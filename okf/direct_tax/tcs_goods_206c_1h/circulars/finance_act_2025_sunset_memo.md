@@ -2,6 +2,7 @@
 id: finance_act_2025_sunset_memo
 title: Explanatory Memorandum on Finance Act, 2025 - Omission and Sunset of Section 206C(1H)
 authority: Ministry of Finance, Government of India
+date: 2025-02-01
 legislative_instrument: Finance Act, 2025
 statutory_section: Section 206C(1H)
 valid_from: 2020-10-01

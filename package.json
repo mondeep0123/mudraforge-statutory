@@ -17,12 +17,15 @@
     "README.md",
     "ARCHITECTURE.md",
     "DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md",
+    "CONTRIBUTING.md",
+    "okf.publication.json",
     "VERIFICATION.md",
     "ENTERPRISE_GOVERNANCE.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "node test.js"
+    "test": "node test.js",
+    "validate": "node scripts/validate_okf.js"
   },
   "repository": {
     "type": "git",

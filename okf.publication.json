@@ -1,0 +1,101 @@
+{
+  "$schema": "https://okf.dev/schema/v0.2/publication.json",
+  "publicationId": "mudraforge-statutory-commons",
+  "title": "MudraForge Statutory Knowledge Substrate (India & Cross-Border)",
+  "version": "2.4.0",
+  "lifecycle": "PUBLIC_BETA",
+  "specification": "OKF-0.2",
+  "publisher": {
+    "name": "MudraForge Technologies",
+    "url": "https://mudraforge.in",
+    "contact": "engineering@mudraforge.in",
+    "legalContact": "hello@mudraforge.in"
+  },
+  "license": {
+    "type": "MIT",
+    "url": "https://opensource.org/licenses/MIT",
+    "primaryLegislationTerms": "Open Government Data (OGD) / Public Domain"
+  },
+  "trustAnchors": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "jurisdiction": "IN-CENTRAL",
+      "officialPortal": "https://incometaxindia.gov.in"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "jurisdiction": "IN-CENTRAL",
+      "officialPortal": "https://taxinformation.cbic.gov.in"
+    },
+    {
+      "authority": "Ministry of Micro, Small and Medium Enterprises",
+      "jurisdiction": "IN-CENTRAL",
+      "officialPortal": "https://msme.gov.in"
+    },
+    {
+      "authority": "Ministry of Corporate Affairs (MCA)",
+      "jurisdiction": "IN-CENTRAL",
+      "officialPortal": "https://mca.gov.in"
+    },
+    {
+      "authority": "Reserve Bank of India (RBI)",
+      "jurisdiction": "IN-CENTRAL",
+      "officialPortal": "https://rbi.org.in"
+    },
+    {
+      "authority": "Internal Revenue Service (IRS)",
+      "jurisdiction": "US-FEDERAL",
+      "officialPortal": "https://www.irs.gov"
+    }
+  ],
+  "distribution": {
+    "packageManager": "npm",
+    "packageName": "@mudraforge/statutory",
+    "localSubpath": "okf",
+    "edgeNetwork": {
+      "provider": "Cloudflare Global Anycast Edge",
+      "baseUrl": "https://api.mudraforge.in",
+      "endpoints": {
+        "catalog": "/api/v1/statutory/sections",
+        "lookup": "/api/v1/statutory/lookup",
+        "manifest": "/api/v1/statutory/manifest.json",
+        "calculate": "/api/v1/statutory/calculate"
+      }
+    }
+  },
+  "domains": [
+    {
+      "id": "direct_tax",
+      "title": "Direct Tax & Corporate Withholdings (TDS / TCS)",
+      "path": "okf/direct_tax",
+      "governingActs": ["Income-tax Act, 1961", "Income-tax Act, 2025", "Finance Act, 2025"],
+      "sections": ["194Q", "194J", "206C(1H)"]
+    },
+    {
+      "id": "indirect_tax_gst",
+      "title": "Indirect Tax & Procurement Compliance (GST)",
+      "path": "okf/indirect_tax_gst",
+      "governingActs": ["Central Goods and Services Tax Act, 2017"],
+      "sections": ["17(5)"]
+    },
+    {
+      "id": "msme_commercial",
+      "title": "MSME Working Capital & Commercial Law",
+      "path": "okf/msme_commercial",
+      "governingActs": ["Micro, Small and Medium Enterprises Development Act, 2006", "Income-tax Act, 1961 Section 43B(h)", "Companies Act, 2013 Schedule III"],
+      "sections": ["MSMED-15-16"]
+    },
+    {
+      "id": "international_tax",
+      "title": "Cross-Border & Foreign Tax Credit",
+      "path": "okf/international_tax",
+      "governingActs": ["Internal Revenue Code of 1986", "Income-tax Rules, 1962 Rule 128"],
+      "sections": ["IRC-901-904"]
+    }
+  ],
+  "verification": {
+    "engine": "scripts/validate_okf.js",
+    "tlaStateModel": "formal_verification/statutory_state_machine.tla",
+    "failClosedGates": ["cumulativeThresholds", "temporalSunsets", "nonPanEscalationCaps", "traderExclusions"]
+  }
+}
