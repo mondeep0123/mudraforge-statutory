@@ -21,6 +21,7 @@
 | **Corpus Quality Card** | 100% Citation Resolution (13/13 URLs) in [`CORPUS_QUALITY.md`](./CORPUS_QUALITY.md) |
 | **Architecture Decision Records** | 5 Normative ADRs documented in [`ARCHITECTURE_DECISIONS.md`](./ARCHITECTURE_DECISIONS.md) |
 | **Vendor Conformance Suite** | 12/12 Passing Fixture Tests in [`conformance/`](./conformance/) |
+| **End-to-End Execution Trace** | Audited 7-stage AP lifecycle in [`examples/`](./examples/) (`npm run example:trace`) |
 | **Enterprise Assurance Preview** | Formal TLA+ & mutation defenses in [`ADESHA_ASSURANCE_OVERVIEW.md`](./ADESHA_ASSURANCE_OVERVIEW.md) |
 | **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](./okf/manifest.json) (reproducible byte-level non-tampering proof) |
 | **Temporal Framework** | Dual-Act Bridge: *Income-tax Act, 1961* & *Income-tax Act, 2025* |

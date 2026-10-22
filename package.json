@@ -29,6 +29,7 @@
     "CORPUS_QUALITY.md",
     "ARCHITECTURE_DECISIONS.md",
     "conformance",
+    "examples",
     "LICENSE"
   ],
   "scripts": {
@@ -36,6 +37,7 @@
     "validate": "node scripts/validate_okf.js",
     "conformance": "node conformance/test_conformance.js",
     "quality": "node scripts/corpus_quality_report.js",
+    "example:trace": "node examples/simulate_end_to_end_trace.js",
     "manifest": "node scripts/generate_manifest.js",
     "manifest:check": "node scripts/generate_manifest.js --check",
     "catalog": "node scripts/build_catalog.js"

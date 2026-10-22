@@ -43,5 +43,8 @@ jobs:
       - name: Generate and Verify Corpus Quality Card
         run: node scripts/corpus_quality_report.js
 
+      - name: Verify End-to-End AP Execution Trace
+        run: node examples/simulate_end_to_end_trace.js
+
       - name: Run Multi-Domain Regression Test Suite
         run: node test.js

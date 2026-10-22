@@ -1,0 +1,148 @@
+{
+  "$schema": "https://mudraforge.in/schemas/v1/execution-trace.json",
+  "traceId": "trace_e2e_2026_sec194q_001",
+  "timestamp": "2026-04-15T10:30:00Z",
+  "description": "End-to-end execution trace: From raw vendor invoice through OKF Section 194Q statutory evaluation, Adesha human authorization lease, bank RTGS settlement, and balanced double-entry GL writeback.",
+  "workflow": "ACCOUNTS_PAYABLE_STATUTORY_DISBURSEMENT",
+  
+  "stage1_incoming_invoice": {
+    "invoiceNumber": "INV-2026-891",
+    "invoiceDate": "2026-04-15",
+    "vendor": {
+      "legalName": "Apex Industrial Steels Private Limited",
+      "pan": "AAACA1234F",
+      "panStatus": "OPERATIVE_VERIFIED",
+      "gstin": "27AAACA1234F1Z5",
+      "msmeStatus": "NOT_APPLICABLE_LARGE_ENTERPRISE"
+    },
+    "currency": "INR",
+    "lineItems": [
+      {
+        "description": "Hot Rolled Steel Coils (Grade IS 2062)",
+        "quantity": 120,
+        "unit": "MT",
+        "basicAmountInr": 6000000.00
+      }
+    ],
+    "basicGoodsAmountInr": 6000000.00,
+    "gstRatePercent": 18.0,
+    "cgstAmountInr": 540000.00,
+    "sgstAmountInr": 540000.00,
+    "totalGstAmountInr": 1080000.00,
+    "grossInvoiceAmountInr": 7080000.00
+  },
+
+  "stage2_okf_statutory_rule_resolution": {
+    "provisionResolved": "194Q",
+    "source": "LOCAL_OKF_FS",
+    "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+    "successorStatute": "Income-tax Act, 2025 Section 393(1) Table 8 Item (ii)",
+    "temporalStatus": "ACTIVE",
+    "retrievalMode": "LOCAL_OFFLINE_FASTPATH",
+    "statutoryRule": {
+      "thresholdInr": 5000000.00,
+      "buyerPriorYearTurnoverCr": 10.00,
+      "standardDeductionRatePercent": 0.1,
+      "inoperativePanPenaltyRatePercent": 5.0,
+      "taxableBaseScope": "EXCESS_OVER_50_LAKHS_ONLY",
+      "gstUnbundlingMandated": true,
+      "citation": "CBDT Circular No. 13 of 2021 (Dated 30 June 2021)"
+    }
+  },
+
+  "stage3_deterministic_statutory_computation": {
+    "engine": "MudraForge Deterministic Statutory Calculator",
+    "inputs": {
+      "buyerPriorYearGrossTurnoverCr": 24.50,
+      "isBuyerEligible": true,
+      "priorPurchasesInCurrentFYInr": 4500000.00,
+      "currentInvoiceBasicInr": 6000000.00,
+      "cumulativeFYPurchasesInr": 10500000.00
+    },
+    "calculationSteps": {
+      "statutoryThresholdInr": 5000000.00,
+      "portionExemptFromPriorBalanceInr": 500000.00,
+      "taxableBaseForThisInvoiceInr": 5500000.00,
+      "gstComponentExcludedInr": 1080000.00,
+      "tdsRateAppliedPercent": 0.1,
+      "tdsDeductionCalculatedInr": 5500.00,
+      "netPayableToVendorInr": 7074500.00
+    },
+    "verificationStatus": "DETERMINISTIC_PASS"
+  },
+
+  "stage4_adesha_payment_authorization_lease": {
+    "runtime": "MudraForge Adesha Sovereign Runtime",
+    "leaseId": "lease_2026_04_apex_89a1",
+    "leaseStatus": "PENDING_HUMAN_AUTHORIZATION",
+    "singleUseLeaseToken": "sha256-4f9e8a71b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9",
+    "authorizedRecipient": {
+      "beneficiaryName": "Apex Industrial Steels Private Limited",
+      "bankAccountNumber": "XXXXXX9812",
+      "ifscCode": "HDFC0000123"
+    },
+    "maximumAuthorizedDisbursementInr": 7074500.00,
+    "leaseExpiresAt": "2026-04-15T12:00:00Z",
+    "formalState": "LEASE_ISSUED_UNCONSUMED"
+  },
+
+  "stage5_human_in_the_loop_authorization": {
+    "channel": "Adesha Mobile Authority Harness (Android/iOS)",
+    "decision": "APPROVED",
+    "authorizedBy": {
+      "officerId": "usr_cfo_001",
+      "email": "cfo@enterprise-client.in",
+      "role": "CHIEF_FINANCIAL_OFFICER"
+    },
+    "authenticationFactor": "BIOMETRIC_PASSKEY_VERIFIED",
+    "authorizedAt": "2026-04-15T10:32:15Z",
+    "stateTransition": "LEASE_ISSUED_UNCONSUMED -> AUTHORIZED_FOR_SETTLEMENT"
+  },
+
+  "stage6_banking_rail_disbursement": {
+    "bankingPartner": "Host-to-Host Corporate Banking (RazorpayX / ICICI / HDFC)",
+    "rail": "RTGS",
+    "transportIdempotencyKey": "idem_apex_inv891_20260415_01",
+    "bankUniqueTransactionReference": "HDFCR52026041500918234",
+    "disbursedAmountInr": 7074500.00,
+    "settlementTimestamp": "2026-04-15T10:32:18Z",
+    "networkOutcome": "HTTP_200_SETTLED_CONFIRMED"
+  },
+
+  "stage7_general_ledger_double_entry_writeback": {
+    "erpSystem": "Enterprise ERP (SAP S/4HANA / Zoho Books / Tally Prime)",
+    "voucherNumber": "JV-2026-04-0042",
+    "postingDate": "2026-04-15",
+    "journalLines": [
+      {
+        "account": "Purchases / Cost of Goods Sold (IS 2062)",
+        "type": "DEBIT",
+        "amountInr": 6000000.00
+      },
+      {
+        "account": "Input CGST Receivable (9%)",
+        "type": "DEBIT",
+        "amountInr": 540000.00
+      },
+      {
+        "account": "Input SGST Receivable (9%)",
+        "type": "DEBIT",
+        "amountInr": 540000.00
+      },
+      {
+        "account": "TDS Payable under Section 194Q",
+        "type": "CREDIT",
+        "amountInr": 5500.00
+      },
+      {
+        "account": "HDFC Corporate Bank Operating Account",
+        "type": "CREDIT",
+        "amountInr": 7074500.00
+      }
+    ],
+    "totalDebitsInr": 7080000.00,
+    "totalCreditsInr": 7080000.00,
+    "netDiscrepancyInr": 0.00,
+    "equilibriumVerification": "PAISA_LEVEL_PERFECT_BALANCE"
+  }
+}
