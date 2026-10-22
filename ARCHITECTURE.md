@@ -184,21 +184,26 @@ Examples of sections and domains we are actively indexing or can prioritize on r
 
 ## 6. How the Knowledge Layer Connects to Adesha
 
-The statutory substrate published in this repository (`@mudraforge/statutory`) acts as the reference oracle for the broader **MudraForge Adesha Governance Platform**:
+The statutory substrate published in this repository (`@mudraforge/statutory`) acts as the declarative knowledge layer for the broader **MudraForge Adesha Governance Platform**:
 
 ```mermaid
 flowchart TD
     AP["Corporate AP Stream:<br/>PDF Invoices / IRN e-Invoices"] --> Triage["Statutory Domain Classifier<br/>& Context Builder"]
     
-    subgraph OKFSubstrate["MudraForge Statutory Substrate (This Package)"]
-        Triage --> Substrate{"Local OKF Filesystem<br/>or Edge Substrate"}
+    subgraph Tier1["Tier 1: Open Substrate (This Repository)"]
+        Triage --> Substrate{"Local OKF Filesystem<br/>(Zero Network Calls)"}
         Substrate --> S1["194Q Thresholds & Excess Scope"]
         Substrate --> S2["206C(1H) Sunset Evaluation"]
         Substrate --> S3["MSMED 15/16 Payment Rules"]
         Substrate --> S4["194J FTS vs Professional Rates"]
     end
 
-    subgraph AdeshaEngine["Adesha Sovereign Governance Engine"]
+    subgraph Tier2["Tier 2: Hosted Edge Sync API (api.mudraforge.in)"]
+        Substrate -.-> EdgeSync["Remote Manifest Check & Sync<br/>(Cloudflare 300+ PoPs)"]
+        EdgeSync --> RemoteCatalog["11-Domain Roadmap Catalog"]
+    end
+
+    subgraph Tier3["Tier 3: Commercial Adesha Governance Runtime"]
         S1 & S2 & S3 & S4 --> CalcEngine["Deterministic Arithmetic Calculator<br/>(₹50L Excess, 3x RBI Interest)"]
         CalcEngine --> CanonResult["Canonical Financial Result<br/>(RFC 8785 JCS + SHA-256 Seal)"]
         CanonResult --> PresLock["Presentation Consistency Lock<br/>(Automated Prose Auditor)"]
@@ -210,16 +215,16 @@ flowchart TD
 
 ### Subsystem Boundary Delineation
 
-| Capability | Public Substrate (`@mudraforge/statutory`) | Commercial Adesha Platform |
-| :--- | :--- | :--- |
-| **Statutory Text & Schemas** | Supported (Open Knowledge Format / MIT) | Included & Maintained |
-| **Offline Filesystem Lookup** | Supported (Sub-1ms local traversal, 0 network calls) | Included |
-| **Agent Skill (`SKILL.md`)** | Supported (`init-skill` CLI) | Included |
-| **Maintenance & Gazette Updates**| Static public release snapshot | Continuous edge synchronization |
-| **Deterministic Tax Math** | Reference metadata only | Gated Edge API (`POST /calculate`) |
-| **Payment Authorization Leases**| Excluded | Single-use cryptographic CAS leases |
-| **Banking Reconciliation** | Excluded | Two-Generals failure recovery |
-| **ERP Ledger Writeback** | Excluded | Source-bound double-entry writeback |
+| Capability | Tier 1: Public Substrate (`@mudraforge/statutory`) | Tier 2: Hosted Edge API (`api.mudraforge.in`) | Tier 3: Commercial Adesha Runtime |
+| :--- | :--- | :--- | :--- |
+| **Statutory Text & Schemas** | Included (OKF v0.2 / CC BY 4.0 & MIT) | Remote edge catalog | Included & Maintained |
+| **Offline Filesystem Lookup** | Supported (Sub-1ms local traversal, 0 network calls) | N/A (Edge requires network) | Local caching within VPC |
+| **Agent Skill (`SKILL.md`)** | Supported (`init-skill` CLI) | Supported | Included |
+| **Maintenance & Updates** | Static public release snapshot | Best-effort beta sync (`POST /sync`) | Continuous real-time gazette sync |
+| **Deterministic Tax Math** | Reference metadata only | Gated Edge API (`POST /calculate`) | Built-in arithmetic calculator |
+| **Payment Authorization Leases**| Excluded | Excluded | Single-use cryptographic CAS leases |
+| **Banking Reconciliation** | Excluded | Excluded | Two-Generals failure recovery |
+| **ERP Ledger Writeback** | Excluded | Excluded | Source-bound double-entry writeback |
 
 ---
 

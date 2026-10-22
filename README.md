@@ -1,6 +1,6 @@
 # @mudraforge/statutory
 
-> **Open Knowledge Format (OKF) — Authoritative Indian & Cross-Border Statutory Substrate**  
+> **Open Knowledge Format (OKF) — Structured Indian & Cross-Border Statutory Knowledge Substrate**  
 > *Zero runtime dependencies. Fully offline-capable local filesystem. Public reference commons for software engineers, tax practitioners, and autonomous AI agents.*
 
 [![npm version](https://img.shields.io/npm/v/@mudraforge/statutory.svg)](https://www.npmjs.com/package/@mudraforge/statutory)
@@ -16,8 +16,8 @@
 | Item | Value |
 |---|---|
 | **Package Release** | **`v2.4.0`** (Public Beta) |
-| **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2)** |
-| **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Snapshot: October 2026** |
+| **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2) + MudraForge Statutory Schema Extension** |
+| **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Baseline: October 2026** |
 | **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](./okf/manifest.json) (reproducible byte-level non-tampering proof) |
 | **Temporal Framework** | Dual-Act Bridge: *Income-tax Act, 1961* & *Income-tax Act, 2025* |
 | **Verification Gate** | 100% Pass across cumulative thresholds, legislative sunsets, and excess math |
@@ -28,9 +28,9 @@
 
 ## Statutory Authority & Epistemic Boundary
 
-- **Primary Legislation & Official Circulars**: Statutory texts, executive circulars, notifications, and compliance forms in this repository are structured transpositions of official publications issued by the Ministry of Finance (CBDT/CBIC), Ministry of MSME, Ministry of Corporate Affairs (MCA), and the US Internal Revenue Service (IRS). Official government source material is governed by respective open data and statutory frameworks.
-- **Open Knowledge Format (OKF)**: The structured JSON schemas, Markdown circulars with YAML frontmatter, temporal validity state machines, and cross-statute relational maps are authored under the Google Open Knowledge Format (OKF v0.2) specification.
-- **Deterministic Runtime**: Mathematical execution (cumulative threshold deductions, multi-interval monthly compound interest, double-entry ledger writebacks, and single-use payment leases) is evaluated independently by the MudraForge Adesha Governance Engine on Cloudflare Anycast Edge. Reference metadata published in this package does not constitute formal legal counsel or statutory audit certification.
+- **Primary Legislation & Official Circulars**: Statutory texts, executive circulars, notifications, and compliance forms in this repository are structured transpositions of official publications issued by the Ministry of Finance (CBDT/CBIC), Ministry of MSME, Ministry of Corporate Affairs (MCA), and the US Internal Revenue Service (IRS). Official government source material remains the sole statutory authority.
+- **Open Knowledge Format (OKF v0.2) & Companion Model**: This repository implements Google's Open Knowledge Format (OKF v0.2) for portable knowledge publication (Markdown circulars, YAML frontmatter, trust anchors, and `okf.publication.json`). It extends the format with the **MudraForge Statutory Schema Extension** (`section.json`, `forms/*.json`) to capture strict transactional threshold parameters, tax rate determinants, and dual-act mappings needed by accounting software and autonomous agents.
+- **Deterministic Runtime Separation**: Mathematical execution (cumulative threshold deductions, multi-interval monthly compound interest, double-entry ledger writebacks, and single-use payment leases) is evaluated independently by the MudraForge Adesha Governance Engine on Cloudflare Anycast Edge. Reference metadata published in this package does not constitute formal legal counsel or statutory audit certification.
 
 ---
 
@@ -42,6 +42,7 @@
 ### What OKF Compatibility Means
 Provisions in this repository adhere to the **Open Knowledge Format (OKF v0.2)** specification:
 - **Declarative Knowledge**: Legal rules are structured into clean, machine-readable JSON (`section.json`), official administrative circulars with YAML frontmatter (`.md`), and compliance return schemas.
+- **Companion Extension**: While Google's OKF v0.2 standardizes Markdown-based knowledge with YAML frontmatter, MudraForge provides a companion data model (`section.json`) to express transactional tax thresholds, rate structures, and dual-act cross-compilation maps.
 - **Temporal State Machines**: Strict `validFrom`, `validTo`, and `annualReset` boundaries preventing retrospective hallucination and catching legislative sunsets (e.g. Section 206C(1H) sunset on 1 April 2025).
 - **Trust Anchors**: Every provision binds to authoritative primary sources: the Gazette of India, CBDT/CBIC executive circulars, or Ministry notifications (`incometax.gov.in`, `cbic-gst.gov.in`, `msme.gov.in`, `irs.gov.in`).
 - **Cryptographic Provenance**: Bundled files are verifiable against a deterministic SHA-256 Merkle root hash.
@@ -126,23 +127,24 @@ The OKF substrate currently indexes and enforces ground truth across four major 
 
 ---
 
-## Free Local OKF vs. Paid Cloud Enterprise Tier
+## Architectural Boundaries: Open Substrate vs. Hosted Edge vs. Adesha Platform
 
-We deliberately separate **reference knowledge** from **deep mathematical execution & neural reasoning**:
+To ensure clarity for developers, CAs, and prospective enterprise clients, the capabilities across the three operational tiers are explicitly delineated below:
 
-| Capability / Feature | Free Local OKF (NPM / Substrate) | Paid Cloud Enterprise API (`hello@mudraforge.in`) |
-| :--- | :--- | :--- |
-| **Pricing** | **100% Free** (Open Source / Public Beta) | **Paid Enterprise Subscription** (Direct Contact) |
-| **Live OKF Updates (`sync`)** | **Included Free during Beta** (transitions to Paid post-beta for ongoing sustainability) | **Continuous Verified Versioning & Real-Time Sync** |
-| **Data Privacy & Latency** | 100% Offline, 0 network calls, sub-1ms | Global Cloudflare Anycast edge (sub-10ms) |
-| **Search Engine** | Exact keyword, section code & alias lookup | **System-1 Neural Semantic Discovery Model** (finds relevant laws from unstructured transaction queries) |
-| **Reasoning Capabilities** | None (Static reference data only) | **Multi-Step Statutory Reasoning Engine** (evaluates facts, composite supplies, M&A restructuring, and cross-border remittances) |
-| **Output Modes** | Raw statutory JSON & thresholds | **Analysis Mode**: Detailed legal rationale, disallowance risk warnings, and balanced double-entry journal vouchers |
-| **Deterministic Calculators** | *Not bundled in package* (prevents reverse-engineering) | **Full Execution Engine**: Cumulative ₹50L excess math (§194Q), MSMED 3x RBI compound interest, 194J 2% vs 10% |
-| **Government Portal Attestation** | Not available | **Out-of-Band Attestation**: TRACES certificates, UDYAM portal registration, GSTIN verification |
-| **How to Obtain Access** | Run `npm install @mudraforge/statutory` | **Email `hello@mudraforge.in` or `support@mudraforge.in`** |
+| Capability / Layer | Tier 1: Open Substrate (This NPM Package) | Tier 2: Hosted Edge API (Cloudflare Anycast) | Tier 3: Commercial Adesha Runtime (Enterprise Platform) |
+| :--- | :--- | :--- | :--- |
+| **Pricing & License** | **100% Free** (MIT Code / CC BY 4.0 Data) | **Best-Effort Free Beta** (Transitions to Paid) | **Commercial Enterprise SaaS** |
+| **Execution Location** | 100% Local Filesystem (0 Network Calls) | Cloudflare Edge (Global 300+ PoPs) | Private Enterprise VPC / On-Premise Worker |
+| **Statutory Knowledge** | Bundled 4-Domain Starter Seed (6 Core Sections) | Full 11-Domain Roadmap Catalog | Full 11-Domain Roadmap + Custom Private Contracts |
+| **Lookup Engine** | Exact code, alias & folder path resolution | System-1 Semantic Intent & Rule Discovery | Multi-tenant RAG & Context Assembler |
+| **Temporal Status** | Offline deterministic evaluation (`computeTemporalStatus`) | Live temporal state machine resolution | In-flight temporal locks across transaction lifecycle |
+| **Deterministic Calculators**| *Not included* (declarative schemas only) | Hosted calculation endpoint (`POST /calculate`) | Full arithmetic engine with ₹50L excess & 3x RBI interest |
+| **Payment Authorization** | *Not included* | *Not included* | **Single-Use Cryptographic Payment Leases (TLA+ verified)** |
+| **Banking Execution** | *Not included* | *Not included* | **Host-to-Host Bank Rails (RazorpayX / ICICI / HDFC)** |
+| **ERP Writebacks** | *Not included* | *Not included* | **Balanced double-entry journal writebacks (SAP / Zoho)** |
+| **How to Access** | `npm install @mudraforge/statutory` | `npx @mudraforge/statutory sync` | Contact: `hello@mudraforge.in` |
 
-> **Operational Boundary**: The Paid Cloud Enterprise API provides deterministic statutory calculation, neural discovery search, and legal analysis. It does **not** disburse funds, issue payment leases, or perform direct ERP database mutations. Autonomous money movement and general ledger writebacks are governed separately by the **MudraForge Adesha Enterprise Platform** (see [ENTERPRISE_GOVERNANCE.md](./ENTERPRISE_GOVERNANCE.md)).
+> **Operational Distinction**: This open-source repository provides the **declarative knowledge foundation**. It does not perform live banking transfers, hold funds, or mutate corporate ERP databases. Those consequential actions are strictly isolated within the **MudraForge Adesha Enterprise Governance Engine** (see [`ENTERPRISE_GOVERNANCE.md`](./ENTERPRISE_GOVERNANCE.md)).
 
 ---
 

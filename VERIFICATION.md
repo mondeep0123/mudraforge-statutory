@@ -17,6 +17,26 @@ This report documents:
 3. The empirical test harnesses used to evaluate high-concurrency database operations and network timeout handling.
 4. **Known limitations and the boundary between simulated test doubles and live enterprise production**.
 
+### Reproducing Public Package Checks Locally
+
+Any developer, Chartered Accountant, or auditor can reproduce the verification checks for this open-source package locally with zero external network access:
+
+```bash
+# 1. Run the multi-domain regression suite (11 test suites covering all provisions & failure modes)
+npm test
+
+# 2. Run the fail-closed OKF schema & circular frontmatter validator
+npm run validate
+
+# 3. Verify cryptographic SHA-256 Merkle root integrity of all bundled files
+npm run manifest:check
+
+# 4. Recompile the statutory catalog from source files
+npm run catalog
+```
+
+> **Delineation Note**: The four commands above reproduce the verification of this open-source package (`@mudraforge/statutory`). Sections 2–5 below document the internal adversarial mutation suites, formal TLA+ state machine specifications, and banking timeout recovery models implemented in the private Adesha platform engine.
+
 ---
 
 ## 2. Statutory Ground Truth Oracle & Mutation Testing
