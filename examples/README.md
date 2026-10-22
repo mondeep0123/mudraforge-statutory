@@ -1,6 +1,7 @@
 # MudraForge Statutory & Adesha: End-to-End Execution Traces
 
-> **Purpose**: Demonstrates the concrete operational bridge connecting public OKF statutory rules with the commercial Adesha Autonomous Finance Runtime.
+> **Purpose**: Demonstrates the concrete operational bridge connecting public OKF statutory rules with the commercial Adesha Autonomous Finance Runtime.  
+> **Demonstration Notice**: This trace contains synthetic transaction data and modeled authorization, banking, and ledger events. It does not connect to a real bank, verify a live biometric event, or execute a real-world payment. All PANs, GSTINs, and account numbers are explicitly synthetic test fixtures.
 
 ---
 

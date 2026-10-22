@@ -313,6 +313,26 @@ npm run catalog
 
 ---
 
+## A Note from the Maintainer
+
+Hi, I am Mondeep Engti, the founder of MudraForge and the current maintainer of `@mudraforge/statutory`.
+
+I am building this project because I believe that statutory compliance knowledge—the rules that govern commercial trade, taxation, MSME working capital, and enterprise accountability—should not be locked inside expensive proprietary silos or hallucinated by ungrounded black-box AI models. It should be open, machine-readable, and mathematically verifiable by anyone.
+
+This repository is part of a deliberate two-tier architecture:
+1. **The Public Commons (`@mudraforge/statutory`)**: Provides declarative, zero-dependency statutory ground truth under Google's Open Knowledge Format (OKF v0.2) with cryptographic Merkle verification. It is 100% free, inspectable, and locally usable for developers, researchers, and Chartered Accountants.
+2. **The Commercial Platform (Adesha)**: Builds on top of this foundation to deliver an autonomous enterprise finance runtime—providing deterministic calculation engines, two-way ERP reconciliation, and single-use cryptographic payment leases governed by human authorization.
+
+**This project is currently maintained by a solo founder.** That means development velocity, review capacity, and update cadences have real limits. The hosted edge sync is provided on a best-effort basis, while the bundled local package is guaranteed to remain fully functional offline indefinitely.
+
+I open-sourced this layer because critical financial infrastructure benefits from public inspection, adversarial testing, and community contributions. Whether you are an engineer building financial AI agents, a Chartered Accountant auditing tax withholding, or a compliance practitioner, your feedback, pull requests, and bug reports are genuinely welcome.
+
+If you are working on autonomous financial systems or want to discuss the roadmap, you can reach me directly at **mondeepe@gmail.com** or **hello@mudraforge.in**.
+
+— Mondeep Engti, Founder & Maintainer
+
+---
+
 ## Institutional Governance & Contributing
 
 - **[Statutory Knowledge Catalog](./CATALOG.md)**: Full table of all indexed provisions, key thresholds, and return schemas.

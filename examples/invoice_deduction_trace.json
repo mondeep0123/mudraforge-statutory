@@ -2,17 +2,18 @@
   "$schema": "https://mudraforge.in/schemas/v1/execution-trace.json",
   "traceId": "trace_e2e_2026_sec194q_001",
   "timestamp": "2026-04-15T10:30:00Z",
-  "description": "End-to-end execution trace: From raw vendor invoice through OKF Section 194Q statutory evaluation, Adesha human authorization lease, bank RTGS settlement, and balanced double-entry GL writeback.",
+  "isSyntheticDemonstrationFixture": true,
+  "disclaimer": "Demonstration only: This trace contains synthetic transaction data and simulated authorization, banking and general ledger events. It does not connect to a real bank, verify a real biometric event, or execute a live payment.",
   "workflow": "ACCOUNTS_PAYABLE_STATUTORY_DISBURSEMENT",
   
   "stage1_incoming_invoice": {
     "invoiceNumber": "INV-2026-891",
     "invoiceDate": "2026-04-15",
     "vendor": {
-      "legalName": "Apex Industrial Steels Private Limited",
-      "pan": "AAACA1234F",
-      "panStatus": "OPERATIVE_VERIFIED",
-      "gstin": "27AAACA1234F1Z5",
+      "legalName": "Apex Synthetic Industrial Steels Private Limited (Demonstration Fixture)",
+      "pan": "AAAPA0000A",
+      "panStatus": "OPERATIVE_VERIFIED_SYNTHETIC",
+      "gstin": "27AAAPA0000A1Z5",
       "msmeStatus": "NOT_APPLICABLE_LARGE_ENTERPRISE"
     },
     "currency": "INR",
@@ -77,9 +78,9 @@
     "leaseStatus": "PENDING_HUMAN_AUTHORIZATION",
     "singleUseLeaseToken": "sha256-4f9e8a71b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9",
     "authorizedRecipient": {
-      "beneficiaryName": "Apex Industrial Steels Private Limited",
-      "bankAccountNumber": "XXXXXX9812",
-      "ifscCode": "HDFC0000123"
+      "beneficiaryName": "Apex Synthetic Industrial Steels Pvt Ltd (Demonstration Fixture)",
+      "bankAccountNumber": "0000000000009812",
+      "ifscCode": "TEST0000001"
     },
     "maximumAuthorizedDisbursementInr": 7074500.00,
     "leaseExpiresAt": "2026-04-15T12:00:00Z",
@@ -87,26 +88,26 @@
   },
 
   "stage5_human_in_the_loop_authorization": {
-    "channel": "Adesha Mobile Authority Harness (Android/iOS)",
+    "channel": "Adesha Mobile Authority Harness (Simulated Android/iOS)",
     "decision": "APPROVED",
     "authorizedBy": {
-      "officerId": "usr_cfo_001",
-      "email": "cfo@enterprise-client.in",
+      "officerId": "usr_cfo_synthetic_01",
+      "email": "cfo@example-enterprise.invalid",
       "role": "CHIEF_FINANCIAL_OFFICER"
     },
-    "authenticationFactor": "BIOMETRIC_PASSKEY_VERIFIED",
+    "authenticationFactor": "SIMULATED_BIOMETRIC_PASSKEY_VERIFIED",
     "authorizedAt": "2026-04-15T10:32:15Z",
     "stateTransition": "LEASE_ISSUED_UNCONSUMED -> AUTHORIZED_FOR_SETTLEMENT"
   },
 
   "stage6_banking_rail_disbursement": {
-    "bankingPartner": "Host-to-Host Corporate Banking (RazorpayX / ICICI / HDFC)",
-    "rail": "RTGS",
-    "transportIdempotencyKey": "idem_apex_inv891_20260415_01",
-    "bankUniqueTransactionReference": "HDFCR52026041500918234",
+    "bankingPartner": "Simulated Corporate Banking Gateway (H2H RTGS)",
+    "rail": "RTGS_SIMULATED",
+    "transportIdempotencyKey": "idem_synthetic_inv891_20260415_01",
+    "bankUniqueTransactionReference": "SIMULATED-RTGS-UTR-2026-891",
     "disbursedAmountInr": 7074500.00,
     "settlementTimestamp": "2026-04-15T10:32:18Z",
-    "networkOutcome": "HTTP_200_SETTLED_CONFIRMED"
+    "networkOutcome": "SIMULATED_HTTP_200_SETTLED_CONFIRMED"
   },
 
   "stage7_general_ledger_double_entry_writeback": {

@@ -21,6 +21,11 @@ const TRACE_PATH = path.join(__dirname, 'invoice_deduction_trace.json');
 export function runTraceSimulation() {
     console.log('===========================================================================');
     console.log('MUDRAFORGE & ADESHA: END-TO-END AP STATUTORY EXECUTION TRACE');
+    console.log('===========================================================================');
+    console.log('[NOTE] DEMONSTRATION FIXTURE ONLY:');
+    console.log('This trace models synthetic transaction data and simulated authorization,');
+    console.log('banking, and general ledger events to illustrate the Adesha governance contract.');
+    console.log('It does not connect to a real bank, verify a live biometric event, or execute a real payment.');
     console.log('===========================================================================\n');
 
     const trace = JSON.parse(fs.readFileSync(TRACE_PATH, 'utf8'));
