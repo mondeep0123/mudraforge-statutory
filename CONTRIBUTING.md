@@ -13,7 +13,7 @@ Our mission is to build the definitive, open, machine-readable statutory knowled
 Unlike standard software libraries where code is judged primarily on execution speed, statutory knowledge repositories are judged on **statutory ground truth, temporal precision, and provenance**:
 
 1. **Official Primary Sources Only**: All statutory thresholds, rates, and rules must be sourced directly from official Union Gazettes, Central Board of Direct Taxes (CBDT), Central Board of Indirect Taxes and Customs (CBIC), Reserve Bank of India (RBI), Ministry of Corporate Affairs (MCA), or official regulatory portals. **Citations to third-party SEO blogs or unverified discussion forums are strictly rejected.**
-2. **Temporal Enforcement**: Statutory provisions must declare strict `valid_from` dates and definitive `valid_to` dates (or `OPEN_ENDED` for active legislation). Sunset dates must be rigorously documented.
+2. **Temporal Enforcement**: Statutory provisions must declare strict temporal boundaries (`effectivePeriod.validFrom` and `effectivePeriod.validTo` in `section.json`; `valid_from` and `valid_to` in circular YAML frontmatter, or `OPEN_ENDED` for active legislation). Sunset dates must be rigorously documented.
 3. **Fail-Closed Validation**: Every submission must pass the automated schema linter (`npm run validate`) and test suite (`npm test`) with zero defects before merge.
 
 ---

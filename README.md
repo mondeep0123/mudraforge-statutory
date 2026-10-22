@@ -21,6 +21,7 @@
 | **Corpus Quality Card** | 100% Citation Resolution (13/13 URLs) in [`CORPUS_QUALITY.md`](./CORPUS_QUALITY.md) |
 | **Architecture Decision Records** | 5 Normative ADRs documented in [`ARCHITECTURE_DECISIONS.md`](./ARCHITECTURE_DECISIONS.md) |
 | **Vendor Conformance Suite** | 12/12 Passing Fixture Tests in [`conformance/`](./conformance/) |
+| **Enterprise Assurance Preview** | Formal TLA+ & mutation defenses in [`ADESHA_ASSURANCE_OVERVIEW.md`](./ADESHA_ASSURANCE_OVERVIEW.md) |
 | **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](./okf/manifest.json) (reproducible byte-level non-tampering proof) |
 | **Temporal Framework** | Dual-Act Bridge: *Income-tax Act, 1961* & *Income-tax Act, 2025* |
 | **Verification Gate** | 100% Pass across cumulative thresholds, legislative sunsets, and excess math |
@@ -137,8 +138,8 @@ To ensure clarity for developers, CAs, and prospective enterprise clients, the c
 | Capability / Layer | Tier 1: Open Substrate (This NPM Package) | Tier 2: Hosted Edge API (Cloudflare Anycast) | Tier 3: Commercial Adesha Runtime (Enterprise Platform) |
 | :--- | :--- | :--- | :--- |
 | **Pricing & License** | **100% Free** (MIT Code / CC BY 4.0 Data) | **Best-Effort Free Beta** (Transitions to Paid) | **Commercial Enterprise SaaS** |
-| **Execution Location** | 100% Local Filesystem (0 Network Calls) | Cloudflare Edge (Global 300+ PoPs) | Private Enterprise VPC / On-Premise Worker |
-| **Statutory Knowledge** | Bundled 4-Domain Starter Seed (6 Core Sections) | Full 11-Domain Roadmap Catalog | Full 11-Domain Roadmap + Custom Private Contracts |
+| **Execution Location** | 100% Local Filesystem (0 Network Calls) | Cloudflare Edge (Global 300+ PoPs, typical 20–80ms Anycast latency) | Private Enterprise VPC / On-Premise Worker |
+| **Statutory Knowledge** | Bundled 4-Domain Starter Seed (6 Core Sections) | 4 Active Domains (11-Domain Roadmap Catalog in expansion) | Full 11-Domain Sovereign Catalog + Custom Private Contracts |
 | **Lookup Engine** | Exact code, alias & folder path resolution | System-1 Semantic Intent & Rule Discovery | Multi-tenant RAG & Context Assembler |
 | **Temporal Status** | Offline deterministic evaluation (`computeTemporalStatus`) | Live temporal state machine resolution | In-flight temporal locks across transaction lifecycle |
 | **Deterministic Calculators**| *Not included* (declarative schemas only) | Hosted calculation endpoint (`POST /calculate`) | Full arithmetic engine with ₹50L excess & 3x RBI interest |
@@ -253,7 +254,7 @@ npx mudraforge-statutory init-skill
 ```javascript
 import { lookupLocalStatute, isStatuteActive } from '@mudraforge/statutory';
 
-// 1. Look up Section 194Q from local disk (sub-1ms, 0 network calls)
+// 1. Look up Section 194Q from local disk (0 network calls, direct filesystem read)
 const statute = lookupLocalStatute('194Q');
 console.log(statute.title);
 console.log(statute.keyStatutoryThresholds.taxableBaseScope);

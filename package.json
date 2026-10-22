@@ -25,6 +25,7 @@
     "okf.publication.json",
     "VERIFICATION.md",
     "ENTERPRISE_GOVERNANCE.md",
+    "ADESHA_ASSURANCE_OVERVIEW.md",
     "CORPUS_QUALITY.md",
     "ARCHITECTURE_DECISIONS.md",
     "conformance",
@@ -60,5 +61,5 @@
     "okf"
   ],
   "author": "MudraForge Technologies <engineering@mudraforge.in>",
-  "license": "MIT"
+  "license": "MIT AND CC-BY-4.0"
 }

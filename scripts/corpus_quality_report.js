@@ -25,7 +25,7 @@ function findFilesRecursively(dir, filterFn) {
         const fullPath = path.join(dir, entry.name);
         if (entry.isDirectory()) {
             results = results.concat(findFilesRecursively(fullPath, filterFn));
-        } else if (entry.isFile() && filterFn(entry.name)) {
+        } else if (entry.isFile() && filterFn(entry.name, fullPath)) {
             results.push(fullPath);
         }
     }
@@ -34,8 +34,14 @@ function findFilesRecursively(dir, filterFn) {
 
 export function generateCorpusQualityReport() {
     const sectionFiles = findFilesRecursively(OKF_DIR, f => f === 'section.json');
-    const circularFiles = findFilesRecursively(OKF_DIR, f => f.endsWith('.md') && !f.includes('README'));
-    const formFiles = findFilesRecursively(OKF_DIR, f => f.startsWith('form_') || f.startsWith('gstr_') || f.startsWith('udyam_') || f.startsWith('irs_') || f.startsWith('schedule_'));
+    // Circulars are markdown files inside a 'circulars' folder
+    const circularFiles = findFilesRecursively(OKF_DIR, (f, fullPath) => {
+        return f.endsWith('.md') && fullPath.replace(/\\/g, '/').includes('/circulars/');
+    });
+    // Forms are json or markdown files inside a 'forms' folder
+    const formFiles = findFilesRecursively(OKF_DIR, (f, fullPath) => {
+        return (f.endsWith('.json') || f.endsWith('.md')) && fullPath.replace(/\\/g, '/').includes('/forms/');
+    });
 
     let totalSections = sectionFiles.length;
     let withOfficialCitations = 0;
@@ -143,7 +149,9 @@ ${sectionCards.map(s => `| **${s.code}** | ${s.title} | ${s.governingStatute} | 
 ## 4. Maintenance & Defect Resolution Protocol
 
 - **Defect Reporting**: Statutory inaccuracies must be submitted via GitHub Issues with the \`statutory-defect\` label, citing the official Gazette Notification or Circular number.
-- **Triage Commitment**: Best-effort maintainer triage within 48 hours for statutory threshold breaks; 7-day correction releases for validated legal changes.
+- **Initial Acknowledgement**: Target 2 business days for incoming reports.
+- **Triage & Legal Ground-Truth Verification**: Target 5 business days to verify reported discrepancies against primary Gazette texts.
+- **Targeted Patch Release**: Target 14 calendar days for verified statutory threshold or rate defects (or scheduled in the next monthly corpus release).
 - **Local Continuity Guarantee**: Local filesystem queries continue operating indefinitely without network or server reliance even if hosted edge services are interrupted.
 `;
 

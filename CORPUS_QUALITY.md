@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.4.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-22T16:36:36.131Z
+> **Generated Timestamp**: 2026-10-22T16:55:44.679Z
 
 ---
 
@@ -14,8 +14,8 @@
 | **Primary Source Citations** | 13 resolvable gazette URLs | 13 total citations declared | **100.0%** | VERIFIED |
 | **Temporal Validity Bounds** | 6 sections with explicit dates | 6 total bundled sections | **100.0%** | VERIFIED |
 | **Dual-Act 2025 Transition Bridges** | 3 direct tax provisions mapped | 3 direct tax provisions | **100.0%** | VERIFIED |
-| **Attached Administrative Circulars** | 8 official circulars | 6 sections across 4 domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 7 schemas/templates | 6 sections across 4 domains | **100% Attached** | VERIFIED |
+| **Attached Administrative Circulars** | 6 official circulars | 6 sections across 4 domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 8 schemas/templates | 6 sections across 4 domains | **100% Attached** | VERIFIED |
 | **Cryptographic Merkle Verification** | 20 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
@@ -54,5 +54,7 @@
 ## 4. Maintenance & Defect Resolution Protocol
 
 - **Defect Reporting**: Statutory inaccuracies must be submitted via GitHub Issues with the `statutory-defect` label, citing the official Gazette Notification or Circular number.
-- **Triage Commitment**: Best-effort maintainer triage within 48 hours for statutory threshold breaks; 7-day correction releases for validated legal changes.
+- **Initial Acknowledgement**: Target 2 business days for incoming reports.
+- **Triage & Legal Ground-Truth Verification**: Target 5 business days to verify reported discrepancies against primary Gazette texts.
+- **Targeted Patch Release**: Target 14 calendar days for verified statutory threshold or rate defects (or scheduled in the next monthly corpus release).
 - **Local Continuity Guarantee**: Local filesystem queries continue operating indefinitely without network or server reliance even if hosted edge services are interrupted.

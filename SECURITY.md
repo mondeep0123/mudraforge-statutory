@@ -55,12 +55,12 @@ To expedite resolution, please include:
 
 We operate an open-source, community-verified disclosure and correction model:
 
-| Issue Type | Target Acknowledgment | Remediation & Release Pathway |
-|---|---|---|
-| **Critical Statutory Bug** (e.g., incorrect tax rate, missed sunset) | Within 2 business days | Independent verification against official gazette & fast-tracked patch release (`2.4.x`) |
-| **Code / Packaging Vulnerability** (e.g., integrity mismatch, parser crash) | Within 2 business days | Patch release with updated cryptographic checksums |
-| **Regulatory Clarification** (e.g., administrative circular ambiguity) | Within 5 business days | Evaluated during next scheduled monthly release cycle |
-| **Documentation / Typo** (e.g., broken official link) | Within 1 week | Addressed in regular maintenance commits |
+| Issue Type | Target Acknowledgment | Triage & Gazette Verification | Target Release Window |
+|---|---|---|---|
+| **Critical Statutory Bug** (e.g., incorrect tax rate, missed sunset) | 2 business days | 5 business days (verified against Gazette) | 14 calendar days (fast-tracked patch release) |
+| **Code / Security Vulnerability** (e.g., parser crash, checksum mismatch) | 2 business days | 3 business days | 7 calendar days |
+| **Regulatory Clarification** (e.g., administrative circular ambiguity) | 5 business days | Next monthly review cycle | Scheduled monthly corpus release |
+| **Documentation / Typo** (e.g., broken official link) | 5 business days | Regular maintenance | Next release cycle |
 
 ### Correction Verification Policy
 To prevent regressions, no statutory correction is merged based solely on ungrounded AI generation or secondary blog summaries. Every amendment must link to an official primary gazette URL, circular number, or statutory enactment.
