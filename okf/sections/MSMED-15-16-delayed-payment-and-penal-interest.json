@@ -1,0 +1,64 @@
+{
+  "sectionId": "MSMED2006_SEC15_16",
+  "sectionCode": "MSMED-15-16",
+  "aliases": [
+    "msme",
+    "msmed",
+    "msmed-15-16",
+    "msmed_15_16",
+    "43b(h)",
+    "sec43b(h)",
+    "section 15",
+    "section 16",
+    "msme 45 days",
+    "delayed payments"
+  ],
+  "governingStatute": "Micro, Small and Medium Enterprises Development Act, 2006 read with Income-tax Act, 1961 Section 43B(h)",
+  "statutorySection": "Sections 15 & 16 of MSMED Act, 2006 read with Section 43B(h) of IT Act, 1961",
+  "successorStatute": "Income-tax Act, 2025 Section 37(2)(g)",
+  "successorSection": "Section 37(2)(g) of Income-tax Act, 2025",
+  "title": "Statutory payment timelines to Micro & Small Enterprises, compound penal interest, and income tax deduction disallowance",
+  "effectivePeriod": {
+    "validFrom": "2006-10-02",
+    "validTo": "2099-12-31",
+    "annualReset": "Year-End March 31 Tax Disallowance Audit",
+    "sunsetNotes": "Section 43B(h) takes effect from FY 2023-24 (AY 2024-25) and continues under Section 37(2)(g) of the Income-tax Act, 2025."
+  },
+  "plainTextSummary": "Under Section 15 of the MSMED Act, where any supplier supplies any goods or renders any services to any buyer, the buyer shall make payment therefor on or before the date agreed upon in writing (which shall NOT exceed 45 days), or if there is no agreement, before the appointed day (15 days from physical acceptance). Under Section 16, failure to pay triggers compound interest with monthly rests at 3 times the RBI Bank Rate (which cannot be claimed as a tax-deductible expense). Under Section 43B(h) of the Income-tax Act, any sum payable to a micro or small enterprise beyond the specified limit is disallowed as a business deduction in the financial year of incurrence and allowed only in the year of actual payment.",
+  "keyStatutoryThresholds": {
+    "statutoryDefaultTimelineDays": 15,
+    "maximumWrittenAgreementTimelineDays": 45,
+    "penalInterestRate": "3 times the Bank Rate notified by the Reserve Bank of India (compounded monthly)",
+    "applicableEnterprises": "Micro and Small Enterprises with valid Udyam Registration (Medium Enterprises are excluded)",
+    "traderExclusionRule": "Enterprises registered solely under Retail and Wholesale Trade (NIC 45, 46, 47) are excluded from delayed payment protection per Ministry of MSME OM No. 2/1(5)/2021-P&G/Policy."
+  },
+  "officialCitations": [
+    {
+      "authority": "Ministry of Law and Justice",
+      "instrument": "Micro, Small and Medium Enterprises Development Act, 2006 (Act No. 27 of 2006)",
+      "subject": "Chapter V: Delayed Payments to Micro and Small Enterprises",
+      "officialUrl": "https://msme.gov.in"
+    },
+    {
+      "authority": "Ministry of MSME",
+      "instrument": "Office Memorandum No. 2/1(5)/2021-P&G/Policy (Dated 2 July 2021)",
+      "subject": "Inclusion of Retail and Wholesale Trade under MSME - Restriction on Chapter V delayed payment benefits",
+      "officialUrl": "https://msme.gov.in/sites/default/files/OM_Retail_Wholesale.pdf"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Finance Act, 2023 (Enacting Section 43B(h))",
+      "subject": "Disallowance of expenditure for delayed payments to Micro and Small Enterprises",
+      "officialUrl": "https://incometaxindia.gov.in"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Supplier Udyam Registration Certificate verifying classification (Micro or Small)",
+    "Udyam National Industry Classification (NIC) 2-digit/4-digit code check (Confirm not retail/wholesale trader)",
+    "Purchase Order / Written Agreement establishing payment term (Must not exceed 45 days)",
+    "Goods Receipt Note (GRN) or Service Acceptance record establishing the \"appointed day\"",
+    "Dispute record in writing filed within 15 days of delivery (if goods were defective or incomplete)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

@@ -1,0 +1,52 @@
+{
+  "sectionId": "US_IRC_SEC901_904",
+  "sectionCode": "IRC-901-904",
+  "aliases": [
+    "904",
+    "901",
+    "form 1116",
+    "k1 box 21",
+    "k3",
+    "foreign tax credit",
+    "ftc"
+  ],
+  "governingStatute": "Internal Revenue Code of 1986 (Title 26, U.S. Code)",
+  "statutorySection": "26 U.S. Code § 901 & § 904(d)",
+  "successorStatute": "Title 26, U.S. Code (Continuous)",
+  "successorSection": "26 U.S.C. §§ 901, 904(d), 904(j), 469",
+  "title": "Foreign Tax Credit authorization, separate basket limitation, and partnership pass-through reporting (Form 1116 / Schedule K-3)",
+  "effectivePeriod": {
+    "validFrom": "2021-01-01",
+    "validTo": "2099-12-31",
+    "annualReset": "Tax Year",
+    "sunsetNotes": "Active US international tax regime."
+  },
+  "plainTextSummary": "A taxpayer claiming a foreign tax credit under 26 U.S.C. § 901 based on partnership pass-through items reported on IRS Form 1065 Schedule K-1 Box 21 must substantiate the claim with Schedule K-3 (Partner Share of International Income and Taxes). Box 21 alone does not establish legal compliance. Form 1116 separate basket limitation calculations (26 U.S.C. § 904(d)), passive activity limits (26 U.S.C. § 469), and country-by-country breakdown are statutory prerequisites before the credit may be claimed on federal income tax returns.",
+  "keyStatutoryThresholds": {
+    "deMinimisExemptionMfJUsd": 600,
+    "deMinimisExemptionSingleUsd": 300,
+    "statutoryRequirement": "Schedule K-3 mandatory supporting attachment for amounts exceeding de minimis thresholds."
+  },
+  "officialCitations": [
+    {
+      "authority": "Internal Revenue Service (IRS)",
+      "instrument": "Instructions for Form 1116 (Foreign Tax Credit)",
+      "subject": "Substantiation requirements and separate basket allocations",
+      "officialUrl": "https://www.irs.gov/forms-pubs/about-form-1116"
+    },
+    {
+      "authority": "Internal Revenue Service (IRS)",
+      "instrument": "Instructions for Schedule K-3 (Form 1065)",
+      "subject": "Partner Share of Income, Deductions, Credits, etc. - International",
+      "officialUrl": "https://www.irs.gov/forms-pubs/about-schedule-k-3-form-1065"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "IRS Schedule K-1 (Form 1065) Line 21 reporting foreign taxes paid/accrued",
+    "IRS Schedule K-3 (Form 1065) Part II confirming country of source and income category",
+    "Cryptographic tool provenance (0.3.0 64-hex SHA-256 digest) confirming un-tampered document retrieval",
+    "Foreign withholding tax statements or proof of payment for IRS examination defense"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

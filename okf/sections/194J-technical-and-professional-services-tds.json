@@ -1,0 +1,53 @@
+{
+  "sectionId": "ITA1961_SEC194J",
+  "sectionCode": "194J",
+  "aliases": [
+    "194J",
+    "194j",
+    "sec194j",
+    "fts",
+    "technical services",
+    "professional fees"
+  ],
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194J",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 6, Item (iii)",
+  "title": "Fees for professional or technical services, royalty, and non-compete fees",
+  "effectivePeriod": {
+    "validFrom": "1995-07-01",
+    "validTo": "2026-03-31",
+    "annualReset": "Annual",
+    "sunsetNotes": "Transitions to Section 393(1) Table 6 Item (iii) of Income-tax Act, 2025 effective 1 April 2026."
+  },
+  "plainTextSummary": "Deduction of tax at source on fees paid to residents for: (a) Professional services (10%), (b) Fees for technical services (2% effective 1 April 2020), (c) Royalty for sale/distribution of cinematographic films (2%), (d) Other royalties and non-compete fees (10%). Threshold: ₹30,000 per financial year for each separate category. Reclassification Risk: If IT architecture/technical consultancy is reclassified by an Assessing Officer as managerial/professional advice, differential withholding of 8% plus Section 201(1A) penal interest (1% per month) attaches.",
+  "keyStatutoryThresholds": {
+    "categoryThresholdInr": 30000,
+    "technicalServicesRatePercent": 2,
+    "professionalServicesRatePercent": 10,
+    "nonCompliantPanPenaltyRatePercent": 20,
+    "cbdtCircular23GstExclusion": "TDS applies on basic service amount excluding separately stated GST."
+  },
+  "officialCitations": [
+    {
+      "authority": "Ministry of Finance / CBDT",
+      "instrument": "Finance Act, 2020 Amendment to Section 194J(1)",
+      "subject": "Reduction of TDS rate on Fees for Technical Services (FTS) from 10% to 2%",
+      "officialUrl": "https://incometaxindia.gov.in"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 23 of 2017",
+      "subject": "Exclusion of GST component from value of service for tax deduction at source",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular23_2017.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Vendor Agreement / Statement of Work verifying scope of work (Pure technical vs. managerial consulting)",
+    "Tax invoice with GST separately indicated",
+    "Vendor PAN verification",
+    "Lower-deduction certificate under Section 197 / Section 395 (if lower rate is claimed by vendor)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

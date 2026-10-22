@@ -1,0 +1,15 @@
+{
+  "okfVersion": "2.4.0",
+  "publishedAt": "2026-10-21T18:00:00Z",
+  "rootHash": "sha256-okf-v240-mudraforge-edge",
+  "totalSections": 6,
+  "changelog": "Dual-Act Income-tax Act 2025 transitions, Finance Act 2025 Section 206C(1H) sunset, and MSMED trader exclusion rules.",
+  "sections": [
+    "194Q",
+    "206C(1H)",
+    "17(5)",
+    "MSMED-15-16",
+    "194J",
+    "IRC-901-904"
+  ]
+}

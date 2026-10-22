@@ -1,0 +1,56 @@
+{
+  "sectionId": "CGST2017_SEC17_5",
+  "sectionCode": "17(5)",
+  "aliases": [
+    "17(5)",
+    "sec17(5)",
+    "blocked itc",
+    "ineligible itc",
+    "catering gst",
+    "motor vehicle itc"
+  ],
+  "governingStatute": "Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)",
+  "statutorySection": "Section 17(5)",
+  "successorStatute": "CGST Act, 2017 (In force)",
+  "successorSection": "Section 17(5)(b)(i) & (b)(iii)",
+  "title": "Apportionment of credit and blocked input tax credits",
+  "effectivePeriod": {
+    "validFrom": "2017-07-01",
+    "validTo": "2099-12-31",
+    "annualReset": "Continuous",
+    "sunsetNotes": "Active statutory restriction."
+  },
+  "plainTextSummary": "Input Tax Credit (ITC) shall NOT be available in respect of: (i) Food and beverages, outdoor catering, beauty treatment, health services, cosmetic and plastic surgery; (ii) Motor vehicles for transportation of persons having approved seating capacity of up to 13 persons (including driver), except when used for making further taxable supply of such vehicles/transportation; (iii) Membership of a club, health, and fitness centre. Proviso exception: Credit is permissible ONLY where the inward supply is used for making an outward taxable supply of the same category, or where it is statutory obligation for an employer to provide the same under any law for the time being in force (e.g. Factories Act 1948 Section 46).",
+  "keyStatutoryThresholds": {
+    "blockedCategories": [
+      "Outdoor Catering",
+      "Food & Beverages",
+      "Motor Vehicles <= 13 seats",
+      "Club Membership",
+      "Employee Gifts > ₹50,000"
+    ],
+    "statutoryAccountingDirective": "Prohibited from capitalizing or crediting to ITC Asset Ledger (Account 1400). Must be booked directly as Ineligible Operating Expense in P&L (Account 5010)."
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Central Goods and Services Tax Act, 2017 Section 17(5)",
+      "subject": "Statutory list of blocked input tax credits",
+      "officialUrl": "https://cbic-gst.gov.in"
+    },
+    {
+      "authority": "Ministry of Labour & Employment",
+      "instrument": "Factories Act, 1948 Section 46",
+      "subject": "Mandatory canteen provision in factories employing > 250 workers (Statutory Proviso Exception)",
+      "officialUrl": "https://labour.gov.in"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Vendor Tax Invoice itemizing food, catering, or transport charges",
+    "Contract / Scope of Work establishing whether supply is for internal consumption or outward taxable re-supply",
+    "Employee headcount records if claiming statutory canteen obligation exception under Factories Act",
+    "Journal Voucher routing blocked GST to P&L Expense ledger rather than balance sheet Asset"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

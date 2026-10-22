@@ -1,0 +1,54 @@
+{
+  "sectionId": "ITA1961_SEC194Q",
+  "sectionCode": "194Q",
+  "aliases": [
+    "194Q",
+    "194q",
+    "sec194q",
+    "section 194q",
+    "goods tds",
+    "purchase of goods"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Section 194Q",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 8, Item (ii)",
+  "title": "Deduction of tax at source on payment of a certain sum for purchase of goods",
+  "effectivePeriod": {
+    "validFrom": "2021-07-01",
+    "validTo": "2026-03-31",
+    "annualReset": "Every April 1 (Cumulative Purchases Reset Annually)",
+    "sunsetNotes": "Transitions to Section 393(1) Table 8(ii) of the Income-tax Act, 2025 effective 1 April 2026."
+  },
+  "plainTextSummary": "Any buyer whose total sales, gross receipts, or turnover from business exceeds ₹10 Crore in the preceding financial year, responsible for paying any sum to a resident seller for purchase of goods exceeding ₹50 Lakhs in the current financial year, must deduct 0.1% TDS on the amount exceeding ₹50 Lakhs at the time of credit to seller account or payment, whichever is earlier.",
+  "keyStatutoryThresholds": {
+    "buyerPriorYearTurnoverCr": 10,
+    "annualPurchaseThresholdInr": 5000000,
+    "standardDeductionRatePercent": 0.1,
+    "inoperativePanPenaltyRatePercent": 5,
+    "taxableBaseScope": "Tax is deductible strictly on the excess over ₹50 Lakhs, NOT on the aggregate gross turnover."
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 13 of 2021 (Dated 30 June 2021)",
+      "subject": "Guidelines under section 194Q of the Income-tax Act, 1961 - Threshold calculation & advance netting",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular_13_2021.pdf"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 23 of 2017",
+      "subject": "Exclusion of separately stated GST from basic taxable amount for TDS purposes",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular23_2017.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Valid Permanent Account Number (PAN) of Seller (Checked against TRACES/Income Tax Portal)",
+    "Audited Financial Statements confirming Buyer gross turnover exceeded ₹10 Crore in preceding FY",
+    "Cumulative Purchase Ledger for current FY establishing date threshold of ₹50 Lakhs was crossed",
+    "Payment / Credit vouchers cross-referencing advance challans (ITNS 281)",
+    "Tax invoice with GST separately stated (to ensure tax is withheld strictly on basic value)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

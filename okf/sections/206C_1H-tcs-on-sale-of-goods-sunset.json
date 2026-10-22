@@ -1,0 +1,50 @@
+{
+  "sectionId": "ITA1961_SEC206C_1H_SUNSET",
+  "sectionCode": "206C(1H)",
+  "aliases": [
+    "206C(1H)",
+    "206c(1h)",
+    "sec206c(1h)",
+    "tcs goods",
+    "seller tcs sunset"
+  ],
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 206C(1H)",
+  "successorStatute": "Finance Act, 2025 (Statutory Sunset)",
+  "successorSection": "Section 206C(1H) Omitted",
+  "title": "Collection of tax at source by seller on receipt of consideration for sale of goods (Omitted effective 1 April 2025)",
+  "effectivePeriod": {
+    "validFrom": "2020-10-01",
+    "validTo": "2025-03-31",
+    "annualReset": "Annual",
+    "sunsetNotes": "CRITICAL SUNSET: Section 206C(1H) is formally omitted by Finance Act, 2025 effective 1 April 2025. Post-sunset, seller TCS ceases; buyer TDS under Section 194Q exclusively governs."
+  },
+  "plainTextSummary": "Prior to 1 April 2025, a seller whose turnover exceeded ₹10 Crore was required to collect 0.1% TCS on receipts exceeding ₹50 Lakhs, unless the buyer was already liable to deduct TDS under Section 194Q. Effective 1 April 2025, this provision is omitted by the Finance Act 2025 to eliminate double-compliance friction.",
+  "keyStatutoryThresholds": {
+    "sellerPriorYearTurnoverCr": 10,
+    "annualReceiptThresholdInr": 5000000,
+    "standardTcsRatePercent": 0.1,
+    "precedenceRule": "Section 194Q buyer TDS always took precedence over Section 206C(1H) seller TCS when buyer was compliant."
+  },
+  "officialCitations": [
+    {
+      "authority": "Parliament of India / Ministry of Finance",
+      "instrument": "Finance Act, 2025 (Section 206C(1H) Sunset Clause)",
+      "subject": "Omission of Section 206C(1H) effective 1 April 2025",
+      "officialUrl": "https://incometaxindia.gov.in"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 17 of 2020",
+      "subject": "Guidelines for collection of tax at source under section 206C(1H)",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular_17_2020.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Transaction date verification (Must strictly verify whether payment was received on or before 31 March 2025)",
+    "Buyer written declaration of Section 194Q applicability (relieving seller from TCS obligation)",
+    "Form 27EQ quarterly TCS return and Form 27D certificate"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}
