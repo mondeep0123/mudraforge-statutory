@@ -3,7 +3,7 @@
 
 > **Document Version**: `1.0.0`  
 > **Package**: `@mudraforge/statutory` (v2.4.0)  
-> **Internal Sovereign Engine**: `mudraforge-sarvam` (Adesha Runtime)  
+> **Enterprise Sovereign Engine**: MudraForge Adesha Sovereign Runtime  
 > **Specification**: Google Open Knowledge Format (OKF v0.2)  
 
 ---
@@ -13,13 +13,13 @@
 This document provides the authoritative architectural matrix comparing the **Breadth** (regulatory domains covered) and **Depth** (granularity, operative provisos, evidence attestation, and mathematical enforcement) between:
 
 1. **The Public Package (`@mudraforge/statutory`)**: The lightweight, zero-dependency, offline-capable starter seed published for public AI agents and developer workflows.
-2. **The Full Sovereign Engine (`mudraforge-sarvam`)**: The private enterprise financial operating substrate governing live Accounts Payable (AP), Treasury, and General Ledger writebacks on the MudraForge Cloudflare Global Anycast Edge.
+2. **The Full Sovereign Engine (Adesha Runtime)**: The private enterprise financial operating substrate governing live Accounts Payable (AP), Treasury, and General Ledger writebacks on the MudraForge Cloudflare Global Anycast Edge.
 
 ---
 
 ## 2. Breadth Matrix: Regulatory Domains
 
-This matrix delineates what is **natively bundled in the base package** (zero network calls, completely offline), what is **available to pull immediately via edge sync (`npx @mudraforge/statutory sync`)**, and what is **scheduled for upcoming expansion packs** from the internal sovereign engine (`mudraforge-sarvam`):
+This matrix delineates what is **natively bundled in the base package** (zero network calls, completely offline), what is **available to pull immediately via edge sync (`npx @mudraforge/statutory sync`)**, and what is **scheduled for upcoming expansion packs** from the enterprise sovereign engine (Adesha Runtime):
 
 | # | Regulatory Domain | Base Package (Offline Clone / No Sync) | Edge Synced (`npx ... sync`) | Future Cloud Expansion (Internal Sovereign Engine) | Availability & Status in Package |
 | :-: | :--- | :--- | :--- | :--- | :---: |
@@ -63,7 +63,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
   - **Rates**: 0.1% base rate, 2% FTS rate, 10% professional rate, 5% Section 206AA non-PAN penalty cap.
   - **Circulars**: CBDT Circular 13/2021 (threshold calculation, advance netting), CBDT Circular 23/2017 (GST unbundling).
   - **Forms**: Form 26Q quarterly TDS return schema, Form 16A certificate schema, Vendor PAN / 206AB declaration template.
-* **Full Internal Engine (`mudraforge-sarvam`)**:
+* **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Full Statutory Spectrum**: Table 8 of Income-tax Act, 2025 (Section 392 Rent, 393 Goods, 394 Contractors, 395 Professional/FTS, 397 Non-PAN).
   - **TRACES Lower Deduction Vault**: Automatically ingests, validates, and tracks Section 197 / Section 395 lower withholding certificates; enforces monetary ceilings and tracks consumed quota.
@@ -80,7 +80,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
   - **Rates**: Mandatory compound penal interest at 3x RBI Bank Rate.
   - **Circulars**: Ministry of MSME OM 1/4(1)/2021-P&G/Policy (strictly excluding retail and wholesale traders under NIC 45, 46, 47 from delayed payment protections).
   - **Forms**: UDYAM registration verification schema, Companies Act Schedule III corporate balance sheet disclosure notes.
-* **Full Internal Engine (`mudraforge-sarvam`)**:
+* **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Multi-Interval Compound Interest Calculator** (`calculateMultiIntervalMsmeInterest`): Accurately tracks shifting RBI Bank Rates across multi-quarter delinquencies, compounding on monthly rests.
   - **Section 23 Permanent Disallowance**: Enforces mandatory tax addback in Clause 22 of Tax Audit Form 3CD.
@@ -95,7 +95,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
   - **Scope**: Motor vehicles, food & beverages, outdoor catering, club memberships, personal consumption.
   - **Circulars**: CBIC Circular 172/04/2022-GST (carving out the statutory employer obligation exception).
   - **Forms**: GSTR-2B vs. GSTR-3B Table 4(B) ineligible ITC reporting schema.
-* **Full Internal Engine (`mudraforge-sarvam`)**:
+* **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Section 16(2) 4-Condition Invariant Gate**: Concurrently verifies tax invoice possession, physical GRN receipt, GSTR-2B reflection, and supplier tax remittance.
   - **180-Day Rule Reversal**: Calculates mandatory ITC reversals for invoices unpaid past 180 days with exact 18% annual interest under Section 50.
@@ -107,7 +107,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 ### 4. Financial Reporting & Indian Accounting Standards (Ind AS)
 * **Public Starter Seed**:
   - ❌ *Not seeded in starter package.*
-* **Full Internal Engine (`mudraforge-sarvam`)**:
+* **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5** (Full Corporate Financial Reporting & Ind AS Framework).
   - **Ind AS 115 (Revenue from Contracts with Customers)**:
     - 5-step revenue recognition model.
@@ -132,7 +132,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 ### 5. Corporate Governance & Companies Act, 2013
 * **Public Starter Seed**:
   - ❌ *Not seeded in starter package.*
-* **Full Internal Engine (`mudraforge-sarvam`)**:
+* **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Section 188 (Related Party Transactions)**:
     - Arm's length ordinary course of business evaluation.
@@ -150,7 +150,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 ### 6. Capital Markets & Listing Obligations (SEBI LODR)
 * **Public Starter Seed**:
   - ❌ *Not seeded in starter package.*
-* **Full Internal Engine (`mudraforge-sarvam`)**:
+* **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Regulation 30 (Materiality Triad)**:
     - Deterministic numerical threshold: lowest of:
@@ -169,7 +169,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
   - Reaches **Level 3**.
   - **Provisions**: US Internal Revenue Code §§ 901 & 904 Foreign Tax Credit limitation baskets (General vs. Passive Category).
   - **Forms**: Indian Form 67 (Rule 128 statement) and US IRS Form 1065 Schedule K-3 dual-reporting schema.
-* **Full Internal Engine (`mudraforge-sarvam`)**:
+* **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Supreme Court Jurisprudence**: *Engineering Analysis Centre of Excellence (2021)* classification: automated SaaS and off-the-shelf cloud infrastructure qualify as "Business Profits" under DTAA Article 7 (0% withholding if No Permanent Establishment).
   - **Form 15CA / 15CB vs. Form 145 / 146**: Automated routing based on remittance thresholds and AO orders under Income-tax Act, 2025.
@@ -180,7 +180,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 ### 8. Corporate Mergers, Acquisitions & Successor Liability
 * **Public Starter Seed**:
   - ❌ *Not seeded in starter package.*
-* **Full Internal Engine (`mudraforge-sarvam`)**:
+* **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Slump Sale vs. Itemized Sale (§50B / Act 2025)**:
     - Organic undertaking test (equipment, workforce, operational leases, customer contracts).
