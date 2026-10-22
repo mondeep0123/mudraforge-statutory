@@ -93,7 +93,7 @@ subject: Threshold calculation, advance payment netting, and non-resident exempt
 official_url: https://incometaxindia.gov.in/communications/circular/circular_13_2021.pdf
 ---
 
-> ⏳ **STATUTORY VALIDITY WINDOW & TEMPORAL STATUS**  
+> [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  
 > **Valid From**: 1 July 2021  
 > **Valid To**: 31 March 2026  
 > **Temporal Status**: ACTIVE  

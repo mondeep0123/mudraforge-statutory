@@ -173,7 +173,7 @@ The table below records the provenance baseline, verification standard, and expl
     }
 
     fs.writeFileSync(CATALOG_PATH, md, 'utf8');
-    console.log(`✔ Generated CATALOG.md (${(md.length / 1024).toFixed(1)} KB)`);
+    console.log(`[OK] Generated CATALOG.md (${(md.length / 1024).toFixed(1)} KB)`);
 }
 
 run();

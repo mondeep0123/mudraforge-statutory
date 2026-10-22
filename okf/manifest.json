@@ -1,7 +1,7 @@
 {
   "okfVersion": "2.4.0",
-  "publishedAt": "2026-10-22T14:25:54.915Z",
-  "rootHash": "sha256-d389a5fe1e41de8bb8a28c27f6853fadef77c0f6f2bb93e3469ad1c873b5fd5d",
+  "publishedAt": "2026-10-22T18:27:40.223Z",
+  "rootHash": "sha256-5030157ae218cc1575604bc9d473b977fe79be7ec8844575fb97b1b4b9830065",
   "totalSections": 6,
   "totalFiles": 20,
   "changelog": "Restructured into domain hierarchy with statutory circulars, official notifications, and compliance forms/checklists.",
@@ -30,25 +30,25 @@
     "MSMED-15-16"
   ],
   "files": {
-    "direct_tax/tcs_goods_206c_1h/circulars/finance_act_2025_sunset_memo.md": "315e1829828af073b429de8fa7c2e911fa23f59af7c793f4fdbe290af1d3c146",
-    "direct_tax/tcs_goods_206c_1h/section.json": "c9c293282fcc5579cccab9296ab61c5e9c4b508220df12cd380c8a807fab560e",
-    "direct_tax/tds_goods_194q/circulars/cbdt_circular_13_2021_guidelines.md": "74ce0ba64fb917659ee84a03b1115bf559b31fd7e8bb446279cc7bc9b8572284",
-    "direct_tax/tds_goods_194q/circulars/cbdt_circular_23_2017_gst_unbundling.md": "11cb831fd637efebe83c802b52e312a2f9e8fdf056fc7fe417b3b9357a6e34f7",
+    "direct_tax/tcs_goods_206c_1h/circulars/finance_act_2025_sunset_memo.md": "c7b02dfa6e429448b13621a32eb1719e1cf9fa7bcf98aa39dc827f370903ecf8",
+    "direct_tax/tcs_goods_206c_1h/section.json": "0ca81591f852c7efb9bf67c8ddb002bafa688ad54e1d1b44e684c928054e048c",
+    "direct_tax/tds_goods_194q/circulars/cbdt_circular_13_2021_guidelines.md": "02b6c9f78e59626bd4912ce474878c712bb5d019f368623d68e5c6a6f3f157ef",
+    "direct_tax/tds_goods_194q/circulars/cbdt_circular_23_2017_gst_unbundling.md": "17adb39c774de1035c761909a7e0d812333f73b07f8a55e8fe192cea71be16cc",
     "direct_tax/tds_goods_194q/forms/form_26q_quarterly_return.json": "f1d92eb728b9d1846691481f32057b8d1f804901b856851606a5a90c2d3726a4",
-    "direct_tax/tds_goods_194q/forms/vendor_pan_declaration.md": "d17c4ced1fd934fb2efc02b9f11a057c5ab4dd4dd61e8e881663d1d61db6e21c",
+    "direct_tax/tds_goods_194q/forms/vendor_pan_declaration.md": "1fadbae2f18b9d542509f186b365874575e6251f20916db3d31898a5804e5ef9",
     "direct_tax/tds_goods_194q/section.json": "dfa144807636df96ff4f8407c2439425e35edba26ffbb532b4ae49c2e2f0250e",
-    "direct_tax/tds_services_194j/circulars/cbdt_circular_03_2020_fts_rate_cut.md": "b2809fcbb8e9c25da69ba6ad66fc85c86b66929b4d8ca5bf44a9eea3c576d0b2",
+    "direct_tax/tds_services_194j/circulars/cbdt_circular_03_2020_fts_rate_cut.md": "e4313bec4208a3de2e7177411b343dccb0bad8f4a6115851f66f35a5846c0488",
     "direct_tax/tds_services_194j/forms/form_16a_tds_certificate.json": "c80c48d0b8758935be8092e1b3bec6ab88bdef8cd9cca6efe61fcdbfa335d068",
-    "direct_tax/tds_services_194j/section.json": "d3dc48412b29702faa06c11751122cbee794ebbe837572e9209b0db7ca453e18",
-    "indirect_tax_gst/blocked_itc_17_5/circulars/cbic_circular_172_2022_employer_obligations.md": "a02e31f4c91b178e316270c85c28afd7c56fcabe5aa4b48557e4c1e9cb6f2776",
+    "direct_tax/tds_services_194j/section.json": "ac4dd05b94fa9d03f73937fcc933e173d742beaa01fe76cb52da8289e255ea98",
+    "indirect_tax_gst/blocked_itc_17_5/circulars/cbic_circular_172_2022_employer_obligations.md": "77fab713c94dbcf0e30639c1a294525084d169b4db2ffe1a29bc01f44f0535bc",
     "indirect_tax_gst/blocked_itc_17_5/forms/gstr_2b_ineligible_reconciliation.json": "b71b26a0797077ad1f5195fa07b25e8c499fcec46c4073360195b35ca431c6f6",
-    "indirect_tax_gst/blocked_itc_17_5/section.json": "9a64bdd7e129b8bb1ed203ac37e9f2d8b0702e6a5a7606650f307fe86f11e7f2",
+    "indirect_tax_gst/blocked_itc_17_5/section.json": "169a936a4aaa6e718c3b50dd7c22a8ef35b68b7e049a9dfab5136fb4ef564b60",
     "international_tax/foreign_tax_credit_irc_901_904/forms/form_67_statement_of_foreign_tax.json": "05f8fb5b2765a23e53e6f9c38be1a89ed817abdfdbbe78ac0c361b9976959e2d",
     "international_tax/foreign_tax_credit_irc_901_904/forms/irs_schedule_k3_reporting.json": "f2672f3870427338f37d408daba17c870230eab3f9dcb6eb2f14de2b4141f1fb",
     "international_tax/foreign_tax_credit_irc_901_904/section.json": "e6ce25b2d1bd1cb0f2432f15a4f39d6b165233c61177006b4e0f73105c8d6484",
-    "msme_commercial/delayed_payments_15_16/circulars/msme_om_2021_trader_exclusion.md": "917cd3f1e24c9c21c4ce25b585249e5b12eee7723c3c2ebb217c5b747dd29933",
-    "msme_commercial/delayed_payments_15_16/forms/schedule_iii_msme_disclosure.md": "a4e6d673c30e663e7a889a9b6d41e00957e2d5425a68c0ff08512479389e5360",
+    "msme_commercial/delayed_payments_15_16/circulars/msme_om_2021_trader_exclusion.md": "f55f0e9368156452b891583043a31d1ebc4f162484925635be78f3c54a32af4a",
+    "msme_commercial/delayed_payments_15_16/forms/schedule_iii_msme_disclosure.md": "93d6000e79a96f4242d6a831905edeb44654134206301a9642bf63ca65f6b5ab",
     "msme_commercial/delayed_payments_15_16/forms/udyam_registration_verification.json": "3da5d248a8fae5ed74af21149dd5922ddd18a9e3e1378ef69925e5beda09ebe6",
-    "msme_commercial/delayed_payments_15_16/section.json": "dda162f4acb211c2cba6505213b481fc174dadfd64ac8b6d74afa067ca65161f"
+    "msme_commercial/delayed_payments_15_16/section.json": "53502a97a535c99cf7aa65ac2e5e5665f889bad691ee51efb7d49134a6e82e7e"
   }
 }

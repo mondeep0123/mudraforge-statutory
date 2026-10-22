@@ -24,30 +24,40 @@
     "annualReset": "Year-End March 31 Tax Disallowance Audit",
     "sunsetNotes": "Section 43B(h) takes effect from FY 2023-24 (AY 2024-25) and continues under Section 37(2)(g) of the Income-tax Act, 2025."
   },
-  "plainTextSummary": "Under Section 15 of the MSMED Act, where any supplier supplies any goods or renders any services to any buyer, the buyer shall make payment therefor on or before the date agreed upon in writing (which shall NOT exceed 45 days), or if there is no agreement, before the appointed day (15 days from physical acceptance). Under Section 16, failure to pay triggers compound interest with monthly rests at 3 times the RBI Bank Rate (which cannot be claimed as a tax-deductible expense). Under Section 43B(h) of the Income-tax Act, any sum payable to a micro or small enterprise beyond the specified limit is disallowed as a business deduction in the financial year of incurrence and allowed only in the year of actual payment.",
+  "plainTextSummary": "Distinct legal mechanisms governing delayed payments to micro and small enterprises: (1) MSMED Act, 2006 Payment Mandate (Section 15): A buyer must pay a registered micro or small enterprise supplier on or before the agreed date in writing (which cannot exceed 45 days), or if no written agreement exists, before the 'appointed day' (15 days from physical delivery or removal of defects). (2) MSMED Act Compound Penal Interest (Sections 16 & 23): Failure to pay on time incurs mandatory compound interest with monthly rests at 3 times the RBI Bank Rate from the due date until actual payment. Under Section 23 of the MSMED Act, this interest is strictly non-deductible in computing taxable income. (3) Income-tax Act Accrual Disallowance (Section 43B(h) / Act 2025 Section 37(2)(g)): If payment to a micro or small enterprise is not made within the Section 15 timeline, the underlying invoice expenditure is disallowed in the financial year of incurrence and allowed only in the year of actual payment; the proviso allowing payment up to the tax return due date (Section 139(1)) does not apply to clause (h). (4) Trader Exclusion: Per Ministry of MSME OM dated 2 July 2021 and RBI Circular FIDD.MSME & NFS.BC.No.13/06.02.31/2021-22, retail and wholesale traders (NIC 45, 46, 47) are eligible for Udyam solely for Priority Sector Lending; they are excluded from Chapter V (Sections 15-25) of the MSMED Act and are therefore exempt from Section 43B(h) tax disallowance.",
   "keyStatutoryThresholds": {
     "statutoryDefaultTimelineDays": 15,
     "maximumWrittenAgreementTimelineDays": 45,
     "penalInterestRate": "3 times the Bank Rate notified by the Reserve Bank of India (compounded monthly)",
-    "applicableEnterprises": "Micro and Small Enterprises with valid Udyam Registration (Medium Enterprises are excluded)",
-    "traderExclusionRule": "Enterprises registered solely under Retail and Wholesale Trade (NIC 45, 46, 47) are excluded from delayed payment protection per Ministry of MSME OM No. 2/1(5)/2021-P&G/Policy."
+    "statutoryInterestDisallowance": "Section 23 of MSMED Act prohibits claiming Section 16 penal interest as an income tax deduction",
+    "taxAccrualDisallowanceSection43Bh": "Disallows deduction of overdue principal in year of incurrence; allowed strictly upon payment under Section 43B(h) / Act 2025 Section 37(2)(g)",
+    "applicableEnterprises": "Micro and Small Enterprises with valid Udyam Registration (Medium Enterprises are excluded from Chapter V)",
+    "traderExclusionRule": "Enterprises registered solely under Retail and Wholesale Trade (NIC Codes 45, 46, 47) are excluded from delayed payment benefits per Ministry of MSME OM No. 5/2(2)/2021-E/P & G/Policy and RBI Circular FIDD.MSME & NFS.BC.No.13/06.02.31/2021-22",
+    "writtenDisputeWindowDays": 15,
+    "disputeStatutoryBasis": "Explanation (b) to Section 2(n) of MSMED Act: buyer must lodge written objection regarding defects within 15 days of delivery to prevent deemed acceptance"
   },
   "officialCitations": [
     {
       "authority": "Ministry of Law and Justice",
       "instrument": "Micro, Small and Medium Enterprises Development Act, 2006 (Act No. 27 of 2006)",
-      "subject": "Chapter V: Delayed Payments to Micro and Small Enterprises",
+      "subject": "Chapter V: Delayed Payments to Micro and Small Enterprises (Sections 15, 16, 23)",
       "officialUrl": "https://msme.gov.in"
     },
     {
       "authority": "Ministry of MSME",
-      "instrument": "Office Memorandum No. 2/1(5)/2021-P&G/Policy (Dated 2 July 2021)",
+      "instrument": "Office Memorandum No. 5/2(2)/2021-E/P & G/Policy (Dated 2 July 2021) & OM No. 1/4(1)/2021-P&G/Policy",
       "subject": "Inclusion of Retail and Wholesale Trade under MSME - Restriction on Chapter V delayed payment benefits",
       "officialUrl": "https://msme.gov.in/sites/default/files/OM_Retail_Wholesale.pdf"
     },
     {
+      "authority": "Reserve Bank of India",
+      "instrument": "Circular RBI/2021-2022/67 FIDD.MSME & NFS.BC.No.13/06.02.31/2021-22",
+      "subject": "Lending to Micro, Small & Medium Enterprises - Retail and Wholesale Trade PSL Eligibility",
+      "officialUrl": "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12129&Mode=0"
+    },
+    {
       "authority": "Central Board of Direct Taxes (CBDT)",
-      "instrument": "Finance Act, 2023 (Enacting Section 43B(h))",
+      "instrument": "Finance Act, 2023 (Enacting Section 43B(h) of Income-tax Act, 1961)",
       "subject": "Disallowance of expenditure for delayed payments to Micro and Small Enterprises",
       "officialUrl": "https://incometaxindia.gov.in"
     }

@@ -11,11 +11,12 @@ subject: Clarification on proviso applicability across Section 17(5)(b) for stat
 official_url: https://taxinformation.cbic.gov.in/
 ---
 
-> ⏳ **STATUTORY VALIDITY WINDOW & TEMPORAL STATUS**  
+> [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  
 > **Valid From**: 1 July 2017  
-> **Valid To**: In Force (Indefinite)  
+> **Valid To**: OPEN_ENDED (Active statutory circular; no sunset gazetted)  
 > **Temporal Status**: ACTIVE  
-> **Stale / Sunset Notes**: Active law. Operates concurrently with Factories Act, 1948 Section 46 and prevailing state labour mandates.
+> **Stale / Sunset Notes**: Active law. Operates concurrently with Factories Act, 1948 Section 46 and prevailing state labour mandates.  
+> **Statutory Notice**: This document is a structured machine-readable distillation of CBIC Circular No. 172/04/2022-GST for automated compliance reasoning, citing primary statutory authority.
 
 # CBIC Circular No. 172/04/2022-GST: Clarification on Section 17(5)(b) Blocked Credits
 
@@ -31,3 +32,7 @@ Whether the proviso following Section 17(5)(b)(iii) of the CGST Act—which stat
    - Employee transport / cab services (when mandated under state-specific Shop & Establishment Acts for night-shift female employees).
 3. **Audit Evidence Requirement**:
    To claim ITC under this proviso, the registered person must maintain the statutory enactment citation or government notification establishing that the provision of goods/services was a compulsory legal obligation.
+
+## 3. Distinction: Employee Gifts vs. Blocked ITC
+- **Section 17(5)(h)**: Input Tax Credit is explicitly blocked on goods lost, stolen, destroyed, written off, or disposed of by way of gift or free samples, irrespective of value.
+- **Schedule I Entry 2 Proviso**: The ₹50,000 monetary threshold in Schedule I to the CGST Act relates solely to determining whether gifts from an employer to an employee constitute a supply liable to GST in the absence of consideration; it does not unblock ITC under Section 17(5).

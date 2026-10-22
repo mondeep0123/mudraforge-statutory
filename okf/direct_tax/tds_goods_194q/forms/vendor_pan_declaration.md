@@ -8,7 +8,7 @@ valid_to: 2026-03-31
 temporal_status: ACTIVE
 ---
 
-> ⏳ **STATUTORY VALIDITY WINDOW & TEMPORAL STATUS**  
+> [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  
 > **Valid From**: 1 July 2021  
 > **Valid To**: 31 March 2026  
 > **Temporal Status**: ACTIVE  

@@ -9,15 +9,16 @@ valid_from: 2020-10-01
 valid_to: 2025-03-31
 temporal_status: SUNSET_OMITTED
 sunset_effective_date: 2025-04-01
-successor_rule: Section 194Q Exclusively Governs
-official_url: https://incometaxindia.gov.in
+successor_rule: Section 194Q buyer TDS applies conditionally
+official_url: https://incometaxindia.gov.in/communications/circular/circular_17_2020.pdf
 ---
 
-> ⚠️ **TEMPORAL STATUS: SUNSET & OMITTED**  
+> [TEMPORAL STATUS: SUNSET & OMITTED]  
 > **Valid From**: 1 October 2020  
 > **Valid To**: 31 March 2025  
 > **Sunset Effective Date**: 1 April 2025 (Omitted by Finance Act, 2025)  
-> **Current Legal Status**: INOPERATIVE / STALE for transactions on or after 1 April 2025.
+> **Current Legal Status**: INOPERATIVE / STALE for transactions on or after 1 April 2025.  
+> **Statutory Notice**: This document is a structured machine-readable distillation of the legislative amendment omitting Section 206C(1H), citing primary statutory authority.
 
 # Explanatory Memorandum: Omission of Section 206C(1H) (Seller TCS on Goods)
 
@@ -30,4 +31,4 @@ This created persistent operational friction, where both buyer and seller debate
 To rationalize the tax compliance burden and remove dual-withholding friction:
 1. **Section 206C(1H) is formally omitted effective 1st April 2025**.
 2. **Post-Sunset Rule**: For any sale or receipt occurring on or after 1 April 2025, sellers are **prohibited from collecting TCS under Section 206C(1H)**.
-3. **Buyer TDS under Section 194Q exclusively governs** transactions crossing ₹50 Lakhs.
+3. **Statutory Withholding Rule**: Tax withholding on sale of goods is governed exclusively by buyer TDS under Section 194Q, provided the buyer independently meets the statutory threshold (prior financial year turnover exceeding ₹10 Crore and cumulative purchases exceeding ₹50 Lakhs). If the buyer does not meet the Section 194Q threshold, no withholding or collection of tax applies to the transaction.

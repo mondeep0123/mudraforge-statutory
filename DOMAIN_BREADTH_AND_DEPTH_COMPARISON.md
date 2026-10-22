@@ -106,7 +106,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 ### 4. Financial Reporting & Indian Accounting Standards (Ind AS)
 * **Public Starter Seed**:
-  - ❌ *Not seeded in starter package.*
+  - [Not seeded in starter package]
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5** (Full Corporate Financial Reporting & Ind AS Framework).
   - **Ind AS 115 (Revenue from Contracts with Customers)**:
@@ -131,7 +131,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 ### 5. Corporate Governance & Companies Act, 2013
 * **Public Starter Seed**:
-  - ❌ *Not seeded in starter package.*
+  - [Not seeded in starter package]
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Section 188 (Related Party Transactions)**:
@@ -149,7 +149,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 ### 6. Capital Markets & Listing Obligations (SEBI LODR)
 * **Public Starter Seed**:
-  - ❌ *Not seeded in starter package.*
+  - [Not seeded in starter package]
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Regulation 30 (Materiality Triad)**:
@@ -179,7 +179,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 ### 8. Corporate Mergers, Acquisitions & Successor Liability
 * **Public Starter Seed**:
-  - ❌ *Not seeded in starter package.*
+  - [Not seeded in starter package]
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Slump Sale vs. Itemized Sale (§50B / Act 2025)**:

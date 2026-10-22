@@ -52,7 +52,7 @@ async function main() {
         case 'lookup':
         case 'get':
             if (!args[1]) {
-                console.error('❌ Please specify a section to lookup, e.g. mudraforge-statutory lookup 194Q');
+                console.error('[ERROR] Please specify a section to lookup, e.g. npx @mudraforge/statutory lookup 194Q');
                 process.exit(1);
             }
             await handleLookup(args[1], args[2]);

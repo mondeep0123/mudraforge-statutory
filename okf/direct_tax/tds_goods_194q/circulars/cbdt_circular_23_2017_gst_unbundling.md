@@ -8,14 +8,15 @@ valid_from: 2017-07-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Exclusion of separately stated GST from basic taxable amount for TDS purposes
-official_url: https://incometaxindia.gov.in
+official_url: https://incometaxindia.gov.in/communications/circular/circular23_2017.pdf
 ---
 
-> ⏳ **STATUTORY VALIDITY WINDOW & TEMPORAL STATUS**  
+> [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  
 > **Valid From**: 1 July 2017  
-> **Valid To**: In Force (Indefinite)  
+> **Valid To**: OPEN_ENDED (No sunset date currently gazetted; active guidance under Income-tax Act, 1961 Chapter XVII-B and transitionally applicable under Income-tax Act, 2025 unless explicitly superseded)  
 > **Temporal Status**: ACTIVE  
-> **Applicable Principle**: Tax is deducted at source strictly on the basic value of goods/services when GST is separately stated on invoice.
+> **Applicable Principle**: Tax is deducted at source strictly on the basic value of goods/services when GST is separately stated on invoice.  
+> **Statutory Notice**: This document is a structured machine-readable distillation of CBDT Circular No. 23 of 2017 for automated compliance reasoning, citing primary statutory authority.
 
 # CBDT Circular No. 23 of 2017: Treatment of GST for Withholding Tax
 

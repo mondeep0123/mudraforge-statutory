@@ -11,7 +11,7 @@ subject: Statutory notes to financial statements for MSME dues and compound inte
 official_url: https://www.mca.gov.in/
 ---
 
-> ⏳ **STATUTORY VALIDITY WINDOW & TEMPORAL STATUS**  
+> [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  
 > **Valid From**: 1 April 2014  
 > **Valid To**: In Force (Indefinite)  
 > **Temporal Status**: ACTIVE  

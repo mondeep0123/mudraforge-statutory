@@ -108,7 +108,7 @@ function validateOkfRepository() {
                     const data = JSON.parse(fs.readFileSync(sectionJsonPath, 'utf8'));
                     for (const field of REQUIRED_SECTION_FIELDS) {
                         if (data[field] === undefined) {
-                            console.error(`  ❌ ${provision}/section.json missing required field: '${field}'`);
+                            console.error(`  [FAIL] ${provision}/section.json missing required field: '${field}'`);
                             totalErrors++;
                         }
                     }
@@ -116,11 +116,11 @@ function validateOkfRepository() {
                     // Validate effectivePeriod
                     if (data.effectivePeriod) {
                         if (!isValidDateOrOpenEnded(data.effectivePeriod.validFrom)) {
-                            console.error(`  ❌ ${provision}/section.json invalid validFrom: ${data.effectivePeriod.validFrom}`);
+                            console.error(`  [FAIL] ${provision}/section.json invalid validFrom: ${data.effectivePeriod.validFrom}`);
                             totalErrors++;
                         }
                         if (!isValidDateOrOpenEnded(data.effectivePeriod.validTo)) {
-                            console.error(`  ❌ ${provision}/section.json invalid validTo: ${data.effectivePeriod.validTo}`);
+                            console.error(`  [FAIL] ${provision}/section.json invalid validTo: ${data.effectivePeriod.validTo}`);
                             totalErrors++;
                         }
                     }
@@ -129,16 +129,16 @@ function validateOkfRepository() {
                     if (Array.isArray(data.officialCitations)) {
                         for (const cit of data.officialCitations) {
                             if (!cit.officialUrl || !cit.officialUrl.startsWith('http')) {
-                                console.error(`  ❌ ${provision}/section.json invalid citation URL: ${cit.officialUrl}`);
+                                console.error(`  [FAIL] ${provision}/section.json invalid citation URL: ${cit.officialUrl}`);
                                 totalErrors++;
                             }
                         }
                     }
 
                     validatedSections++;
-                    console.log(`  ✔ Section [${data.sectionCode}] (${provision}): Validated OKF Schema`);
+                    console.log(`  [PASS] Section [${data.sectionCode}] (${provision}): Validated OKF Schema`);
                 } catch (e) {
-                    console.error(`  ❌ Failed to parse ${sectionJsonPath}: ${e.message}`);
+                    console.error(`  [FAIL] Failed to parse ${sectionJsonPath}: ${e.message}`);
                     totalErrors++;
                 }
             }
@@ -153,17 +153,17 @@ function validateOkfRepository() {
                     const frontmatter = parseYamlFrontmatter(content);
 
                     if (!frontmatter) {
-                        console.error(`  ❌ Missing or invalid YAML frontmatter in circular: ${cFile}`);
+                        console.error(`  [FAIL] Missing or invalid YAML frontmatter in circular: ${cFile}`);
                         totalErrors++;
                     } else {
                         for (const field of REQUIRED_FRONTMATTER_FIELDS) {
                             if (!frontmatter[field]) {
-                                console.error(`  ❌ Circular ${cFile} missing required frontmatter key: '${field}'`);
+                                console.error(`  [FAIL] Circular ${cFile} missing required frontmatter key: '${field}'`);
                                 totalErrors++;
                             }
                         }
                         if (!frontmatter.official_url || !frontmatter.official_url.startsWith('http')) {
-                            console.error(`  ❌ Circular ${cFile} invalid official_url: ${frontmatter.official_url}`);
+                            console.error(`  [FAIL] Circular ${cFile} invalid official_url: ${frontmatter.official_url}`);
                             totalErrors++;
                         }
                         validatedCirculars++;
@@ -184,7 +184,7 @@ function validateOkfRepository() {
                             validatedForms++;
                             console.log(`    ↳ Form Schema [${fFile}]: Validated JSON`);
                         } catch (e) {
-                            console.error(`  ❌ Invalid JSON in form: ${fFile}: ${e.message}`);
+                            console.error(`  [FAIL] Invalid JSON in form: ${fFile}: ${e.message}`);
                             totalErrors++;
                         }
                     } else if (fFile.endsWith('.md')) {

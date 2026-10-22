@@ -45,11 +45,11 @@ The table below records the provenance baseline, verification standard, and expl
 - **Governing Statute**: Income-tax Act, 1961
 - **Successor Provision**: Finance Act, 2025 (Statutory Sunset) &mdash; Section 206C(1H) Omitted
 - **Temporal Validity**: `2020-10-01` to `2025-03-31`
-- **Legislative Sunset / Transition**: CRITICAL SUNSET: Section 206C(1H) is formally omitted by Finance Act, 2025 effective 1 April 2025. Post-sunset, seller TCS ceases; buyer TDS under Section 194Q exclusively governs.
+- **Legislative Sunset / Transition**: CRITICAL SUNSET: Section 206C(1H) is formally omitted by Finance Act, 2025 effective 1 April 2025. Post-sunset, seller TCS on sale of goods ceases entirely. Tax withholding on sale of goods is governed strictly by buyer TDS under Section 194Q where the buyer independently satisfies Section 194Q threshold criteria (prior year turnover exceeding ₹10 Crore and cumulative purchases exceeding ₹50 Lakhs). If the buyer is not liable under Section 194Q, no withholding tax or collection of tax attaches to the sale of goods.
 - **Machine-Readable Source**: [`okf/direct_tax/tcs_goods_206c_1h/section.json`](./okf/direct_tax/tcs_goods_206c_1h/section.json)
 
 **Statutory Summary**:
-> Prior to 1 April 2025, a seller whose turnover exceeded ₹10 Crore was required to collect 0.1% TCS on receipts exceeding ₹50 Lakhs, unless the buyer was already liable to deduct TDS under Section 194Q. Effective 1 April 2025, this provision is omitted by the Finance Act 2025 to eliminate double-compliance friction.
+> Prior to 1 April 2025, a seller whose turnover exceeded ₹10 Crore in the preceding financial year was required to collect 0.1% TCS on receipts exceeding ₹50 Lakhs from a buyer, unless the buyer was liable to deduct TDS under Section 194Q and had deducted such tax. Effective 1 April 2025, Section 206C(1H) is omitted by the Finance Act, 2025 to eliminate double-compliance overlap. Following this omission, seller TCS on goods is obsolete; buyer TDS under Section 194Q applies only where the buyer independently satisfies its statutory prerequisites.
 
 **Key Deterministic Thresholds**:
 ```json
@@ -57,12 +57,12 @@ The table below records the provenance baseline, verification standard, and expl
   "sellerPriorYearTurnoverCr": 10,
   "annualReceiptThresholdInr": 5000000,
   "standardTcsRatePercent": 0.1,
-  "precedenceRule": "Section 194Q buyer TDS always took precedence over Section 206C(1H) seller TCS when buyer was compliant."
+  "precedenceRule": "Historically prior to 1 April 2025, Section 194Q buyer TDS took statutory precedence over Section 206C(1H) seller TCS when the buyer was compliant."
 }
 ```
 
 **Official Citations & Trust Anchors**:
-- **Parliament of India / Ministry of Finance** — [Finance Act, 2025 (Section 206C(1H) Sunset Clause)](https://incometaxindia.gov.in): *Omission of Section 206C(1H) effective 1 April 2025*
+- **Parliament of India / Ministry of Finance** — [Finance Act, 2025 (Section 206C(1H) Sunset Clause)](https://incometaxindia.gov.in/communications/circular/circular_17_2020.pdf): *Omission of Section 206C(1H) effective 1 April 2025*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 17 of 2020](https://incometaxindia.gov.in/communications/circular/circular_17_2020.pdf): *Guidelines for collection of tax at source under section 206C(1H)*
 
 **Executive Circulars Bundled**:
@@ -115,7 +115,7 @@ The table below records the provenance baseline, verification standard, and expl
 - **Machine-Readable Source**: [`okf/direct_tax/tds_services_194j/section.json`](./okf/direct_tax/tds_services_194j/section.json)
 
 **Statutory Summary**:
-> Deduction of tax at source on fees paid to residents for: (a) Professional services (10%), (b) Fees for technical services (2% effective 1 April 2020), (c) Royalty for sale/distribution of cinematographic films (2%), (d) Other royalties and non-compete fees (10%). Threshold: ₹30,000 per financial year for each separate category. Reclassification Risk: If IT architecture/technical consultancy is reclassified by an Assessing Officer as managerial/professional advice, differential withholding of 8% plus Section 201(1A) penal interest (1% per month) attaches.
+> Deduction of tax at source under Section 194J on payments to resident payees. (1) Statutory Rates: (a) Fees for Technical Services (FTS) under Section 194J(1)(a): 2% (reduced by Finance Act, 2020 s. 80); (b) Fees for Professional Services: 10%; (c) Royalty for cinematographic films: 2%; (d) Other royalties and non-compete fees under Section 28(va): 10%. (2) Threshold: ₹30,000 per financial year applied separately to each statutory category. (3) Classification Invariants: Professional services are strictly defined under Section 44AA(1) (legal, medical, engineering, architecture, accountancy, technical consultancy, interior decoration, IT); FTS is defined under Explanation 2 to Section 9(1)(vii) (managerial, technical, or consultancy services). (4) Reclassification Risk & Penalties: If services deducted at 2% (FTS) are recharacterized on assessment as Section 44AA(1) professional services (10%), the deductor is liable for: (a) the 8% differential withholding tax; (b) mandatory penal interest under Section 201(1A) at 1% per month from the date tax was deductible to date deducted and 1.5% from deduction to deposit; and (c) 30% business expenditure disallowance under Section 40(a)(ia) until tax is deposited.
 
 **Key Deterministic Thresholds**:
 ```json
@@ -124,12 +124,16 @@ The table below records the provenance baseline, verification standard, and expl
   "technicalServicesRatePercent": 2,
   "professionalServicesRatePercent": 10,
   "nonCompliantPanPenaltyRatePercent": 20,
+  "technicalServicesDefinition": "Explanation 2 to Section 9(1)(vii) of Income-tax Act, 1961 (managerial, technical, or consultancy services)",
+  "professionalServicesDefinition": "Section 44AA(1) of Income-tax Act, 1961 (notified professions: legal, medical, engineering, architectural, accountancy, technical consultancy, interior decoration, IT professionals)",
+  "penalInterestSection201_1A": "1% per month for delay/shortfall from date deductible; 1.5% per month from date deducted to date deposited",
+  "disallowanceSection40_a_ia": "30% expenditure disallowance for failure to deduct or deposit TDS",
   "cbdtCircular23GstExclusion": "TDS applies on basic service amount excluding separately stated GST."
 }
 ```
 
 **Official Citations & Trust Anchors**:
-- **Ministry of Finance / CBDT** — [Finance Act, 2020 Amendment to Section 194J(1)](https://incometaxindia.gov.in): *Reduction of TDS rate on Fees for Technical Services (FTS) from 10% to 2%*
+- **Ministry of Law & Justice / CBDT** — [Finance Act, 2020 (Act No. 12 of 2020), Section 80 amending Section 194J(1)](https://incometaxindia.gov.in/communications/circular/circular_03_2020.pdf): *Reduction of TDS rate on Fees for Technical Services (FTS) from 10% to 2%*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://incometaxindia.gov.in/communications/circular/circular23_2017.pdf): *Exclusion of GST component from value of service for tax deduction at source*
 
 **Executive Circulars Bundled**:
@@ -151,7 +155,7 @@ The table below records the provenance baseline, verification standard, and expl
 - **Machine-Readable Source**: [`okf/indirect_tax_gst/blocked_itc_17_5/section.json`](./okf/indirect_tax_gst/blocked_itc_17_5/section.json)
 
 **Statutory Summary**:
-> Input Tax Credit (ITC) shall NOT be available in respect of: (i) Food and beverages, outdoor catering, beauty treatment, health services, cosmetic and plastic surgery; (ii) Motor vehicles for transportation of persons having approved seating capacity of up to 13 persons (including driver), except when used for making further taxable supply of such vehicles/transportation; (iii) Membership of a club, health, and fitness centre. Proviso exception: Credit is permissible ONLY where the inward supply is used for making an outward taxable supply of the same category, or where it is statutory obligation for an employer to provide the same under any law for the time being in force (e.g. Factories Act 1948 Section 46).
+> Input Tax Credit (ITC) shall NOT be available in respect of statutory blocked credits under Section 17(5) of the CGST Act, 2017: (a) Motor vehicles for transportation of persons having approved seating capacity up to 13 persons (including driver), vessels, and aircraft, with narrow exceptions; (b)(i) Food and beverages, outdoor catering, beauty treatment, health services, cosmetic and plastic surgery, leasing/renting/hiring of motor vehicles; (b)(ii) Membership of a club, health and fitness centre; (b)(iii) Travel benefits extended to employees on vacation (LTC/home travel); (c) & (d) Works contract services and goods/services for construction of immovable property on own account; (h) Goods lost, stolen, destroyed, written off, or disposed of by way of gift or free samples (blocked regardless of value). Statutory Proviso Exception: ITC is permissible where: (1) inward supply is used for making outward taxable supply of the same category; or (2) where an employer is obligated by statutory law in force to provide the goods/services to employees (e.g. Factories Act, 1948 Section 46 mandatory canteen for factories with > 250 workers). Legal Note on Gifts: Under Section 17(5)(h), ITC on gifts is blocked irrespective of value. The ₹50,000 threshold in CGST Schedule I Entry 2 proviso relates solely to whether gifts by an employer to an employee constitute a deemed taxable supply without consideration, and does not permit ITC under Section 17(5).
 
 **Key Deterministic Thresholds**:
 ```json
@@ -160,15 +164,18 @@ The table below records the provenance baseline, verification standard, and expl
     "Outdoor Catering",
     "Food & Beverages",
     "Motor Vehicles <= 13 seats",
-    "Club Membership",
-    "Employee Gifts > ₹50,000"
+    "Club, Health & Fitness Membership",
+    "Gifts and Free Samples (Sec 17(5)(h))",
+    "Works Contract for Immovable Property (Sec 17(5)(c))"
   ],
-  "statutoryAccountingDirective": "Prohibited from capitalizing or crediting to ITC Asset Ledger (Account 1400). Must be booked directly as Ineligible Operating Expense in P&L (Account 5010)."
+  "giftTreatmentDistinction": "Section 17(5)(h) blocks ITC on gifts and free samples regardless of value. The ₹50,000 threshold in CGST Schedule I Entry 2 proviso applies strictly to deemed supply valuation for employer-employee gifts, not to ITC eligibility.",
+  "erpImplementationGuidance": "In standard corporate ERP systems (e.g. SAP/NetSuite), blocked input tax must not be credited to the Electronic Credit Ledger / Asset Account (e.g. standard COA Account 1400); it must be capitalized into the asset cost or expensed to the respective operating expense ledger (e.g. standard COA Account 5010). Account numbers 1400/5010 represent configurable ERP conventions, not statutory account codes."
 }
 ```
 
 **Official Citations & Trust Anchors**:
-- **Central Board of Indirect Taxes and Customs (CBIC)** — [Central Goods and Services Tax Act, 2017 Section 17(5)](https://cbic-gst.gov.in): *Statutory list of blocked input tax credits*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Central Goods and Services Tax Act, 2017 Section 17(5)](https://taxinformation.cbic.gov.in): *Statutory list of blocked input tax credits*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 172/04/2022-GST (CBIC-190354/172/2022-TRU)](https://taxinformation.cbic.gov.in): *Clarification on applicability of proviso across Section 17(5)(b) for statutory employer obligations*
 - **Ministry of Labour & Employment** — [Factories Act, 1948 Section 46](https://labour.gov.in): *Mandatory canteen provision in factories employing > 250 workers (Statutory Proviso Exception)*
 
 **Executive Circulars Bundled**:
@@ -222,7 +229,7 @@ The table below records the provenance baseline, verification standard, and expl
 - **Machine-Readable Source**: [`okf/msme_commercial/delayed_payments_15_16/section.json`](./okf/msme_commercial/delayed_payments_15_16/section.json)
 
 **Statutory Summary**:
-> Under Section 15 of the MSMED Act, where any supplier supplies any goods or renders any services to any buyer, the buyer shall make payment therefor on or before the date agreed upon in writing (which shall NOT exceed 45 days), or if there is no agreement, before the appointed day (15 days from physical acceptance). Under Section 16, failure to pay triggers compound interest with monthly rests at 3 times the RBI Bank Rate (which cannot be claimed as a tax-deductible expense). Under Section 43B(h) of the Income-tax Act, any sum payable to a micro or small enterprise beyond the specified limit is disallowed as a business deduction in the financial year of incurrence and allowed only in the year of actual payment.
+> Distinct legal mechanisms governing delayed payments to micro and small enterprises: (1) MSMED Act, 2006 Payment Mandate (Section 15): A buyer must pay a registered micro or small enterprise supplier on or before the agreed date in writing (which cannot exceed 45 days), or if no written agreement exists, before the 'appointed day' (15 days from physical delivery or removal of defects). (2) MSMED Act Compound Penal Interest (Sections 16 & 23): Failure to pay on time incurs mandatory compound interest with monthly rests at 3 times the RBI Bank Rate from the due date until actual payment. Under Section 23 of the MSMED Act, this interest is strictly non-deductible in computing taxable income. (3) Income-tax Act Accrual Disallowance (Section 43B(h) / Act 2025 Section 37(2)(g)): If payment to a micro or small enterprise is not made within the Section 15 timeline, the underlying invoice expenditure is disallowed in the financial year of incurrence and allowed only in the year of actual payment; the proviso allowing payment up to the tax return due date (Section 139(1)) does not apply to clause (h). (4) Trader Exclusion: Per Ministry of MSME OM dated 2 July 2021 and RBI Circular FIDD.MSME & NFS.BC.No.13/06.02.31/2021-22, retail and wholesale traders (NIC 45, 46, 47) are eligible for Udyam solely for Priority Sector Lending; they are excluded from Chapter V (Sections 15-25) of the MSMED Act and are therefore exempt from Section 43B(h) tax disallowance.
 
 **Key Deterministic Thresholds**:
 ```json
@@ -230,15 +237,20 @@ The table below records the provenance baseline, verification standard, and expl
   "statutoryDefaultTimelineDays": 15,
   "maximumWrittenAgreementTimelineDays": 45,
   "penalInterestRate": "3 times the Bank Rate notified by the Reserve Bank of India (compounded monthly)",
-  "applicableEnterprises": "Micro and Small Enterprises with valid Udyam Registration (Medium Enterprises are excluded)",
-  "traderExclusionRule": "Enterprises registered solely under Retail and Wholesale Trade (NIC 45, 46, 47) are excluded from delayed payment protection per Ministry of MSME OM No. 2/1(5)/2021-P&G/Policy."
+  "statutoryInterestDisallowance": "Section 23 of MSMED Act prohibits claiming Section 16 penal interest as an income tax deduction",
+  "taxAccrualDisallowanceSection43Bh": "Disallows deduction of overdue principal in year of incurrence; allowed strictly upon payment under Section 43B(h) / Act 2025 Section 37(2)(g)",
+  "applicableEnterprises": "Micro and Small Enterprises with valid Udyam Registration (Medium Enterprises are excluded from Chapter V)",
+  "traderExclusionRule": "Enterprises registered solely under Retail and Wholesale Trade (NIC Codes 45, 46, 47) are excluded from delayed payment benefits per Ministry of MSME OM No. 5/2(2)/2021-E/P & G/Policy and RBI Circular FIDD.MSME & NFS.BC.No.13/06.02.31/2021-22",
+  "writtenDisputeWindowDays": 15,
+  "disputeStatutoryBasis": "Explanation (b) to Section 2(n) of MSMED Act: buyer must lodge written objection regarding defects within 15 days of delivery to prevent deemed acceptance"
 }
 ```
 
 **Official Citations & Trust Anchors**:
-- **Ministry of Law and Justice** — [Micro, Small and Medium Enterprises Development Act, 2006 (Act No. 27 of 2006)](https://msme.gov.in): *Chapter V: Delayed Payments to Micro and Small Enterprises*
-- **Ministry of MSME** — [Office Memorandum No. 2/1(5)/2021-P&G/Policy (Dated 2 July 2021)](https://msme.gov.in/sites/default/files/OM_Retail_Wholesale.pdf): *Inclusion of Retail and Wholesale Trade under MSME - Restriction on Chapter V delayed payment benefits*
-- **Central Board of Direct Taxes (CBDT)** — [Finance Act, 2023 (Enacting Section 43B(h))](https://incometaxindia.gov.in): *Disallowance of expenditure for delayed payments to Micro and Small Enterprises*
+- **Ministry of Law and Justice** — [Micro, Small and Medium Enterprises Development Act, 2006 (Act No. 27 of 2006)](https://msme.gov.in): *Chapter V: Delayed Payments to Micro and Small Enterprises (Sections 15, 16, 23)*
+- **Ministry of MSME** — [Office Memorandum No. 5/2(2)/2021-E/P & G/Policy (Dated 2 July 2021) & OM No. 1/4(1)/2021-P&G/Policy](https://msme.gov.in/sites/default/files/OM_Retail_Wholesale.pdf): *Inclusion of Retail and Wholesale Trade under MSME - Restriction on Chapter V delayed payment benefits*
+- **Reserve Bank of India** — [Circular RBI/2021-2022/67 FIDD.MSME & NFS.BC.No.13/06.02.31/2021-22](https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12129&Mode=0): *Lending to Micro, Small & Medium Enterprises - Retail and Wholesale Trade PSL Eligibility*
+- **Central Board of Direct Taxes (CBDT)** — [Finance Act, 2023 (Enacting Section 43B(h) of Income-tax Act, 1961)](https://incometaxindia.gov.in): *Disallowance of expenditure for delayed payments to Micro and Small Enterprises*
 
 **Executive Circulars Bundled**:
 - [`msme_om_2021_trader_exclusion.md`](./okf/msme_commercial/delayed_payments_15_16/circulars/msme_om_2021_trader_exclusion.md)

@@ -20,23 +20,31 @@
     "annualReset": "Continuous",
     "sunsetNotes": "Active statutory restriction."
   },
-  "plainTextSummary": "Input Tax Credit (ITC) shall NOT be available in respect of: (i) Food and beverages, outdoor catering, beauty treatment, health services, cosmetic and plastic surgery; (ii) Motor vehicles for transportation of persons having approved seating capacity of up to 13 persons (including driver), except when used for making further taxable supply of such vehicles/transportation; (iii) Membership of a club, health, and fitness centre. Proviso exception: Credit is permissible ONLY where the inward supply is used for making an outward taxable supply of the same category, or where it is statutory obligation for an employer to provide the same under any law for the time being in force (e.g. Factories Act 1948 Section 46).",
+  "plainTextSummary": "Input Tax Credit (ITC) shall NOT be available in respect of statutory blocked credits under Section 17(5) of the CGST Act, 2017: (a) Motor vehicles for transportation of persons having approved seating capacity up to 13 persons (including driver), vessels, and aircraft, with narrow exceptions; (b)(i) Food and beverages, outdoor catering, beauty treatment, health services, cosmetic and plastic surgery, leasing/renting/hiring of motor vehicles; (b)(ii) Membership of a club, health and fitness centre; (b)(iii) Travel benefits extended to employees on vacation (LTC/home travel); (c) & (d) Works contract services and goods/services for construction of immovable property on own account; (h) Goods lost, stolen, destroyed, written off, or disposed of by way of gift or free samples (blocked regardless of value). Statutory Proviso Exception: ITC is permissible where: (1) inward supply is used for making outward taxable supply of the same category; or (2) where an employer is obligated by statutory law in force to provide the goods/services to employees (e.g. Factories Act, 1948 Section 46 mandatory canteen for factories with > 250 workers). Legal Note on Gifts: Under Section 17(5)(h), ITC on gifts is blocked irrespective of value. The ₹50,000 threshold in CGST Schedule I Entry 2 proviso relates solely to whether gifts by an employer to an employee constitute a deemed taxable supply without consideration, and does not permit ITC under Section 17(5).",
   "keyStatutoryThresholds": {
     "blockedCategories": [
       "Outdoor Catering",
       "Food & Beverages",
       "Motor Vehicles <= 13 seats",
-      "Club Membership",
-      "Employee Gifts > ₹50,000"
+      "Club, Health & Fitness Membership",
+      "Gifts and Free Samples (Sec 17(5)(h))",
+      "Works Contract for Immovable Property (Sec 17(5)(c))"
     ],
-    "statutoryAccountingDirective": "Prohibited from capitalizing or crediting to ITC Asset Ledger (Account 1400). Must be booked directly as Ineligible Operating Expense in P&L (Account 5010)."
+    "giftTreatmentDistinction": "Section 17(5)(h) blocks ITC on gifts and free samples regardless of value. The ₹50,000 threshold in CGST Schedule I Entry 2 proviso applies strictly to deemed supply valuation for employer-employee gifts, not to ITC eligibility.",
+    "erpImplementationGuidance": "In standard corporate ERP systems (e.g. SAP/NetSuite), blocked input tax must not be credited to the Electronic Credit Ledger / Asset Account (e.g. standard COA Account 1400); it must be capitalized into the asset cost or expensed to the respective operating expense ledger (e.g. standard COA Account 5010). Account numbers 1400/5010 represent configurable ERP conventions, not statutory account codes."
   },
   "officialCitations": [
     {
       "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
       "instrument": "Central Goods and Services Tax Act, 2017 Section 17(5)",
       "subject": "Statutory list of blocked input tax credits",
-      "officialUrl": "https://cbic-gst.gov.in"
+      "officialUrl": "https://taxinformation.cbic.gov.in"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Circular No. 172/04/2022-GST (CBIC-190354/172/2022-TRU)",
+      "subject": "Clarification on applicability of proviso across Section 17(5)(b) for statutory employer obligations",
+      "officialUrl": "https://taxinformation.cbic.gov.in"
     },
     {
       "authority": "Ministry of Labour & Employment",

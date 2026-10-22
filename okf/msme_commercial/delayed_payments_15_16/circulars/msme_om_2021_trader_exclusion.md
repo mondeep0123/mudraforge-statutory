@@ -12,7 +12,7 @@ subject: Restriction of retail and wholesale trade to Priority Sector Lending an
 official_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12129&Mode=0
 ---
 
-> ⏳ **STATUTORY VALIDITY WINDOW & TEMPORAL STATUS**  
+> [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  
 > **Valid From**: 2 July 2021  
 > **Valid To**: In Force (Indefinite)  
 > **Temporal Status**: ACTIVE  
