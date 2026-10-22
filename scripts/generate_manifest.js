@@ -45,12 +45,12 @@ function computeFileHash(filePath) {
 }
 
 function run() {
-    console.log('═══════════════════════════════════════════════════════════════════════════');
-    console.log(isCheckMode ? '🔒 OKF CRYPTOGRAPHIC INTEGRITY VERIFIER' : '⚡ OKF MANIFEST & ROOT CHECKSUM GENERATOR');
-    console.log('═══════════════════════════════════════════════════════════════════════════\n');
+    console.log('===========================================================================');
+    console.log(isCheckMode ? 'OKF CRYPTOGRAPHIC INTEGRITY VERIFIER' : 'OKF MANIFEST & ROOT CHECKSUM GENERATOR');
+    console.log('===========================================================================\n');
 
     if (!fs.existsSync(OKF_DIR)) {
-        console.error(`❌ OKF directory not found at: ${OKF_DIR}`);
+        console.error(`[ERROR] OKF directory not found at: ${OKF_DIR}`);
         process.exit(1);
     }
 
@@ -75,7 +75,7 @@ function run() {
                     sections.push(data.sectionCode);
                 }
             } catch (err) {
-                console.error(`❌ Failed parsing ${relPath}: ${err.message}`);
+                console.error(`[ERROR] Failed parsing ${relPath}: ${err.message}`);
                 process.exit(1);
             }
         }
@@ -90,7 +90,7 @@ function run() {
 
     if (isCheckMode) {
         if (!fs.existsSync(MANIFEST_PATH)) {
-            console.error('❌ manifest.json does not exist. Run "npm run manifest" first.');
+            console.error('[ERROR] manifest.json does not exist. Run "npm run manifest" first.');
             process.exit(1);
         }
 
@@ -98,7 +98,7 @@ function run() {
         let mismatches = 0;
 
         if (existing.rootHash !== rootHash) {
-            console.error(`❌ Root hash mismatch!`);
+            console.error(`[ERROR] Root hash mismatch!`);
             console.error(`   Recorded: ${existing.rootHash}`);
             console.error(`   Computed: ${rootHash}`);
             mismatches++;
@@ -107,10 +107,10 @@ function run() {
         const recordedFiles = existing.files || {};
         for (const [relPath, hash] of Object.entries(fileHashes)) {
             if (!recordedFiles[relPath]) {
-                console.error(`❌ Untracked file: ${relPath}`);
+                console.error(`[ERROR] Untracked file: ${relPath}`);
                 mismatches++;
             } else if (recordedFiles[relPath] !== hash) {
-                console.error(`❌ Checksum mismatch for: ${relPath}`);
+                console.error(`[ERROR] Checksum mismatch for: ${relPath}`);
                 console.error(`   Expected: ${recordedFiles[relPath]}`);
                 console.error(`   Actual:   ${hash}`);
                 mismatches++;
@@ -119,19 +119,19 @@ function run() {
 
         for (const recordedPath of Object.keys(recordedFiles)) {
             if (!fileHashes[recordedPath]) {
-                console.error(`❌ Missing file recorded in manifest: ${recordedPath}`);
+                console.error(`[ERROR] Missing file recorded in manifest: ${recordedPath}`);
                 mismatches++;
             }
         }
 
         if (mismatches > 0) {
-            console.error(`\n❌ Integrity verification FAILED with ${mismatches} mismatch(es).`);
+            console.error(`\n[ERROR] Integrity verification failed with ${mismatches} mismatch(es).`);
             process.exit(1);
         }
 
-        console.log(`✔ All ${allFiles.length} OKF files matched their cryptographic SHA-256 signatures.`);
-        console.log(`✔ Root Merkle digest verified: ${rootHash}`);
-        console.log('\n🎉 CRYPTOGRAPHIC INTEGRITY VERIFICATION PASSED.\n');
+        console.log(`[OK] All ${allFiles.length} OKF files matched their cryptographic SHA-256 signatures.`);
+        console.log(`[OK] Root Merkle digest verified: ${rootHash}`);
+        console.log('\nCRYPTOGRAPHIC INTEGRITY VERIFICATION PASSED (0 MISMATCHES).\n');
         process.exit(0);
     }
 
@@ -157,10 +157,10 @@ function run() {
 
     fs.writeFileSync(MANIFEST_PATH, JSON.stringify(updatedManifest, null, 2) + '\n', 'utf8');
 
-    console.log(`✔ Indexed ${sections.length} statutory sections across ${Object.keys(domains).length} domains.`);
-    console.log(`✔ Hashed ${allFiles.length} statutory files.`);
-    console.log(`✔ Root Merkle Hash: ${rootHash}`);
-    console.log(`✔ Saved updated manifest to: ${MANIFEST_PATH}\n`);
+    console.log(`[OK] Indexed ${sections.length} statutory sections across ${Object.keys(domains).length} domains.`);
+    console.log(`[OK] Hashed ${allFiles.length} statutory files.`);
+    console.log(`[OK] Root Merkle Hash: ${rootHash}`);
+    console.log(`[OK] Saved updated manifest to: ${MANIFEST_PATH}\n`);
 }
 
 run();

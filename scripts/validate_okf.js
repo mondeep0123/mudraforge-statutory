@@ -73,9 +73,9 @@ function isValidDateOrOpenEnded(val) {
 }
 
 function validateOkfRepository() {
-    console.log('═══════════════════════════════════════════════════════════════════════════');
-    console.log('🏛️  MUDRAFORGE OKF v0.2 SCHEMA & PROVENANCE VALIDATOR');
-    console.log('═══════════════════════════════════════════════════════════════════════════\n');
+    console.log('===========================================================================');
+    console.log('MUDRAFORGE OKF v0.2 SCHEMA & PROVENANCE VALIDATOR');
+    console.log('===========================================================================\n');
 
     let totalErrors = 0;
     let validatedSections = 0;
@@ -93,7 +93,7 @@ function validateOkfRepository() {
             return fs.statSync(path.join(domainPath, item)).isDirectory();
         });
 
-        console.log(`📁 Validating Domain [${domain}] (${provisions.length} provisions)...`);
+        console.log(`[DOMAIN] Validating Domain [${domain}] (${provisions.length} provisions)...`);
 
         for (const provision of provisions) {
             const provPath = path.join(domainPath, provision);
@@ -101,7 +101,7 @@ function validateOkfRepository() {
             // 1. Validate section.json
             const sectionJsonPath = path.join(provPath, 'section.json');
             if (!fs.existsSync(sectionJsonPath)) {
-                console.error(`  ❌ Missing section.json in ${provPath}`);
+                console.error(`  [ERROR] Missing section.json in ${provPath}`);
                 totalErrors++;
             } else {
                 try {
@@ -197,19 +197,19 @@ function validateOkfRepository() {
         console.log('');
     }
 
-    console.log('═══════════════════════════════════════════════════════════════════════════');
-    console.log(`📊 VALIDATION SUMMARY:`);
+    console.log('===========================================================================');
+    console.log(`VALIDATION SUMMARY:`);
     console.log(`• Sections Validated:  ${validatedSections}`);
     console.log(`• Circulars Validated: ${validatedCirculars}`);
     console.log(`• Forms Validated:     ${validatedForms}`);
     console.log(`• Total Errors:        ${totalErrors}`);
-    console.log('═══════════════════════════════════════════════════════════════════════════');
+    console.log('===========================================================================');
 
     if (totalErrors > 0) {
-        console.error(`\n❌ Validation failed with ${totalErrors} defect(s).`);
+        console.error(`\n[FAIL] Validation failed with ${totalErrors} defect(s).`);
         process.exit(1);
     } else {
-        console.log('\n🎉 ALL OKF SCHEMAS, CIRCULARS & FORMS PASSED VALIDATION WITH ZERO DEFECTS!');
+        console.log('\n[PASS] ALL OKF SCHEMAS, CIRCULARS & FORMS PASSED VALIDATION WITH ZERO DEFECTS.\n');
         process.exit(0);
     }
 }

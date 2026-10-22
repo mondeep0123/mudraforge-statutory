@@ -13,9 +13,9 @@ import {
 } from './src/index.js';
 
 async function run() {
-    console.log('═══════════════════════════════════════════════════════════════════════════');
-    console.log('🏛️  @MUDRAFORGE/STATUTORY MULTI-DOMAIN INSTITUTIONAL TEST SUITE');
-    console.log('═══════════════════════════════════════════════════════════════════════════\n');
+    console.log('===========================================================================');
+    console.log('@MUDRAFORGE/STATUTORY MULTI-DOMAIN REGRESSION TEST SUITE');
+    console.log('===========================================================================\n');
 
     // 1. Directory Listing
     console.log('── Test 1: Section Catalog & Manifest Listing ──');
@@ -155,12 +155,12 @@ async function run() {
         console.log(`✔ Empty section query correctly rejected: "${err.message}"`);
     }
 
-    console.log('\n═══════════════════════════════════════════════════════════════════════════');
-    console.log('🎉 ALL 11 TEST SUITES PASSED WITH 100% REPRODUCIBLE PRECISION!');
-    console.log('═══════════════════════════════════════════════════════════════════════════\n');
+    console.log('\n===========================================================================');
+    console.log('ALL 11 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('===========================================================================\n');
 }
 
 run().catch(err => {
-    console.error('\n❌ Test Suite Failed:', err);
+    console.error('\n[FAIL] Test Suite Failed:', err);
     process.exit(1);
 });

@@ -27,18 +27,18 @@ To prevent the **Epistemic Gap** (where software engineers embed an incorrect le
 
 | Mutant ID | Injected Corruption | Statutory Legal Ground Truth | Test Outcome |
 | :--- | :--- | :--- | :--- |
-| **MUTANT-01** | Section 194Q rate increased from 0.1% to 1.0% | Section 194Q: 0.1% strictly on excess over ₹50L | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-02** | Section 194Q threshold lowered from ₹50L to ₹10L | Section 194Q: Mandates ₹50 Lakhs cumulative threshold | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-03** | Section 206C(1H) evaluated on or after 1 April 2025 | Finance Act 2025: Sunsets Section 206C(1H) w.e.f. 01-04-2025 | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-04** | Section 194Q computed on gross invoice including GST | CBDT Circular 13/2021: Mandates unbundling GST component | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-05** | Missing PAN on 194Q penalized at 20% instead of 5% | Section 206AA(1) Proviso: Capped strictly at 5% for Sec 194Q | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-06** | MSMED penal rate computed from RBI Repo Rate (6.5%) | MSMED Sec 16: Specifies 3x RBI Bank Rate (Sec 49 RBI Act) | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-07** | MSMED penal interest computed as simple annual interest| MSMED Sec 16: Mandates compound interest with monthly rests | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-08** | Section 43B(h) disallowance applied to Medium units | Section 43B(h): Applies strictly to Micro and Small enterprises | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-09** | Section 194Q applied to foreign vendor without PE | CBDT Circular 13/2021 Q3: Exempts direct foreign imports | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-10** | Tie-breaker inverted when buyer turnover is under ₹10 Cr| Sec 206C(1H) 2nd Proviso: Only yields if buyer is legally liable | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-11** | Section 194Q deducted on entire invoice crossing ₹50L | Only the incremental excess over ₹50L is the taxable base | 🛑 **CAUGHT** (Discrepancy detected) |
-| **MUTANT-12** | Advance netting deducted without adjusting prior advance TDS| CBDT Circular 13/2021 Q1: Prevents double withholding | 🛑 **CAUGHT** (Discrepancy detected) |
+| **MUTANT-01** | Section 194Q rate increased from 0.1% to 1.0% | Section 194Q: 0.1% strictly on excess over ₹50L | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-02** | Section 194Q threshold lowered from ₹50L to ₹10L | Section 194Q: Mandates ₹50 Lakhs cumulative threshold | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-03** | Section 206C(1H) evaluated on or after 1 April 2025 | Finance Act 2025: Sunsets Section 206C(1H) w.e.f. 01-04-2025 | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-04** | Section 194Q computed on gross invoice including GST | CBDT Circular 13/2021: Mandates unbundling GST component | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-05** | Missing PAN on 194Q penalized at 20% instead of 5% | Section 206AA(1) Proviso: Capped strictly at 5% for Sec 194Q | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-06** | MSMED penal rate computed from RBI Repo Rate (6.5%) | MSMED Sec 16: Specifies 3x RBI Bank Rate (Sec 49 RBI Act) | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-07** | MSMED penal interest computed as simple annual interest| MSMED Sec 16: Mandates compound interest with monthly rests | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-08** | Section 43B(h) disallowance applied to Medium units | Section 43B(h): Applies strictly to Micro and Small enterprises | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-09** | Section 194Q applied to foreign vendor without PE | CBDT Circular 13/2021 Q3: Exempts direct foreign imports | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-10** | Tie-breaker inverted when buyer turnover is under ₹10 Cr| Sec 206C(1H) 2nd Proviso: Only yields if buyer is legally liable | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-11** | Section 194Q deducted on entire invoice crossing ₹50L | Only the incremental excess over ₹50L is the taxable base | [PASS] Intercepted (Discrepancy detected) |
+| **MUTANT-12** | Advance netting deducted without adjusting prior advance TDS| CBDT Circular 13/2021 Q1: Prevents double withholding | [PASS] Intercepted (Discrepancy detected) |
 
 ---
 
@@ -80,7 +80,7 @@ In distributed banking, network communication over public payment rails is funda
 Client ──[ POST /v1/payouts ]──► Gateway ──► Bank Rail
    ▲                                              │
    │                                              ▼
-   └───[ 💥 HTTP 504 Timeout / Socket Drop ]──────┘
+   └───[ HTTP 504 Timeout / Socket Drop ]─────────┘
 ```
 
 When an enterprise runtime encounters an HTTP 504 gateway timeout, socket reset, or worker crash after transmitting a payment, the client cannot know whether the bank executed the wire.
