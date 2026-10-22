@@ -212,14 +212,14 @@ flowchart TD
 
 | Capability | Public Substrate (`@mudraforge/statutory`) | Commercial Adesha Platform |
 | :--- | :--- | :--- |
-| **Statutory Text & Schemas** | ✅ Open Knowledge Format (MIT License) | Included & Maintained |
-| **Offline Filesystem Lookup** | ✅ Sub-1ms local traversal, 0 network calls | Included |
-| **Agent Skill (`SKILL.md`)** | ✅ Included (`init-skill` CLI) | Included |
+| **Statutory Text & Schemas** | Supported (Open Knowledge Format / MIT) | Included & Maintained |
+| **Offline Filesystem Lookup** | Supported (Sub-1ms local traversal, 0 network calls) | Included |
+| **Agent Skill (`SKILL.md`)** | Supported (`init-skill` CLI) | Included |
 | **Maintenance & Gazette Updates**| Static public release snapshot | Continuous edge synchronization |
 | **Deterministic Tax Math** | Reference metadata only | Gated Edge API (`POST /calculate`) |
-| **Payment Authorization Leases**| ❌ Not included | Single-use cryptographic CAS leases |
-| **Banking Reconciliation** | ❌ Not included | Two-Generals failure recovery |
-| **ERP Ledger Writeback** | ❌ Not included | Source-bound double-entry writeback |
+| **Payment Authorization Leases**| Excluded | Single-use cryptographic CAS leases |
+| **Banking Reconciliation** | Excluded | Two-Generals failure recovery |
+| **ERP Ledger Writeback** | Excluded | Source-bound double-entry writeback |
 
 ---
 
@@ -279,6 +279,7 @@ Treating statutory maintenance as an unfunded volunteer project invariably produ
 
 ## 9. Related Documents
 
+- [`DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md`](./DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md) — Authoritative matrix comparing the 4 starter domains against the full 11-domain sovereign roadmap.
 - [`VERIFICATION.md`](./VERIFICATION.md) — Formal verification report, TLA+ state machine model, mutation tests, and documented limitations.
 - [`ENTERPRISE_GOVERNANCE.md`](./ENTERPRISE_GOVERNANCE.md) — The Adesha governance architecture: single-use payment leases, Two-Generals banking recovery, and ERP writebacks.
 - [`README.md`](./README.md) — Quickstart, CLI commands, and installation guide.
