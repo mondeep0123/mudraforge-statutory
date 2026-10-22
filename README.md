@@ -18,9 +18,11 @@
 | **Package Release** | **`v2.4.0`** (Public Beta) |
 | **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2)** |
 | **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Snapshot: October 2026** |
-| **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](./okf/manifest.json) |
+| **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](./okf/manifest.json) (reproducible byte-level non-tampering proof) |
 | **Temporal Framework** | Dual-Act Bridge: *Income-tax Act, 1961* & *Income-tax Act, 2025* |
 | **Verification Gate** | 100% Pass across cumulative thresholds, legislative sunsets, and excess math |
+
+> **Note on Cryptographic Scope**: The SHA-256 root hash in `okf/manifest.json` provides mathematical verification of **byte-level integrity** (ensuring local files have not been corrupted, altered, or partially written). A hash certifies that bytes match the published release; it does not by itself constitute legal or statutory authority. Epistemic authority is established strictly via the primary gazette citations, CBDT/CBIC executive circulars, and independent ground-truth tests.
 
 ---
 

@@ -54,6 +54,10 @@ export interface LookupResult {
     temporalStatus: 'ACTIVE' | 'SUNSET_SUPERSEDED' | 'FUTURE_PENDING';
     asOfDate: string;
     source?: 'LOCAL_OKF_FS' | 'EDGE_API';
+    retrievalMode?: 'LOCAL_SNAPSHOT' | 'EDGE_LIVE' | 'LOCAL_SNAPSHOT_FALLBACK';
+    isOfflineSnapshot?: boolean;
+    snapshotVersion?: string;
+    advisory?: string;
     clientTier?: 'PUBLIC_COMMONS_FREE' | 'ENTERPRISE_PAID';
     authenticated?: boolean;
     statute: StatutoryRecord;
@@ -75,9 +79,11 @@ export interface SectionSummary {
 export interface LookupOptions {
     asOfDate?: string;
     baseUrl?: string;
+    okfDir?: string;
     apiKey?: string;
     tier?: 'PUBLIC_COMMONS_FREE' | 'ENTERPRISE_PAID';
-    mode?: 'standard' | 'analysis';
+    mode?: 'auto' | 'local' | 'edge';
+    forceEdge?: boolean;
 }
 
 export interface ClientOptions {

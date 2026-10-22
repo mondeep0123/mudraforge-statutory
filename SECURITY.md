@@ -51,17 +51,22 @@ To expedite resolution, please include:
 
 ---
 
-## SLA & Response Timelines
+## Triage & Release Protocol
 
-| Severity Level | Definition | First Response | Remediation SLA |
-|---|---|---|---|
-| **Critical Statutory Bug** | Rate error or sunset miss causing immediate financial misstatement | &le; 12 Hours | &le; 24 Hours |
-| **High Code Vulnerability** | Arbitrary code execution or integrity bypass | &le; 12 Hours | &le; 24 Hours |
-| **Medium Statutory Note** | Ambiguity in executive circular notes or missing form field | &le; 24 Hours | &le; 72 Hours |
-| **Low / Documentation** | Typographical error or broken external hyperlink | &le; 48 Hours | Next Scheduled Release |
+We operate an open-source, community-verified disclosure and correction model:
+
+| Issue Type | Target Acknowledgment | Remediation & Release Pathway |
+|---|---|---|
+| **Critical Statutory Bug** (e.g., incorrect tax rate, missed sunset) | Within 2 business days | Independent verification against official gazette & fast-tracked patch release (`2.4.x`) |
+| **Code / Packaging Vulnerability** (e.g., integrity mismatch, parser crash) | Within 2 business days | Patch release with updated cryptographic checksums |
+| **Regulatory Clarification** (e.g., administrative circular ambiguity) | Within 5 business days | Evaluated during next scheduled monthly release cycle |
+| **Documentation / Typo** (e.g., broken official link) | Within 1 week | Addressed in regular maintenance commits |
+
+### Correction Verification Policy
+To prevent regressions, no statutory correction is merged based solely on ungrounded AI generation or secondary blog summaries. Every amendment must link to an official primary gazette URL, circular number, or statutory enactment.
 
 ---
 
-## Responsible Disclosure & Bug Bounty
+## Responsible Disclosure & Attribution
 
-We operate a responsible disclosure policy. Researchers, Chartered Accountants, and tax attorneys who responsibly report verified statutory or software defects will be credited in our published **Provenance Ledger** and release changelogs.
+Researchers, Chartered Accountants, and tax practitioners who report verified statutory discrepancies or security flaws are gratefully acknowledged in our **Published Release & Provenance Ledger** and release changelogs.

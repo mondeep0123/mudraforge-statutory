@@ -244,37 +244,70 @@ export function computeTemporalStatus(statute, asOfDate) {
 
 /**
  * Look up a statutory provision by section code or alias.
- * Offline-first: inspects local OKF filesystem before falling back to Cloudflare Edge API.
+ * 
+ * Supports explicit retrieval modes:
+ * - 'auto' (default): Checks local OKF snapshot first; queries Cloudflare Edge API if unbundled or stale.
+ * - 'local': Resolves strictly from local filesystem (0 network calls; fails if provision not bundled).
+ * - 'edge': Resolves directly against Cloudflare Edge API (requires network connectivity).
+ * 
+ * To ensure epistemic rigor, responses explicitly distinguish between an offline static snapshot
+ * and a live, edge-verified statutory lookup.
  */
 export async function lookupStatute(section, options = {}) {
-    if (!section || typeof section !== 'string') {
+    if (!section || typeof section !== 'string' || !section.trim()) {
         throw new Error('[@mudraforge/statutory] Section query must be a non-empty string.');
     }
 
+    const cleanSection = section.trim();
+    const mode = options.mode || (options.forceEdge ? 'edge' : 'auto');
     const okfDir = options.okfDir || DEFAULT_LOCAL_OKF_DIR;
     const asOfDate = options.asOfDate ? options.asOfDate.trim() : 'CURRENT_ACTIVE';
 
-    // 1. Local-first resolution
-    if (!options.forceEdge && fs.existsSync(okfDir)) {
+    // 1. Strict Local Mode
+    if (mode === 'local') {
+        const local = fs.existsSync(okfDir) ? lookupLocalStatute(cleanSection, okfDir) : null;
+        if (!local) {
+            const notFoundErr = new Error(`[@mudraforge/statutory] Section [${cleanSection}] not found in local OKF snapshot (${okfDir}).`);
+            notFoundErr.code = 'SECTION_NOT_FOUND';
+            throw notFoundErr;
+        }
+        return {
+            status: 'SUCCESS',
+            temporalStatus: computeTemporalStatus(local, asOfDate),
+            asOfDate,
+            source: 'LOCAL_OKF_FS',
+            retrievalMode: 'LOCAL_SNAPSHOT',
+            snapshotVersion: local.version || '2.4.0',
+            isOfflineSnapshot: true,
+            advisory: 'Offline statutory snapshot. For real-time gazetted amendments, sync with Edge API or run in edge mode.',
+            statute: local
+        };
+    }
+
+    // 2. Auto Mode: Local-first check
+    if (mode === 'auto' && fs.existsSync(okfDir)) {
         try {
-            const local = lookupLocalStatute(section, okfDir);
+            const local = lookupLocalStatute(cleanSection, okfDir);
             if (local) {
-                const temporalStatus = computeTemporalStatus(local, asOfDate);
                 return {
                     status: 'SUCCESS',
-                    temporalStatus,
+                    temporalStatus: computeTemporalStatus(local, asOfDate),
                     asOfDate,
                     source: 'LOCAL_OKF_FS',
+                    retrievalMode: 'LOCAL_SNAPSHOT',
+                    snapshotVersion: local.version || '2.4.0',
+                    isOfflineSnapshot: true,
+                    advisory: 'Offline statutory snapshot. For real-time gazetted amendments, sync with Edge API or run in edge mode.',
                     statute: local
                 };
             }
         } catch (_) {}
     }
 
-    // 2. Edge API fallback
+    // 3. Edge API query
     const baseUrl = options.baseUrl || DEFAULT_BASE_URL;
     const url = new URL('/api/v1/statutory/lookup', baseUrl);
-    url.searchParams.set('section', section.trim());
+    url.searchParams.set('section', cleanSection);
 
     if (options.asOfDate) {
         url.searchParams.set('asOfDate', options.asOfDate.trim());
@@ -299,26 +332,33 @@ export async function lookupStatute(section, options = {}) {
             headers
         });
     } catch (netErr) {
-        // If network request failed (e.g. offline) and local statute is available, return local
-        if (fs.existsSync(okfDir)) {
-            const local = lookupLocalStatute(section, okfDir);
+        // In auto mode, if network failed but local is available, fall back with explicit flag
+        if (mode === 'auto' && fs.existsSync(okfDir)) {
+            const local = lookupLocalStatute(cleanSection, okfDir);
             if (local) {
                 return {
                     status: 'SUCCESS',
                     temporalStatus: computeTemporalStatus(local, asOfDate),
                     asOfDate,
                     source: 'LOCAL_OKF_FS',
+                    retrievalMode: 'LOCAL_SNAPSHOT_FALLBACK',
+                    snapshotVersion: local.version || '2.4.0',
+                    isOfflineSnapshot: true,
+                    advisory: `Edge query unreachable (${netErr.message}); degraded to offline snapshot.`,
                     statute: local
                 };
             }
         }
-        throw new Error(`[@mudraforge/statutory] Network lookup failed and local statute not found: ${netErr.message}`);
+        const connErr = new Error(`[@mudraforge/statutory] Edge query failed: ${netErr.message}`);
+        connErr.code = 'EDGE_NETWORK_ERROR';
+        throw connErr;
     }
 
     if (!response.ok) {
         const errorJson = await response.json().catch(() => ({}));
         const err = new Error(errorJson.message || `Statutory lookup failed with HTTP ${response.status}`);
         err.status = response.status;
+        err.code = response.status === 404 ? 'SECTION_NOT_FOUND' : 'EDGE_API_ERROR';
         err.error = errorJson.error;
         err.availableSections = errorJson.availableSections;
         throw err;
@@ -327,7 +367,9 @@ export async function lookupStatute(section, options = {}) {
     const data = await response.json();
     return {
         ...data,
-        source: 'EDGE_API'
+        source: 'EDGE_API',
+        retrievalMode: 'EDGE_LIVE',
+        isOfflineSnapshot: false
     };
 }
 

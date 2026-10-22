@@ -273,6 +273,23 @@ Treating statutory maintenance as an unfunded volunteer project invariably produ
 ### 8.3 Perpetual MIT License Guarantee
 - **The Local Snapshot Remains Free Forever**: Every statutory file and manifest downloaded or cloned under the MIT license remains permanently free for offline traversal, local agent skills, and internal experimentation.
 - **No Vendor Lock-In**: Organizations are free to maintain, inspect, and fork their local `./okf/` directories indefinitely.
+
+---
+
+### 8.4 Edge Consistency & Immutable Release Strategy (Cloudflare KV)
+
+Cloudflare Workers KV is a globally distributed, eventually consistent storage layer across 300+ points of presence (PoPs). In statutory finance, serving inconsistent states during an active release rollout (e.g. one edge PoP serving an amended 0.1% TDS rate while another serves an outdated 1% rate) introduces compliance risk.
+
+To prevent version skew across regions, the edge runtime employs an **Immutable Release Key Pattern**:
+
+1. **Immutable Artifact Keys**: Every section schema, circular, and form is stored under an immutable, version-tagged key:
+   ```
+   statutory:releases:<semver>:<domain>:<section_code>
+   # Example: statutory:releases:v2.4.0:direct_tax:194Q
+   ```
+   Once written to KV, the bytes for a specific semver key are permanently immutable.
+2. **Atomic Manifest Pointers**: Releases are indexed by a versioned root manifest (`statutory:manifests:v2.4.0`). The active pointer is switched only after all constituent keys are fully populated.
+3. **Cache Invalidation & ETag Gates**: The manifest endpoint serves HTTP `ETag` validators with short edge TTLs (`Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600`). This ensures edge caches converge globally within minutes while allowing clients to detect release changes via deterministic SHA-256 root hash comparisons.
 - **Commercial Boundary**: Only the automated, continuously maintained edge update stream, neural discovery search, and deep deterministic calculator engines require an Enterprise API subscription post-beta.
 
 ---

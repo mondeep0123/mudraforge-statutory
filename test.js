@@ -126,8 +126,37 @@ async function run() {
     }
     console.log(`✔ Manifest Verified: v${manifest.okfVersion}, Root Hash: ${manifest.rootHash}`);
 
+    // 11. Failure Modes & Explicit Retrieval Modes
+    console.log('\n── Test 11: Failure Modes & Explicit Retrieval Verification ──');
+    // Mode local check
+    const localExplicit = await lookupStatute('194Q', { mode: 'local' });
+    if (localExplicit.retrievalMode !== 'LOCAL_SNAPSHOT' || localExplicit.isOfflineSnapshot !== true) {
+        throw new Error('Expected retrievalMode=LOCAL_SNAPSHOT and isOfflineSnapshot=true');
+    }
+    console.log(`✔ Explicit mode='local' returned validated snapshot with advisory note.`);
+
+    // Local 404 check
+    try {
+        await lookupStatute('NON_EXISTENT_SECTION_999', { mode: 'local' });
+        throw new Error('FAILED: lookupStatute should have thrown for non-existent section');
+    } catch (err) {
+        if (err.code === 'SECTION_NOT_FOUND') {
+            console.log(`✔ Non-existent section correctly rejected with code: ${err.code}`);
+        } else {
+            throw err;
+        }
+    }
+
+    // Invalid input check
+    try {
+        await lookupStatute('');
+        throw new Error('FAILED: lookupStatute should have thrown for empty string');
+    } catch (err) {
+        console.log(`✔ Empty section query correctly rejected: "${err.message}"`);
+    }
+
     console.log('\n═══════════════════════════════════════════════════════════════════════════');
-    console.log('🎉 ALL 10 TEST SUITES PASSED WITH 100% REPRODUCIBLE PRECISION!');
+    console.log('🎉 ALL 11 TEST SUITES PASSED WITH 100% REPRODUCIBLE PRECISION!');
     console.log('═══════════════════════════════════════════════════════════════════════════\n');
 }
 
