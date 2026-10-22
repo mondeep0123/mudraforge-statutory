@@ -31,6 +31,48 @@
 
 ---
 
+## The Payment Instruction Boundary & End-to-End AP Architecture
+
+> **The Dangerous Moment in Finance AI**:  
+> *The dangerous moment in finance AI isn't when the model is wrong. It's when its output becomes a payment instruction.*
+> 
+> In marketing, an AI hallucination is a typo. In accounts payable, an unhandled bank timeout can trigger a retry that double-pays a vendor.
+> 
+> Hardening the financial runtime for **Adesha, MudraForge's organizational AI**, our principle is simple:  
+> **Reasoning can be probabilistic, but financial execution needs deterministic boundaries.**
+
+### The Four Pillars of Autonomous Finance Execution
+
+1. **Retrieval is Not Verification**: Finding a document or matching keywords is not legal verification. Real accounting requires validating evidence against connected systems of record (including live Zoho Books / SAP ERP readback) and authenticated tenant statutory vaults.
+2. **Safe Tools Do Not Guarantee Safe Workflows**: An AI agent can call individually safe API tools and still coordinate an unauthorized or illegal transaction. Generative models coordinate investigations; deterministic code calculates statutory taxes and enforces ledger invariants (*Rule 11: Agreement with the Engine ≠ Agreement with the Law*).
+3. **Preventing Silent Financial Drift**: Deterministic code computes numbers. RFC 8785 JSON Canonicalization Scheme (JCS) and SHA-256 bind calculation results to a verifiable fingerprint. The hash does not compute—it detects changes between calculation, human authorization, and execution. If the result no longer matches the fingerprint, the workflow halts.
+4. **Testing Payment Boundaries Against Failure**: Single-use CAS leases prevent duplicate payments under concurrent races. Formal TLA+ modeling with the TLC Model Checker explored all 361 reachable states in our configured distributed model with 0 invariant violations and caught 4 injected defects. Edge execution runs on Cloudflare Workers V8 isolates with zero-discrepancy double-entry ledger writebacks.
+
+### Seven-Stage End-to-End AP Governance Lifecycle
+
+```
+Stage 1: Invoice Ingestion (IRP QR / PDF)
+    ↓
+Stage 2: OKF Rule Resolution (Sub-1ms Local Offline Lookup)
+    ↓
+Stage 3: Deterministic Statutory Computation (Excess Math & GST Unbundling)
+    ↓
+Stage 4: Cryptographic Payment Authorization Lease (Single-Use Atomic CAS Gate)
+    ↓
+Stage 5: Human-in-the-Loop Authority Harness (CFO Biometric Passkey / Mobile)
+    ↓
+Stage 6: Bank Rail Settlement (Host-to-Host Corporate RTGS)
+    ↓
+Stage 7: General Ledger Balanced Double-Entry Writeback (ERP Equilibrium: ₹0.00 Discrepancy)
+```
+
+Run this audited 7-stage AP simulation directly in your local terminal:
+```bash
+npm run example:trace
+```
+
+---
+
 ## Statutory Authority & Epistemic Boundary
 
 - **Primary Legislation & Official Circulars**: Statutory texts, executive circulars, notifications, and compliance forms in this repository are structured transpositions of official publications issued by the Ministry of Finance (CBDT/CBIC), Ministry of MSME, Ministry of Corporate Affairs (MCA), and the US Internal Revenue Service (IRS). Official government source material remains the sole statutory authority.

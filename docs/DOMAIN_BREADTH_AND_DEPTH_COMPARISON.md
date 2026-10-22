@@ -200,4 +200,4 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 1. **Lightweight Developer Gateway**: Shipping the starter seed via npm keeps package size small (~2 MB) and enables instantaneous installation for any developer or AI agent.
 2. **Deterministic Security Boundary**: Proprietary mathematical execution code (`statutory_calculator.js`), banking CAS leases, and ledger writeback engines remain protected behind the MudraForge Cloudflare Anycast API.
-3. **Continuous Expansion via Edge Sync**: New regulatory domains (Ind AS, MCA, SEBI, FEMA) are authored and verified by legal teams, deployed to the edge, and pulled on-demand via `npx @mudraforge/statutory sync`.
+3. **Continuous Expansion via Edge Sync**: New regulatory domains (Ind AS, MCA, SEBI, FEMA) are curated and verified against primary gazette notifications, official CBDT/CBIC executive circulars, and independent programmatic test fixtures, deployed to the edge, and pulled on-demand via `npx @mudraforge/statutory sync`.

@@ -8,11 +8,118 @@
 
 ---
 
-## 1. Executive Summary & Problem Formulation
+## 1. Executive Thesis: The Payment Instruction Boundary
+
+> **The Dangerous Moment in Finance AI**:  
+> *The dangerous moment in finance AI isn't when the model is wrong. It's when its output becomes a payment instruction.*
+> 
+> In marketing, an AI hallucination is a typo. In accounts payable, an unhandled bank timeout can trigger a retry that double-pays a vendor.
+> 
+> Hardening the financial runtime for **Adesha, MudraForge's organizational AI**, our principle is simple:  
+> **Reasoning can be probabilistic, but financial execution needs deterministic boundaries.**
+
+---
+
+## 2. The Four Pillars of Autonomous Finance Execution
+
+To ensure financial workflows remain resilient against model confabulation, concurrent API races, and network failures, the MudraForge architecture is grounded in four operational pillars:
+
+### Pillar 1: Retrieval is Not Verification
+Early on, prototype compliance validators relied on pre-populated test files holding expected answers. We scrapped that crutch. Real-world accounting cannot trust static assumptions.
+
+Our tests now exercise live retrieval from connected systems of record (including live Zoho Books / SAP ERP readback) and authenticated tenant statutory vaults. Finding a document or matching keywords is not legal verification; the system must verify what evidence legally supports before any downstream calculation runs or any payment lease is minted.
+
+### Pillar 2: Safe Tools Do Not Guarantee Safe Workflows
+An AI agent can call individually safe API tools and still coordinate an unauthorized or illegal transaction (e.g., deducting tax on an exempt unit or paying an altered beneficiary account).
+
+We enforce an absolute separation between reasoning and execution:
+- **Generative AI Layer**: Coordinates investigations, clarifies unstructured context, and extracts messy invoice narratives.
+- **Deterministic Execution Engine**: Evaluates statutory tax thresholds, computes paisa-level withholding, and enforces ledger invariants.
+- **Statutory Provenance**: Human oversight must not mean accountants re-auditing arithmetic; the runtime provides verifiable statutory provenance so human officers can focus on the actual business decision.
+
+> **Rule 11**: *Agreement with the Engine ≠ Agreement with the Law.*  
+> Never confuse an agent adhering to tool output with true statutory correctness. If the underlying statutory baseline is flawed, 100% agent adherence merely guarantees that the agent faithfully repeats a flawed calculation. Statutory thresholds and effective dates must be enforced by deterministic calculator functions, never left to ungrounded LLM text generation.
+
+### Pillar 3: Preventing Silent Financial Drift
+Deterministic code computes numbers. RFC 8785 JSON Canonicalization Scheme (JCS) and SHA-256 bind the calculation result to a verifiable, immutable fingerprint:
+```
+Calculation Result ──► RFC 8785 Canonicalization ──► SHA-256 Fingerprint
+```
+The cryptographic hash does not perform math—it detects any alteration between calculation, human authorization, and banking execution. If an invoice total, vendor account, or tax deduction is altered anywhere in the workflow, the fingerprint mismatch immediately halts execution before payment dispatch.
+
+### Pillar 4: Testing Payment Boundaries Against Failure
+- **Duplicate-Payment Prevention**: Single-use Compare-and-Swap (CAS) leases are tested under concurrent races using MongoDB-compatible atomic operations (`findAndModify`): exactly one consumer consumes the lease successfully; all concurrent races are rejected with `LEASE_ALREADY_CONSUMED`.
+- **Formal TLA+ State Machine Modeling**: The TLC Model Checker explored all 361 reachable states in our configured distributed model (covering two concurrent leases, retries, and network timeouts) with zero invariant violations, and caught four deliberate defects injected into the formal specification.
+- **Edge Execution**: Built on Cloudflare Workers V8 isolates, eliminating container cold starts and sandbox vulnerabilities.
+- **Accounting Integrity**: Adversarial test suites target unbalanced journals, duplicate credits, and amount mismatches, enforcing paisa-level equilibrium before ERP writeback.
+
+---
+
+## 3. End-to-End AP Architecture: From Statutory Law to Bank Settlement
+
+The journey of an accounts payable transaction from incoming PDF invoice to general ledger reconciliation traverses seven strict governance stages (`npm run example:trace`):
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ STAGE 1: INVOICE INGESTION                                             │
+│ Incoming PDF / IRN e-Invoice QR code parsed and verified.              │
+│ (Basic: INR 60,00,000 | GST 18%: INR 10,80,000 | Gross: INR 70,80,000) │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ STAGE 2: OKF RULE RESOLUTION (This Package - Zero Network Calls)       │
+│ Offline local lookup identifies Section 194Q & successor Act 2025.     │
+│ Threshold: INR 50,00,000 | Standard Rate: 0.1% | Excess Base Only      │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ STAGE 3: DETERMINISTIC STATUTORY COMPUTATION (Arithmetic Engine)       │
+│ Prior FY Purchases: INR 45,00,000 | Cumulative: INR 1,05,00,000        │
+│ Taxable Excess: INR 55,00,000 | GST Unbundled (Circular 13/2021)       │
+│ TDS Deducted: INR 5,500 | Net Payable to Vendor: INR 70,74,500         │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ STAGE 4: CRYPTOGRAPHIC PAYMENT AUTHORIZATION LEASE (Adesha CAS Gate)   │
+│ Single-Use Token: sha256-4f9e8a71... | Max Authorized: INR 70,74,500   │
+│ State: LEASE_ISSUED_UNCONSUMED (Atomic lock prevents re-execution)     │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ STAGE 5: HUMAN-IN-THE-LOOP AUTHORITY HARNESS (Mobile / Biometric)      │
+│ CFO reviews verifiable statutory provenance on mobile authority app.   │
+│ Decision: APPROVED | Transition: AUTHORIZED_FOR_SETTLEMENT             │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ STAGE 6: BANK RAIL DISBURSEMENT (Host-to-Host Corporate RTGS)          │
+│ Payout dispatched via banking gateway. HTTP 200 settled confirmed.     │
+│ Bank UTR: SIMULATED-RTGS-UTR-2026-891 | Disbursed: INR 70,74,500       │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ STAGE 7: GENERAL LEDGER BALANCED DOUBLE-ENTRY WRITEBACK (ERP)          │
+│ Balanced Journal Entry (JV-2026-04-0042) posted to ERP (SAP / Zoho):   │
+│   [DEBIT ] Purchases / Cost of Goods Sold       INR 60,00,000.00       │
+│   [DEBIT ] Input CGST Receivable (9%)           INR  5,40,000.00       │
+│   [DEBIT ] Input SGST Receivable (9%)           INR  5,40,000.00       │
+│   [CREDIT] TDS Payable under Section 194Q       INR      5,500.00      │
+│   [CREDIT] Bank Operating Account               INR 70,74,500.00       │
+│ Equilibrium: PAISA_LEVEL_PERFECT_BALANCE (Discrepancy: INR 0.00)       │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+> **Reproduce This Execution Trace Locally**:  
+> You can run the audited 7-stage execution simulation locally in your terminal:  
+> ```bash
+> npm run example:trace
+> ```
+
+---
+
+## 4. The Failure Boundaries of LLMs in Tax Law
 
 Large Language Models (LLMs) are stochastic token predictors. In corporate accounting, accounts payable automation, and ERP reconciliation, applying generative models directly to statutory compliance introduces a critical failure mode: **the conflation of generative reasoning with transactional and statutory authority**.
-
-### The Failure Boundaries of LLMs in Tax Law
 
 1. **Non-Linear Cumulative Thresholds**:
    Statutory tax provisions in India are non-linear and cumulative across financial years.
@@ -33,7 +140,7 @@ Large Language Models (LLMs) are stochastic token predictors. In corporate accou
 
 ---
 
-## 2. Architectural Principle: Sovereign Separation of Powers
+## 5. Architectural Principle: Sovereign Separation of Powers
 
 To resolve these vulnerabilities, MudraForge enforces a strict **Separation of Powers**:
 
@@ -63,7 +170,7 @@ To resolve these vulnerabilities, MudraForge enforces a strict **Separation of P
 
 ---
 
-## 3. The Open Knowledge Format (OKF) Implementation
+## 6. The Open Knowledge Format (OKF) Implementation
 
 The foundation of the statutory knowledge layer is the **Open Knowledge Format (OKF)**, an open specification introduced by Google Cloud as the "OpenAPI for Knowledge" (upstream specification: v0.2).
 
@@ -138,7 +245,7 @@ Transactions dated before 1 April 2026 resolve under the 1961 Act; transactions 
 
 ---
 
-## 4. Financial Regulatory Domains Currently Supported
+## 7. Financial Regulatory Domains Currently Supported
 
 The OKF statutory substrate is purpose-built for **corporate finance departments, enterprise accounts payable (AP), treasury controllers, and tax compliance teams**.
 
@@ -163,7 +270,7 @@ Currently, the substrate indexes and provides deterministic ground truth across 
 
 ---
 
-## 5. Requesting New Statutes & Expanding Legal Domains
+## 8. Requesting New Statutes & Expanding Legal Domains
 
 Enterprise finance operations are broad, and finance teams frequently encounter specialized regulatory frameworks beyond the initial core set.
 
@@ -182,7 +289,7 @@ Examples of sections and domains we are actively indexing or can prioritize on r
 
 ---
 
-## 6. How the Knowledge Layer Connects to Adesha
+## 9. How the Knowledge Layer Connects to Adesha
 
 The statutory substrate published in this repository (`@mudraforge/statutory`) acts as the declarative knowledge layer for the broader **MudraForge Adesha Governance Platform**:
 
@@ -228,7 +335,7 @@ flowchart TD
 
 ---
 
-## 7. Working Example: Offline Local Traversal
+## 10. Working Example: Offline Local Traversal
 
 The public package allows developers and agents to traverse statutory law with zero external network requests:
 
@@ -248,9 +355,9 @@ const isActive2025 = await isStatuteActive('206C(1H)', '2025-06-01'); // false (
 
 ---
 
-## 8. Public Commons vs. Commercial Lifecycle & Sustainability Policy
+## 11. Public Commons vs. Commercial Lifecycle & Sustainability Policy
 
-### 8.1 Free Edge Sync and Maintenance Policy
+### 11.1 Free Edge Sync and Maintenance Policy
 The MudraForge Statutory project publishes an open, locally usable statutory knowledge package under the MIT License. The hosted free sync service (`npx @mudraforge/statutory sync`) is provided on a best-effort basis and is not a guarantee of perpetual availability, comprehensive statutory coverage, or continuous updates.
 
 1. **Maintainer Capacity & Community Updates**: Future updates to the hosted free dataset depend on maintainer capacity, community contributions, infrastructure costs, and project priorities. The free service may experience limited coverage, delayed updates, or periods without new releases.
@@ -260,7 +367,7 @@ The MudraForge Statutory project publishes an open, locally usable statutory kno
 
 ---
 
-### 8.4 Edge Consistency & Immutable Release Strategy (Cloudflare KV)
+### 11.2 Edge Consistency & Immutable Release Strategy (Cloudflare KV)
 
 Cloudflare Workers KV is a globally distributed, eventually consistent storage layer across 300+ points of presence (PoPs). In statutory finance, serving inconsistent states during an active release rollout (e.g. one edge PoP serving an amended 0.1% TDS rate while another serves an outdated 1% rate) introduces compliance risk.
 
@@ -278,7 +385,7 @@ To prevent version skew across regions, the edge runtime employs an **Immutable 
 
 ---
 
-## 9. Related Documents
+## 12. Related Documents
 
 - [`DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md`](./DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md) — Authoritative matrix comparing the 4 starter domains against the full 11-domain sovereign roadmap.
 - [`VERIFICATION.md`](./VERIFICATION.md) — Formal verification report, TLA+ state machine model, mutation tests, and documented limitations.

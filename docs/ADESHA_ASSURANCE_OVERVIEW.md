@@ -10,11 +10,34 @@
 
 While the open-source `@mudraforge/statutory` package provides declarative knowledge schemas, thresholds, and administrative circulars, the **Adesha Sovereign Runtime** is the commercial execution engine. It governs autonomous accounts payable, payment authorization leases, two-way ERP reconciliation, and bank rail execution.
 
-To guarantee that autonomous financial agents cannot execute unauthorized disbursements or corrupt general ledgers, the Adesha runtime is engineered using formal verification, adversarial mutation testing, and fail-closed state machine invariants.
+> **The Payment Instruction Boundary**:  
+> *The dangerous moment in finance AI isn't when the model is wrong. It's when its output becomes a payment instruction. In marketing, an AI hallucination is a typo. In accounts payable, an unhandled bank timeout can trigger a retry that double-pays a vendor. Reasoning can be probabilistic, but financial execution needs deterministic boundaries.*
+
+To guarantee that autonomous financial agents cannot execute unauthorized disbursements or corrupt general ledgers, the Adesha runtime is engineered around four core execution pillars, formal verification, adversarial mutation testing, and fail-closed state machine invariants.
 
 ---
 
-## 2. Statutory Ground Truth Oracle & Adversarial Mutation Matrix
+## 2. The Four Pillars of Autonomous Finance Execution
+
+1. **Retrieval is Not Verification**:
+   Early on, our claim validator relied on pre-populated test files holding expected answers. We scrapped that crutch. Our tests now exercise retrieval from connected systems of record (including live Zoho Books / SAP ERP readback) and authenticated tenant statutory vaults. Finding a document or matching keywords isn't enough; the system must verify what evidence legally supports before any downstream calculation runs.
+
+2. **Safe Tools Do Not Guarantee Safe Workflows**:
+   An AI agent can call individually safe API tools and still coordinate an unauthorized or illegal transaction. We separated reasoning from execution: the generative AI coordinates investigations and extracts messy invoice narratives; deterministic code calculates statutory taxes and enforces ledger invariants. Human oversight shouldn't mean accountants re-auditing math; the runtime provides statutory provenance so humans can focus on the actual decision.
+   *Rule 11: Agreement with the Engine ≠ Agreement with the Law.*
+
+3. **Preventing Silent Financial Drift**:
+   Deterministic code computes numbers. RFC 8785 JSON Canonicalization Scheme (JCS) and SHA-256 bind the result to a verifiable, immutable fingerprint. The hash doesn't calculate—it detects any drift between calculation, human approval, and bank execution. If the financial result no longer matches the verified record, the workflow halts immediately.
+
+4. **Testing Payment Boundaries Against Failure**:
+   - **Duplicate-Payment Prevention**: Single-use Compare-and-Swap (CAS) leases tested under concurrent races using MongoDB-compatible atomic operations (`findAndModify`): exactly one consumer succeeds; all concurrent races are rejected with `LEASE_ALREADY_CONSUMED`.
+   - **Formal TLA+ Modeling**: TLC explored all 361 reachable states in our configured distributed model (covering two leases, retries, and network timeouts) with zero invariant violations, and caught four deliberate defects injected into the spec.
+   - **Edge Execution**: Built on Cloudflare Workers V8 isolates without container-based execution or cold starts.
+   - **Accounting Integrity**: Adversarial tests target unbalanced journals, duplicate credits, and amount mismatches, enforcing strict double-entry ledger balance before ERP writeback.
+
+---
+
+## 3. Statutory Ground Truth Oracle & Adversarial Mutation Matrix
 
 To prevent the **Epistemic Gap** (where engineers embed incorrect tax interpretations into both the code and the tests), Adesha validates statutory computations against an independent test oracle across an adversarial mutation matrix.
 
@@ -37,19 +60,34 @@ To prevent the **Epistemic Gap** (where engineers embed incorrect tax interpreta
 
 ---
 
-## 3. Formal TLA+ State Machine Verification
+## 4. Formal TLA+ State Machine Verification
 
-The payment authorization lease lifecycle in MudraForge Adesha is formally modeled in TLA+ (`specs/adesha_lease_state_machine.tla`) and verified using the **TLC Model Checker**.
+The payment authorization lease lifecycle in MudraForge Adesha is formally modeled in TLA+ (`specs/adesha_lease_state_machine.tla`) and verified using the **TLC Model Checker** (`tlc2.TLC`).
 
-### Model Structure & State Space
+### 1. Full Concurrent Distributed Model (361 Reachable States)
+In the complete distributed execution configuration covering concurrent transactions, retry attempts, and network drops:
+- **Reachable States Explored**: **361 unique reachable states** fully traversed by TLC.
+- **Safety Invariant Violations**: **0 violations**. Every reachable state maintains mutual exclusion, single-consumption CAS gates, and fail-closed ambiguity preservation.
+- **Concurrency Coverage**: Evaluates concurrent races between multiple leases competing for settlement rails under network fault conditions.
+
+### 2. Four Deliberate TLA+ Mutation Challenges (Caught by TLC)
+To prove that the formal TLA+ specification is sensitive to real-world edge defects (and not a tautology), four unsafe transitions were deliberately injected into the model (`tools/run_tla_mutant_challenges.js`). TLC caught and generated counterexample traces for every single mutant:
+
+| Mutant ID | Injected Defect | Formal Invariant Guarding It | TLC Verification Outcome |
+| :--- | :--- | :--- | :--- |
+| **TLA-MUTANT-1** | Missing CAS guard (permitting lease re-use post-settlement) | `InvariantNoDoubleDisbursement` | [CAUGHT] TLC found counterexample trace at Depth 4 |
+| **TLA-MUTANT-2** | Optimistic timeout retry under HTTP 504 uncertainty | `InvariantAmbiguityPreservedFailClosed` | [CAUGHT] TLC found counterexample trace at Depth 3 |
+| **TLA-MUTANT-3** | Premature ledger writeback prior to bank settlement | `InvariantNoLedgerWritebackWithoutSettlement` | [CAUGHT] TLC found counterexample trace at Depth 2 |
+| **TLA-MUTANT-4** | Unleased direct dispatch bypassing authority harness | `InvariantNoUnleasedDisbursement` | [CAUGHT] TLC found counterexample trace at Depth 1 |
+
+### 3. Single-Lease Micro-State Space (25 States & 225 Evaluations)
+For an isolated lease in the differential test harness (`tests/test_oracle_tla_differential_equivalence.js`):
 - **Reachable States**: 25 unique reachable states.
 - **Formal Actions**: 8 formal transition actions.
-- **Differential Evaluations**: 225 state-action checks:
-  - 28 enabled transitions.
-  - 197 blocked precondition rejections.
-  - **Result**: 100% agreement between the TLA+ specification and the private runtime implementation.
+- **Differential Evaluations**: 225 state-action checks (28 enabled transitions, 197 blocked precondition rejections).
+- **Agreement**: 100% differential equivalence between the TLA+ formal specification and the private runtime implementation.
 
-### Mathematical Derivation of the 225 Checks
+#### Mathematical Derivation of the 225 Checks
 1. **Seven Deterministic Actions (Single-Branch, 1 Evaluation per State)**:
    `IssueLease`, `ConsumeLeaseCAS`, `WireSettlementSuccess`, `StatementIngestionConfirmsSettlement`, `GatewayCertifiesReversal`, `RetryWireWithLinkedKey`, `PostGeneralLedgerVoucher`.
    $$\text{Subtotal} = 25 \text{ states} \times 7 \text{ actions} \times 1 \text{ branch} = 175 \text{ evaluations}$$
@@ -64,7 +102,7 @@ The payment authorization lease lifecycle in MudraForge Adesha is formally model
 
 ---
 
-## 4. The Two-Generals Problem & In-Flight Banking Resolution
+## 5. The Two-Generals Problem & In-Flight Banking Resolution
 
 In distributed banking, network communication over public payment rails is fundamentally subject to the **Two-Generals Problem**:
 
@@ -88,7 +126,7 @@ When an enterprise runtime encounters an HTTP 504 gateway timeout, socket reset,
 
 ---
 
-## 5. Double-Entry General Ledger Balance Invariants
+## 6. Double-Entry General Ledger Balance Invariants
 
 In corporate accounting, recording a voucher before external settlement creates accounting distortions. Adesha enforces:
 
@@ -105,7 +143,21 @@ In corporate accounting, recording a voucher before external settlement creates 
 
 ---
 
-## 6. Access & Commercial Deployment
+## 7. Current Development Status & Scoped Pilot Boundary
+
+> **Honest Operational Status**:  
+> All 60 enterprise test suites are passing across formal TLA+ state machines, mutation matrices, and differential calculators, and our core engine baseline is frozen at `v2.2.0`.  
+>  
+> Importantly, **Adesha itself remains under active development**; passing tests does not make the product production-ready. Our planned initial pilot is deliberately and narrowly scoped:
+> - **Domain Focus**: Domestic Accounts Payable (AP) in supervised shadow mode.
+> - **System of Record**: Live ERP readback from connected systems (Zoho Books / SAP S/4HANA).
+> - **Safety Constraints**: No live bank credentials connected, and **zero live funds at risk**.
+>
+> Autonomous finance will not be unlocked by bigger AI models alone. It requires traceable evidence, deterministic calculations, and execution boundaries that hold when a model gets something wrong.
+
+---
+
+## 8. Access & Commercial Deployment
 
 For enterprises, financial institutions, and audit firms seeking deployment details, pilot onboarding, or custom ERP connector specifications:
 
