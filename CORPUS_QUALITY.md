@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.4.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-22T17:20:40.187Z
+> **Generated Timestamp**: 2026-10-22T17:29:39.971Z
 
 ---
 
@@ -35,6 +35,12 @@
    - Every release candidate must pass both:
      - **Gate A (Structural Validation)**: Zero schema lint errors via `npm run validate`.
      - **Gate B (Independent Legal Ground Truth)**: Differential test suite (`test.js`) verifying calculations against independently prepared CA tax baselines.
+
+4. **Four Distinct Levels of Verification Assurance**:
+   - **Level 1 (Reachable Source)**: The declared official Gazette, CBDT, or CBIC URL resolves with HTTP 200 (verified by automated crawl).
+   - **Level 2 (Text Conformance)**: The statutory threshold numbers, rates, and effective dates in `section.json` correspond directly to the official legislative paragraphs.
+   - **Level 3 (Differential Computation)**: The calculation logic is independently executed against edge-case test vectors (e.g. ₹50L excess boundary, inoperative PAN rates) in `test.js`.
+   - **Level 4 (Practitioner Review)**: The provision has undergone review by an empanelled Chartered Accountant or legal scholar (indicated in `reviewedBy`).
 
 ---
 

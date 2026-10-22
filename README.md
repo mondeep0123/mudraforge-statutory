@@ -227,13 +227,13 @@ The package bundles an initial curated baseline snapshot across all four domains
 
 ```bash
 # Step 1: Check if newer statutes, circulars, or gazette amendments exist on the edge
-npx mudraforge-statutory check-update
+npx @mudraforge/statutory check-update
 
 # Step 2: Synchronize the complete statutory bundle directly to your local ./okf/ directory
-npx mudraforge-statutory sync
+npx @mudraforge/statutory sync
 
 # Step 3: Browse your full local statutory library interactively
-npx mudraforge-statutory browse
+npx @mudraforge/statutory browse
 ```
 
 ---
@@ -248,7 +248,7 @@ npm install @mudraforge/statutory
 ### 2. Initialize AI Agent Skill
 Installs `SKILL.md` into your workspace's `.agents/skills/` directory:
 ```bash
-npx mudraforge-statutory init-skill
+npx @mudraforge/statutory init-skill
 ```
 
 ### 3. Direct Programmatic Traversal (Zero Dependencies, Offline-First)
