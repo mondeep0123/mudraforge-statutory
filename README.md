@@ -27,6 +27,32 @@ This package delivers:
 3. **Interactive Terminal Browser**: Browse and inspect laws directly in your shell (`browse`).
 4. **Cloud Anycast Edge API**: Sub-10ms global endpoints on Cloudflare edge.
 
+### 🐕 Built & Dogfooded by MudraForge
+This is **not a synthetic library or an academic prototype**. `@mudraforge/statutory` is the exact, production-proven legal oracle subsystem that **MudraForge actively uses and dogfoods internally** to govern its own autonomous financial agents (Adesha), accounts payable ledgers, and multi-tenant ERP reconciliation pipelines. Every statute, threshold check, and temporal boundary in this repository is battle-tested in our own production stack before being released to the public commons.
+
+---
+
+## Legal Domains Currently Covered
+
+The OKF substrate currently indexes and enforces ground truth across four major regulatory domains:
+
+### 1. Direct Tax (Income Tax & TDS/TCS)
+- **Section 194Q**: 0.1% TDS on purchase of goods exceeding ₹50 Lakhs cumulative annual threshold (calculating strictly on the excess).
+- **Section 206C(1H)**: TCS on sale of goods, with automated temporal interception of its **1 April 2025 sunset** under the Finance Act, 2025.
+- **Section 194J**: Fees for Technical Services (2% FTS) vs. Professional Fees (10%), handling 5% non-PAN penalty rates.
+- **Dual-Act Forward Mapping**: Complete cross-compilation matrix from the *Income-tax Act, 1961* to the upcoming *Income-tax Act, 2025* (taking effect 1 April 2026), mapping sections seamlessly (e.g., Section 194Q → Section 393(1), Table 8, Item (ii)).
+
+### 2. Indirect Tax (Goods & Services Tax - GST)
+- **CGST Section 17(5)**: Comprehensive statutory negative list for Blocked Input Tax Credit (ITC)—including motor vehicles, corporate food & beverages, personal consumption, club memberships, and statutory exceptions/provisos.
+
+### 3. Micro, Small & Medium Enterprises (MSME & Section 43B(h))
+- **MSMED Act, 2006 (Sections 15 & 16)**: Strict statutory payment clock (15 days without agreement, max 45 days with written agreement) and non-negotiable compound penal interest at **3 times the RBI Bank Rate** (compounded monthly).
+- **Trader Exclusion Rule**: Automated enforcement of Ministry of MSME OM No. 2/1(5)/2021-P&G/Policy, strictly excluding wholesale and retail traders (NIC 45, 46, 47) from delayed payment protection.
+- **Income Tax Linkage**: Cross-statutory disallowance rules under Section 43B(h) for overdue payments.
+
+### 4. Cross-Border & US-India International Tax
+- **US Internal Revenue Code (IRC §§ 901 & 904)**: Foreign Tax Credit (FTC) limitation baskets (General Category vs. Passive Category), Pass-Through Entity (PTE) tax pass-throughs, and Schedule K-3 dual-reporting compliance for Indo-US cross-border ventures.
+
 ---
 
 ## Free Local OKF vs. Paid Cloud Enterprise Tier
@@ -151,6 +177,25 @@ npx mudraforge-statutory sync
 # List all indexed sections
 npx mudraforge-statutory list
 ```
+
+---
+
+## 🤝 Contributing to OKF & Calling Out Legal Overlooks
+
+Statutory law is alive, nuanced, and constantly shaped by new CBDT/CBIC circulars, court rulings, ITAT orders, and annual Finance Acts. 
+
+**If you spot:**
+- A statutory oversight or omitted notification
+- An ambiguous circular interpretation or missing legal proviso
+- An edge-case threshold interaction (e.g., GST component exclusion vs TDS turnover limits)
+- A section or domain you want indexed into the OKF commons
+
+**Please call it out or contribute!** We treat statutory ground truth as an open, collective effort for the entire developer and accounting ecosystem. You can contribute or report issues anywhere you can reach us:
+
+- **GitHub Issues & PRs**: Open an [Issue](https://github.com/mondeep0123/mudraforge-statutory/issues) or submit a Pull Request right here on this repository.
+- **Engineering Email**: [hello@mudraforge.in](mailto:hello@mudraforge.in) or [support@mudraforge.in](mailto:support@mudraforge.in)
+- **Direct Founder Contact**: Mondeep Engti at [mondeepe@gmail.com](mailto:mondeepe@gmail.com)
+- **LinkedIn / Socials**: Reach out to Mondeep directly on [LinkedIn](https://linkedin.com) or Twitter/X.
 
 ---
 
