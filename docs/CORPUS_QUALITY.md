@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.4.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-22T19:48:52.084Z
+> **Generated Timestamp**: 2026-10-22T20:02:02.530Z
 
 ---
 
@@ -11,11 +11,11 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 15 resolvable gazette URLs | 15 total citations declared | **100.0%** | VERIFIED |
-| **Temporal Validity Bounds** | 6 sections with explicit dates | 6 total bundled sections | **100.0%** | VERIFIED |
+| **Primary Source Citations** | 18 resolvable gazette URLs | 18 total citations declared | **100.0%** | VERIFIED |
+| **Temporal Validity Bounds** | 7 sections with explicit dates | 7 total bundled sections | **100.0%** | VERIFIED |
 | **Dual-Act 2025 Transition Bridges** | 3 direct tax provisions mapped | 3 direct tax provisions | **100.0%** | VERIFIED |
-| **Attached Administrative Circulars** | 6 official circulars | 6 sections across 4 domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 8 schemas/templates | 6 sections across 4 domains | **100% Attached** | VERIFIED |
+| **Attached Administrative Circulars** | 8 official circulars | 6 sections across 4 domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 10 schemas/templates | 6 sections across 4 domains | **100% Attached** | VERIFIED |
 | **Cryptographic Merkle Verification** | 20 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
@@ -48,6 +48,7 @@
 
 | Section Code | Statutory Provision | Governing Statute | Temporal Window | Status | Citations | Circulars | Forms | 2025 Act Successor |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **50B** | Special provision for computation of capital gains in case of slump sale | Income-tax Act, 1961 (Act No. 43 of 1961) | `2000-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 2 | 2 | Income-tax Act, 2025 (Section 78 (Capital gains on slump sale of undertakings)) |
 | **206C(1H)** | Collection of tax at source by seller on receipt of consideration for sale of goods (Omitted effective 1 April 2025) | Income-tax Act, 1961 | `2020-10-01` to `2025-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 0 | Finance Act, 2025 (Statutory Sunset) (Section 206C(1H) Omitted) |
 | **194Q** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 2 | 2 | Income-tax Act, 2025 (Section 393(1), Table 8, Item (ii)) |
 | **194J** | Fees for professional or technical services, royalty, and non-compete fees | Income-tax Act, 1961 | `1995-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 6, Item (iii)) |

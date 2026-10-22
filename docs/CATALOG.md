@@ -12,6 +12,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 
 | Domain | Section | Governing Statute | Validity Period | Temporal Status | Key Statutory Threshold | Primary Form / Schedule |
 |---|---|---|---|---|---|---|
+| `corporate_ma_restructuring` | [**50B**](#50b) | Income-tax Act, 1961 | 2000-04-01 &rarr; In Force | `Active` | General Provision | `form_3cea_chartered_accountant_report` |
 | `direct_tax` | [**206C(1H)**](#206c-1h-) | Income-tax Act, 1961 | 2020-10-01 &rarr; 2025-03-31 | **Sunset** (2025-03-31) | Seller > ₹10Cr; Receipts > ₹50L | N/A |
 | `direct_tax` | [**194Q**](#194q) | Income-tax Act, 1961 | 2021-07-01 &rarr; 2026-03-31 | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | `form_26q_quarterly_return` |
 | `direct_tax` | [**194J**](#194j) | Income-tax Act, 1961 | 1995-07-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_16a_tds_certificate` |
@@ -37,6 +38,49 @@ The table below records the provenance baseline, verification standard, and expl
 ---
 
 ## Detailed Domain Specifications
+
+### Corporate M&A, Restructuring & Successor Liability (Income-tax & CGST)
+
+#### Section 50B: Special provision for computation of capital gains in case of slump sale
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 78 (Capital gains on slump sale of undertakings)
+- **Temporal Validity**: `2000-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Continues under Income-tax Act, 1961 and maps to Section 78 of the Income-tax Act, 2025 effective 1 April 2026.
+- **Machine-Readable Source**: [`okf/corporate_ma_restructuring/slump_sale_50b/section.json`](./okf/corporate_ma_restructuring/slump_sale_50b/section.json)
+
+**Statutory Summary**:
+> Any profits or gains arising from the slump sale (transfer of one or more undertakings as a result of the sale for a lump sum consideration without values being assigned to individual assets and liabilities u/s 2(42C)) effected in the previous year shall be chargeable to income-tax as capital gains arising from the transfer of long-term capital assets if the undertaking was owned and held by the assessee for more than 36 months, or short-term capital assets if held for not more than 36 months. Capital gain is calculated as the Full Value of Consideration (determined under Rule 11UAE) minus the aggregate net worth of the undertaking. Revaluations are ignored; depreciable assets are valued at WDV under Section 43(6); other assets at book value. No benefit of indexation is available under Section 50B(2). Transfer of a going concern attracts 0% GST under Notification 12/2017-Central Tax (Rate) Entry 2.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "longTermHoldingPeriodThresholdMonths": 36,
+  "revaluationPermittedInNetWorth": false,
+  "depreciableAssetValuationBasis": "Written Down Value (WDV) under Section 43(6)",
+  "nonDepreciableAssetValuationBasis": "Book value in balance sheet (ignoring revaluation)",
+  "indexationBenefitAvailable": false,
+  "mandatoryAuditReport": "Form 3CEA by a practicing Chartered Accountant submitted one month prior to Section 139(1) due date",
+  "gstApplicability": "Exempt (0% GST under Notification 12/2017-Central Tax (Rate) Entry 2 as transfer of going concern)",
+  "successorTaxLiability": "Joint and several liability under Section 313 of Income-tax Act and Section 85 of CGST Act",
+  "section281NocRequirement": "Mandatory tax clearance certificate from Assessing Officer if tax assessment proceedings or demand notices are pending"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Income Tax Department, Ministry of Finance** — [Section 50B, Income-tax Act, 1961](https://incometaxindia.gov.in/acts/income-tax-act-1961/section-50b.htm): *Special provision for computation of capital gains in case of slump sale*
+- **Central Board of Direct Taxes (CBDT)** — [Notification No. 68/2021 (Dated 24 May 2021)](https://incometaxindia.gov.in/communications/notification/notification_68_2021.pdf): *Rule 11UAE: Computation of fair market value of capital assets for the purposes of section 50B*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 12/2017-Central Tax (Rate) Entry 2](https://cbic-gst.gov.in/pdf/central-tax-rate/notf-12-2017-cgst-rate-english.pdf): *Services by way of transfer of a going concern, as a whole or an independent part thereof, attract 0% GST*
+
+**Executive Circulars Bundled**:
+- [`cbdt_notification_68_2021_rule_11uae_fmv.md`](./okf/corporate_ma_restructuring/slump_sale_50b/circulars/cbdt_notification_68_2021_rule_11uae_fmv.md)
+- [`cbic_notification_12_2017_going_concern_exemption.md`](./okf/corporate_ma_restructuring/slump_sale_50b/circulars/cbic_notification_12_2017_going_concern_exemption.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_3cea_chartered_accountant_report.json`](./okf/corporate_ma_restructuring/slump_sale_50b/forms/form_3cea_chartered_accountant_report.json)
+- [`section_281_tax_clearance_checklist.md`](./okf/corporate_ma_restructuring/slump_sale_50b/forms/section_281_tax_clearance_checklist.md)
+
+---
 
 ### Direct Tax (Income-tax Act, 1961 / Income-tax Act, 2025)
 

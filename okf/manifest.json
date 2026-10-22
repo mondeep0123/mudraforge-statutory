@@ -1,11 +1,14 @@
 {
   "okfVersion": "2.4.0",
-  "publishedAt": "2026-10-22T18:27:40.223Z",
-  "rootHash": "sha256-5030157ae218cc1575604bc9d473b977fe79be7ec8844575fb97b1b4b9830065",
-  "totalSections": 6,
-  "totalFiles": 20,
+  "publishedAt": "2026-10-22T20:00:33.899Z",
+  "rootHash": "sha256-d9612074241f7c2cc1d05fa5eee254996f21db56ad1ab71ac36a084ffd4169e1",
+  "totalSections": 7,
+  "totalFiles": 25,
   "changelog": "Restructured into domain hierarchy with statutory circulars, official notifications, and compliance forms/checklists.",
   "domains": {
+    "corporate_ma_restructuring": [
+      "50B"
+    ],
     "direct_tax": [
       "206C(1H)",
       "194Q",
@@ -22,6 +25,7 @@
     ]
   },
   "sections": [
+    "50B",
     "206C(1H)",
     "194Q",
     "194J",
@@ -30,6 +34,11 @@
     "MSMED-15-16"
   ],
   "files": {
+    "corporate_ma_restructuring/slump_sale_50b/circulars/cbdt_notification_68_2021_rule_11uae_fmv.md": "6c4f2a73bade6171d896112344be493e88add1535e2d654b8c4f6183ddedb4c8",
+    "corporate_ma_restructuring/slump_sale_50b/circulars/cbic_notification_12_2017_going_concern_exemption.md": "347e5266a996d8de67d5d020dd81779a7867662d039986fac3652067c94f7cdc",
+    "corporate_ma_restructuring/slump_sale_50b/forms/form_3cea_chartered_accountant_report.json": "ce245341e41e92f1a38a9af9abc27535578a71984bcdc4d63c45fe4d6de51a25",
+    "corporate_ma_restructuring/slump_sale_50b/forms/section_281_tax_clearance_checklist.md": "3e3837a55c288a0ddb5e378896f0a8dddaf05a29bc6f9dc2269a2f91ee3dab89",
+    "corporate_ma_restructuring/slump_sale_50b/section.json": "bb8b6bf1ffacceaa4e0fcf494113794f0727d57e13bbd0b51875e88b3bf99bbd",
     "direct_tax/tcs_goods_206c_1h/circulars/finance_act_2025_sunset_memo.md": "c7b02dfa6e429448b13621a32eb1719e1cf9fa7bcf98aa39dc827f370903ecf8",
     "direct_tax/tcs_goods_206c_1h/section.json": "0ca81591f852c7efb9bf67c8ddb002bafa688ad54e1d1b44e684c928054e048c",
     "direct_tax/tds_goods_194q/circulars/cbdt_circular_13_2021_guidelines.md": "02b6c9f78e59626bd4912ce474878c712bb5d019f368623d68e5c6a6f3f157ef",

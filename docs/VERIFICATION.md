@@ -2,8 +2,8 @@
 
 > **Audited Package**: `@mudraforge/statutory` v2.4.0 (Public Open Knowledge Commons)  
 > **Target Runtime**: Node.js v20+, Bun, Deno, Cloudflare Workers  
-> **Public Test Status**: 23 Public Conformance & Verification Suites Passing (100% Reproducible)  
-> **Cryptographic Scope**: SHA-256 Merkle root digest over 20 bundled knowledge files (0 mismatches)  
+> **Public Test Status**: 24 Public Conformance & Verification Suites Passing (100% Reproducible)  
+> **Cryptographic Scope**: SHA-256 Merkle root digest over 25 bundled knowledge files (0 mismatches)  
 
 ---
 
@@ -71,6 +71,7 @@ The regression suite (`test.js`) verifies calculations against independently for
 | **Indirect Tax: CGST Sec 17(5)** | Blocked ITC negative list categories | Motor vehicles <= 13 seats, food/catering, club memberships | [PASS] Blocked |
 | **MSME: MSMED Sections 15 & 16** | Payment window & compound penal interest | 15 days default / 45 days written contract; 3x RBI bank rate | [PASS] Verified |
 | **Cross-Border: IRC §§ 901/904** | Foreign Tax Credit limitation baskets | Pass-through entity taxes, IRS Schedule K-3 requirement | [PASS] Verified |
+| **Corporate M&A: Section 50B** | Slump sale net worth computation & FMV | WDV for depreciable assets, revaluations ignored, 0% GST going concern | [PASS] Verified |
 | **Local Resilience (Dead Network)**| Edge query unreachable / simulated dead network | Gracefully falls back to local OKF disk snapshot | [PASS] Verified |
 | **Explicit Retrieval Modes** | `mode: 'local'` requested by caller | Fails closed if provision unbundled; 0 network calls | [PASS] Verified |
 

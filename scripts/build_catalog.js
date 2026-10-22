@@ -21,7 +21,8 @@ const DOMAIN_TITLES = {
     direct_tax: 'Direct Tax (Income-tax Act, 1961 / Income-tax Act, 2025)',
     indirect_tax_gst: 'Indirect Tax (Central Goods and Services Tax Act, 2017)',
     msme_commercial: 'Commercial & MSME Compliance (MSMED Act, 2006)',
-    international_tax: 'Cross-Border & International Tax (Internal Revenue Code)'
+    international_tax: 'Cross-Border & International Tax (Internal Revenue Code)',
+    corporate_ma_restructuring: 'Corporate M&A, Restructuring & Successor Liability (Income-tax & CGST)'
 };
 
 function run() {

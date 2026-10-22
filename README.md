@@ -103,12 +103,12 @@ Provisions in this repository adhere to the **Open Knowledge Format (OKF v0.2)**
 
 ## Published Inventory Metrics
 
-The repository currently publishes a verified starter seed across four regulatory domains, accompanied by official executive guidance and compliance schemas:
+The repository currently publishes a verified starter seed across five regulatory domains, accompanied by official executive guidance and compliance schemas:
 
-- **4 Foundational Regulatory Domains**: Direct Tax (TDS/TCS), Indirect Tax (GST), MSME & Working Capital, International Tax.
-- **6 Indexed Core Provisions**: Section 194Q, Section 194J, Section 206C(1H) sunset, CGST Section 17(5), MSMED Act Sections 15 & 16, US Internal Revenue Code §§ 901 & 904.
-- **6 Official Executive Circulars & Memoranda**: CBDT Circular 13/2021, CBDT Circular 23/2017, CBDT Circular 03/2020, Finance Act 2025 Sunset Memorandum, CBIC Circular 172/04/2022-GST, Ministry of MSME OM 1/4(1)/2021-P&G/Policy.
-- **8 Compliance Form Schemas & Verification Checklists**: Form 26Q quarterly TDS return, Form 16A certificate, GSTR-2B Table 4(B) ineligible ITC reconciliation, UDYAM portal registration verification, Companies Act Schedule III corporate balance sheet notes, Form 67 (Rule 128), US IRS Schedule K-3, and Vendor PAN / Section 206AB declarations.
+- **5 Foundational Regulatory Domains**: Direct Tax (TDS/TCS), Indirect Tax (GST), MSME & Working Capital, International Tax, Corporate M&A & Restructuring.
+- **7 Indexed Core Provisions**: Section 194Q, Section 194J, Section 206C(1H) sunset, CGST Section 17(5), MSMED Act Sections 15 & 16, US Internal Revenue Code §§ 901 & 904, Section 50B (Slump Sale & Successor Liability).
+- **8 Official Executive Circulars & Memoranda**: CBDT Circular 13/2021, CBDT Circular 23/2017, CBDT Circular 03/2020, Finance Act 2025 Sunset Memorandum, CBIC Circular 172/04/2022-GST, Ministry of MSME OM 1/4(1)/2021-P&G/Policy, CBDT Notification 68/2021 (Rule 11UAE FMV), CBIC Notification 12/2017 Entry 2 (0% GST going concern).
+- **10 Compliance Form Schemas & Verification Checklists**: Form 26Q quarterly TDS return, Form 16A certificate, GSTR-2B Table 4(B) ineligible ITC reconciliation, UDYAM portal registration verification, Companies Act Schedule III corporate balance sheet notes, Form 67 (Rule 128), US IRS Schedule K-3, Form 3CEA CA slump sale report schema, Section 281 & Section 313 M&A tax due diligence checklist, and Vendor PAN / Section 206AB declarations.
 - **100% Corpus Verification Suite**: Validated against statutory threshold resets, non-PAN penalty rate caps, and statutory sunset interceptions.
 
 ---
@@ -251,12 +251,22 @@ okf/
 │           ├── udyam_registration_verification.json   # UDYAM portal certificate validation schema
 │           └── schedule_iii_msme_disclosure.md        # Balance Sheet Schedule III disclosure format
 │
-└── international_tax/
-    └── foreign_tax_credit_irc_901_904/
-        ├── section.json                               # US Foreign Tax Credit limitation baskets
+├── international_tax/
+│   └── foreign_tax_credit_irc_901_904/
+│       ├── section.json                               # US Foreign Tax Credit limitation baskets
+│       └── forms/
+│           ├── form_67_statement_of_foreign_tax.json  # Indian Income Tax Form 67 (Rule 128)
+│           └── irs_schedule_k3_reporting.json         # US IRS Schedule K-3 dual-reporting schema
+│
+└── corporate_ma_restructuring/
+    └── slump_sale_50b/
+        ├── section.json                               # Section 50B slump sale & net worth rules
+        ├── circulars/
+        │   ├── cbdt_notification_68_2021_rule_11uae_fmv.md # Rule 11UAE Fair Market Value formula
+        │   └── cbic_notification_12_2017_going_concern_exemption.md # 0% GST going concern exemption
         └── forms/
-            ├── form_67_statement_of_foreign_tax.json  # Indian Income Tax Form 67 (Rule 128)
-            └── irs_schedule_k3_reporting.json         # US IRS Schedule K-3 dual-reporting schema
+            ├── form_3cea_chartered_accountant_report.json # Form 3CEA CA slump sale report schema
+            └── section_281_tax_clearance_checklist.md # Section 281 & 313 due diligence checklist
 ```
 
 Because the folder hierarchy separates legal domains and provisions cleanly, an AI agent browsing the folder can identify the applicable statute, circular, or compliance form at **0 token cost**.

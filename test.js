@@ -21,8 +21,8 @@ async function run() {
     console.log('── Test 1: Section Catalog & Manifest Listing ──');
     const sections = await listSections();
     console.log(`[PASS] listSections: retrieved ${sections.length} sections across active domains.`);
-    if (sections.length < 6) {
-        throw new Error(`Expected at least 6 sections, got ${sections.length}`);
+    if (sections.length < 7) {
+        throw new Error(`Expected at least 7 sections, got ${sections.length}`);
     }
 
     // 2. Direct Tax: Section 194Q
@@ -87,16 +87,26 @@ async function run() {
     }
     console.log(`[PASS] IRC De Minimis Substantiation Limits: $${ircThresholds.deMinimisExemptionSingleUsd} (Single) / $${ircThresholds.deMinimisExemptionMfJUsd} (MFJ). Schedule K-3 mandatory.`);
 
-    // 8. Offline Fallback & Local Resilience
-    console.log('\n── Test 8: Offline-First Local Resilience (Dead Network Simulation) ──');
+    // 8. Corporate M&A: Section 50B (Slump Sale & Successor Liability)
+    console.log('\n── Test 8: Corporate M&A — Section 50B (Slump Sale & Successor Liability) ──');
+    const res50B = await lookupStatute('50B');
+    console.log(`[PASS] lookupStatute(50B): status=${res50B.status}, temporal=${res50B.temporalStatus}`);
+    const bThresholds = res50B.statute.keyStatutoryThresholds;
+    if (bThresholds.revaluationPermittedInNetWorth !== false || bThresholds.indexationBenefitAvailable !== false) {
+        throw new Error('Section 50B statutory invariants violated (revaluations must be false, indexation must be false)');
+    }
+    console.log(`[PASS] Section 50B Verified: WDV valuation basis (${bThresholds.depreciableAssetValuationBasis}), Form 3CEA mandatory audit.`);
+
+    // 9. Offline Fallback & Local Resilience
+    console.log('\n── Test 9: Offline-First Local Resilience (Dead Network Simulation) ──');
     const deadNetworkOptions = { baseUrl: 'http://127.0.0.1:59999' };
     const offlineRes = await lookupStatute('194Q', deadNetworkOptions);
     console.log(`[PASS] lookupStatute with dead network gracefully resolved locally: source=${offlineRes.source}, status=${offlineRes.status}`);
     const offlineList = await listSections(deadNetworkOptions);
     console.log(`[PASS] listSections with dead network gracefully listed ${offlineList.length} local sections.`);
 
-    // 9. Enterprise StatutoryClient Class & Tier Attestation
-    console.log('\n── Test 9: Enterprise StatutoryClient & Calculation Gate ──');
+    // 10. Enterprise StatutoryClient Class & Tier Attestation
+    console.log('\n── Test 10: Enterprise StatutoryClient & Calculation Gate ──');
     const enterpriseClient = new StatutoryClient({
         tier: 'ENTERPRISE_PAID',
         apiKey: 'mf_live_ent_test_token_8842',
@@ -118,16 +128,16 @@ async function run() {
         }
     }
 
-    // 10. Cryptographic Manifest Check
-    console.log('\n── Test 10: Cryptographic Manifest Verification ──');
+    // 11. Cryptographic Manifest Check
+    console.log('\n── Test 11: Cryptographic Manifest Verification ──');
     const manifest = getLocalManifest();
     if (!manifest || !manifest.rootHash || !manifest.rootHash.startsWith('sha256-')) {
         throw new Error('Local manifest is missing a valid rootHash!');
     }
     console.log(`[PASS] Manifest Verified: v${manifest.okfVersion}, Root Hash: ${manifest.rootHash}`);
 
-    // 11. Failure Modes & Explicit Retrieval Modes
-    console.log('\n── Test 11: Failure Modes & Explicit Retrieval Verification ──');
+    // 12. Failure Modes & Explicit Retrieval Modes
+    console.log('\n── Test 12: Failure Modes & Explicit Retrieval Verification ──');
     // Mode local check
     const localExplicit = await lookupStatute('194Q', { mode: 'local' });
     if (localExplicit.retrievalMode !== 'LOCAL_SNAPSHOT' || localExplicit.isOfflineSnapshot !== true) {
@@ -156,7 +166,7 @@ async function run() {
     }
 
     console.log('\n===========================================================================');
-    console.log('ALL 11 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 12 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

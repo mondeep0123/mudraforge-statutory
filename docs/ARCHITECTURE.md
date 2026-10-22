@@ -221,12 +221,22 @@ okf/
 │           ├── udyam_registration_verification.json   # UDYAM portal certificate validation schema
 │           └── schedule_iii_msme_disclosure.md        # Balance Sheet Schedule III disclosure format
 │
-└── international_tax/
-    └── foreign_tax_credit_irc_901_904/
-        ├── section.json                               # US Foreign Tax Credit limitation baskets
+├── international_tax/
+│   └── foreign_tax_credit_irc_901_904/
+│       ├── section.json                               # US Foreign Tax Credit limitation baskets
+│       └── forms/
+│           ├── form_67_statement_of_foreign_tax.json  # Indian Income Tax Form 67 (Rule 128)
+│           └── irs_schedule_k3_reporting.json         # US IRS Schedule K-3 dual-reporting schema
+│
+└── corporate_ma_restructuring/
+    └── slump_sale_50b/
+        ├── section.json                               # Section 50B slump sale & net worth rules
+        ├── circulars/
+        │   ├── cbdt_notification_68_2021_rule_11uae_fmv.md # Rule 11UAE Fair Market Value formula
+        │   └── cbic_notification_12_2017_going_concern_exemption.md # 0% GST going concern exemption
         └── forms/
-            ├── form_67_statement_of_foreign_tax.json  # Indian Income Tax Form 67 (Rule 128)
-            └── irs_schedule_k3_reporting.json         # US IRS Schedule K-3 dual-reporting schema
+            ├── form_3cea_chartered_accountant_report.json # Form 3CEA CA slump sale report schema
+            └── section_281_tax_clearance_checklist.md # Section 281 & 313 due diligence checklist
 ```
 
 ### Zero-Token Agent Discovery
@@ -249,7 +259,7 @@ Transactions dated before 1 April 2026 resolve under the 1961 Act; transactions 
 
 The OKF statutory substrate is purpose-built for **corporate finance departments, enterprise accounts payable (AP), treasury controllers, and tax compliance teams**.
 
-Currently, the substrate indexes and provides deterministic ground truth across four vital financial domains:
+Currently, the substrate indexes and provides deterministic ground truth across five vital financial domains:
 
 ### 1. Direct Tax & Corporate Withholdings (TDS / TCS)
 - **Section 194Q**: 0.1% TDS on purchase of goods exceeding ₹50 Lakhs cumulative annual threshold (calculating strictly on the excess over ₹50L).
@@ -267,6 +277,12 @@ Currently, the substrate indexes and provides deterministic ground truth across 
 
 ### 4. Cross-Border Remittances & Dual-Reporting
 - **US Internal Revenue Code (IRC §§ 901 & 904)**: Foreign Tax Credit (FTC) limitation baskets (General Category vs. Passive Category), Pass-Through Entity (PTE) tax pass-throughs, and Schedule K-3 dual-reporting compliance for Indo-US cross-border ventures.
+
+### 5. Corporate M&A, Restructuring & Successor Liability
+- **Section 50B**: Special provision for computation of capital gains in case of slump sale (organic undertaking test, book value net worth minus liabilities, WDV for depreciable assets u/s 43(6), revaluations ignored, indexation unavailable u/s 50B(2)).
+- **Rule 11UAE Fair Market Value**: CBDT Notification 68/2021 deemed full value of consideration formula: $\max(\text{FMV}_1, \text{FMV}_2)$.
+- **CBIC Notification 12/2017 Entry 2**: 0% GST going concern exemption verification for business transfers.
+- **Section 281 & Section 313**: Pre-closing tax clearance NOC and joint/several successor tax liability enforcement under direct and indirect tax law.
 
 ---
 

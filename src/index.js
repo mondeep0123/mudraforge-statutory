@@ -423,7 +423,16 @@ export async function listSections(options = {}) {
         if (response.ok) {
             const data = await response.json();
             if (data.sections && data.sections.length > 0) {
-                return data.sections;
+                // Merge local sections if local filesystem has newly added or unbundled provisions
+                const localSecs = getLocalSections();
+                const remoteCodes = new Set(data.sections.map(s => (s.sectionCode || '').toLowerCase()));
+                const merged = [...data.sections];
+                for (const loc of localSecs) {
+                    if (!remoteCodes.has((loc.sectionCode || '').toLowerCase())) {
+                        merged.push(loc);
+                    }
+                }
+                return merged;
             }
         }
     } catch (_) {

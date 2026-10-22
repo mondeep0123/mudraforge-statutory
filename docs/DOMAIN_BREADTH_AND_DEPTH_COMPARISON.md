@@ -30,7 +30,7 @@ This matrix delineates what is **natively bundled in the base package** (zero ne
 | **5** | **Corporate Governance (MCA)** | Not bundled in base | Companies Act Section 188 threshold guidance | **Full Companies Act 2013 Suite**: Section 188 (RPT audit committee & voting ban), Section 180 (borrowing limits), Section 185/186 (inter-corporate loans), Section 68 (25% buybacks) | **Planned: MCA Expansion Pack** |
 | **6** | **Capital Markets (SEBI LODR)** | Not bundled in base | Regulation 30 materiality guidelines | **SEBI LODR Suite**: Regulation 30 Materiality Triad calculator (2% turnover / 2% net worth / 50% PAT), 24-hr stock exchange disclosure timer, Regulation 23 listed RPTs | **Planned: SEBI Expansion Pack** |
 | **7** | **Cross-Border & FEMA** | Included: IRC 901/904 FTC pass-through baskets + Indian Form 67 & US IRS Schedule K-3 | Foreign vendor DTAA treaty checklists (TRC, No-PE, electronic Form 10F) | Supreme Court *Engineering Analysis* SaaS royalty defense, Form 15CA/CB vs Form 145/146 automated dual-act router | **Bundled in Base**<br>*(Expanded via Sync)* |
-| **8** | **M&A Restructuring & Succession** | Not bundled in base | Section 50B slump sale checklist | **Restructuring Engine**: Section 50B undertaking test, Section 281 AO clearance NOC, Section 313 successor liability, CGST 85, Notification 12/2017 0% GST going concern | **Planned: M&A Expansion Pack** |
+| **8** | **M&A Restructuring & Succession** | Included: Section 50B slump sale net worth computation + Rule 11UAE FMV + Notif 12/2017 0% GST + Form 3CEA schema | Section 281 AO clearance NOC & Section 313 successor liability checklist | Section 50B organic undertaking test, Section 281 AO clearance NOC, Section 313 successor liability, CGST 85, Notification 12/2017 0% GST going concern | **Bundled in Base**<br>*(Expanded via Sync)* |
 | **9** | **Strategic Corporate Tax Planning** | Not bundled in base | Section 115BAA overview | **Strategic Tax Playbook**: Section 115BAA vs MAT credit cliff, Section 80JJAA 30% employment deduction, Section 79 loss continuity, Section 68/115BBE cash credit defense | **Planned: Strategic Tax Pack** |
 | **10**| **Customs & Foreign Trade Policy** | Not bundled in base | Customs valuation basics | **Customs & Trade Suite**: Section 65 MOOWR duty deferral, EPCG, Advance Authorization, Section 74 fraud penalties, IGST Section 13(8)(b) intermediary traps | **Planned: Customs Pack** |
 | **11**| **Finance Operations & SOPs** | Not bundled in base | Standard 3-way match guidelines | **Enterprise Treasury Controls**: P2P 3-way match, O2C, 13-week cash forecasting, penny drop validation, maker-checker segregation of duties | **Planned: Finance Ops Pack** |
@@ -179,7 +179,11 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 ### 8. Corporate Mergers, Acquisitions & Successor Liability
 * **Public Starter Seed**:
-  - [Not seeded in starter package]
+  - Reaches **Level 3**.
+  - **Provisions**: Section 50B (Capital gains on slump sale of undertakings).
+  - **Invariants**: Depreciable assets valued at WDV u/s 43(6); revaluations ignored; indexation benefit unavailable u/s 50B(2).
+  - **Circulars**: CBDT Notification 68/2021 (Rule 11UAE Fair Market Value formula: $\max(\text{FMV}_1, \text{FMV}_2)$); CBIC Notification 12/2017 Entry 2 (0% GST going concern exemption).
+  - **Forms**: Form 3CEA Chartered Accountant audit report schema; Section 281 & Section 313 tax due diligence checklist.
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Slump Sale vs. Itemized Sale (§50B / Act 2025)**:

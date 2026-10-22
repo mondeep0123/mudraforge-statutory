@@ -1,0 +1,69 @@
+{
+  "sectionId": "ITA1961_SEC50B",
+  "sectionCode": "50B",
+  "aliases": [
+    "50B",
+    "50b",
+    "sec50b",
+    "sec 50b",
+    "section 50b",
+    "slump sale",
+    "slump_sale",
+    "business transfer",
+    "undertaking sale"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Section 50B",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 78 (Capital gains on slump sale of undertakings)",
+  "title": "Special provision for computation of capital gains in case of slump sale",
+  "effectivePeriod": {
+    "validFrom": "2000-04-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Not Applicable (Transaction-Specific Event)",
+    "sunsetNotes": "Continues under Income-tax Act, 1961 and maps to Section 78 of the Income-tax Act, 2025 effective 1 April 2026."
+  },
+  "plainTextSummary": "Any profits or gains arising from the slump sale (transfer of one or more undertakings as a result of the sale for a lump sum consideration without values being assigned to individual assets and liabilities u/s 2(42C)) effected in the previous year shall be chargeable to income-tax as capital gains arising from the transfer of long-term capital assets if the undertaking was owned and held by the assessee for more than 36 months, or short-term capital assets if held for not more than 36 months. Capital gain is calculated as the Full Value of Consideration (determined under Rule 11UAE) minus the aggregate net worth of the undertaking. Revaluations are ignored; depreciable assets are valued at WDV under Section 43(6); other assets at book value. No benefit of indexation is available under Section 50B(2). Transfer of a going concern attracts 0% GST under Notification 12/2017-Central Tax (Rate) Entry 2.",
+  "keyStatutoryThresholds": {
+    "longTermHoldingPeriodThresholdMonths": 36,
+    "revaluationPermittedInNetWorth": false,
+    "depreciableAssetValuationBasis": "Written Down Value (WDV) under Section 43(6)",
+    "nonDepreciableAssetValuationBasis": "Book value in balance sheet (ignoring revaluation)",
+    "indexationBenefitAvailable": false,
+    "mandatoryAuditReport": "Form 3CEA by a practicing Chartered Accountant submitted one month prior to Section 139(1) due date",
+    "gstApplicability": "Exempt (0% GST under Notification 12/2017-Central Tax (Rate) Entry 2 as transfer of going concern)",
+    "successorTaxLiability": "Joint and several liability under Section 313 of Income-tax Act and Section 85 of CGST Act",
+    "section281NocRequirement": "Mandatory tax clearance certificate from Assessing Officer if tax assessment proceedings or demand notices are pending"
+  },
+  "officialCitations": [
+    {
+      "authority": "Income Tax Department, Ministry of Finance",
+      "instrument": "Section 50B, Income-tax Act, 1961",
+      "subject": "Special provision for computation of capital gains in case of slump sale",
+      "officialUrl": "https://incometaxindia.gov.in/acts/income-tax-act-1961/section-50b.htm"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Notification No. 68/2021 (Dated 24 May 2021)",
+      "subject": "Rule 11UAE: Computation of fair market value of capital assets for the purposes of section 50B",
+      "officialUrl": "https://incometaxindia.gov.in/communications/notification/notification_68_2021.pdf"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Notification No. 12/2017-Central Tax (Rate) Entry 2",
+      "subject": "Services by way of transfer of a going concern, as a whole or an independent part thereof, attract 0% GST",
+      "officialUrl": "https://cbic-gst.gov.in/pdf/central-tax-rate/notf-12-2017-cgst-rate-english.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Business Transfer Agreement (BTA) executing the transfer of the undertaking as a whole going concern",
+    "Form 3CEA audit certificate from an independent Chartered Accountant certifying net worth calculation",
+    "Written Down Value (WDV) tax depreciation schedule u/s 43(6) for all transferred asset blocks",
+    "Audited Balance Sheet of the undertaking immediately preceding the date of transfer",
+    "Rule 11UAE Fair Market Value (FMV1 vs FMV2) computation working papers",
+    "Section 281 Assessing Officer Tax Clearance NOC confirming no pending tax proceedings void the transfer",
+    "Form GST ITC-02 filing confirmation transferring unutilized Input Tax Credit under CGST Section 18(3)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}
