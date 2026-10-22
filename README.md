@@ -91,11 +91,11 @@ Large Language Models are probabilistic token sequence predictors, not determini
 
 ---
 
-## Production Lineage & System Validation
+## System Origin & Validation Baseline
 
-`@mudraforge/statutory` is not a theoretical exercise or a synthetic benchmark wrapper. It represents the production-proven statutory oracle subsystem that **MudraForge dogfoods internally** to govern its autonomous financial operating platform (Adesha).
+`@mudraforge/statutory` publishes the declarative statutory rules, executive circulars, and return schemas developed internally at MudraForge to feed its autonomous finance engine (Adesha). 
 
-Every statute, threshold check, and temporal boundary in this repository is actively evaluated against enterprise accounts payable workflows and verified by Chartered Accountants before publication.
+It is currently released as a **Public Beta**. The bundled schemas and temporal state machines have been verified internally against synthetic mutation suites, historical enterprise AP audit samples, and Chartered Accountant peer reviews before publication. It has not yet been subjected to third-party high-volume client production workloads, which is why we invite independent evaluation, verification, and community contributions.
 
 ---
 
@@ -110,7 +110,7 @@ The OKF substrate currently indexes and enforces ground truth across four major 
 - **Section 194Q**: 0.1% TDS on purchase of goods exceeding ₹50 Lakhs cumulative annual threshold (calculating strictly on the excess).
 - **Section 206C(1H)**: TCS on sale of goods, with automated temporal interception of its **1 April 2025 sunset** under the Finance Act, 2025.
 - **Section 194J**: Fees for Technical Services (2% FTS) vs. Professional Fees (10%), handling 5% non-PAN penalty rates under Section 206AA.
-- **Dual-Act Forward Mapping**: Complete cross-compilation matrix from the *Income-tax Act, 1961* to the *Income-tax Act, 2025* (taking effect 1 April 2026), mapping sections seamlessly (e.g., Section 194Q $\rightarrow$ Section 393(1), Table 8, Item (ii)).
+- **Dual-Act Forward Mapping**: Complete cross-compilation bridge from the legacy *Income-tax Act, 1961* to the *Income-tax Act, 2025* (which took effect 1 April 2026), mapping historical provisions seamlessly (e.g., Section 194Q $\rightarrow$ Section 393(1), Table 8, Item (ii)).
 
 ### 2. Indirect Tax (Goods & Services Tax - GST)
 - **CGST Section 17(5)**: Comprehensive statutory negative list for Blocked Input Tax Credit (ITC)—including motor vehicles, catering, employee benefits, and the statutory employer obligation proviso under CBIC Circular 172/04/2022-GST.
@@ -291,7 +291,7 @@ console.log(result.taxableBase); // ₹70,00,000 (Calculates strictly on excess 
 The repository enforces fail-closed automated verification for schemas, temporal rules, and cryptographic digests:
 
 ```bash
-# 1. Run full 10-suite multi-domain regression test
+# 1. Run full 11-suite multi-domain regression test
 npm test
 
 # 2. Validate all OKF schemas, circular YAML frontmatter, and return forms
@@ -312,10 +312,14 @@ npm run catalog
 - **[Domain Breadth & Depth Comparison](./DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md)**: 4-domain starter commons vs. 11-domain edge roadmap.
 - **[Contributor Protocol](./CONTRIBUTING.md)**: Authoring standards for `section.json`, executive circulars, and CA empanelment.
 - **[Security & Statutory Integrity Policy](./SECURITY.md)**: Protocol for reporting code flaws and gazetted statutory amendments.
+- **[Data Licensing & Attribution Policy](./DATA_LICENSING.md)**: Tripartite legal licensing boundary (MIT code, CC BY 4.0 structured schemas, public domain statutes).
+- **[Changelog](./CHANGELOG.md)**: Complete record of versioned releases, breaking changes, and migrations.
 - **[Architecture Specification](./ARCHITECTURE.md)**: Master specification of the Adesha Sovereign Runtime & Statutory Engine.
 
 ---
 
 ## License
 
-This software and the reference Open Knowledge Format (OKF) knowledge definitions in `./okf/` are licensed under the **[MIT License](./LICENSE)**. Sourced government gazettes and statutory instruments are subject to their respective official public-domain and open government data terms.
+- **Software Code & Tools**: Licensed under the **[MIT License](./LICENSE)**.
+- **Derived OKF Schemas & Curated Summaries**: Licensed under the **[Creative Commons Attribution 4.0 International (CC BY 4.0)](./DATA_LICENSING.md)**.
+- **Primary Government Gazettes & Statutory Instruments**: Sourced under official public-domain and open government data terms (Republic of India Copyright Act, 1957 Section 52(1)(q) / US Code Title 17 Section 105). See **[DATA_LICENSING.md](./DATA_LICENSING.md)** for details.

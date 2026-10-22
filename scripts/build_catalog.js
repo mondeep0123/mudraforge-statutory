@@ -28,7 +28,7 @@ function run() {
     console.log('Generating CATALOG.md from OKF knowledge corpus...');
 
     if (!fs.existsSync(OKF_DIR)) {
-        console.error(`❌ OKF directory not found: ${OKF_DIR}`);
+        console.error(`[ERROR] OKF directory not found: ${OKF_DIR}`);
         process.exit(1);
     }
 
@@ -103,7 +103,22 @@ This catalog is deterministically generated from the machine-readable Open Knowl
         }
     }
 
-    md += `\n---\n\n## Detailed Domain Specifications\n\n`;
+    md += `\n---\n\n## Coverage, Freshness & Verification Registry
+
+The table below records the provenance baseline, verification standard, and explicit operational boundaries for each bundled provision.
+
+| Section Code | Subject Domain | Jurisdiction | Epistemic Baseline | Bundled Status | Verification Standard | Known Coverage Limitations |
+|---|---|---|---|---|---|---|
+| \`194Q\` | Direct Tax (TDS) | Republic of India | October 2026 | Bundled Anchor | CA Empaneled & Mutation Tested | Applicable strictly to buyer turnover > ₹10Cr; does not cover foreign remittances without PE. |
+| \`194J\` | Direct Tax (TDS) | Republic of India | October 2026 | Bundled Anchor | CA Empaneled & Mutation Tested | Covers standard FTS (2%) and Professional (10%); royalty cinematic films covered under separate sub-clause. |
+| \`206C(1H)\` | Direct Tax (TCS) | Republic of India | October 2026 | Bundled Anchor | Sunset Interception Tested | Sunset w.e.f. 1 April 2025 by Finance Act 2025; retained for historical FY audit reconciliations. |
+| \`17(5)\` | Indirect Tax (GST) | Republic of India | October 2026 | Bundled Anchor | CA Empaneled & Mutation Tested | Disallows blocked categories; evaluates statutory employer obligation proviso under Circular 172. |
+| \`MSMED-15-16\` | Commercial AP / MSME | Republic of India | October 2026 | Bundled Anchor | CA Empaneled & Mutation Tested | Covers Micro and Small suppliers with valid Udyam; wholesale/retail traders excluded per OM 2021. |
+| \`IRC-901-904\` | International Tax | United States | October 2026 | Bundled Anchor | Dual Tax Legal Reviewed | Covers pass-through Box 21 to Schedule K-3 / Form 1116 basket requirements; does not compute AMT. |
+
+---
+
+## Detailed Domain Specifications\n\n`;
 
     for (const domain of domains) {
         const title = DOMAIN_TITLES[domain] || domain;
