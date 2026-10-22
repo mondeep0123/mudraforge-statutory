@@ -34,6 +34,25 @@
 
 ---
 
+## Project Identity, Audience & Non-Goals
+
+### Purpose & Intended Audience
+`@mudraforge/statutory` publishes an open, machine-readable statutory knowledge substrate for software engineers building financial AI agents (Antigravity, Cursor, Claude Code, Copilot), ERP integration teams (Tally, SAP, Zoho Books, NetSuite), Chartered Accountants, and compliance automation engineers.
+
+### What OKF Compatibility Means
+Provisions in this repository adhere to the **Open Knowledge Format (OKF v0.2)** specification:
+- **Declarative Knowledge**: Legal rules are structured into clean, machine-readable JSON (`section.json`), official administrative circulars with YAML frontmatter (`.md`), and compliance return schemas.
+- **Temporal State Machines**: Strict `validFrom`, `validTo`, and `annualReset` boundaries preventing retrospective hallucination and catching legislative sunsets (e.g. Section 206C(1H) sunset on 1 April 2025).
+- **Trust Anchors**: Every provision binds to authoritative primary sources: the Gazette of India, CBDT/CBIC executive circulars, or Ministry notifications (`incometax.gov.in`, `cbic-gst.gov.in`, `msme.gov.in`, `irs.gov.in`).
+- **Cryptographic Provenance**: Bundled files are verifiable against a deterministic SHA-256 Merkle root hash.
+
+### Explicit Non-Goals
+1. **Not Legal or Tax Advice**: This package structures public legal instruments into machine-readable data. It does not provide formal legal counsel, tax opinions, or statutory audit certification.
+2. **Not a Universal Legal Library**: Unlike broad legal repositories (*IndiaCode*, *Open India Law*), this project does not compile general civil, criminal, or constitutional case law. It focuses strictly on **transactional finance, direct/indirect taxation, and commercial AP compliance**.
+3. **Not an ERP or Payment Rail**: This package provides declarative ground truth to AI agents and software pipelines; it does not store accounting ledgers, move money, or replace enterprise ERPs.
+
+---
+
 ## Published Inventory Metrics
 
 The repository currently publishes a verified starter seed across four regulatory domains, accompanied by official executive guidance and compliance schemas:
@@ -127,14 +146,14 @@ We deliberately separate **reference knowledge** from **deep mathematical execut
 
 ---
 
-## Public Beta Policy & Sustainable Maintenance
+## Free OKF Sync and Maintenance Policy
 
-1. **Free Updates During Public Beta**:  
-   Throughout the Public Beta, calling `npx @mudraforge/statutory check-update` or `npx @mudraforge/statutory sync` connects to the Cloudflare Anycast edge without an API key. You can synchronize new statutory amendments, notifications, and section definitions directly into your local workspace.
-2. **Economic Rationale for Long-Term Maintenance**:  
-   Tax law is active public policy subject to annual Union Budgets, periodic Finance Acts, CBDT/CBIC circulars, and appellate tribunal precedents. Continuously auditing official gazettes, formalizing legal schemas with Chartered Accountants, running regression test suites, and distributing low-latency edge updates requires sustained engineering infrastructure. To ensure the oracle remains continuously audited and strictly accurate without quality degradation, live versioning updates will transition to the paid Enterprise subscription following beta conclusion.
-3. **Perpetual MIT License Guarantee**:  
-   The local OKF bundle you install or clone remains **100% free under the MIT license forever**. You are never locked out of your existing files, and you may fork, modify, or extend them for offline operations at zero cost.
+The MudraForge Statutory project publishes an open, locally usable statutory knowledge package under the MIT License. The hosted free sync service (`npx @mudraforge/statutory sync`) is provided on a best-effort basis and is not a guarantee of perpetual availability, comprehensive statutory coverage, or continuous updates.
+
+- **Maintainer Capacity & Best-Effort Updates**: Future updates to the hosted free dataset depend on maintainer capacity, community contributions, infrastructure costs, and project priorities. The free sync service may have limited coverage, delayed updates, or periods without new releases.
+- **Snapshot Provenance & User Responsibility**: Each published bundle explicitly identifies its release version, source provenance, and applicable verification or effective-date information. Users and AI agents are responsible for checking whether a statutory snapshot is current and suitable for their intended use.
+- **Perpetual Local Freedom**: Users may continue to use, inspect, fork, and maintain previously released files subject to the MIT license.
+- **Separation of Services**: Additional hosted services, expanded domain suites (covering all 11 enterprise domains), and maintained deterministic calculation engines are offered separately under commercial subscriptions.
 
 ---
 

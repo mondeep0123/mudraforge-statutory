@@ -245,34 +245,13 @@ const isActive2025 = await isStatuteActive('206C(1H)', '2025-06-01'); // false (
 
 ## 8. Public Commons vs. Commercial Lifecycle & Sustainability Policy
 
-### 8.1 Free Edge Updates Supported During Public Beta
-During the **Public Beta**, both the local reference substrate and the Cloudflare Anycast edge synchronization endpoints (`check-update` and `sync`) are **100% free and unauthenticated**. 
+### 8.1 Free Edge Sync and Maintenance Policy
+The MudraForge Statutory project publishes an open, locally usable statutory knowledge package under the MIT License. The hosted free sync service (`npx @mudraforge/statutory sync`) is provided on a best-effort basis and is not a guarantee of perpetual availability, comprehensive statutory coverage, or continuous updates.
 
-Developers, compliance engineers, and AI agents can execute:
-```bash
-# Check if new statutory releases or gazette amendments exist on edge
-npx @mudraforge/statutory check-update
-
-# Automatically sync latest statutory JSON files directly into local ./okf/
-npx @mudraforge/statutory sync
-```
-No API key or commercial contract is required to synchronize and update your local OKF knowledge files throughout the beta window.
-
-### 8.2 The Economic Rationale for Moving Live Updates to Paid (Sustainability)
-Statutory compliance is fundamentally different from typical open-source libraries. Code libraries can remain unchanged for years; **statutory tax law is a living, actively amended legal regime**:
-- **Annual Finance Acts & Budget Enactments**: The Indian Parliament revises withholding rates, introduces new statutory regimes, and sunsets obsolete provisions annually (such as the explicit sunset of Section 206C(1H) on 1 April 2025, and the complete transition to the *Income-tax Act, 2025* taking effect 1 April 2026).
-- **Executive Circulars & Notifications**: The Central Board of Direct Taxes (CBDT) and Central Board of Indirect Taxes and Customs (CBIC) issue monthly circulars altering threshold definitions, unbundling requirements (e.g. GST unbundling under Circular 13/2021), and procedural exclusions.
-- **Appellate & Supreme Court Precedents**: High Court, Supreme Court, and ITAT judgments continuously refine the legal boundaries of terms such as "composite supply", "pure agent", or "trader exclusions".
-
-Operating a verified, tamper-evident statutory oracle requires **continuous legal engineering, daily Gazette of India monitoring, Chartered Accountant peer review, formal state machine testing (TLA+), and globally distributed Anycast edge infrastructure**.
-
-Treating statutory maintenance as an unfunded volunteer project invariably produces stale, hallucinated legal data—the exact failure mode that causes catastrophic multi-crore enterprise tax disallowances. 
-
-**To make this continuous legal surveillance and versioned maintenance sustainable for the long term without compromising epistemic rigor**, live automated versioning updates (`sync` and `check-update`) will transition to the paid Enterprise API tier once the Public Beta concludes.
-
-### 8.3 Perpetual MIT License Guarantee
-- **The Local Snapshot Remains Free Forever**: Every statutory file and manifest downloaded or cloned under the MIT license remains permanently free for offline traversal, local agent skills, and internal experimentation.
-- **No Vendor Lock-In**: Organizations are free to maintain, inspect, and fork their local `./okf/` directories indefinitely.
+1. **Maintainer Capacity & Community Updates**: Future updates to the hosted free dataset depend on maintainer capacity, community contributions, infrastructure costs, and project priorities. The free service may experience limited coverage, delayed updates, or periods without new releases.
+2. **Deterministic Versioning**: Each published bundle explicitly identifies its release version, source provenance, and applicable verification or effective-date information. Users are responsible for checking whether a statutory snapshot is current and suitable for their intended use.
+3. **Perpetual MIT License Guarantee**: Every statutory file and manifest downloaded or cloned under the MIT license remains permanently free for offline traversal, local agent skills, and internal experimentation. Organizations are free to inspect, fork, and maintain their local `./okf/` directories indefinitely.
+4. **Commercial Services**: Additional hosted services, comprehensive domain suites (all 11 enterprise domains), and maintained deterministic calculation engines are offered separately under commercial subscriptions.
 
 ---
 
