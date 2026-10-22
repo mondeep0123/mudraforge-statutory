@@ -121,6 +121,13 @@ We establish a 3-tier declarative knowledge model for complex multi-statute tran
 6. **Normative Scope & Independent Legal Validation**:
    - An Architecture Decision Record defines structural design invariants and data contracts; it does not substitute for independent legal certification of specific transaction scenarios. All composite profiles and legal-version mappings must be validated against independent legal ground truth in dedicated scenario test suites before promotion to stable status.
 
+#### Prototype Implementation Requirements (feature/composite-transaction-profiles):
+Prior to merging any composite transaction prototype into `main`, the implementation must satisfy four strict verification gates:
+1. **Precise Graph Semantics & Acyclicity**: Formally define `dependsOn`, `parallelIndependentChecks`, and `conditionalDownstreamChecks`. Implement automated DAG validation that rejects circular dependencies and cleanly halts downstream evaluation when an upstream prerequisite is `UNKNOWN` or `UNRESOLVED`.
+2. **Temporal & Provenance Continuity**: Every statutory reference in a profile must carry an unambiguous enactment code, provision identifier, official Gazette source URL, and `effectivePeriod`. Cross-regime profiles must evaluate against an explicit `asOfDate` rather than silently blending provisions from different legislative eras.
+3. **Four-State Epistemic Uncertainty Model**: Inquiries must be evaluated against an explicit four-state epistemic model (`SATISFIED`, `NOT_SATISFIED`, `UNKNOWN` / `EVIDENCE_PENDING`, and `NOT_APPLICABLE`). Missing documentation or unverified assertions must remain `UNKNOWN` rather than prematurely collapsing into negative legal conclusions.
+4. **Independent Open-Source Usability (Zero Vendor Lock-in)**: A third-party developer or external AI agent must be able to load a composite profile, validate its schema, traverse its dependency graph, and inspect its evidence checklists locally and offline using only `@mudraforge/statutory`, with zero dependency on the proprietary Adesha runtime, API keys, or remote servers.
+
 ### Consequences
 - **Positive**: Makes complex statutory relationships discoverable and machine-readable for AI agents without compromising open-source format purity or disclosing proprietary execution code.
 - **Lifecycle Management**: Implemented as an experimental prototype on a dedicated feature branch (`feature/composite-transaction-profiles`) and subjected to independent legal scenario benchmarking prior to promotion into public release `v2.5.0`. Release `v2.4.0` remains focused on the verified atomic statutory corpus.
