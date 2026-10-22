@@ -21,7 +21,7 @@
 `@mudraforge/statutory` provides an authoritative, versioned knowledge substrate for Indian and cross-border statutory tax law under the **Open Knowledge Format (OKF)**.
 
 This package delivers:
-1. **Self-Documenting OKF Filesystem**: A clean directory of statutory provisions (`./okf/sections/`) where every file combines the **Section Code + Plain-Text Explanation** for instant, zero-token filesystem discovery by AI agents.
+1. **Self-Documenting OKF Filesystem**: A clean directory of statutory provisions (`./okf/`) organized by regulatory domain where every provision combines the **Section Code + Plain-Text Explanation** alongside official executive circulars and return schemas.
 2. **Autonomous Agent Self-Updates**: Agents can check if laws have changed (`check-update`) and sync new releases (`sync`) automatically.
 3. **Interactive Terminal Browser**: Browse and inspect laws directly in your shell (`browse`).
 4. **Cloud Anycast Edge API**: Sub-10ms global endpoints on Cloudflare edge.

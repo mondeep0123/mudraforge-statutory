@@ -124,7 +124,7 @@ okf/
 
 ### Zero-Token Agent Discovery
 When an autonomous agent (Antigravity, Cursor, Claude Code) receives a compliance task:
-1. The agent reads the directory listing of `./okf/sections/`.
+1. The agent reads the directory listing of `./okf/` (organized by regulatory domains).
 2. The combination of section code and plain-text description allows the agent to identify the applicable statute at **0 token cost** without RAG hallucinations.
 3. The agent loads only the targeted JSON statute into context.
 
@@ -253,7 +253,7 @@ Developers, compliance engineers, and AI agents can execute:
 # Check if new statutory releases or gazette amendments exist on edge
 npx @mudraforge/statutory check-update
 
-# Automatically sync latest statutory JSON files directly into local ./okf/sections/
+# Automatically sync latest statutory JSON files directly into local ./okf/
 npx @mudraforge/statutory sync
 ```
 No API key or commercial contract is required to synchronize and update your local OKF knowledge files throughout the beta window.

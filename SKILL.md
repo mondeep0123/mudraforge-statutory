@@ -14,7 +14,7 @@ AI agents can operate in two modes:
 ### Mode 1: Local Filesystem Navigation (Default / Free / Offline)
 The skill maintains a local versioned directory of statutory rules in `./okf/`:
 - `okf/manifest.json`: Local release version & root integrity hash.
-- `okf/sections/*.json`: Individual statutory provisions with self-documenting filenames combining Section Code + Plain-Text Explanation (e.g. `194Q-tds-on-purchase-of-goods.json`, `MSMED-15-16-delayed-payment-and-penal-interest.json`, `17_5-blocked-input-tax-credit.json`).
+- `okf/<domain>/<provision>/section.json`: Individual statutory provisions organized by regulatory domain (`direct_tax`, `indirect_tax_gst`, `msme_commercial`, `international_tax`), accompanied by official executive circulars (`circulars/*.md`) and compliance forms (`forms/*.json`).
 
 Agents should traverse and read these local files directly to avoid external network calls.
 
