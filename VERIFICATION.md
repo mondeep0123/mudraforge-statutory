@@ -28,12 +28,42 @@ npm test
 # 2. Run the fail-closed OKF schema & circular frontmatter validator
 npm run validate
 
-# 3. Verify cryptographic SHA-256 Merkle root integrity of all bundled files
+# 3. Run the vendor-neutral OKF conformance suite (12 fixture assertions)
+npm run conformance
+
+# 4. Generate the corpus quality card (Google Data Cards Playbook standard)
+npm run quality
+
+# 5. Verify cryptographic SHA-256 Merkle root integrity of all bundled files
 npm run manifest:check
 
-# 4. Recompile the statutory catalog from source files
+# 6. Recompile the statutory catalog from source files
 npm run catalog
 ```
+
+### Cryptographic Integrity vs. Statutory Legal Truth
+
+It is critical to distinguish **byte-level distribution integrity** from **statutory legal ground truth**:
+- **What a SHA-256 hash proves**: Byte fidelity. It proves that the downloaded JSON schema or Markdown circular matches the exact byte sequence recorded in the Merkle manifest at publication time.
+- **What a SHA-256 hash does NOT prove**: Statutory correctness. A cryptographically intact file can still contain a legally outdated or misconstrued provision.
+- **How legal truth is verified**: Every provision must pass our differential test suite (`test.js`) and corpus quality audit (`scripts/corpus_quality_report.js`), verifying calculations against primary Union Gazettes, official CBDT/CBIC circulars, and independent CA legal baselines.
+
+### Reproducible Release Tarball Verification
+
+Every published release tarball can be independently verified against Git tag `v2.4.0`:
+
+```bash
+# 1. Pack the distribution tarball
+npm pack
+
+# 2. Compute the SHA-256 checksum of the tarball (PowerShell)
+Get-FileHash mudraforge-statutory-2.4.0.tgz -Algorithm SHA256
+
+# Or in Linux / macOS:
+# sha256sum mudraforge-statutory-2.4.0.tgz
+```
+
+The resulting package contains exactly 41 audited files (zero extraneous build artifacts, zero internal development scripts).
 
 > **Delineation Note**: The four commands above reproduce the verification of this open-source package (`@mudraforge/statutory`). Sections 2–5 below document the internal adversarial mutation suites, formal TLA+ state machine specifications, and banking timeout recovery models implemented in the private Adesha platform engine.
 

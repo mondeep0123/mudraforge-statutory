@@ -136,7 +136,29 @@ Ensure output finishes with: `ALL OKF SCHEMAS, CIRCULARS & FORMS PASSED VALIDATI
 npm test
 ```
 
-### Step 6: Submit a Pull Request
+### Step 6: Developer Certificate of Origin (DCO 1.1) Sign-Off
+All commits must be signed off to certify that the contributor has the right to submit the code and legal annotations under the project's open licenses (MIT for code, CC BY 4.0 for OKF data).
+
+Use the `-s` or `--signoff` flag when committing:
+```bash
+git commit -s -m "feat(direct_tax): add section 194C contractor withholding"
+```
+
+By adding a `Signed-off-by:` line, you certify the following:
+```
+Developer Certificate of Origin
+Version 1.1
+
+Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+
+By making a contribution to this project, I certify that:
+(a) The contribution was created in whole or in part by me and I have the right to submit it under the open source license indicated in the file; or
+(b) The contribution is based upon previous work that, to the best of my knowledge, is covered under an appropriate open source license and I have the right under that license to submit that work with modifications, whether created in whole or in part by me, under the same open source license; or
+(c) The contribution was provided directly to me by some other person who certified (a), (b) or (c) and I have not modified it.
+(d) I understand and agree that this project and the contribution are public and that a record of the contribution is maintained indefinitely.
+```
+
+### Step 7: Submit a Pull Request
 Push your branch to GitHub and open a Pull Request against `main`. Provide:
 1. The governing statute and section code.
 2. Official government links (Gazette, CBDT, CBIC, or RBI notifications).
@@ -144,7 +166,17 @@ Push your branch to GitHub and open a Pull Request against `main`. Provide:
 
 ---
 
-## 4. Chartered Accountant (CA) & Legal Practitioner Empanelment
+## 4. Starter Tasks & Good First Issues
+
+Looking to contribute? Here are recommended starter areas:
+- **Circular Updates**: Adding newly notified CBDT or CBIC circulars to existing direct tax provisions with standard YAML frontmatter.
+- **Form Schemas**: Adding JSON return schemas or GSTR-2B reconciliation templates under `okf/indirect_tax_gst/forms/`.
+- **Successor Mappings**: Adding dual-act cross-references for sections transitioning from the *Income-tax Act, 1961* to the *Income-tax Act, 2025* (taking effect 1 April 2026).
+- **Cross-Border Treaties**: Adding DTAA withholding schedules (e.g. India-US Article 12, India-Singapore Article 12) under `okf/international_tax/`.
+
+---
+
+## 5. Chartered Accountant (CA) & Legal Practitioner Empanelment
 
 If you are a Chartered Accountant (FCA/ACA), CPA, Company Secretary (CS), or tax attorney and wish to author, verify, or co-sign statutory rule packs:
 

@@ -18,6 +18,9 @@
 | **Package Release** | **`v2.4.0`** (Public Beta) |
 | **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2) + MudraForge Statutory Schema Extension** |
 | **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Baseline: October 2026** |
+| **Corpus Quality Card** | 100% Citation Resolution (13/13 URLs) in [`CORPUS_QUALITY.md`](./CORPUS_QUALITY.md) |
+| **Architecture Decision Records** | 5 Normative ADRs documented in [`ARCHITECTURE_DECISIONS.md`](./ARCHITECTURE_DECISIONS.md) |
+| **Vendor Conformance Suite** | 12/12 Passing Fixture Tests in [`conformance/`](./conformance/) |
 | **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](./okf/manifest.json) (reproducible byte-level non-tampering proof) |
 | **Temporal Framework** | Dual-Act Bridge: *Income-tax Act, 1961* & *Income-tax Act, 2025* |
 | **Verification Gate** | 100% Pass across cumulative thresholds, legislative sunsets, and excess math |

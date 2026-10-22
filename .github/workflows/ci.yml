@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x, 24.x]
 
     steps:
       - name: Checkout Repository
@@ -28,11 +28,20 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Verify Zero Dependency Audit
+        run: npm audit --audit-level=high
+
       - name: Verify Cryptographic Manifest Integrity
         run: node scripts/generate_manifest.js --check
 
       - name: Validate OKF Schemas & Circulars
         run: node scripts/validate_okf.js
 
-      - name: Run Test Suite
+      - name: Run OKF Conformance Test Suite
+        run: node conformance/test_conformance.js
+
+      - name: Generate and Verify Corpus Quality Card
+        run: node scripts/corpus_quality_report.js
+
+      - name: Run Multi-Domain Regression Test Suite
         run: node test.js

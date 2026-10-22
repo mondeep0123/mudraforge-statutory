@@ -1,0 +1,11 @@
+{
+  "sectionCode": "CONF_SEC_01",
+  "statutorySection": "Section 1",
+  "governingStatute": "Test Act, 2024",
+  "effectivePeriod": {
+    "validFrom": "2024-04-01",
+    "validTo": "OPEN_ENDED"
+  },
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

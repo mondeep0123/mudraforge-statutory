@@ -1,0 +1,35 @@
+{
+  "sectionId": "CONF_SEC_02_FULL",
+  "sectionCode": "CONF_SEC_02",
+  "aliases": ["CONF_02", "conformance-full"],
+  "governingStatute": "Comprehensive Compliance Act, 2024",
+  "statutorySection": "Section 2",
+  "successorStatute": "Future Compliance Act, 2026",
+  "successorSection": "Section 101",
+  "title": "Comprehensive Conformance Test Section with Temporal Bounds & Thresholds",
+  "effectivePeriod": {
+    "validFrom": "2024-04-01",
+    "validTo": "2026-03-31",
+    "annualReset": "Every April 1",
+    "sunsetNotes": "Transitions to Section 101 on 1 April 2026."
+  },
+  "plainTextSummary": "This fixture asserts parsing of full metadata, thresholds, citations, and checklists.",
+  "keyStatutoryThresholds": {
+    "monetaryThresholdInr": 1000000,
+    "ratePercent": 1.5,
+    "penaltyRatePercent": 10.0
+  },
+  "officialCitations": [
+    {
+      "authority": "Standard Setting Authority",
+      "instrument": "Notification No. 01/2024",
+      "officialUrl": "https://example.org/gazette/2024/01.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Taxpayer Identification Card",
+    "Transaction Invoices"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

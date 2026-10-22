@@ -25,11 +25,16 @@
     "okf.publication.json",
     "VERIFICATION.md",
     "ENTERPRISE_GOVERNANCE.md",
+    "CORPUS_QUALITY.md",
+    "ARCHITECTURE_DECISIONS.md",
+    "conformance",
     "LICENSE"
   ],
   "scripts": {
     "test": "node test.js",
     "validate": "node scripts/validate_okf.js",
+    "conformance": "node conformance/test_conformance.js",
+    "quality": "node scripts/corpus_quality_report.js",
     "manifest": "node scripts/generate_manifest.js",
     "manifest:check": "node scripts/generate_manifest.js --check",
     "catalog": "node scripts/build_catalog.js"

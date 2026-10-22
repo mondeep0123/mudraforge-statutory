@@ -1,0 +1,10 @@
+{
+  "sectionCode": "CONF_ERR_INVERTED_TIMELINE",
+  "statutorySection": "Section 500",
+  "governingStatute": "Paradox Act, 2024",
+  "effectivePeriod": {
+    "validFrom": "2026-04-01",
+    "validTo": "2024-03-31"
+  },
+  "tier": "PUBLIC_COMMONS_FREE"
+}
