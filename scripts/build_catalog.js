@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const OKF_DIR = path.join(ROOT_DIR, 'okf');
-const CATALOG_PATH = path.join(ROOT_DIR, 'CATALOG.md');
+const CATALOG_PATH = path.join(ROOT_DIR, 'docs', 'CATALOG.md');
 
 const DOMAIN_TITLES = {
     direct_tax: 'Direct Tax (Income-tax Act, 1961 / Income-tax Act, 2025)',

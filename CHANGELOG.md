@@ -18,12 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Executive Circulars & Compliance Forms**: Bundled 6 official executive circulars with YAML frontmatter and 8 compliance return schemas (Form 26Q, Form 16A, GSTR-2B Table 4(B), UDYAM verification, Form 67, IRS Schedule K-3).
 - **Automated OKF Validator & Linter**: Created `scripts/validate_okf.js` (`npm run validate`) enforcing schema validation, ISO date checks, `OPEN_ENDED` validity flags, and official URL checks.
 - **Cryptographic Manifest & Integrity Tooling**: Created `scripts/generate_manifest.js` calculating per-file SHA-256 hashes and a root Merkle digest (`sha256-d389...`). Added `npm run manifest:check` for tamper-evidence verification.
-- **Automated Catalog Generator**: Created `scripts/build_catalog.js` (`npm run catalog`) compiling an authoritative markdown index ([`CATALOG.md`](./CATALOG.md)) from the repository corpus.
+- **Automated Catalog Generator**: Created `scripts/build_catalog.js` (`npm run catalog`) compiling an authoritative markdown index ([`docs/CATALOG.md`](./docs/CATALOG.md)) from the repository corpus.
 - **GitHub Actions CI Matrix**: Added `.github/workflows/ci.yml` running validation, manifest integrity check, and test suite on Ubuntu and Windows across Node.js 18.x, 20.x, and 22.x with minimal permissions (`contents: read`).
 - **Governance & Contributor Protocols**:
   - [`CONTRIBUTING.md`](./CONTRIBUTING.md): Authoring standards for `section.json`, executive circulars, and CA review process.
   - [`SECURITY.md`](./SECURITY.md): Responsible disclosure policy for code flaws and statutory inaccuracy triage (2-business-day acknowledgment).
-  - [`DATA_LICENSING.md`](./DATA_LICENSING.md): Explicit tripartite licensing separating MIT software, public domain statutes, and CC BY 4.0 structured annotations.
+  - [`docs/DATA_LICENSING.md`](./docs/DATA_LICENSING.md): Explicit tripartite licensing separating MIT software, public domain statutes, and CC BY 4.0 structured annotations.
   - `.github/ISSUE_TEMPLATE/`: Templates for new statute requests and legislative amendment notifications.
   - `.github/PULL_REQUEST_TEMPLATE.md`: 7-point verification and provenance checklist.
 - **11-Suite Multi-Domain Regression Test**: Expanded `test.js` to cover all 6 provisions, boundary conditions, dead-network offline fallbacks, explicit retrieval modes, and failure cases.

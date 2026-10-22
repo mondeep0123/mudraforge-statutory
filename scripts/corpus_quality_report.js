@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const OKF_DIR = path.join(ROOT_DIR, 'okf');
-const REPORT_PATH = path.join(ROOT_DIR, 'CORPUS_QUALITY.md');
+const REPORT_PATH = path.join(ROOT_DIR, 'docs', 'CORPUS_QUALITY.md');
 
 function findFilesRecursively(dir, filterFn) {
     let results = [];

@@ -18,11 +18,11 @@
 | **Package Release** | **`v2.4.0`** (Public Beta) |
 | **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2) + MudraForge Statutory Schema Extension** |
 | **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Baseline: October 2026** |
-| **Corpus Quality Card** | 100% Citation Resolution (13/13 URLs) in [`CORPUS_QUALITY.md`](./CORPUS_QUALITY.md) |
-| **Architecture Decision Records** | 5 Normative ADRs documented in [`ARCHITECTURE_DECISIONS.md`](./ARCHITECTURE_DECISIONS.md) |
+| **Corpus Quality Card** | 100% Citation Resolution (15/15 URLs) in [`docs/CORPUS_QUALITY.md`](./docs/CORPUS_QUALITY.md) |
+| **Architecture Decision Records** | 6 Normative ADRs documented in [`docs/ARCHITECTURE_DECISIONS.md`](./docs/ARCHITECTURE_DECISIONS.md) |
 | **Vendor Conformance Suite** | 12/12 Passing Fixture Tests in [`conformance/`](./conformance/) |
 | **End-to-End Execution Trace** | Audited 7-stage AP lifecycle in [`examples/`](./examples/) (`npm run example:trace`) |
-| **Enterprise Assurance Preview** | Formal TLA+ & mutation defenses in [`ADESHA_ASSURANCE_OVERVIEW.md`](./ADESHA_ASSURANCE_OVERVIEW.md) |
+| **Enterprise Assurance Preview** | Formal TLA+ & mutation defenses in [`docs/ADESHA_ASSURANCE_OVERVIEW.md`](./docs/ADESHA_ASSURANCE_OVERVIEW.md) |
 | **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](./okf/manifest.json) (reproducible byte-level non-tampering proof) |
 | **Temporal Framework** | Dual-Act Bridge: *Income-tax Act, 1961* & *Income-tax Act, 2025* |
 | **Verification Gate** | 100% Pass across cumulative thresholds, legislative sunsets, and excess math |
@@ -108,7 +108,7 @@ It is currently released as a **Public Beta**. The bundled schemas and temporal 
 ## Legal Domains Currently Covered
 
 > **Full 11-Domain Roadmap & Lifecycle Matrix**:  
-> For the complete architectural matrix comparing the 4 starter domains against the full 11-domain sovereign roadmap (including Indian Accounting Standards [Ind AS], MCA Corporate Governance, and SEBI LODR), see [`DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md`](./DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md).
+> For the complete architectural matrix comparing the 4 starter domains against the full 11-domain sovereign roadmap (including Indian Accounting Standards [Ind AS], MCA Corporate Governance, and SEBI LODR), see [`docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md`](./docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md).
 
 The OKF substrate currently indexes and enforces ground truth across four major regulatory domains:
 
@@ -149,7 +149,7 @@ To ensure clarity for developers, CAs, and prospective enterprise clients, the c
 | **ERP Writebacks** | *Not included* | *Not included* | **Balanced double-entry journal writebacks (SAP / Zoho)** |
 | **How to Access** | `npm install @mudraforge/statutory` | `npx @mudraforge/statutory sync` | Contact: `hello@mudraforge.in` |
 
-> **Operational Distinction**: This open-source repository provides the **declarative knowledge foundation**. It does not perform live banking transfers, hold funds, or mutate corporate ERP databases. Those consequential actions are strictly isolated within the **MudraForge Adesha Enterprise Governance Engine** (see [`ENTERPRISE_GOVERNANCE.md`](./ENTERPRISE_GOVERNANCE.md)).
+> **Operational Distinction**: This open-source repository provides the **declarative knowledge foundation**. It does not perform live banking transfers, hold funds, or mutate corporate ERP databases. Those consequential actions are strictly isolated within the **MudraForge Adesha Enterprise Governance Engine** (see [`docs/ENTERPRISE_GOVERNANCE.md`](./docs/ENTERPRISE_GOVERNANCE.md)).
 
 ---
 
@@ -333,20 +333,29 @@ If you are working on autonomous financial systems or want to discuss the roadma
 
 ---
 
-## Institutional Governance & Contributing
+## Institutional Documentation & Architecture
 
-- **[Statutory Knowledge Catalog](./CATALOG.md)**: Full table of all indexed provisions, key thresholds, and return schemas.
-- **[Domain Breadth & Depth Comparison](./DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md)**: 4-domain starter commons vs. 11-domain edge roadmap.
+All deep-dive architectural specifications, governance boundaries, quality reports, and catalogs are organized in the [`docs/`](./docs/) directory:
+
+- **[Statutory Knowledge Catalog](./docs/CATALOG.md)**: Full table of all indexed provisions, key thresholds, and return schemas.
+- **[Domain Breadth & Depth Comparison](./docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md)**: 4-domain starter commons vs. 11-domain edge roadmap.
+- **[Architecture Decisions (ADRs)](./docs/ARCHITECTURE_DECISIONS.md)**: Formal architecture decision records (ADR-0001 through ADR-0006).
+- **[Architecture Specification](./docs/ARCHITECTURE.md)**: Master specification of the Adesha Sovereign Runtime & Statutory Engine.
+- **[Corpus Quality Card](./docs/CORPUS_QUALITY.md)**: Machine-verified citation health, temporal bounds, and dual-act coverage.
+- **[Enterprise Governance Boundary](./docs/ENTERPRISE_GOVERNANCE.md)**: Operational firewall between open knowledge and governed execution.
+- **[Adesha Assurance Overview](./docs/ADESHA_ASSURANCE_OVERVIEW.md)**: Formal TLA+ specifications and mutation testing defenses.
+- **[Verification Specification](./docs/VERIFICATION.md)**: Multi-domain test harness and conformance criteria.
+- **[Data Licensing & Attribution Policy](./docs/DATA_LICENSING.md)**: Tripartite legal licensing boundary (MIT code, CC BY 4.0 structured schemas, public domain statutes).
+
+### Community & Contribution Standards
 - **[Contributor Protocol](./CONTRIBUTING.md)**: Authoring standards for `section.json`, executive circulars, and CA empanelment.
 - **[Security & Statutory Integrity Policy](./SECURITY.md)**: Protocol for reporting code flaws and gazetted statutory amendments.
-- **[Data Licensing & Attribution Policy](./DATA_LICENSING.md)**: Tripartite legal licensing boundary (MIT code, CC BY 4.0 structured schemas, public domain statutes).
 - **[Changelog](./CHANGELOG.md)**: Complete record of versioned releases, breaking changes, and migrations.
-- **[Architecture Specification](./ARCHITECTURE.md)**: Master specification of the Adesha Sovereign Runtime & Statutory Engine.
 
 ---
 
 ## License
 
 - **Software Code & Tools**: Licensed under the **[MIT License](./LICENSE)**.
-- **Derived OKF Schemas & Curated Summaries**: Licensed under the **[Creative Commons Attribution 4.0 International (CC BY 4.0)](./DATA_LICENSING.md)**.
-- **Primary Government Gazettes & Statutory Instruments**: Sourced under official public-domain and open government data terms (Republic of India Copyright Act, 1957 Section 52(1)(q) / US Code Title 17 Section 105). See **[DATA_LICENSING.md](./DATA_LICENSING.md)** for details.
+- **Derived OKF Schemas & Curated Summaries**: Licensed under the **[Creative Commons Attribution 4.0 International (CC BY 4.0)](./docs/DATA_LICENSING.md)**.
+- **Primary Government Gazettes & Statutory Instruments**: Sourced under official public-domain and open government data terms (Republic of India Copyright Act, 1957 Section 52(1)(q) / US Code Title 17 Section 105). See **[DATA_LICENSING.md](./docs/DATA_LICENSING.md)** for details.
