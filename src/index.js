@@ -222,13 +222,56 @@ export async function syncOkf(options = {}) {
 }
 
 /**
- * Look up a statutory provision by section code or alias (Live Edge API).
+ * Compute the temporal validity status of a statutory record as of a specific date.
+ * If asOfDate is omitted or 'CURRENT_ACTIVE', evaluates against active baseline.
+ * Returns 'ACTIVE', 'SUNSET_SUPERSEDED', or 'FUTURE_PENDING'.
+ */
+export function computeTemporalStatus(statute, asOfDate) {
+    if (!statute || !statute.effectivePeriod) return 'ACTIVE';
+    if (!asOfDate || asOfDate === 'CURRENT_ACTIVE') return 'ACTIVE';
+
+    const { validFrom, validTo } = statute.effectivePeriod;
+    const queryDate = asOfDate.trim();
+
+    if (validFrom && queryDate < validFrom) {
+        return 'FUTURE_PENDING';
+    }
+    if (validTo && validTo !== 'OPEN_ENDED' && queryDate > validTo) {
+        return 'SUNSET_SUPERSEDED';
+    }
+    return 'ACTIVE';
+}
+
+/**
+ * Look up a statutory provision by section code or alias.
+ * Offline-first: inspects local OKF filesystem before falling back to Cloudflare Edge API.
  */
 export async function lookupStatute(section, options = {}) {
     if (!section || typeof section !== 'string') {
         throw new Error('[@mudraforge/statutory] Section query must be a non-empty string.');
     }
 
+    const okfDir = options.okfDir || DEFAULT_LOCAL_OKF_DIR;
+    const asOfDate = options.asOfDate ? options.asOfDate.trim() : 'CURRENT_ACTIVE';
+
+    // 1. Local-first resolution
+    if (!options.forceEdge && fs.existsSync(okfDir)) {
+        try {
+            const local = lookupLocalStatute(section, okfDir);
+            if (local) {
+                const temporalStatus = computeTemporalStatus(local, asOfDate);
+                return {
+                    status: 'SUCCESS',
+                    temporalStatus,
+                    asOfDate,
+                    source: 'LOCAL_OKF_FS',
+                    statute: local
+                };
+            }
+        } catch (_) {}
+    }
+
+    // 2. Edge API fallback
     const baseUrl = options.baseUrl || DEFAULT_BASE_URL;
     const url = new URL('/api/v1/statutory/lookup', baseUrl);
     url.searchParams.set('section', section.trim());
@@ -249,10 +292,28 @@ export async function lookupStatute(section, options = {}) {
         headers['X-Mudra-Tier'] = options.tier;
     }
 
-    const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers
-    });
+    let response;
+    try {
+        response = await fetch(url.toString(), {
+            method: 'GET',
+            headers
+        });
+    } catch (netErr) {
+        // If network request failed (e.g. offline) and local statute is available, return local
+        if (fs.existsSync(okfDir)) {
+            const local = lookupLocalStatute(section, okfDir);
+            if (local) {
+                return {
+                    status: 'SUCCESS',
+                    temporalStatus: computeTemporalStatus(local, asOfDate),
+                    asOfDate,
+                    source: 'LOCAL_OKF_FS',
+                    statute: local
+                };
+            }
+        }
+        throw new Error(`[@mudraforge/statutory] Network lookup failed and local statute not found: ${netErr.message}`);
+    }
 
     if (!response.ok) {
         const errorJson = await response.json().catch(() => ({}));
@@ -263,30 +324,71 @@ export async function lookupStatute(section, options = {}) {
         throw err;
     }
 
-    return await response.json();
+    const data = await response.json();
+    return {
+        ...data,
+        source: 'EDGE_API'
+    };
 }
 
 /**
  * List all statutory sections currently indexed in the Open Knowledge Commons.
+ * Attempts Edge API first, gracefully falling back to local OKF filesystem if offline.
  */
 export async function listSections(options = {}) {
+    const okfDir = options.okfDir || DEFAULT_LOCAL_OKF_DIR;
+
+    function getLocalSections() {
+        const results = [];
+        if (!fs.existsSync(okfDir)) return results;
+        const files = findJsonFilesRecursively(okfDir);
+        for (const file of files) {
+            if (path.basename(file) === 'section.json') {
+                try {
+                    const sec = JSON.parse(fs.readFileSync(file, 'utf8'));
+                    if (sec.sectionCode) {
+                        results.push({
+                            sectionCode: sec.sectionCode,
+                            section: sec.statutorySection || sec.title || sec.sectionCode,
+                            validFrom: sec.effectivePeriod?.validFrom || '',
+                            validTo: sec.effectivePeriod?.validTo || 'OPEN_ENDED',
+                            governingStatute: sec.governingStatute || '',
+                            tier: sec.tier || 'PUBLIC_COMMONS_FREE'
+                        });
+                    }
+                } catch (_) {}
+            }
+        }
+        return results;
+    }
+
+    if (options.localOnly) {
+        return getLocalSections();
+    }
+
     const baseUrl = options.baseUrl || DEFAULT_BASE_URL;
     const url = new URL('/api/v1/statutory/sections', baseUrl);
 
-    const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'User-Agent': '@mudraforge/statutory/2.4.0'
-        }
-    });
+    try {
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': '@mudraforge/statutory/2.4.0'
+            }
+        });
 
-    if (!response.ok) {
-        throw new Error(`Failed to list statutory sections: HTTP ${response.status}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.sections && data.sections.length > 0) {
+                return data.sections;
+            }
+        }
+    } catch (_) {
+        // Fall back gracefully to local OKF filesystem
     }
 
-    const data = await response.json();
-    return data.sections || [];
+    return getLocalSections();
 }
 
 /**
@@ -339,32 +441,18 @@ export class StatutoryClient {
      * Resolve a statutory provision with offline-first speed and enterprise tier attestation.
      */
     async lookup(section, options = {}) {
-        if (this.offlineFirst) {
-            try {
-                const local = lookupLocalStatute(section, this.okfDir);
-                if (local) {
-                    return {
-                        status: 'SUCCESS',
-                        temporalStatus: 'ACTIVE',
-                        source: 'LOCAL_OKF_FS',
-                        tier: this.tier,
-                        asOfDate: options.asOfDate || new Date().toISOString().split('T')[0],
-                        statute: local
-                    };
-                }
-            } catch (_) {}
-        }
-
-        const remote = await lookupStatute(section, {
+        const res = await lookupStatute(section, {
+            ...options,
             baseUrl: this.baseUrl,
-            asOfDate: options.asOfDate,
+            okfDir: this.okfDir,
             apiKey: this.apiKey,
-            tier: this.tier
+            tier: this.tier,
+            forceEdge: !this.offlineFirst
         });
 
         return {
-            ...remote,
-            source: 'EDGE_API',
+            ...res,
+            tier: this.tier,
             clientTier: this.tier,
             authenticated: Boolean(this.apiKey)
         };

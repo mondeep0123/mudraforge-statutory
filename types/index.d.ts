@@ -140,6 +140,7 @@ export declare const DEFAULT_LOCAL_OKF_DIR: string;
 
 export declare function getLocalManifest(okfDir?: string): any;
 export declare function lookupLocalStatute(section: string, okfDir?: string): StatutoryRecord | null;
+export declare function computeTemporalStatus(statute: StatutoryRecord, asOfDate?: string): 'ACTIVE' | 'SUNSET_SUPERSEDED' | 'FUTURE_PENDING';
 export declare function checkUpdates(options?: { baseUrl?: string; okfDir?: string }): Promise<UpdateInfo>;
 export declare function syncOkf(options?: { baseUrl?: string; okfDir?: string }): Promise<SyncResult>;
 

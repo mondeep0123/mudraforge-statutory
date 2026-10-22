@@ -4,6 +4,7 @@
 > *Zero runtime dependencies. Fully offline-capable local filesystem. Public reference commons for software engineers, tax practitioners, and autonomous AI agents.*
 
 [![npm version](https://img.shields.io/npm/v/@mudraforge/statutory.svg)](https://www.npmjs.com/package/@mudraforge/statutory)
+[![CI](https://github.com/mondeep0123/mudraforge-statutory/actions/workflows/ci.yml/badge.svg)](https://github.com/mondeep0123/mudraforge-statutory/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Edge Network](https://img.shields.io/badge/Edge-Cloudflare%20Global%20Anycast-orange.svg)](https://api.mudraforge.in/api/v1/statutory/docs)
 [![Specification: OKF 0.2](https://img.shields.io/badge/Specification-Google%20OKF%20v0.2-green.svg)](https://cloud.google.com/blog)
@@ -261,6 +262,36 @@ const result = await client.calculate({
 
 console.log(result.taxableBase); // ₹70,00,000 (Calculates strictly on excess over ₹50L)
 ```
+
+---
+
+## Developer Tooling & Verification Gates
+
+The repository enforces fail-closed automated verification for schemas, temporal rules, and cryptographic digests:
+
+```bash
+# 1. Run full 10-suite multi-domain regression test
+npm test
+
+# 2. Validate all OKF schemas, circular YAML frontmatter, and return forms
+npm run validate
+
+# 3. Verify cryptographic SHA-256 Merkle root integrity
+npm run manifest:check
+
+# 4. Deterministically rebuild CATALOG.md from the statutory corpus
+npm run catalog
+```
+
+---
+
+## Institutional Governance & Contributing
+
+- **[Statutory Knowledge Catalog](./CATALOG.md)**: Full table of all indexed provisions, key thresholds, and return schemas.
+- **[Domain Breadth & Depth Comparison](./DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md)**: 4-domain starter commons vs. 11-domain edge roadmap.
+- **[Contributor Protocol](./CONTRIBUTING.md)**: Authoring standards for `section.json`, executive circulars, and CA empanelment.
+- **[Security & Statutory Integrity Policy](./SECURITY.md)**: Protocol for reporting code flaws and gazetted statutory amendments.
+- **[Architecture Specification](./ARCHITECTURE.md)**: Master specification of the Adesha Sovereign Runtime & Statutory Engine.
 
 ---
 

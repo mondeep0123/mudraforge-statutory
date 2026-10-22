@@ -248,7 +248,8 @@ async function handleList() {
         const sections = await listSections();
         console.log('───────────────────────────────────────────────────────────────────────────');
         for (const s of sections) {
-            console.log(`• [${s.sectionCode.padEnd(12)}] ${s.section.padEnd(25)} | Valid: ${s.validFrom} to ${s.validTo}`);
+            const displayValidTo = (s.validTo === 'OPEN_ENDED' || s.validTo === '2099-12-31') ? 'In Force' : s.validTo;
+            console.log(`• [${s.sectionCode.padEnd(12)}] ${s.section.padEnd(25)} | Valid: ${s.validFrom} to ${displayValidTo}`);
         }
         console.log('───────────────────────────────────────────────────────────────────────────\n');
     } catch (err) {

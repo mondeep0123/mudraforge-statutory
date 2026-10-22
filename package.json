@@ -18,6 +18,8 @@
     "ARCHITECTURE.md",
     "DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md",
     "CONTRIBUTING.md",
+    "CATALOG.md",
+    "SECURITY.md",
     "okf.publication.json",
     "VERIFICATION.md",
     "ENTERPRISE_GOVERNANCE.md",
@@ -25,7 +27,10 @@
   ],
   "scripts": {
     "test": "node test.js",
-    "validate": "node scripts/validate_okf.js"
+    "validate": "node scripts/validate_okf.js",
+    "manifest": "node scripts/generate_manifest.js",
+    "manifest:check": "node scripts/generate_manifest.js --check",
+    "catalog": "node scripts/build_catalog.js"
   },
   "repository": {
     "type": "git",
