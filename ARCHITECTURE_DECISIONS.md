@@ -91,3 +91,32 @@ To maintain institutional credibility, public documentation must never blur the 
 | **Dual-Custody Mobile Approval Harness** | Layer 4 (Adesha Runtime) | `ENTERPRISE_INTERNAL` | Enterprise License / Pilot | Android APK & TLA+ payment state machine |
 | **ERP Two-Way Sync (SAP/Tally/Zoho)** | Layer 4 (Adesha Runtime) | `ENTERPRISE_INTERNAL` | Enterprise License | Two-way database connectors & journal writebacks |
 | **Bank Rail API Execution (ICICI/HDFC)** | Layer 4 (Adesha Runtime) | `ENTERPRISE_INTERNAL` | Enterprise License | Host-to-Host banking integration |
+
+---
+
+## ADR-0006: Declarative Composite Transaction Profiles and Domain Knowledge Graphs
+
+### Context
+Commercial lifecycle events (such as corporate acquisitions, slump sales, mergers, and vendor onboarding runs) are not individual statutes. Instead, they represent business transaction archetypes that trigger multiple intersecting statutory regimes across Direct Tax, Indirect Tax (GST), and Corporate Governance (Companies Act).
+
+Treating complex transactions as flat, isolated `section.json` files forces consuming developers and AI agents to guess the relationships, execution sequences, and documentary requirements connecting relevant laws. Conversely, hardcoding operational execution logic, linear numbering assumptions, or premature legal verdicts (e.g. declaring a deal void due to a missing certificate without evaluating statutory safe harbors) into declarative formats violates both open knowledge standards and sound statutory jurisprudence.
+
+### Decision
+We establish a 3-tier declarative knowledge model for complex multi-statute transactions:
+
+1. **Tier 1: Atomic Statutory Provision (`section.json`)**: Authoritative legislative text, official Gazette citations, rates, and temporal validity windows.
+2. **Tier 2: Legal Concept Definition (`concepts/*.md`)**: Substantive interpretation boundaries, statutory conditions, exceptions, safe harbors, and evidence checklists (Markdown with structured YAML frontmatter).
+3. **Tier 3: Composite Transaction Profile (`composites/*.json`)**: Declarative relationship graph connecting relevant concepts and provisions for a specific business transaction archetype.
+
+#### Core Architectural Invariants:
+1. **Extension Attribution**: Composite profiles are documented as a versioned **MudraForge OKF Transaction Extension**, keeping them distinct from upstream Google OKF v0.2 core specifications while fully utilizing OKF frontmatter conventions.
+2. **Declarative Dependencies over Arbitrary Sequences**: The profile models statutory dependencies using true graph topology (`parallelIndependentChecks`, `conditionalDownstreamChecks`, `dependsOn`) rather than imposing an artificial linear numbered sequence on concurrent diligence streams.
+3. **Statutory Safe Harbors over Binary Failure Verdicts**: Profiles declare applicable legal questions, statutory conditions, safe harbors (e.g., bona fide purchaser for value without notice under Section 281), and evidentiary burdens, leaving judicial or executive determinations to runtime evaluation engines.
+4. **Strict Temporal Enactment Distinguishability**: Corresponding provisions under the Income-tax Act, 1961 (such as §281, §170) and the Income-tax Act, 2025 (such as §499, §313 taking effect 1 April 2026) must remain explicitly distinguished by enactment code and effective period.
+5. **Separation of Open Knowledge from Governed Execution**:
+   - The open commons (`@mudraforge/statutory`) provides the inspectable, reusable, and testable dependency graph of laws and evidence requirements.
+   - The commercial runtime (Adesha) executes deterministic calculations, enforces bank escrow locks, requires CFO biometric authorization, and writes balanced ERP journal entries.
+
+### Consequences
+- **Positive**: Makes complex statutory relationships discoverable and machine-readable for AI agents without compromising open-source format purity or disclosing proprietary execution code.
+- **Lifecycle Management**: Implemented as an experimental prototype on a dedicated feature branch (`feature/composite-transaction-profiles`) and subjected to independent legal scenario benchmarking prior to promotion into public release `v2.5.0`. Release `v2.4.0` remains focused on the verified atomic statutory corpus.
