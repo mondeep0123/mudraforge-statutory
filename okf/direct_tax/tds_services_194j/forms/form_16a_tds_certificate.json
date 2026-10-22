@@ -1,0 +1,25 @@
+{
+  "formId": "FORM_16A",
+  "title": "Certificate under Section 203 of the Income-tax Act, 1961 for Tax Deducted at Source",
+  "applicableSections": ["194J", "194Q", "194C", "194H", "194I"],
+  "governingRule": "Income-tax Rules, 1962 (Rule 31)",
+  "issuancePortal": "TRACES (TDS Reconciliation Analysis and Correction Enabling System)",
+  "statutoryDueDates": {
+    "Q1": "August 15",
+    "Q2": "November 15",
+    "Q3": "February 15",
+    "Q4": "June 15"
+  },
+  "mandatoryVerificationFields": [
+    "DEDUCTOR_TAN_10_CHAR",
+    "DEDUCTOR_PAN",
+    "DEDUCTEE_PAN",
+    "FINANCIAL_YEAR",
+    "ASSESSMENT_YEAR",
+    "QUARTER",
+    "TOTAL_AMOUNT_PAID_INR",
+    "TOTAL_TAX_DEDUCTED_INR",
+    "TOTAL_TAX_DEPOSITED_INR",
+    "UNIQUE_TRACES_DIGITAL_SIGNATURE"
+  ]
+}

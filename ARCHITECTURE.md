@@ -1,382 +1,284 @@
-# MudraForge Adesha: Autonomous Financial Governance Runtime & Statutory Architecture (v2.4.0)
-*End-to-End Master Technical Specification, Verification Model, and Open Knowledge Format (OKF) Substrate*
+# MudraForge Statutory Architecture
+## Grounding Financial AI in Deterministic Law & Open Knowledge
 
-> **Specification Version**: `v2.4.0-ENTERPRISE-SOVEREIGN`  
-> **Effective Date**: 22 October 2026  
-> **Classification**: Production Enterprise Operating Architecture (Level 9+ Certified)  
-> **Formal Model Verification**: Formally Verified via TLA+ State Machine (`specs/adesha_lease_state_machine.tla`) & 225 Differential Checks  
-> **Public Commons Substrate**: Google Open Knowledge Format (OKF v2.4.0)  
-> **Audit Status**: 61 / 61 Active Test Suites Passing (100% Conformance, 0 Regressions)  
+> **MudraForge Statutory Bundle**: `v2.4.0`  
+> **Knowledge Specification**: Google Open Knowledge Format (OKF) specification (upstream v0.2)  
+> **License**: MIT (Public Knowledge Commons)  
+> **Status**: Public Beta  
 
 ---
 
-## 1. Executive Summary: The Fundamental Problem in Autonomous Corporate Finance
+## 1. Executive Summary & Problem Formulation
 
-The deployment of Artificial Intelligence in enterprise finance is paralyzed by a single architectural liability: **the conflation of generative reasoning with transactional authority**.
+Large Language Models (LLMs) are stochastic token predictors. In corporate accounting, accounts payable automation, and ERP reconciliation, applying generative models directly to statutory compliance introduces a critical failure mode: **the conflation of generative reasoning with transactional and statutory authority**.
 
-In conventional enterprise AI configurations, a conversational model is connected directly or indirectly to corporate financial systems—retrieving accounting data, evaluating invoices, formulating tax positions, and dispatching payment instructions to banking gateways. When an enterprise relies on large language models to calculate statutory withholdings, evaluate legislative thresholds, or interpret network error responses, catastrophic failures inevitably emerge:
+### The Failure Boundaries of LLMs in Tax Law
 
-1. **Arithmetic and Regulatory Volatility**: Large language models operate on probabilistic token prediction. They hallucinate non-existent legal clauses, swap withholding deductions with net wire amounts, invert buyer-seller tax obligations, and miscalculate statutory thresholds across fiscal boundaries. For example, under **Section 194Q**, tax is deductible at 0.1% strictly on the *excess* purchase value over ₹50 Lakhs in a financial year. An LLM presented with an ₹80 Lakh invoice and ₹40 Lakhs of prior purchases frequently computes 0.1% of ₹80 Lakhs (₹8,000) instead of the statutory ₹70 Lakh taxable excess (₹7,000).
-2. **The Epistemic Gap ("Agreement Is Not Truth")**: An AI model evaluating its own output will consistently confirm its own errors. Prompting a language model to "double-check" an incorrect tax calculation simply yields an articulate defense of an erroneous number.
-3. **The Two-Generals Distributed Failure**: In enterprise banking, network communication over payment rails is fundamentally unreliable. When a bank gateway times out (HTTP 504) or drops a socket connection after payment submission, an AI model that infers the transfer "failed" and triggers a retry will **double-pay the vendor**. Conversely, assuming the transfer "succeeded" without proof creates untracked cash leakages.
-4. **Temporal Boundary Decay**: Statutory laws sunset, transition, or are omitted by annual Finance Acts. For example, **Section 206C(1H)** was sunset effective 1 April 2025. Standard model weights continue citing and enforcing sunset sections long after their legal expiration.
+1. **Non-Linear Cumulative Thresholds**:
+   Statutory tax provisions in India are non-linear and cumulative across financial years.
+   *Example*: Under **Section 194Q** of the Income-tax Act, 1961, tax is deductible at 0.1% strictly on the *excess* purchase value over ₹50 Lakhs in a financial year. An LLM presented with an ₹80 Lakh invoice and ₹40 Lakhs of prior purchases frequently computes 0.1% on the full ₹80 Lakhs (₹8,000) instead of the statutory ₹70 Lakh taxable excess (₹7,000)—generating a persistent ₹1,000 tax over-deduction on a single transaction.
 
-### The Adesha Solution: Sovereign Separation of Powers
+2. **Temporal Decay & Legislative Sunsets**:
+   Statutory laws expire or are omitted by annual Finance Acts.
+   *Example*: **Section 206C(1H)** was omitted by the Finance Act, 2025 effective 1 April 2025. Standard model weights continue citing and enforcing sunset sections long after their legal expiration date because pre-training data lacks temporal enforcement boundaries.
 
-**MudraForge Adesha** was designed from first principles to resolve these structural vulnerabilities by enforcing a rigorous **Separation of Powers**:
+3. **Dual-Act Legislative Transition**:
+   India is transitioning to the **Income-tax Act, 2025** (taking effect 1 April 2026), replacing familiar section numbers with new codifications (e.g., Section 194Q transitions to Section 393(1), Table 8, Item (ii)). Agents without a dual-act mapping layer hallucinate cross-statutory citations.
 
-> **The Generative AI assists, analyzes, and explains; the Deterministic Sovereign Runtime computes, gates, authorizes, executes, and reconciles.**
+4. **The Failure of Messy Web Searches (Web RAG)**:
+   When autonomous agents attempt to retrieve tax laws using automated search queries, they ingest conflicting third-party summaries: outdated SEO-optimized accounting blogs from 2018–2022, promotional vendor writeups, and unstructured discussion forums. These sources consistently miss crucial statutory provisos—such as CBDT Circular 13/2021 unbundling GST from TDS, or Ministry of MSME OM 2/1(5)/2021 excluding wholesale/retail traders. Web RAG introduces high latency, burns thousands of context tokens, and injects contradictory noise into agent reasoning.
 
-No generative language model within MudraForge possesses the capability or authorization to calculate a statutory liability, issue a banking instruction, release a wire, or mutate a corporate general ledger. Every financial transaction is processed through a deterministic, fail-closed runtime governed by mathematically verifiable invariant envelopes, cryptographic canonicalization, single-use authorization leases, and out-of-band banking reconciliation state machines.
-
-The foundational principle of Adesha's distributed architecture is:
-
-> ### **"Preserving uncertainty is always safer than guessing."**
-
-When any network connection times out, data structure fails validation, or narrative description diverges from canonical records, the runtime halts execution fail-closed, isolates the ambiguous transaction, and refuses to move funds until downstream facts are definitively proven.
+5. **Having the Law ≠ Correct Interpretation (The Computation Boundary)**:
+   Simply injecting the raw text of a statute into an LLM's context window does **not** ensure statutory compliance. LLMs are probabilistic token sequence predictors, not deterministic arithmetic engines. When an LLM reads Section 194Q or MSMED Section 16, it frequently miscalculates multi-invoice cumulative threshold tracking or monthly compound interest, and defends its erroneous math when challenged (**The Epistemic Confirmation Loop**). Statutory law requires a strict boundary between legal knowledge and mathematical execution.
 
 ---
 
-## 2. System Topology & End-to-End Governance Pipeline
+## 2. Architectural Principle: Sovereign Separation of Powers
 
-The MudraForge Adesha runtime processes corporate financial workflows through an unbroken, seven-stage chain of custody. Each stage forms an independent security boundary with explicit preconditions and postconditions.
+To resolve these vulnerabilities, MudraForge enforces a strict **Separation of Powers**:
 
-```mermaid
-flowchart TD
-    subgraph IntakeBoundary["1. Ingestion & Input Provenance"]
-        Input["Corporate AP Stream: PDF Invoices / IRN e-Invoices"] --> QRVerify["Source Hash Seal & IRP e-Invoice QR Verification"]
-        QRVerify --> Router["Adesha Autonomous Orchestrator"]
-        Router --> RegTriage["Statutory Domain Classifier & Context Builder"]
-    end
-
-    subgraph DeterministicCore["2. Deterministic Governance Core (OKF Layer)"]
-        RegTriage --> StatShield["Deterministic Statutory & Arithmetic Shield"]
-        StatShield --> CalcEngine["Rule Engines: Sec 194Q, 206C(1H), MSMED Sec 16, Sec 43B(h), 194J"]
-        CalcEngine --> CanonBuilder["Canonical Financial Result Synthesizer"]
-        CanonBuilder --> RFC8785["RFC 8785 Canonical Normalization (JCS)"]
-        RFC8785 --> SHA256Seal["Immutable SHA-256 Cryptographic Fingerprint"]
-    end
-
-    subgraph PresentationGate["3. Presentation Lock & Dual-Control Gate"]
-        SHA256Seal --> LLMExplainer["Generative Explanation & Slot Interpolation"]
-        LLMExplainer --> ProseDraft["Draft Natural Language Executive Summary"]
-        ProseDraft --> ProseAuditor{"Automated Discrepancy Auditor"}
-        SHA256Seal -.-> ProseAuditor
-        ProseAuditor -- "Numerical / Entity Discrepancy Detected" --> HardAbort["🛑 FAIL-CLOSED HALT: Presentation Rejection"]
-        ProseAuditor -- "100% Consistent" --> DualControl{"Tier-1 / Tier-2 Human Authorization Gate"}
-        DualControl -- "Pending Approval / Rejected" --> ApprovalHold["⏸️ PENDING_HUMAN_APPROVAL"]
-        DualControl -- "Maker-Checker Clearance Approved" --> LeaseIssuer["4. Payment Authorization Lease Issuer"]
-    end
-
-    subgraph ZeroTrustExecution["4. Zero-Trust Execution Boundary"]
-        LeaseIssuer --> LeaseDoc["Cryptographic Single-Use Lease (AUTHORIZED)"]
-        LeaseDoc --> BankAdapter["Banking Outflow Adapter (RazorpayX / Host-to-Host)"]
-        BankAdapter --> CASConsume{"Atomic Database Compare-and-Swap (CAS)"}
-        CASConsume -- "Lease Reused, Account or Amount Mismatch" --> ReplayBlock["🛑 REJECT: LEASE_ALREADY_CONSUMED / MISMATCH"]
-        CASConsume -- "Valid Single-Use Transition" --> ConsumedState["Lease State: CONSUMED"]
-        ConsumedState --> WireDispatch["Encrypted Wire Transmission to Bank"]
-    end
-
-    subgraph BankingState["5. Distributed Banking & Recovery"]
-        WireDispatch --> WireOutcome{"Downstream Banking Response"}
-        WireOutcome -- "Synchronous UTR" --> SettledState["Lease State: SETTLED"]
-        WireOutcome -- "504 Timeout / Socket Drop / Crash" --> AmbiguousState["Lease State: AMBIGUOUS_RECONCILING (Lock Active)"]
-        AmbiguousState --> ScheduledRecovery["Scheduled Cron Sweeper / Statement Ingestion"]
-        ScheduledRecovery -- "Downstream Bank Settled (UTR Found)" --> SettledState
-        ScheduledRecovery -- "Certified Bank Reversal" --> RetryableState["Lease State: RECOVERED_RETRYABLE (Linked Key)"]
-        ScheduledRecovery -- "Unconfirmed Status" --> EscalationHold["🛑 Safe Lock Maintained (Treasury Escalation)"]
-    end
-
-    subgraph LedgerBoundary["6. Sovereign General Ledger Writeback"]
-        SettledState --> UTRVerify{"Settlement UTR Precondition Check"}
-        UTRVerify -- "Bank UTR Confirmed" --> GLBuilder["Double-Entry Journal Voucher Construction"]
-        GLBuilder --> LineSourceCheck{"Source-Bound Line Audit: Advances, Taxes, Wire Match?"}
-        LineSourceCheck -- "Arbitrary Plug / Delta Detected" --> PlugBlock["🛑 HALT: Source-Bound Line Invariant Failed"]
-        LineSourceCheck -- "Lines Verified" --> EquilibriumCheck{"Mathematical Equilibrium: Debits === Credits?"}
-        EquilibriumCheck -- "Equilibrium Delta > ₹0.01" --> GLBlock["🛑 HALT: General Ledger Out of Balance"]
-        EquilibriumCheck -- "Balanced to ₹0.00" --> ERPWrite["Idempotent Post to General Ledger (Zoho Books / SAP)"]
-    end
-
-    subgraph FormalVerification["7. Continuous Formal Verification Substrate"]
-        ERPWrite --> TLACheck["TLA+ Model Checker (TLC): 25 States / 225 Differential Checks"]
-        TLACheck --> ConformanceReport["Level 9+ Certified Financial Invariant Guarantee"]
-    end
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ 1. Generative Layer (AI Agents / LLMs)                                 │
+│    • Assists, extracts messy invoice narrative, and explains context   │
+│    • Strictly prohibited from authoritative financial computation      │
+└──────────────────────────────────▲─────────────────────────────────────┘
+                                   │ Queries local disk / edge
+┌──────────────────────────────────┴─────────────────────────────────────┐
+│ 2. Statutory Knowledge Substrate (OKF Layer - This Package)            │
+│    • Authoritative, versioned reference law under Google's OKF standard│
+│    • Temporal validity state machines (detects sunsets & transitions)  │
+│    • Zero dependencies, 100% offline-capable, sub-1ms local lookup     │
+└──────────────────────────────────▲─────────────────────────────────────┘
+                                   │ Feeds verified ground truth
+┌──────────────────────────────────┴─────────────────────────────────────┐
+│ 3. Deterministic Execution & Governance (Adesha Runtime)               │
+│    • Pure arithmetic legal calculators (194Q excess, MSMED 3x RBI)     │
+│    • Single-use payment leases, CAS gates & Two-Generals recovery      │
+│    • Double-entry general ledger writeback with source-bound lines     │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
+> **Core Postulate**: *The Generative AI assists, analyzes, and explains; the Deterministic Runtime computes, gates, authorizes, executes, and reconciles.*
+
 ---
 
-## 3. The Open Knowledge Format (OKF) Substrate
+## 3. The Open Knowledge Format (OKF) Implementation
 
-The foundation of Stage 2 (Deterministic Governance Core) is the **Open Knowledge Format (OKF)**, an open specification introduced by Google Cloud as the "OpenAPI for Knowledge".
+The foundation of the statutory knowledge layer is the **Open Knowledge Format (OKF)**, an open specification introduced by Google Cloud as the "OpenAPI for Knowledge" (upstream specification: v0.2).
 
-Rather than relying on opaque embeddings, high-latency vector databases, or prompt injections, the OKF provides an authoritative, zero-neuron, temporal knowledge substrate that both humans and autonomous agents can inspect directly from the filesystem.
+Rather than forcing developers and AI agents to query external vector databases or inject large RAG prompts, the OKF represents legal ground truth as a versioned, portable filesystem of human- and agent-readable files.
 
-### Self-Documenting Filesystem Architecture
-Every statute in `./okf/sections/` combines the **Section Code and Plain-Text Legal Purpose**:
+### Domain-Structured Filesystem Architecture
+
+Statutes in `./okf/` are structured by **regulatory domain** with dedicated sub-directories containing the core statute schema, official executive circulars in Google OKF Markdown, and statutory compliance forms:
 
 ```
 okf/
-├── manifest.json                                      # Cryptographic SHA-256 root hash & release manifest
-└── sections/
-    ├── 194Q-tds-on-purchase-of-goods.json             # 0.1% TDS on purchase excess over ₹50L
-    ├── 206C_1H-tcs-on-sale-of-goods-sunset.json       # TCS sunset on 1 April 2025
-    ├── 17_5-blocked-input-tax-credit.json             # GST blocked ITC categories & negative list
-    ├── MSMED-15-16-delayed-payment-and-penal-interest.json # 45-day rule & 3x RBI interest
-    ├── 194J-technical-and-professional-services-tds.json   # 2% FTS vs 10% Professional fees
-    └── IRC-901-904-foreign-tax-credit-pass-through.json    # US Foreign Tax Credit limitation baskets
+├── manifest.json                                      # Cryptographic SHA-256 root hash & domain manifest
+│
+├── direct_tax/
+│   ├── tds_goods_194q/
+│   │   ├── section.json                               # 0.1% TDS on purchase excess over ₹50L
+│   │   ├── circulars/
+│   │   │   ├── cbdt_circular_13_2021_guidelines.md    # CBDT Q&A on threshold math & advance netting
+│   │   │   └── cbdt_circular_23_2017_gst_unbundling.md# Exclusion of GST from TDS base
+│   │   └── forms/
+│   │       ├── form_26q_quarterly_return.json         # Form 26Q quarterly TDS reporting schema
+│   │       └── vendor_pan_declaration.md              # Vendor PAN & Section 206AB declaration template
+│   ├── tds_services_194j/
+│   │   ├── section.json                               # 2% FTS vs 10% Professional fees
+│   │   ├── circulars/
+│   │   │   └── cbdt_circular_03_2020_fts_rate_cut.md  # FTS 2% rate reduction guidelines
+│   │   └── forms/
+│   │       └── form_16a_tds_certificate.json          # Form 16A quarterly TDS certificate schema
+│   └── tcs_goods_206c_1h/
+│       ├── section.json                               # Section 206C(1H) sunset on 1 April 2025
+│       └── circulars/
+│           └── finance_act_2025_sunset_memo.md        # Finance Act 2025 omission memo
+│
+├── indirect_tax_gst/
+│   └── blocked_itc_17_5/
+│       ├── section.json                               # CGST 17(5) blocked credit negative list
+│       ├── circulars/
+│       │   └── cbic_circular_172_2022_employer_obligations.md # Statutory employer obligation exception
+│       └── forms/
+│           └── gstr_2b_ineligible_reconciliation.json # GSTR-2B vs 3B Table 4(B) reporting schema
+│
+├── msme_commercial/
+│   └── delayed_payments_15_16/
+│       ├── section.json                               # 45-day clock, 3x RBI interest & 43B(h)
+│       ├── circulars/
+│       │   └── msme_om_2021_trader_exclusion.md       # Retail/wholesale trader exclusion rule
+│       └── forms/
+│           ├── udyam_registration_verification.json   # UDYAM portal certificate validation schema
+│           └── schedule_iii_msme_disclosure.md        # Balance Sheet Schedule III disclosure format
+│
+└── international_tax/
+    └── foreign_tax_credit_irc_901_904/
+        ├── section.json                               # US Foreign Tax Credit limitation baskets
+        └── forms/
+            ├── form_67_statement_of_foreign_tax.json  # Indian Income Tax Form 67 (Rule 128)
+            └── irs_schedule_k3_reporting.json         # US IRS Schedule K-3 dual-reporting schema
 ```
 
 ### Zero-Token Agent Discovery
-When an autonomous agent (Antigravity, Cursor, Claude Code) receives a transaction compliance task:
+When an autonomous agent (Antigravity, Cursor, Claude Code) receives a compliance task:
 1. The agent reads the directory listing of `./okf/sections/`.
-2. The combination of section number and plain-text description allows the agent to identify the exact applicable statute at **0 token cost** without RAG hallucinations.
+2. The combination of section code and plain-text description allows the agent to identify the applicable statute at **0 token cost** without RAG hallucinations.
 3. The agent loads only the targeted JSON statute into context.
 
 ### Dual-Act Legislative Migration Matrix
-India is transitioning to the **Income-tax Act, 2025** (taking effect 1 April 2026). The OKF embeds a complete forward-mapping compiler:
+The OKF embeds a cross-compilation matrix forward-mapping the *Income-tax Act, 1961* to the *Income-tax Act, 2025*:
 - `194Q` $\rightarrow$ Section 393(1), Table 8, Item (ii)
 - `194J` $\rightarrow$ Section 393(1), Table 8, Item (iii)
 - `194C` $\rightarrow$ Section 393(1), Table 8, Item (i)
 
-Transactions dated before 1 April 2026 resolve under the 1961 Act framework; transactions on or after 1 April 2026 automatically compile under the 2025 Act codification.
+Transactions dated before 1 April 2026 resolve under the 1961 Act; transactions on or after 1 April 2026 automatically compile under the 2025 Act codification.
 
 ---
 
-## 4. Under the Hood: The 5 Deep Defense Subsystems
+## 4. Financial Regulatory Domains Currently Supported
+
+The OKF statutory substrate is purpose-built for **corporate finance departments, enterprise accounts payable (AP), treasury controllers, and tax compliance teams**.
+
+Currently, the substrate indexes and provides deterministic ground truth across four vital financial domains:
+
+### 1. Direct Tax & Corporate Withholdings (TDS / TCS)
+- **Section 194Q**: 0.1% TDS on purchase of goods exceeding ₹50 Lakhs cumulative annual threshold (calculating strictly on the excess over ₹50L).
+- **Section 206C(1H)**: TCS on sale of goods, with automated temporal interception of its **1 April 2025 sunset** under the Finance Act, 2025.
+- **Section 194J**: Fees for Technical Services (2% FTS) vs. Professional Fees (10%), handling 5% non-PAN penalty rates.
+- **Dual-Act Forward Mapping**: Complete cross-compilation matrix from *Income-tax Act, 1961* to the upcoming *Income-tax Act, 2025* (taking effect 1 April 2026), mapping sections seamlessly (e.g., Section 194Q → Section 393(1), Table 8, Item (ii)).
+
+### 2. Indirect Tax & Procurement Compliance (GST)
+- **CGST Section 17(5)**: Comprehensive statutory negative list for Blocked Input Tax Credit (ITC)—including motor vehicles, corporate food & beverages, personal consumption, club memberships, and statutory exceptions/provisos.
+
+### 3. Micro, Small & Medium Enterprises (MSME Working Capital & Section 43B(h))
+- **MSMED Act, 2006 (Sections 15 & 16)**: Strict statutory payment clock (15 days without agreement, max 45 days with written agreement) and non-negotiable compound penal interest at **3 times the RBI Bank Rate** (compounded monthly).
+- **Trader Exclusion Rule**: Automated enforcement of Ministry of MSME OM No. 2/1(5)/2021-P&G/Policy, strictly excluding wholesale and retail traders (NIC 45, 46, 47) from delayed payment protection.
+- **Income Tax Linkage**: Cross-statutory disallowance rules under Section 43B(h) for overdue vendor payables.
+
+### 4. Cross-Border Remittances & Dual-Reporting
+- **US Internal Revenue Code (IRC §§ 901 & 904)**: Foreign Tax Credit (FTC) limitation baskets (General Category vs. Passive Category), Pass-Through Entity (PTE) tax pass-throughs, and Schedule K-3 dual-reporting compliance for Indo-US cross-border ventures.
 
 ---
 
-### Subsystem 1: Deterministic Statutory & Arithmetic Shield
+## 5. Requesting New Statutes & Expanding Legal Domains
 
-Adesha strips the language model of all statutory arithmetic responsibilities. All financial calculations are delegated to deterministic, purely arithmetic legal engines executing statutory ground truth.
+Enterprise finance operations are broad, and finance teams frequently encounter specialized regulatory frameworks beyond the initial core set.
 
-#### Rule 11 Verification: Ground Truth vs. Agreement
-Past enterprise software audits revealed that test suites often test "agreement with our own code" rather than agreement with statutory law. If a software engineer misinterprets a tax threshold, both the application and the test suite pass together while remaining legally incorrect.
+**Do you need support for an additional tax domain or statutory provision?**
+Examples of sections and domains we are actively indexing or can prioritize on request:
+- **International & Transfer Pricing**: Section 92E / Master File / Local File compliance.
+- **Digital Economy Taxes**: Equalisation Levy (Section 165) and Section 194S (Crypto/VDA TDS).
+- **Lower Deduction Certificates**: Section 197 / Section 195 certificate exhaustion monitoring.
+- **State-Specific Compliance**: State Stamp Duty acts, Professional Tax, and State GST variations.
+- **Cross-Border Jurisdictions**: UK Corporation Tax (HMRC), Singapore IRAS GST, or US State Apportionment / Sales Tax Nexus.
 
-To guarantee statutory truth, Adesha validates its calculator against an **Independent Statutory Ground Truth Oracle** across an adversarial mutation matrix combining scalar mutations with complex semantic misinterpretation mutants:
-
-| Mutant Identifier | Deliberate Corruption Injected | Statutory Legal Baseline | Oracle Verdict |
-| :--- | :--- | :--- | :--- |
-| **MUTANT-01** | Section 194Q rate increased from 0.1% to 1.0% | Section 194Q specifies rate of 0.1% on excess over ₹50L | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-02** | Section 194Q threshold lowered from ₹50L to ₹10L | Section 194Q mandates threshold of ₹50 Lakhs cumulative | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-03** | Section 206C(1H) allowed to evaluate after 1 April 2025 | Finance Act 2025 sunsets Section 206C(1H) w.e.f. 01-04-2025 | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-04** | Section 194Q computed on gross amount including GST | CBDT Circular 13/2021 mandates unbundling of GST component | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-05** | Missing PAN on 194Q penalized at 20% instead of 5% | Section 206AA(1) proviso explicitly caps Sec 194Q at 5% | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-06** | MSMED penal rate computed from RBI Repo Rate (6.5%) | MSMED Sec 16 specifies 3x RBI Bank Rate (Sec 49 RBI Act, 6.75%) | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-07** | MSMED penal interest computed as simple annual interest | MSMED Sec 16 mandates compounding with monthly rests | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-08** | Section 43B(h) disallowance applied to medium enterprises | Section 43B(h) applies strictly to Micro and Small enterprises | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-09** | Section 194Q applied to foreign vendor import without PE | CBDT Circular 13/2021 Q3 exempts imports; Section 195 applies | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-10** | Tie-breaker inverted when buyer turnover is under ₹10 Cr | Sec 206C(1H) 2nd Proviso only yields if buyer is legally liable | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-11** | Section 194Q deducted on entire invoice crossing ₹50L | Only the incremental excess over ₹50 Lakhs is taxable base | 🛑 **KILLED** (Discrepancy Caught) |
-| **MUTANT-12** | Advance netting deducted without adjusting prior advance TDS | CBDT Circular 13/2021 Q1 prevents double withholding | 🛑 **KILLED** (Discrepancy Caught) |
+### How to Request a Statute or Legal Domain:
+1. **GitHub Issues**: Open an issue on [`github.com/mondeep0123/mudraforge-statutory`](https://github.com/mondeep0123/mudraforge-statutory/issues) using the `statute-request` or `domain-support` label. Include the governing statute, section number, and primary CBDT/CBIC/regulatory citations.
+2. **Direct Contact**: Email our engineering and tax research team at [hello@mudraforge.in](mailto:hello@mudraforge.in) or [support@mudraforge.in](mailto:support@mudraforge.in).
+3. **CA & Legal Practitioner Empanelment**: If you are a Chartered Accountant (CA), CPA, or tax attorney and want to co-author, audit, or review statutory packs with official attribution and review records, reach out directly to Mondeep Engti at [mondeepe@gmail.com](mailto:mondeepe@gmail.com).
 
 ---
 
-### Subsystem 2: Cryptographic Canonical Financial Results
+## 6. How the Knowledge Layer Connects to Adesha
 
-Once the statutory shield completes arithmetic execution, the structured output is compiled into an immutable **Canonical Financial Result**. 
-
-To prevent downstream components from modifying figures, reordering data, or dropping line items, the data structure is cryptographically normalized and sealed:
-
-1. **RFC 8785 JSON Canonicalization Scheme (JCS)**: Object keys are sorted lexicographically by UTF-16 code units, redundant whitespace is stripped, and numeric values follow strict IEEE 754 decimal serialization.
-2. **SHA-256 Cryptographic Fingerprint**: The RFC 8785 normalized byte sequence is hashed using SHA-256 to produce an immutable 64-character hexadecimal digest (`fingerprintSha256`).
-3. **Immutability Invariant**: Any downstream modification—even a 1-paisa deviation, whitespace injection, or field rename—causes an immediate cryptographic hash mismatch, instantly invalidating the transaction across all execution boundaries.
-
----
-
-### Subsystem 3: Automated Discrepancy Detection & Presentation Consistency Lock
-
-Adesha rejects the naive claim of "zero hallucination." Generative models cannot be guaranteed to never hallucinate. Instead, Adesha implements an **Automated Discrepancy Detection & Presentation Consistency Lock** that inspects all generated prose against the cryptographically sealed canonical result before any payment authorization lease can be issued.
-
-#### Formal Verification Tolerances:
-- **Absolute Financial Tolerance**: $\le$ ₹1.00 for currency values (Gross, GST, TDS, Net Wire). Any variance $>$ ₹1.00 triggers an immediate fail-closed halt.
-- **Percentage Rate Tolerance**: $\le 0.01\%$ for statutory rates (e.g., verifying 0.1% vs 1.0% vs 5.0%).
-- **Section Citation Guard**: If the canonical ledger cites Section 194Q, any prose claiming tax deduction under Section 206C(1H), Section 194C, or Section 195 is flagged as a regulatory contradiction.
-- **Foreign Remittance Confabulation Guard**: Domestic Indian vendors operating under GSTINs and Indian PANs cannot have foreign remittance holds (such as Form 15CA/15CB or Section 195) hallucinated upon them by the language model.
-- **Fail-Closed Gate**: If a single discrepancy is detected, the transaction halts immediately. The system logs the exact discrepancy, aborts lease generation, and notifies human treasury operations.
-
----
-
-### Subsystem 4: Zero-Trust Payment Authorization Leases & Execution Path Lockdown
-
-Payment adapters (integrations with banking APIs like RazorpayX, Mercury, ICICI Corporate Banking, or host-to-host SFTP rails) operate inside a **Zero-Trust Boundary**. 
-
-An adapter is never permitted to disburse funds based on an API parameter or natural language instruction. To initiate a wire, an execution path must acquire and present an unconsumed **Single-Use Cryptographic Payment Authorization Lease**.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Orchestration Runtime
-    participant LeaseGate as Sovereign Lease Gate
-    participant DB as MongoDB Sovereign Store
-    participant Bank as Banking Outflow Gateway (RazorpayX)
-
-    App->>LeaseGate: Request Payment Lease (Vendor, Net Wire Amount, Canonical SHA-256)
-    LeaseGate->>LeaseGate: Verify Presentation Consistency & Double-Entry Balance
-    LeaseGate->>DB: Atomic Insert (Status: AUTHORIZED, TTL: 5 Minutes)
-    DB-->>LeaseGate: Lease Document Created (lease_id)
-    LeaseGate-->>App: Deliver Single-Use Lease
-
-    App->>Bank: Initiate Wire Transfer (lease_id, Vendor, Amount)
-    Bank->>DB: Atomic CAS: findAndModify({ leaseId, status: 'AUTHORIZED' } -> { status: 'CONSUMED' })
-    
-    alt Replay Attack / Concurrent Duplicate Call
-        DB-->>Bank: Match Failed (Status is already CONSUMED or Hash Mismatched)
-        Bank-->>App: 🛑 REJECT: LEASE_ALREADY_CONSUMED / LEASE_PARAM_MISMATCH
-    else Legitimate First Call
-        DB-->>Bank: Match Succeeded (Status transitioned to CONSUMED)
-        Bank->>Bank: Dispatch Wire to Banking Clearinghouse
-        Bank-->>App: Transfer Dispatched to Rails
-    end
-```
-
-#### Lease Invariants:
-1. **Seven-Fold Cryptographic Binding**: Bound to vendor name, beneficiary account hash, IFSC routing code, exact wire amount, Canonical SHA-256 fingerprint, source document SHA-256 digest, and Maker-Checker clearance token.
-2. **Penny-Drop Verification**: Beneficiary bank account must have completed an automated penny-drop verification via NPCI/IMPS with name-match confidence $\ge 95\%$.
-3. **Change-Control Cooling Lock**: Any alteration to vendor bank details in the enterprise vendor master triggers an immediate **48-hour cooling-off lock** requiring dual CFO re-authorization.
-4. **Capability-Based Secret Isolation**: Banking API credentials reside in an isolated Cloudflare secret boundary accessible exclusively through a cryptographic module demanding an active, unconsumed authorization lease token.
-5. **Atomic Compare-and-Swap (CAS)**: Uses database-level atomic operations (`findAndModify` with exact status predicates). When concurrent threads attempt to execute the same lease simultaneously, exactly one succeeds; all others fail with `LEASE_ALREADY_CONSUMED`.
-
----
-
-### Subsystem 5: Distributed Banking Resilience & The Two-Generals Resolution Protocol
-
-In distributed systems, the **Two-Generals Problem** demonstrates that it is impossible to guarantee that two entities communicating over an unreliable link have reached common knowledge.
-
-When an enterprise runtime transmits an HTTP payment instruction to a banking partner, network timeouts (HTTP 504), proxy drops, or application crashes leave the transaction in an ambiguous state.
-
-```mermaid
-stateDiagram-v2
-    [*] --> AUTHORIZED: Lease Created by Deterministic Gate (Maker-Checker Verified)
-    AUTHORIZED --> CONSUMED: Atomic CAS at Banking Outflow Boundary
-
-    CONSUMED --> SETTLED: Downstream Bank Returns Instant Settlement UTR
-    CONSUMED --> AMBIGUOUS_RECONCILING: HTTP 504 Timeout / Network Drop / Server Reboot
-
-    state AMBIGUOUS_RECONCILING {
-        [*] --> PreservingUncertainty: safeToRetry = false
-        PreservingUncertainty --> ActiveReconciliation: Scheduled Cron Sweeper / Statement Ingestion
-        ActiveReconciliation --> TreasuryEscalation: Uncertified NOT_FOUND / Gateway Unreachable
-    }
-
-    AMBIGUOUS_RECONCILING --> SETTLED: Downstream Bank Confirms Transfer Settled (with UTR)
-    AMBIGUOUS_RECONCILING --> RECOVERED_RETRYABLE: Gateway Certifies Authoritative Reversal / Failure Proof
-
-    RECOVERED_RETRYABLE --> CONSUMED: Safe Retry with Linked Transport Key (attemptIndex: 2)
-    SETTLED --> RECONCILED_LEDGER: General Ledger ERP Writeback Cleared
-    RECONCILED_LEDGER --> [*]: Permanent Ledger Seal
-```
-
-#### Resolution Invariants:
-1. **Uncertainty Preserved Fail-Closed**: When a transaction times out, its lease transitions to `AMBIGUOUS_RECONCILING` with `safeToRetry: false`. In this state, retrying the transaction or generating a new lease is strictly blocked.
-2. **Elapsed Time Never Unlocks a Retry**: Waiting 30 minutes does not mean a transaction didn't settle. Banks experience clearinghouse delays and batch queue lags. Only authoritative downstream evidence (UTR or certified reversal) can transition the state.
-3. **Dual-Mode Provider Retry Contract**:
-   - `IDEMPOTENT_RETRY`: Re-transmits the payout using the exact same `transportIdempotencyKey` and identical body to retrieve existing results without creating duplicate debits.
-   - `COMPENSATED_REATTEMPT`: Only post-certified terminal failure/reversal does Adesha generate a fresh linked transport token (`createRetryTransportToken` with `attemptIndex: 2`), preserving the immutable `domainReferenceId`.
-4. **Scheduled Sweeper with Atomic CAS Lease Claiming**: In serverless edge environments (Cloudflare Workers), out-of-band recovery is executed via scheduled cron sweeps. Workers claim ambiguous leases using atomic CAS locks (`claimRecoveryLease` with TTL), preventing worker race conditions.
-
----
-
-## 5. Sovereign General Ledger Writeback: Double-Entry Equilibrium
-
-In corporate ERP, recording a payment in the general ledger before external bank settlement creates accounting distortions, ghost assets, and tax reconciliation penalties.
-
-Adesha enforces a strict accounting invariant: **Zero general ledger writeback without verified downstream bank settlement**.
+The statutory substrate published in this repository (`@mudraforge/statutory`) acts as the reference oracle for the broader **MudraForge Adesha Governance Platform**:
 
 ```mermaid
 flowchart TD
-    SettledLease["Settled Payment Lease with Bank UTR"] --> GLGate{"General Ledger Writeback Gate"}
+    AP["Corporate AP Stream:<br/>PDF Invoices / IRN e-Invoices"] --> Triage["Statutory Domain Classifier<br/>& Context Builder"]
     
-    GLGate --> Check1{"Precondition 1: Bank UTR Present?"}
-    Check1 -- "No" --> Reject1["🛑 REJECT: SETTLEMENT_UTR_REQUIRED"]
-    Check1 -- "Yes" --> Check2{"Precondition 2: Canonical SHA-256 Verified?"}
-    
-    Check2 -- "No" --> Reject2["🛑 REJECT: MISSING_CANONICAL_FINGERPRINT"]
-    Check2 -- "Yes" --> Check3{"Precondition 3: Actor Clearance Verified (Admin/Finance)?"}
-    
-    Check3 -- "No" --> Reject3["🛑 REJECT: INITIATION_UNAUTHORIZED"]
-    Check3 -- "Yes" --> JVConstruct["Synthesize Multi-Tier Journal Voucher"]
-
-    subgraph SourceLineCheck["Source-Bound Line Verification"]
-        JVConstruct --> L1["Verify COGS Line binds to Invoice Basic Amount"]
-        JVConstruct --> L2["Verify GST Line binds to e-Invoice IRP Digest"]
-        JVConstruct --> L3["Verify TDS Line binds to Statutory Calculator"]
-        JVConstruct --> L4["Verify Advance Credit binds to ERP Unapplied Advance Balance"]
-        JVConstruct --> L5["Verify Bank Credit binds to Authorized Wire Amount"]
+    subgraph OKFSubstrate["MudraForge Statutory Substrate (This Package)"]
+        Triage --> Substrate{"Local OKF Filesystem<br/>or Edge Substrate"}
+        Substrate --> S1["194Q Thresholds & Excess Scope"]
+        Substrate --> S2["206C(1H) Sunset Evaluation"]
+        Substrate --> S3["MSMED 15/16 Payment Rules"]
+        Substrate --> S4["194J FTS vs Professional Rates"]
     end
 
-    subgraph AccountingEquilibrium["Mathematical Equilibrium Audit"]
-        L1 & L2 --> D1["Debit: Raw Material COGS / Inventory = ₹65,00,000"]
-        L1 & L2 --> D2["Debit: GST Input Tax Credit Asset = ₹11,70,000"]
-        L3 --> C1["Credit: Statutory TDS Payable u/s 194Q = ₹6,000"]
-        L4 --> C2["Credit: Vendor Advances Recovered = ₹10,00,000"]
-        L5 --> C3["Credit: Bank Operating Account Wire Disbursed = ₹66,64,000"]
-        
-        D1 & D2 --> SumDebits["Total Debits = ₹76,70,000.00"]
-        C1 & C2 & C3 --> SumCredits["Total Credits = ₹76,70,000.00"]
-        
-        SumDebits & SumCredits --> EqCheck{"Sum(Debits) === Sum(Credits)?"}
+    subgraph AdeshaEngine["Adesha Sovereign Governance Engine"]
+        S1 & S2 & S3 & S4 --> CalcEngine["Deterministic Arithmetic Calculator<br/>(₹50L Excess, 3x RBI Interest)"]
+        CalcEngine --> CanonResult["Canonical Financial Result<br/>(RFC 8785 JCS + SHA-256 Seal)"]
+        CanonResult --> PresLock["Presentation Consistency Lock<br/>(Automated Prose Auditor)"]
+        PresLock --> Lease["Single-Use Payment Lease<br/>(Atomic CAS Gate)"]
+        Lease --> Bank["Banking Outflow Rails<br/>(RazorpayX / Host-to-Host)"]
+        Bank --> GL["Double-Entry General Ledger<br/>(Zoho Books / SAP Writeback)"]
     end
-
-    EqCheck -- "Equilibrium Discrepancy > ₹0.01" --> HaltGL["🛑 HALT: General Ledger Equilibrium Violation"]
-    EqCheck -- "Balanced to Exactly ₹0.00" --> PostERP["Post Journal Voucher to Zoho Books / SAP / NetSuite"]
-    PostERP --> IdempotentReceipt["Idempotent Voucher Key: zoho_jv_{bankUtr}"]
 ```
 
-### Double-Entry Invariants:
-1. **Source-Bound Line Invariant (`verifySourceBoundLineInvariants`)**: Every journal line binds directly to its authoritative source document. Arbitrary balancing plugs are strictly prohibited.
-2. **Absolute Mathematical Equilibrium**:
-   $$\sum \text{Debits} \equiv \sum \text{Credits} = ₹76,70,000.00$$
-   Difference must be $\le ₹0.01$. Any variance aborts the writeback immediately.
-3. **Idempotent ERP Posting**: Every journal voucher is keyed on `zoho_jv_{bankUtr}`. Network drops during ERP posting safely retry without duplicate entries.
+### Subsystem Boundary Delineation
+
+| Capability | Public Substrate (`@mudraforge/statutory`) | Commercial Adesha Platform |
+| :--- | :--- | :--- |
+| **Statutory Text & Schemas** | ✅ Open Knowledge Format (MIT License) | Included & Maintained |
+| **Offline Filesystem Lookup** | ✅ Sub-1ms local traversal, 0 network calls | Included |
+| **Agent Skill (`SKILL.md`)** | ✅ Included (`init-skill` CLI) | Included |
+| **Maintenance & Gazette Updates**| Static public release snapshot | Continuous edge synchronization |
+| **Deterministic Tax Math** | Reference metadata only | Gated Edge API (`POST /calculate`) |
+| **Payment Authorization Leases**| ❌ Not included | Single-use cryptographic CAS leases |
+| **Banking Reconciliation** | ❌ Not included | Two-Generals failure recovery |
+| **ERP Ledger Writeback** | ❌ Not included | Source-bound double-entry writeback |
 
 ---
 
-## 6. Formal Verification & TLA+ Mathematical Specification
+## 7. Working Example: Offline Local Traversal
 
-Adesha's payment authorization lifecycle is formally specified in TLA+ (`specs/adesha_lease_state_machine.tla`) and verified using the **TLC Model Checker**:
+The public package allows developers and agents to traverse statutory law with zero external network requests:
 
-- **Model Dimensions**: 25 reachable states, 8 formal actions.
-- **Differential Equivalence**: 225 state-action checks (28 enabled transitions, 197 blocked preconditions) executed against the runtime, achieving **100% homomorphic agreement**.
-- **Mutant Resistance**: Tested against 4 persistent adversarial specification mutants in `specs/mutants/`—all 4 mutants caught and rejected.
-- **Concurrency Verification**: High-concurrency atomic CAS race conditions verified across distributed edge isolates with zero duplicate lease consumptions.
+```javascript
+import { lookupLocalStatute, isStatuteActive } from '@mudraforge/statutory';
 
----
+// 1. Look up Section 194Q offline (sub-1ms)
+const statute = lookupLocalStatute('194Q');
+console.log(statute.title);
+console.log(statute.keyStatutoryThresholds.taxableBaseScope);
+// => "Tax is deductible strictly on the excess over ₹50 Lakhs, NOT on the aggregate gross turnover."
 
-## 7. Level 9+ Specialization Benchmark Progression
-
-```
-Historical Baseline:       5.5 / 10  (Heuristic LLM wrapped around APIs)
-Prior Architecture Audit:  8.5 / 10  (Deterministic OKF, Formal Model, Conformance Traces)
-Current Audited Benchmark: 9.2 / 10  (Certified Expert-Grade Financial Specialization)
-```
-
-```
-[MudraForge / Adesha Benchmark Progression]
-Level 1–4: Chatbot / Uncontrolled LLM Tool Invocation
-Level 5–6: Parameterized Accounting API Wrappers & Static Checks
-Level 7–8: Deterministic Tax Engines, Temporal OKF, Canonical Invariant Envelopes
-Level 9+:  Formal TLA+ State Machine, Empirical Datastore Isolation, Differential Oracle Homomorphism,
-           Persistent Invariant Mutants, Fail-Closed Two-Generals Distributed Reconciliation,
-           and Dual-Target External ERP Verification (Remote HTTP Mock + Live Zoho Books Handshake)
+// 2. Check temporal status against effective dates
+const isActive2024 = await isStatuteActive('206C(1H)', '2024-05-01'); // true
+const isActive2025 = await isStatuteActive('206C(1H)', '2025-06-01'); // false (sunset effective 1 April 2025)
 ```
 
 ---
 
-## 8. Summary of Sovereign Architectural Guarantees
+## 8. Public Commons vs. Commercial Lifecycle & Sustainability Policy
 
-1. **Calculations are Deterministic, Never Generative**: Tax math, threshold tracking, and disbursement amounts are computed exclusively by deterministic code engines.
-2. **Dual-Control Human Authorization**: High-value disbursements require cryptographic Maker-Checker approval bound directly into the lease document before funds can be committed.
-3. **Anti-Fraud & Account Integrity**: Leases cryptographically bind the destination beneficiary account number and IFSC routing code, validated against penny-drop verified vendor masters with 48-hour cooling-off locks.
-4. **Input Provenance Sealed**: Financial results and payment leases bind directly to source document binary hashes (`sourceDocumentSha256`) and digitally signed government e-invoice (IRP) QR code data.
-5. **Structural Credential Isolation**: Banking API credentials reside in an isolated secret store accessible exclusively through a signing module requiring an active, unconsumed authorization lease.
-6. **Uncertainty is Maintained, Never Guessed**: Network timeouts and socket drops freeze transactions in `AMBIGUOUS_RECONCILING`. Elapsed time never unlocks a retry.
-7. **Source-Bound General Ledger Writeback**: ERP journal vouchers are created only after receiving verified downstream bank settlement, balanced to ₹0.00.
+### 8.1 Free Edge Updates Supported During Public Beta
+During the **Public Beta**, both the local reference substrate and the Cloudflare Anycast edge synchronization endpoints (`check-update` and `sync`) are **100% free and unauthenticated**. 
+
+Developers, compliance engineers, and AI agents can execute:
+```bash
+# Check if new statutory releases or gazette amendments exist on edge
+npx @mudraforge/statutory check-update
+
+# Automatically sync latest statutory JSON files directly into local ./okf/sections/
+npx @mudraforge/statutory sync
+```
+No API key or commercial contract is required to synchronize and update your local OKF knowledge files throughout the beta window.
+
+### 8.2 The Economic Rationale for Moving Live Updates to Paid (Sustainability)
+Statutory compliance is fundamentally different from typical open-source libraries. Code libraries can remain unchanged for years; **statutory tax law is a living, actively amended legal regime**:
+- **Annual Finance Acts & Budget Enactments**: The Indian Parliament revises withholding rates, introduces new statutory regimes, and sunsets obsolete provisions annually (such as the explicit sunset of Section 206C(1H) on 1 April 2025, and the complete transition to the *Income-tax Act, 2025* taking effect 1 April 2026).
+- **Executive Circulars & Notifications**: The Central Board of Direct Taxes (CBDT) and Central Board of Indirect Taxes and Customs (CBIC) issue monthly circulars altering threshold definitions, unbundling requirements (e.g. GST unbundling under Circular 13/2021), and procedural exclusions.
+- **Appellate & Supreme Court Precedents**: High Court, Supreme Court, and ITAT judgments continuously refine the legal boundaries of terms such as "composite supply", "pure agent", or "trader exclusions".
+
+Operating a verified, tamper-evident statutory oracle requires **continuous legal engineering, daily Gazette of India monitoring, Chartered Accountant peer review, formal state machine testing (TLA+), and globally distributed Anycast edge infrastructure**.
+
+Treating statutory maintenance as an unfunded volunteer project invariably produces stale, hallucinated legal data—the exact failure mode that causes catastrophic multi-crore enterprise tax disallowances. 
+
+**To make this continuous legal surveillance and versioned maintenance sustainable for the long term without compromising epistemic rigor**, live automated versioning updates (`sync` and `check-update`) will transition to the paid Enterprise API tier once the Public Beta concludes.
+
+### 8.3 Perpetual MIT License Guarantee
+- **The Local Snapshot Remains Free Forever**: Every statutory file and manifest downloaded or cloned under the MIT license remains permanently free for offline traversal, local agent skills, and internal experimentation.
+- **No Vendor Lock-In**: Organizations are free to maintain, inspect, and fork their local `./okf/` directories indefinitely.
+- **Commercial Boundary**: Only the automated, continuously maintained edge update stream, neural discovery search, and deep deterministic calculator engines require an Enterprise API subscription post-beta.
 
 ---
 
-## 9. License & Enterprise Access
+## 9. Related Documents
 
-- **Public Commons Substrate (OKF & SDK)**: Released under the **MIT License**. Hosted on GitHub at [`mondeep0123/mudraforge-statutory`](https://github.com/mondeep0123/mudraforge-statutory).
-- **Enterprise Execution Engine & Adesha Runtime**: Deployed globally on Cloudflare Edge Anycast (`api.mudraforge.in`). Requires commercial enterprise API keys.
-- **Enterprise Contact**: Direct contact required: email **`hello@mudraforge.in`** or **`support@mudraforge.in`**.
+- [`VERIFICATION.md`](./VERIFICATION.md) — Formal verification report, TLA+ state machine model, mutation tests, and documented limitations.
+- [`ENTERPRISE_GOVERNANCE.md`](./ENTERPRISE_GOVERNANCE.md) — The Adesha governance architecture: single-use payment leases, Two-Generals banking recovery, and ERP writebacks.
+- [`README.md`](./README.md) — Quickstart, CLI commands, and installation guide.

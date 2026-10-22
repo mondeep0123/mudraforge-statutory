@@ -20,7 +20,7 @@
   "title": "Statutory payment timelines to Micro & Small Enterprises, compound penal interest, and income tax deduction disallowance",
   "effectivePeriod": {
     "validFrom": "2006-10-02",
-    "validTo": "2099-12-31",
+    "validTo": "OPEN_ENDED",
     "annualReset": "Year-End March 31 Tax Disallowance Audit",
     "sunsetNotes": "Section 43B(h) takes effect from FY 2023-24 (AY 2024-25) and continues under Section 37(2)(g) of the Income-tax Act, 2025."
   },

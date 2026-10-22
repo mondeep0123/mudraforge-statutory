@@ -16,6 +16,9 @@
     "SKILL.md",
     "README.md",
     "ARCHITECTURE.md",
+    "DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md",
+    "VERIFICATION.md",
+    "ENTERPRISE_GOVERNANCE.md",
     "LICENSE"
   ],
   "scripts": {

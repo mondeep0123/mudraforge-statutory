@@ -1,3 +1,8 @@
+import dns from 'node:dns';
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
+
 import { lookupStatute, listSections, isStatuteActive, StatutoryClient } from './src/index.js';
 
 async function run() {

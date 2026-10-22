@@ -1,0 +1,44 @@
+{
+  "formId": "UDYAM_CERTIFICATE_VERIFICATION",
+  "title": "Udyam Registration Certificate Field Verification & Classification Schema",
+  "governingStatutes": [
+    "Micro, Small and Medium Enterprises Development Act, 2006",
+    "Income-tax Act, 1961 Section 43B(h)"
+  ],
+  "validFrom": "2020-07-01",
+  "validTo": "OPEN_ENDED",
+  "temporalStatus": "ACTIVE",
+  "portalVerificationUrl": "https://udyamregistration.gov.in/",
+  "classificationRules": {
+    "MICRO": {
+      "investmentCeilingInr": 10000000,
+      "turnoverCeilingInr": 50000000,
+      "section43BhApplicable": true
+    },
+    "SMALL": {
+      "investmentCeilingInr": 100000000,
+      "turnoverCeilingInr": 500000000,
+      "section43BhApplicable": true
+    },
+    "MEDIUM": {
+      "investmentCeilingInr": 500000000,
+      "turnoverCeilingInr": 2500000000,
+      "section43BhApplicable": false
+    }
+  },
+  "activityGating": {
+    "MANUFACTURING": "Eligible for Section 15/16 interest and Section 43B(h)",
+    "SERVICES": "Eligible for Section 15/16 interest and Section 43B(h)",
+    "TRADING_RETAIL_WHOLESALE": "Strictly EXCLUDED from Section 15/16 and Section 43B(h)"
+  },
+  "requiredVerificationFields": [
+    "UDYAM_REGISTRATION_NUMBER_19_CHAR",
+    "ENTERPRISE_NAME",
+    "ORGANISATION_TYPE",
+    "MAJOR_ACTIVITY",
+    "ENTERPRISE_CLASSIFICATION_MICRO_SMALL_MEDIUM",
+    "NIC_2_DIGIT_CODES",
+    "DATE_OF_COMMENCEMENT",
+    "UDYAM_VERIFY_TIMESTAMP"
+  ]
+}

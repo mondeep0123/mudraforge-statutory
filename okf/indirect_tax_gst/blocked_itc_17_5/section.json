@@ -16,7 +16,7 @@
   "title": "Apportionment of credit and blocked input tax credits",
   "effectivePeriod": {
     "validFrom": "2017-07-01",
-    "validTo": "2099-12-31",
+    "validTo": "OPEN_ENDED",
     "annualReset": "Continuous",
     "sunsetNotes": "Active statutory restriction."
   },

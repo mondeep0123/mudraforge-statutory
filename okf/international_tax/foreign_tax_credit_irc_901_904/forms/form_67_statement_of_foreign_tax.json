@@ -1,0 +1,25 @@
+{
+  "formId": "FORM_67",
+  "title": "Statement of Foreign Income and Foreign Tax Credit under Rule 128",
+  "governingAct": "Income-tax Act, 1961 Section 90/91 read with Rule 128",
+  "validFrom": "2017-04-01",
+  "validTo": "OPEN_ENDED",
+  "temporalStatus": "ACTIVE",
+  "mandatoryFilingTimeline": "On or before the end of the assessment year relevant to the previous year",
+  "foreignTaxCreditBaskets": [
+    "PASSIVE_INCOME_DIVIDEND_INTEREST_ROYALTY",
+    "GENERAL_CATEGORY_BUSINESS_PROFITS",
+    "SPECIFIED_FINANCIAL_SERVICES"
+  ],
+  "requiredVerificationFields": [
+    "COUNTRY_NAME_AND_CODE",
+    "TAX_IDENTIFICATION_NUMBER_TIN_IN_FOREIGN_COUNTRY",
+    "TOTAL_FOREIGN_INCOME_SOURCE_CURRENCY",
+    "CONVERSION_TELEGRAPHIC_TRANSFER_BUYING_RATE_TTBR",
+    "TOTAL_FOREIGN_INCOME_CONVERTED_INR",
+    "FOREIGN_TAX_PAID_OR_WITHHELD_INR",
+    "TAX_PAYABLE_ON_SUCH_INCOME_IN_INDIA_INR",
+    "ELIGIBLE_FTC_CLAIM_INR_LOWER_OF_FOREIGN_TAX_OR_INDIAN_TAX",
+    "CERTIFICATE_OR_STATEMENT_SPECIFIED_IN_RULE_128_4"
+  ]
+}

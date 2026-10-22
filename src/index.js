@@ -31,8 +31,30 @@ export function getLocalManifest(okfDir = DEFAULT_LOCAL_OKF_DIR) {
 }
 
 /**
+ * Helper to recursively find all JSON files in a directory.
+ */
+function findJsonFilesRecursively(dir) {
+    let results = [];
+    if (!fs.existsSync(dir)) return results;
+    try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                results = results.concat(findJsonFilesRecursively(fullPath));
+            } else if (entry.isFile() && entry.name.endsWith('.json') && entry.name !== 'manifest.json') {
+                results.push(fullPath);
+            }
+        }
+    } catch (_) {}
+    return results;
+}
+
+/**
  * Look up a statutory provision directly from the local OKF filesystem (0 network calls).
- * Supports sectionCode, sectionId, aliases, and rich descriptive filename matching.
+ * Supports domain hierarchies (direct_tax, indirect_tax_gst, msme, international_tax)
+ * as well as flat sections directories.
+ * Returns the statutory record along with associated circulars and compliance forms.
  */
 export function lookupLocalStatute(section, okfDir = DEFAULT_LOCAL_OKF_DIR) {
     if (!section || typeof section !== 'string') {
@@ -41,43 +63,74 @@ export function lookupLocalStatute(section, okfDir = DEFAULT_LOCAL_OKF_DIR) {
 
     const rawClean = section.trim().toLowerCase();
     const normalized = rawClean.replace(/[()_-\s]+/g, '');
-    const sectionsDir = path.join(okfDir, 'sections');
-    if (!fs.existsSync(sectionsDir)) {
-        throw new Error(`[@mudraforge/statutory] Local OKF sections directory not found at: ${sectionsDir}`);
+
+    if (!fs.existsSync(okfDir)) {
+        throw new Error(`[@mudraforge/statutory] Local OKF directory not found at: ${okfDir}`);
     }
 
-    const files = fs.readdirSync(sectionsDir);
-    for (const file of files) {
-        if (!file.endsWith('.json')) continue;
-        const filePath = path.join(sectionsDir, file);
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const files = findJsonFilesRecursively(okfDir);
+    for (const filePath of files) {
+        let data;
+        try {
+            data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        } catch (_) {
+            continue;
+        }
+
+        // Must be a valid statutory record with sectionCode
+        if (!data || !data.sectionCode) continue;
+
+        let isMatch = false;
 
         // 1. Direct sectionCode / sectionId match
         if (data.sectionCode.toLowerCase() === rawClean || data.sectionId.toLowerCase() === rawClean) {
-            return data;
+            isMatch = true;
         }
 
         // 2. Normalized alphanumeric match (handles "17_5", "17(5)", "17-5", "msmed_15_16")
         if (
-            data.sectionCode.toLowerCase().replace(/[()_-\s]+/g, '') === normalized ||
-            data.sectionId.toLowerCase().replace(/[()_-\s]+/g, '') === normalized
+            !isMatch && (
+                data.sectionCode.toLowerCase().replace(/[()_-\s]+/g, '') === normalized ||
+                data.sectionId.toLowerCase().replace(/[()_-\s]+/g, '') === normalized
+            )
         ) {
-            return data;
+            isMatch = true;
         }
 
         // 3. Aliases match
         if (
+            !isMatch &&
             data.aliases &&
             data.aliases.some(
                 a => a.toLowerCase() === rawClean || a.toLowerCase().replace(/[()_-\s]+/g, '') === normalized
             )
         ) {
-            return data;
+            isMatch = true;
         }
 
-        // 4. Rich self-documenting filename prefix match
-        const fileBase = file.toLowerCase().replace(/\.json$/, '');
-        if (fileBase.startsWith(rawClean) || fileBase.startsWith(normalized)) {
+        // 4. Folder or filename match (handles "tds_goods_194q", "194Q-tds-on-purchase...")
+        if (!isMatch) {
+            const fileName = path.basename(filePath).toLowerCase().replace(/\.json$/, '');
+            const folderName = path.basename(path.dirname(filePath)).toLowerCase();
+            if (
+                fileName.startsWith(rawClean) || fileName.startsWith(normalized) ||
+                folderName.includes(rawClean) || folderName.includes(normalized)
+            ) {
+                isMatch = true;
+            }
+        }
+
+        if (isMatch) {
+            // Attach supporting circulars and compliance forms if present in domain hierarchy
+            const parentDir = path.dirname(filePath);
+            const circularsDir = path.join(parentDir, 'circulars');
+            const formsDir = path.join(parentDir, 'forms');
+
+            data.supportingDocuments = {
+                circulars: fs.existsSync(circularsDir) ? fs.readdirSync(circularsDir).filter(f => f.endsWith('.md')) : [],
+                forms: fs.existsSync(formsDir) ? fs.readdirSync(formsDir).filter(f => f.endsWith('.json') || f.endsWith('.md')) : []
+            };
+
             return data;
         }
     }

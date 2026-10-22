@@ -1,0 +1,23 @@
+{
+  "formId": "IRS_SCHEDULE_K3_FORM_1065",
+  "title": "Partner's Share of Income, Deductions, Credits, etc.—International",
+  "governingStatute": "Internal Revenue Code (26 U.S. Code §§ 901, 904, 1065)",
+  "validFrom": "2021-01-01",
+  "validTo": "OPEN_ENDED",
+  "temporalStatus": "ACTIVE",
+  "officialPdfUrl": "https://www.irs.gov/pub/irs-pdf/f1065sk3.pdf",
+  "form1116PdfUrl": "https://www.irs.gov/pub/irs-pdf/f1116.pdf",
+  "keyReportingParts": {
+    "PART_I": "Partner Information and Translation Rates",
+    "PART_II": "Foreign Tax Credit Limitation (Gross Income and Deductions by Basket)",
+    "PART_III": "Other Information for Corporate and Pass-Through Partners"
+  },
+  "requiredVerificationFields": [
+    "PARTNER_TIN_OR_SSN",
+    "PARTNERSHIP_EIN",
+    "FOREIGN_TAX_CREDIT_BASKET_CODE_GENERAL_VS_PASSIVE",
+    "FOREIGN_TAXES_PAID_OR_ACCRUED_USD",
+    "SCHEDULE_K1_BOX_21_LINKAGE",
+    "DOMESTIC_FILING_EXCEPTION_SATISFIED_BOOL"
+  ]
+}

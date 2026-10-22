@@ -1,9 +1,25 @@
 {
   "okfVersion": "2.4.0",
-  "publishedAt": "2026-10-21T18:00:00Z",
+  "publishedAt": "2026-10-22T10:00:00Z",
   "rootHash": "sha256-okf-v240-mudraforge-edge",
   "totalSections": 6,
-  "changelog": "Dual-Act Income-tax Act 2025 transitions, Finance Act 2025 Section 206C(1H) sunset, and MSMED trader exclusion rules.",
+  "changelog": "Restructured into domain hierarchy with statutory circulars, official notifications, and compliance forms/checklists.",
+  "domains": {
+    "direct_tax": [
+      "194Q",
+      "194J",
+      "206C(1H)"
+    ],
+    "indirect_tax_gst": [
+      "17(5)"
+    ],
+    "msme_commercial": [
+      "MSMED-15-16"
+    ],
+    "international_tax": [
+      "IRC-901-904"
+    ]
+  },
   "sections": [
     "194Q",
     "206C(1H)",

@@ -1,0 +1,22 @@
+{
+  "formId": "GSTR_2B_TABLE_4B",
+  "title": "GSTR-2B Auto-Drafted ITC Statement & GSTR-3B Table 4(B) Reconciliation",
+  "governingStatute": "Central Goods and Services Tax Act, 2017 (Section 17(5))",
+  "validFrom": "2017-07-01",
+  "validTo": "OPEN_ENDED",
+  "temporalStatus": "ACTIVE",
+  "reportingTable": "Table 4(B)(1) of Form GSTR-3B",
+  "disallowanceScope": "Permanent ineligible ITC as per Section 17(5)",
+  "reconciliationFields": [
+    "SUPPLIER_GSTIN_15_CHAR",
+    "SUPPLIER_LEGAL_NAME",
+    "INVOICE_NUMBER",
+    "INVOICE_DATE",
+    "INVOICE_TAXABLE_VALUE_INR",
+    "INTEGRATED_TAX_IGST_INR",
+    "CENTRAL_TAX_CGST_INR",
+    "STATE_TAX_SGST_INR",
+    "INELIGIBLE_REASON_CODE_SEC_17_5",
+    "STATUTORY_EXCEPTION_APPLIED_BOOL"
+  ]
+}

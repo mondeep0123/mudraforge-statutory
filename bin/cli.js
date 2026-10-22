@@ -111,28 +111,60 @@ async function handleSync() {
 
 async function handleBrowse() {
     const manifest = getLocalManifest();
-    const sectionsDir = path.join(DEFAULT_LOCAL_OKF_DIR, 'sections');
 
     console.log('\n═══════════════════════════════════════════════════════════════════════════');
-    console.log(`🏛️  OPEN KNOWLEDGE FRAMEWORK (OKF) — LOCAL BROWSER [v${manifest ? manifest.okfVersion : 'Local'}]`);
+    console.log(`🏛️  OPEN KNOWLEDGE FORMAT (OKF) — LOCAL BROWSER [v${manifest ? manifest.okfVersion : 'Local'}]`);
     console.log('═══════════════════════════════════════════════════════════════════════════');
 
-    if (!fs.existsSync(sectionsDir)) {
-        console.log('❌ No local OKF sections directory found. Run "npx @mudraforge/statutory sync" to download.');
+    const domainDisplayNames = {
+        direct_tax: '📁 DIRECT TAX (Income Tax & TDS/TCS)',
+        indirect_tax_gst: '📁 INDIRECT TAX (Goods & Services Tax - GST)',
+        msme_commercial: '📁 MSME & COMMERCIAL LAW',
+        international_tax: '📁 CROSS-BORDER & INTERNATIONAL TAX'
+    };
+
+    let totalDisplayed = 0;
+
+    if (manifest && manifest.domains) {
+        for (const [domainKey, sectionCodes] of Object.entries(manifest.domains)) {
+            console.log(`\n${domainDisplayNames[domainKey] || `📁 ${domainKey.toUpperCase()}`}`);
+            console.log('───────────────────────────────────────────────────────────────────────────');
+            for (const code of sectionCodes) {
+                const data = lookupLocalStatute(code);
+                if (!data) continue;
+                totalDisplayed++;
+                const validToDisplay = data.effectivePeriod.validTo === 'OPEN_ENDED' || !data.effectivePeriod.validTo ? 'Open-ended (In force)' : data.effectivePeriod.validTo;
+                const docCount = data.supportingDocuments 
+                    ? ` (${data.supportingDocuments.circulars.length} circulars, ${data.supportingDocuments.forms.length} forms)`
+                    : '';
+                console.log(`• Section ${data.sectionCode.padEnd(12)} | ${data.governingStatute}`);
+                console.log(`  ↳ ${data.title}`);
+                console.log(`  ↳ Validity: ${data.effectivePeriod.validFrom} to ${validToDisplay}${docCount}`);
+            }
+        }
+    } else {
+        const sectionsDir = path.join(DEFAULT_LOCAL_OKF_DIR, 'sections');
+        if (fs.existsSync(sectionsDir)) {
+            const files = fs.readdirSync(sectionsDir).filter(f => f.endsWith('.json'));
+            files.forEach((f, idx) => {
+                const data = JSON.parse(fs.readFileSync(path.join(sectionsDir, f), 'utf8'));
+                totalDisplayed++;
+                console.log(`[${idx + 1}] Section ${data.sectionCode.padEnd(12)} | ${data.governingStatute}`);
+                console.log(`    ↳ ${data.title}`);
+                console.log(`    ↳ Valid: ${data.effectivePeriod.validFrom} to ${data.effectivePeriod.validTo}`);
+                console.log('');
+            });
+        }
+    }
+
+    if (totalDisplayed === 0) {
+        console.log('❌ No local OKF sections found. Run "npx @mudraforge/statutory sync" to download.');
         return;
     }
 
-    const files = fs.readdirSync(sectionsDir).filter(f => f.endsWith('.json'));
-    files.forEach((f, idx) => {
-        const data = JSON.parse(fs.readFileSync(path.join(sectionsDir, f), 'utf8'));
-        console.log(`[${idx + 1}] Section ${data.sectionCode.padEnd(12)} | ${data.governingStatute}`);
-        console.log(`    ↳ ${data.title}`);
-        console.log(`    ↳ Valid: ${data.effectivePeriod.validFrom} to ${data.effectivePeriod.validTo}`);
-        console.log('');
-    });
-
-    console.log('💡 To inspect details: npx @mudraforge/statutory lookup <section_code>');
-    console.log('🔄 To check updates:   npx @mudraforge/statutory check-update\n');
+    console.log('\n───────────────────────────────────────────────────────────────────────────');
+    console.log('💡 To inspect details & circulars: npx @mudraforge/statutory lookup <section_code>');
+    console.log('🔄 To sync latest edge catalog:    npx @mudraforge/statutory sync\n');
 }
 
 async function handleInitSkill(targetDir) {
@@ -189,6 +221,16 @@ async function handleLookup(section, asOfDate) {
         console.log('\n📜 Official Citations:');
         for (const c of s.officialCitations) {
             console.log(`   • ${c.instrument} (${c.authority}): ${c.officialUrl}`);
+        }
+
+        if (s.supportingDocuments && (s.supportingDocuments.circulars?.length > 0 || s.supportingDocuments.forms?.length > 0)) {
+            console.log('\n📁 Supporting Circulars & Compliance Forms:');
+            if (s.supportingDocuments.circulars?.length > 0) {
+                console.log(`   • Circulars & Guidance: ${s.supportingDocuments.circulars.join(', ')}`);
+            }
+            if (s.supportingDocuments.forms?.length > 0) {
+                console.log(`   • Forms & Returns:     ${s.supportingDocuments.forms.join(', ')}`);
+            }
         }
         console.log('───────────────────────────────────────────────────────────────────────────\n');
     } catch (err) {

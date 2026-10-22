@@ -17,7 +17,7 @@
   "title": "Foreign Tax Credit authorization, separate basket limitation, and partnership pass-through reporting (Form 1116 / Schedule K-3)",
   "effectivePeriod": {
     "validFrom": "2021-01-01",
-    "validTo": "2099-12-31",
+    "validTo": "OPEN_ENDED",
     "annualReset": "Tax Year",
     "sunsetNotes": "Active US international tax regime."
   },
