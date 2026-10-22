@@ -110,12 +110,16 @@ We establish a 3-tier declarative knowledge model for complex multi-statute tran
 
 #### Core Architectural Invariants:
 1. **Extension Attribution**: Composite profiles are documented as a versioned **MudraForge OKF Transaction Extension**, keeping them distinct from upstream Google OKF v0.2 core specifications while fully utilizing OKF frontmatter conventions.
-2. **Declarative Dependencies over Arbitrary Sequences**: The profile models statutory dependencies using true graph topology (`parallelIndependentChecks`, `conditionalDownstreamChecks`, `dependsOn`) rather than imposing an artificial linear numbered sequence on concurrent diligence streams.
+2. **Logical Dependencies vs. Operational Ordering**:
+   - `dependsOn` strictly denotes a **logical prerequisite** where a downstream statutory test is contingent on an upstream outcome (e.g. evaluating GST Notification 12/2017 going-concern nil-rate eligibility logically depends on whether the transfer satisfies the Section 50B "undertaking" test).
+   - In contrast, operational ordering is not enforced as a rigid constraint; independent checks (such as Section 281 tax proceedings verification and Section 180 corporate approval) remain independently runnable even when another inquiry is pending, unresolved, or awaiting documentation.
 3. **Statutory Safe Harbors over Binary Failure Verdicts**: Profiles declare applicable legal questions, statutory conditions, safe harbors (e.g., bona fide purchaser for value without notice under Section 281), and evidentiary burdens, leaving judicial or executive determinations to runtime evaluation engines.
 4. **Strict Temporal Enactment Distinguishability**: Corresponding provisions under the Income-tax Act, 1961 (such as §281, §170) and the Income-tax Act, 2025 (such as §499, §313 taking effect 1 April 2026) must remain explicitly distinguished by enactment code and effective period.
 5. **Separation of Open Knowledge from Governed Execution**:
    - The open commons (`@mudraforge/statutory`) provides the inspectable, reusable, and testable dependency graph of laws and evidence requirements.
    - The commercial runtime (Adesha) executes deterministic calculations, enforces bank escrow locks, requires CFO biometric authorization, and writes balanced ERP journal entries.
+6. **Normative Scope & Independent Legal Validation**:
+   - An Architecture Decision Record defines structural design invariants and data contracts; it does not substitute for independent legal certification of specific transaction scenarios. All composite profiles and legal-version mappings must be validated against independent legal ground truth in dedicated scenario test suites before promotion to stable status.
 
 ### Consequences
 - **Positive**: Makes complex statutory relationships discoverable and machine-readable for AI agents without compromising open-source format purity or disclosing proprietary execution code.
