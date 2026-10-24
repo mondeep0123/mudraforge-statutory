@@ -169,6 +169,16 @@ async function handleBrowse() {
 
 async function handleInitSkill(targetDir) {
     const destDir = targetDir || path.join(process.cwd(), '.agents', 'skills', 'indian-statutory-commons');
+    const resolvedDest = path.resolve(destDir);
+    const cwd = path.resolve(process.cwd());
+
+    // Path traversal boundary check preventing prefix collisions
+    const relative = path.relative(cwd, resolvedDest);
+    if (targetDir && (relative.startsWith('..') || path.isAbsolute(relative))) {
+        console.error('[ERROR] Target directory must be within current workspace directory.');
+        process.exit(1);
+    }
+
     const sourceSkillPath = path.join(__dirname, '..', 'SKILL.md');
 
     if (!fs.existsSync(sourceSkillPath)) {
@@ -186,21 +196,27 @@ async function handleInitSkill(targetDir) {
 }
 
 async function handleLookup(section, asOfDate) {
+    const cleanSection = (section || '').normalize('NFKC').replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    if (asOfDate && !/^\d{4}-\d{2}-\d{2}$/.test(asOfDate.trim())) {
+        console.error(`[ERROR] Invalid date format: "${asOfDate}". Date must be in ISO 8601 YYYY-MM-DD format.`);
+        process.exit(1);
+    }
+
     try {
         // Try local OKF first
-        const local = lookupLocalStatute(section);
+        const local = lookupLocalStatute(cleanSection);
         let s = local;
         let temporalStatus = 'ACTIVE';
 
         if (s) {
-            console.log(`\n[LOCAL OKF CACHE] Loaded section [${section}] from disk.`);
+            console.log(`\n[LOCAL OKF CACHE] Loaded section [${cleanSection}] from disk.`);
             if (asOfDate) {
                 if (asOfDate < s.effectivePeriod.validFrom) temporalStatus = 'PRE_EFFECTIVE';
                 else if (s.effectivePeriod.validTo && asOfDate > s.effectivePeriod.validTo) temporalStatus = 'SUNSET_SUPERSEDED';
             }
         } else {
-            console.log(`\n[EDGE LOOKUP] Querying MudraForge Live Commons for [${section}]${asOfDate ? ` (as-of: ${asOfDate})` : ''}...`);
-            const remote = await lookupStatute(section, { asOfDate });
+            console.log(`\n[EDGE LOOKUP] Querying MudraForge Live Commons for [${cleanSection}]${asOfDate ? ` (as-of: ${asOfDate})` : ''}...`);
+            const remote = await lookupStatute(cleanSection, { asOfDate });
             s = remote.statute;
             temporalStatus = remote.temporalStatus;
         }

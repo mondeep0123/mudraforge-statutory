@@ -1,9 +1,9 @@
 {
   "okfVersion": "2.4.0",
   "publishedAt": "2026-10-22T20:00:33.899Z",
-  "rootHash": "sha256-d9612074241f7c2cc1d05fa5eee254996f21db56ad1ab71ac36a084ffd4169e1",
-  "totalSections": 7,
-  "totalFiles": 25,
+  "rootHash": "sha256-96089fe2835d0b9493293a1e5205e0b6b46f16771c9380d1f571969b453ba80d",
+  "totalSections": 8,
+  "totalFiles": 26,
   "changelog": "Restructured into domain hierarchy with statutory circulars, official notifications, and compliance forms/checklists.",
   "domains": {
     "corporate_ma_restructuring": [
@@ -12,7 +12,8 @@
     "direct_tax": [
       "206C(1H)",
       "194Q",
-      "194J"
+      "194J",
+      "393"
     ],
     "indirect_tax_gst": [
       "17(5)"
@@ -31,7 +32,8 @@
     "194J",
     "17(5)",
     "IRC-901-904",
-    "MSMED-15-16"
+    "MSMED-15-16",
+    "393"
   ],
   "files": {
     "corporate_ma_restructuring/slump_sale_50b/circulars/cbdt_notification_68_2021_rule_11uae_fmv.md": "6c4f2a73bade6171d896112344be493e88add1535e2d654b8c4f6183ddedb4c8",
@@ -58,6 +60,7 @@
     "msme_commercial/delayed_payments_15_16/circulars/msme_om_2021_trader_exclusion.md": "f55f0e9368156452b891583043a31d1ebc4f162484925635be78f3c54a32af4a",
     "msme_commercial/delayed_payments_15_16/forms/schedule_iii_msme_disclosure.md": "93d6000e79a96f4242d6a831905edeb44654134206301a9642bf63ca65f6b5ab",
     "msme_commercial/delayed_payments_15_16/forms/udyam_registration_verification.json": "3da5d248a8fae5ed74af21149dd5922ddd18a9e3e1378ef69925e5beda09ebe6",
-    "msme_commercial/delayed_payments_15_16/section.json": "53502a97a535c99cf7aa65ac2e5e5665f889bad691ee51efb7d49134a6e82e7e"
+    "msme_commercial/delayed_payments_15_16/section.json": "53502a97a535c99cf7aa65ac2e5e5665f889bad691ee51efb7d49134a6e82e7e",
+    "direct_tax/tds_goods_393/section.json": "f0ef5201aae6b158180abf33b688a696e6c1c77f5604491f7059878f407dd714"
   }
 }

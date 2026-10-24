@@ -15,7 +15,7 @@
 
 | Item | Value |
 |---|---|
-| **Package Release** | **`v2.4.0`** (Public Beta) |
+| **Package Release** | **`v2.4.1`** (Public Beta) |
 | **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2) + MudraForge Statutory Schema Extension** |
 | **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Baseline: October 2026** |
 | **Corpus Quality Card** | 100% Citation Resolution (15/15 URLs) in [`docs/CORPUS_QUALITY.md`](./docs/CORPUS_QUALITY.md) |
@@ -28,6 +28,46 @@
 | **Verification Gate** | 100% Pass across cumulative thresholds, legislative sunsets, and excess math |
 
 > **Note on Cryptographic Scope**: The SHA-256 root hash in `okf/manifest.json` provides mathematical verification of **byte-level integrity** (ensuring local files have not been corrupted, altered, or partially written). A hash certifies that bytes match the published release; it does not by itself constitute legal or statutory authority. Epistemic authority is established strictly via the primary gazette citations, CBDT/CBIC executive circulars, and independent ground-truth tests.
+
+---
+
+## Table of Contents
+
+- [Quick Start (Free Tier)](#quick-start-free-tier)
+  - [1. Installation via npm](#1-installation-via-npm)
+  - [2. Initialize AI Agent Skill](#2-initialize-ai-agent-skill)
+  - [3. Direct Programmatic Traversal](#3-direct-programmatic-traversal-zero-dependencies-offline-first)
+- [Supported Application Patterns](#supported-application-patterns)
+  - [1. AI Agents & LLM Tooling](#1-ai-agents--llm-tooling)
+  - [2. Finance Software & Accounts-Payable Workflows](#2-finance-software--accounts-payable-workflows)
+  - [3. Developer Tooling & Audit Verification](#3-developer-tooling--audit-verification)
+- [Tier Separation: Free Commons vs. Hosted Calculation Engine](#architectural-boundaries-open-substrate-vs-hosted-edge-vs-adesha-platform)
+- [Legal Domains Currently Covered](#legal-domains-currently-covered)
+- [Structured OKF Directory Hierarchy](#structured-okf-domain-hierarchy-zero-token-discovery)
+- [Canonical Edge Synchronization](#canonical-edge-synchronization-full-statutory-universe)
+- [Enterprise Tier (Paid Cloud Execution)](#enterprise-tier-paid-cloud-execution--analysis-mode)
+  - [Edge API Endpoints & Quotas](#enterprise-edge-api-endpoints--quotas)
+  - [Error Semantics & Response Codes](#error-semantics--response-codes)
+- [System Origin & Validation Baseline](#system-origin--validation-baseline)
+- [The Payment Instruction Boundary & End-to-End AP Architecture](#the-payment-instruction-boundary--end-to-end-ap-architecture)
+
+---
+
+## Supported Application Patterns
+
+`@mudraforge/statutory` serves as an authoritative reference layer and computation client across three distinct environments:
+
+### 1. AI Agents & LLM Tooling
+- **Current Implementation**: Generates a self-contained [`SKILL.md`](./SKILL.md) skill definition (`npx @mudraforge/statutory init-skill`) that connects agent runtimes directly to the local filesystem without external API calls or token bloat from search queries.
+- **Integration Boundary**: Agents can read structured section definitions (`okf/**/section.json`) to discover rates, thresholds, and return filing schemas deterministically rather than relying on model parameter memory.
+
+### 2. Finance Software & Accounts-Payable Workflows
+- **Current Implementation**: Provides offline threshold logic (such as Section 194Q cumulative purchases exceeding ₹50 Lakhs) and legislative sunsets (Section 206C(1H) omission on 1 April 2025). The hosted enterprise tier provides deterministic calculation via `client.calculate()`.
+- **Integration Boundary**: Custom accounting engines or enterprise middleware can invoke these functions via Node.js or REST endpoints. *(Note: This package exposes standard programmatic and JSON interfaces; it does not ship pre-packaged ERP plugins for third-party platforms).*
+
+### 3. Developer Tooling & Audit Verification
+- **Current Implementation**: CLI commands (`browse`, `lookup`, `list`, `check-update`) allow developers and tax compliance teams to inspect verified primary citations, download statutory checklists (such as Form 3CEA slump sale audit requirements), and verify dual-act forward crosswalks between the 1961 and 2025 Income-tax Acts.
+- **Integration Boundary**: Usable standalone in terminal environments, continuous integration (CI) compliance checks, or custom tax tooling.
 
 ---
 
@@ -152,12 +192,12 @@ It is currently released as a **Public Beta**. The bundled schemas and temporal 
 > **Full 11-Domain Roadmap & Lifecycle Matrix**:  
 > For the complete architectural matrix comparing the 4 starter domains against the full 11-domain sovereign roadmap (including Indian Accounting Standards [Ind AS], MCA Corporate Governance, and SEBI LODR), see [`docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md`](./docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md).
 
-The OKF substrate currently indexes and enforces ground truth across four major regulatory domains:
+The OKF substrate currently indexes and enforces ground truth across five major regulatory domains:
 
 ### 1. Direct Tax (Income Tax & TDS/TCS)
 - **Section 194Q**: 0.1% TDS on purchase of goods exceeding ₹50 Lakhs cumulative annual threshold (calculating strictly on the excess).
 - **Section 206C(1H)**: TCS on sale of goods, with automated temporal interception of its **1 April 2025 sunset** under the Finance Act, 2025.
-- **Section 194J**: Fees for Technical Services (2% FTS) vs. Professional Fees (10%), handling 5% non-PAN penalty rates under Section 206AA.
+- **Section 194J**: Fees for Technical Services (2% FTS) vs. Professional Fees (10%), enforcing standard 20% non-PAN penalty rate under Section 206AA(1)(iii) / Section 397(2)(a).
 - **Dual-Act Forward Mapping**: Complete cross-compilation bridge from the legacy *Income-tax Act, 1961* to the *Income-tax Act, 2025* (which took effect 1 April 2026), mapping historical provisions seamlessly (e.g., Section 194Q $\rightarrow$ Section 393(1), Table 8, Item (ii)).
 
 ### 2. Indirect Tax (Goods & Services Tax - GST)
@@ -171,6 +211,9 @@ The OKF substrate currently indexes and enforces ground truth across four major 
 ### 4. Cross-Border & International Tax
 - **US Internal Revenue Code (IRC §§ 901 & 904)**: Foreign Tax Credit (FTC) limitation baskets (General Category vs. Passive Category), Pass-Through Entity (PTE) tax pass-throughs, and Schedule K-3 dual-reporting compliance for Indo-US cross-border ventures.
 - **Indian Rule 128 (Form 67)**: Statement of foreign tax credit compliance schema and filing deadlines.
+
+### 5. Corporate M&A & Restructuring
+- **Section 50B (Slump Sale)**: Capital gains computation on slump sale of undertakings based on Written Down Value (WDV) net worth under Section 43(6), Form 3CEA CA certification schema, and Section 281/313 tax clearance due diligence checklists.
 
 ---
 
@@ -341,7 +384,44 @@ const result = await client.calculate({
 });
 
 console.log(result.taxableBase); // ₹70,00,000 (Calculates strictly on excess over ₹50L)
+console.log(result.taxAmount);   // ₹7,000 (0.1% TDS on taxable base)
 ```
+
+### Enterprise Edge API Endpoints & Quotas
+
+| Endpoint | Method | Auth Required | Quota Limit | Response |
+|---|---|---|---|---|
+| `/api/v1/statutory/sections` | `GET` | No | 180 req/min | JSON array of indexed OKF sections |
+| `/api/v1/statutory/lookup` | `GET` | No | 180 req/min | Parametric section details & temporal validity |
+| `/api/v1/statutory/laws/:code` | `GET` | No | 180 req/min | Direct path statutory section lookup |
+| `/api/v1/statutory/manifest.json` | `GET` | No | 180 req/min | Latest OKF release manifest & rootHash |
+| `/api/v1/statutory/bundle.json` | `GET` | No | 180 req/min | Full versioned statutory bundle (ETag 304 supported) |
+| `/api/v1/statutory/calculate` | `POST` | **Yes** (Bearer) | 45 req/min | Deterministic statutory deduction result |
+
+### Error Semantics & Response Codes
+
+All error responses from `@mudraforge/statutory` and the hosted edge API return structured JSON:
+
+```json
+{
+  "status": "ERROR",
+  "error": "API_KEY_REQUIRED",
+  "message": "Deterministic calculation engines require an Enterprise API key.",
+  "contact": "hello@mudraforge.in"
+}
+```
+
+| HTTP Status | Error Code | Description / Remedy |
+|---|---|---|
+| `400 Bad Request` | `INVALID_AMOUNT` | Numerical value is negative, NaN, or exceeds `Number.MAX_SAFE_INTEGER`. |
+| `400 Bad Request` | `INVALID_DATE_FORMAT` | Date string does not match ISO 8601 `YYYY-MM-DD` format. |
+| `400 Bad Request` | `QUERY_TOO_LONG` | Section search query exceeds 64-character security ceiling. |
+| `401 / 403 Forbidden` | `API_KEY_REQUIRED` / `INVALID_API_KEY` | Missing or invalid Enterprise API key. Contact `hello@mudraforge.in`. |
+| `404 Not Found` | `SECTION_NOT_FOUND` | Queried section does not exist in the indexed statutory corpus. |
+| `405 Method Not Allowed` | `METHOD_NOT_ALLOWED` | Non-GET request sent to read-only commons endpoints. |
+| `413 Payload Too Large` | `PAYLOAD_TOO_LARGE` | JSON request body on `/calculate` exceeds 64KB security threshold. |
+| `415 Unsupported Media` | `UNSUPPORTED_MEDIA_TYPE` | Non-JSON payload sent to calculation engine. Set `Content-Type: application/json`. |
+| `429 Too Many Requests` | `RATE_LIMIT_EXCEEDED` | Request quota breached. Check `Retry-After` header before retrying. |
 
 ---
 
@@ -350,7 +430,7 @@ console.log(result.taxableBase); // ₹70,00,000 (Calculates strictly on excess 
 The repository enforces fail-closed automated verification for schemas, temporal rules, and cryptographic digests:
 
 ```bash
-# 1. Run full 11-suite multi-domain regression test
+# 1. Run full 36-suite multi-domain regression test
 npm test
 
 # 2. Validate all OKF schemas, circular YAML frontmatter, and return forms

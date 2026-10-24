@@ -182,10 +182,10 @@ If you are a Chartered Accountant (FCA/ACA), CPA, Company Secretary (CS), or tax
 
 - Co-authored statutory packs carry official attribution in `section.json` (`reviewedBy`, `practitionerRegistrationNumber`).
 - Empanelled reviewers receive verification attribution in release notes and access to the MudraForge Enterprise Research network.
-- To join the review panel, contact our legal engineering team directly at **`hello@mudraforge.in`** or **`mondeepe@gmail.com`**.
+- To join the review panel or collaborate, reach out directly to the maintainer at **`hello@mudraforge.in`** or **`mondeepe@gmail.com`**.
 
 ---
 
-## 5. Security & Responsible Disclosure
+## 6. Security & Responsible Disclosure
 
 If you discover a vulnerability or statutory discrepancy that could lead to financial calculation errors or compliance failures, please report it privately to **`security@mudraforge.in`** or **`hello@mudraforge.in`**.

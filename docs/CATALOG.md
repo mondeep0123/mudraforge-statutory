@@ -15,6 +15,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | `corporate_ma_restructuring` | [**50B**](#50b) | Income-tax Act, 1961 | 2000-04-01 &rarr; In Force | `Active` | General Provision | `form_3cea_chartered_accountant_report` |
 | `direct_tax` | [**206C(1H)**](#206c-1h-) | Income-tax Act, 1961 | 2020-10-01 &rarr; 2025-03-31 | **Sunset** (2025-03-31) | Seller > ₹10Cr; Receipts > ₹50L | N/A |
 | `direct_tax` | [**194Q**](#194q) | Income-tax Act, 1961 | 2021-07-01 &rarr; 2026-03-31 | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | `form_26q_quarterly_return` |
+| `direct_tax` | [**393**](#393) | Income-tax Act, 2025 | 2026-04-01 &rarr; In Force | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | N/A |
 | `direct_tax` | [**194J**](#194j) | Income-tax Act, 1961 | 1995-07-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_16a_tds_certificate` |
 | `indirect_tax_gst` | [**17(5)**](#17-5-) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_2b_ineligible_reconciliation` |
 | `international_tax` | [**IRC-901-904**](#irc-901-904) | Internal Revenue Code of 1986 | 2021-01-01 &rarr; In Force | `Active` | General Provision | `form_67_statement_of_foreign_tax` |
@@ -147,6 +148,35 @@ The table below records the provenance baseline, verification standard, and expl
 **Compliance Return Schemas & Templates**:
 - [`form_26q_quarterly_return.json`](./okf/direct_tax/tds_goods_194q/forms/form_26q_quarterly_return.json)
 - [`vendor_pan_declaration.md`](./okf/direct_tax/tds_goods_194q/forms/vendor_pan_declaration.md)
+
+---
+
+#### Section 393: Deduction of tax at source on payment of a certain sum for purchase of goods
+
+- **Governing Statute**: Income-tax Act, 2025 (Act No. 1 of 2025)
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2026-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: In force from 1 April 2026 as statutory successor to Section 194Q of the Income-tax Act, 1961.
+- **Machine-Readable Source**: [`okf/direct_tax/tds_goods_393/section.json`](./okf/direct_tax/tds_goods_393/section.json)
+
+**Statutory Summary**:
+> Under Section 393(1) Table 8 Item (ii) of the Income-tax Act, 2025 (effective 1 April 2026), any buyer whose total sales, gross receipts, or turnover from business exceeds ₹10 Crore in the preceding financial year, responsible for paying any sum to a resident seller for purchase of goods exceeding ₹50 Lakhs in the current financial year, must deduct 0.1% TDS on the amount exceeding ₹50 Lakhs at the time of credit to seller account or payment, whichever is earlier. Penalty rate under Section 397(2) Proviso is 5% if PAN is not furnished or is inoperative.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "buyerPriorYearTurnoverCr": 10,
+  "annualPurchaseThresholdInr": 5000000,
+  "standardDeductionRatePercent": 0.1,
+  "inoperativePanPenaltyRatePercent": 5,
+  "taxableBaseScope": "Tax is deductible strictly on the excess over ₹50 Lakhs, NOT on the aggregate gross turnover."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 8, Item (ii)](https://incometaxindia.gov.in): *TDS on purchase of goods exceeding ₹50 Lakhs*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 397(2)](https://incometaxindia.gov.in): *Higher withholding rate (5%) for failure to furnish PAN*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 13 of 2021 (Principles saved under Section 536(2) transitional savings)](https://incometaxindia.gov.in/communications/circular/circular_13_2021.pdf): *Threshold calculation & advance netting guidelines saved under 2025 Act*
 
 ---
 
