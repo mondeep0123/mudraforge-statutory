@@ -43,7 +43,7 @@ async function main() {
         case 'sync':
         case 'pull':
         case 'update':
-            await handleSync();
+            await handleSync(args[1]);
             break;
 
         case 'browse':
@@ -122,10 +122,20 @@ async function handleCheckUpdate() {
     }
 }
 
-async function handleSync() {
+async function handleSync(targetDir) {
     try {
-        console.log('\n[INFO] Synchronizing local OKF filesystem with Cloudflare edge...');
-        const res = await syncOkf();
+        let dest = undefined;
+        if (targetDir) {
+            dest = path.resolve(process.cwd(), targetDir);
+            const cwd = path.resolve(process.cwd());
+            const relative = path.relative(cwd, dest);
+            if (relative.startsWith('..') || path.isAbsolute(relative)) {
+                console.error('[ERROR] Target sync directory must be within current workspace directory.');
+                process.exit(1);
+            }
+        }
+        console.log(`\n[INFO] Synchronizing local OKF filesystem with Cloudflare edge${dest ? ` into "${dest}"` : ''}...`);
+        const res = await syncOkf(dest ? { okfDir: dest } : {});
         console.log('───────────────────────────────────────────────────────────────────────────');
         console.log(`[OK] Successfully synced OKF v${res.okfVersion}`);
         console.log(`Downloaded sections: ${res.syncedSections}`);
@@ -313,7 +323,7 @@ Commands:
   browse                    Interactively browse local OKF statutory filesystem
   lookup <section> [date]   Look up section details & temporal status (e.g. 194Q 2025-06-01)
   check-update              Check if newer OKF versions or legal changes exist on Cloudflare edge
-  sync                      Download/sync latest versioned OKF bundle to disk
+  sync [path]               Download/sync latest versioned OKF bundle to disk (default: package okf/ or custom dir)
   list                      List all indexed statutory sections
   init-skill [path]         Install SKILL.md into your agent workspace (defaults to .agents/skills/)
   help                      Show this help message
