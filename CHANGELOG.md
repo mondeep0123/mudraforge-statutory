@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.4.1] - 2026-10-24
+
+### Added
+- **Developer Navigation & Usability**: Compact, audited Table of Contents in `README.md` targeting all key documentation sections.
+- **Package Metadata**: Official `homepage` pointing to `https://mudraforge.in/docs` and `bugs` pointing to GitHub Issues.
+- **Supported Application Patterns**: Documented clear integration boundaries across AI Agents (local `SKILL.md`), Finance Software (declarative threshold schemas), and Developer Tooling.
+- **Corporate M&A Restructuring Domain**: Section 50B slump sale capital gains based on WDV net worth (Section 43(6)), Form 3CEA CA certification schema, and Section 281 clearance checklist.
+- **Dual-Act Successor Mapping**: Section 393 (*Income-tax Act, 2025*) successor provision mapping for Section 194Q.
+- **Cryptographic Trust Anchor & Anti-Tamper Hardening**: Ed25519 digital signature verification for remote bundles, CRL key revocation enforcement, replay protections, Windows reserved device name protection, and strict production bypass locks (36 passing regression suites).
+
+### Changed
+- **Statutory Rate Enforcements**: Section 194J non-PAN deduction rate updated to the statutory 20% penalty tier under Section 206AA.
+- **Quotas & Error Semantics**: Documented Cloudflare Edge API rate limits, error codes, and HTTP semantics.
+
+---
+
 ## [2.4.0] - 2026-10-22
 
 ### Added
