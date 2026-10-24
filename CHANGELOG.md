@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.4.2] - 2026-10-24
+
+### Added
+- **npm Package Update Notifier**: Lightweight, zero-dependency update notifier querying `registry.npmjs.org` with a 24-hour temporary file cache (`checkForPackageUpdate()`).
+- **Unified `check-update` CLI Command**: Now audits both npm package code updates against the npm registry and legal rule updates against the Cloudflare Edge manifest.
+- **Non-Intrusive Terminal Footers**: Automatically surfaces `[NOTICE]` prompts when a newer npm release is available, with opt-out support via `NO_UPDATE_NOTIFIER=1` or `CI=true`.
+
+---
+
 ## [2.4.1] - 2026-10-24
 
 ### Added

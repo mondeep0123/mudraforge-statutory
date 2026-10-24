@@ -21,7 +21,8 @@ import {
     assertSecureEndpoint,
     resolveSafeStatuteFilename,
     StatutoryIndeterminateError,
-    compareSemver
+    compareSemver,
+    checkForPackageUpdate
 } from './src/index.js';
 
 async function run() {
@@ -961,8 +962,73 @@ async function run() {
         expiredBundleServer.close();
     }
 
+    // 37. Package Update Notifier (Zero-Dependency npm version check)
+    console.log('\n── Test 37: Zero-Dependency Package Update Notifier (npm registry check) ──');
+    let mockLatestPkgVersion = '2.5.0';
+    const mockNpmServer = http.createServer((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            name: '@mudraforge/statutory',
+            version: mockLatestPkgVersion
+        }));
+    });
+    await new Promise(resolve => mockNpmServer.listen(0, '127.0.0.1', resolve));
+    const mockNpmPort = mockNpmServer.address().port;
+    const mockNpmUrl = `http://127.0.0.1:${mockNpmPort}`;
+
+    try {
+        // 37.1 Newer version available
+        mockLatestPkgVersion = '2.5.0';
+        const resNewer = await checkForPackageUpdate({
+            registryUrl: mockNpmUrl,
+            currentVersion: '2.4.1',
+            cacheTtlMs: 0
+        });
+        if (!resNewer || !resNewer.updateAvailable || resNewer.latestVersion !== '2.5.0') {
+            throw new Error(`Expected updateAvailable: true, got ${JSON.stringify(resNewer)}`);
+        }
+        console.log(`[PASS] checkForPackageUpdate correctly detected newer version: ${resNewer.currentVersion} -> ${resNewer.latestVersion}`);
+
+        // 37.2 Already up to date or older
+        mockLatestPkgVersion = '2.4.1';
+        const resSame = await checkForPackageUpdate({
+            registryUrl: mockNpmUrl,
+            currentVersion: '2.4.1',
+            cacheTtlMs: 0
+        });
+        if (!resSame || resSame.updateAvailable) {
+            throw new Error(`Expected updateAvailable: false, got ${JSON.stringify(resSame)}`);
+        }
+        console.log(`[PASS] checkForPackageUpdate correctly detected up-to-date status.`);
+
+        // 37.3 NO_UPDATE_NOTIFIER opt-out
+        process.env.NO_UPDATE_NOTIFIER = '1';
+        try {
+            const resOptOut = await checkForPackageUpdate({ registryUrl: mockNpmUrl });
+            if (resOptOut !== null) {
+                throw new Error('Expected null when NO_UPDATE_NOTIFIER=1');
+            }
+            console.log(`[PASS] checkForPackageUpdate respected NO_UPDATE_NOTIFIER=1 opt-out.`);
+        } finally {
+            delete process.env.NO_UPDATE_NOTIFIER;
+        }
+
+        // 37.4 Silent fail-open on network error
+        const resDeadNet = await checkForPackageUpdate({
+            registryUrl: 'http://127.0.0.1:1', // invalid dead port
+            timeoutMs: 200,
+            cacheTtlMs: 0
+        });
+        if (resDeadNet !== null) {
+            throw new Error('Expected null fail-open on dead network');
+        }
+        console.log(`[PASS] checkForPackageUpdate gracefully handled dead network with zero crashes.`);
+    } finally {
+        mockNpmServer.close();
+    }
+
     console.log('\n===========================================================================');
-    console.log('ALL 36 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 37 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

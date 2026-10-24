@@ -10,6 +10,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
@@ -17,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const DEFAULT_LOCAL_OKF_DIR = path.resolve(__dirname, '..', 'okf');
 export const DEFAULT_BASE_URL = 'https://api.mudraforge.in';
-export const STATUTORY_CLIENT_VERSION = '2.4.1';
+export const STATUTORY_CLIENT_VERSION = '2.4.2';
 
 /**
  * Pinned official release Merkle root digests.
@@ -427,6 +428,78 @@ export async function checkUpdates(options = {}) {
         changelog: remote.changelog,
         totalSections: remote.totalSections,
         rootHash: remote.rootHash
+    };
+}
+
+/**
+ * Check if a newer version of the @mudraforge/statutory npm package is published on npmjs.com.
+ * Uses a lightweight cached file in os.tmpdir() to prevent frequent network roundtrips.
+ *
+ * @param {Object} [options]
+ * @param {string} [options.currentVersion] - Current installed version (defaults to STATUTORY_CLIENT_VERSION).
+ * @param {number} [options.cacheTtlMs] - Cache duration in milliseconds (default: 24 hours).
+ * @param {number} [options.timeoutMs] - Request timeout in milliseconds (default: 1500ms).
+ * @param {string} [options.registryUrl] - Registry endpoint (default: https://registry.npmjs.org/@mudraforge/statutory/latest).
+ * @returns {Promise<{ updateAvailable: boolean, currentVersion: string, latestVersion: string } | null>}
+ */
+export async function checkForPackageUpdate(options = {}) {
+    if (process.env.NO_UPDATE_NOTIFIER === '1' || process.env.CI === 'true') {
+        return null;
+    }
+
+    const currentVersion = options.currentVersion || STATUTORY_CLIENT_VERSION;
+    const cacheTtlMs = options.cacheTtlMs !== undefined ? options.cacheTtlMs : 24 * 60 * 60 * 1000;
+    const timeoutMs = options.timeoutMs || 1500;
+    const cacheFile = path.join(os.tmpdir(), '.mudraforge_statutory_npm_update.json');
+
+    let cached = null;
+    if (cacheTtlMs > 0) {
+        try {
+            if (fs.existsSync(cacheFile)) {
+                const data = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+                if (data && typeof data.lastChecked === 'number' && (Date.now() - data.lastChecked < cacheTtlMs)) {
+                    cached = data;
+                }
+            }
+        } catch (_) {}
+    }
+
+    let latestVersion = cached?.latestVersion;
+
+    if (!latestVersion) {
+        try {
+            const url = options.registryUrl || 'https://registry.npmjs.org/@mudraforge/statutory/latest';
+            const res = await fetch(url, {
+                signal: AbortSignal.timeout(timeoutMs),
+                headers: { 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+                const json = await res.json();
+                if (json && json.version && typeof json.version === 'string') {
+                    latestVersion = json.version;
+                    if (cacheTtlMs > 0) {
+                        try {
+                            fs.writeFileSync(cacheFile, JSON.stringify({
+                                lastChecked: Date.now(),
+                                latestVersion
+                            }), 'utf8');
+                        } catch (_) {}
+                    }
+                }
+            }
+        } catch (_) {
+            // Fail open and silent on network error, offline, or timeout
+            return null;
+        }
+    }
+
+    if (!latestVersion) return null;
+
+    const cmp = compareSemver(latestVersion, currentVersion);
+    return {
+        updateAvailable: cmp > 0,
+        currentVersion,
+        latestVersion
     };
 }
 

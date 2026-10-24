@@ -16,6 +16,8 @@ import {
     checkUpdates,
     syncOkf,
     getLocalManifest,
+    checkForPackageUpdate,
+    STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
 } from '../src/index.js';
 
@@ -68,10 +70,36 @@ async function main() {
             printHelp();
             break;
     }
+
+    // Non-intrusive background npm package update notice
+    if (!['check-update', 'status', 'version'].includes(command)) {
+        try {
+            const updateInfo = await checkForPackageUpdate();
+            if (updateInfo && updateInfo.updateAvailable) {
+                console.log('───────────────────────────────────────────────────────────────────────────');
+                console.log(`[NOTICE] A new version of @mudraforge/statutory is available: ${updateInfo.currentVersion} -> ${updateInfo.latestVersion}`);
+                console.log(`Run: npm install @mudraforge/statutory@latest or npx @mudraforge/statutory@latest`);
+                console.log('───────────────────────────────────────────────────────────────────────────\n');
+            }
+        } catch (_) {}
+    }
 }
 
 async function handleCheckUpdate() {
     try {
+        console.log('\n[INFO] Checking npm package version against registry.npmjs.org...');
+        try {
+            const pkgUpdate = await checkForPackageUpdate({ cacheTtlMs: 0 });
+            if (pkgUpdate && pkgUpdate.updateAvailable) {
+                console.log('───────────────────────────────────────────────────────────────────────────');
+                console.log(`[WARN] New npm package version available: v${pkgUpdate.latestVersion} (installed: v${pkgUpdate.currentVersion})`);
+                console.log(`Run: npm install @mudraforge/statutory@latest`);
+                console.log('───────────────────────────────────────────────────────────────────────────');
+            } else if (pkgUpdate) {
+                console.log(`[OK] npm package code is up to date (v${pkgUpdate.currentVersion}).`);
+            }
+        } catch (_) {}
+
         console.log('\n[INFO] Checking OKF knowledge substrate status against Cloudflare edge...');
         const status = await checkUpdates();
         console.log('───────────────────────────────────────────────────────────────────────────');
@@ -82,7 +110,7 @@ async function handleCheckUpdate() {
         console.log('───────────────────────────────────────────────────────────────────────────');
 
         if (status.isOutdated) {
-            console.log(`[WARN] New version available: v${status.latestVersion}`);
+            console.log(`[WARN] New legal data version available: v${status.latestVersion}`);
             console.log(`Changelog: ${status.changelog}`);
             console.log(`Run: npx @mudraforge/statutory sync to pull the latest rules.\n`);
         } else {

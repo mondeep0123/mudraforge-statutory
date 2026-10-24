@@ -15,7 +15,7 @@
 
 | Item | Value |
 |---|---|
-| **Package Release** | **`v2.4.1`** (Public Beta) |
+| **Package Release** | **`v2.4.2`** (Public Beta) |
 | **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2) + MudraForge Statutory Schema Extension** |
 | **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Baseline: October 2026** |
 | **Corpus Quality Card** | 100% Citation Resolution (15/15 URLs) in [`docs/CORPUS_QUALITY.md`](./docs/CORPUS_QUALITY.md) |
