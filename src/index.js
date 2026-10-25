@@ -18,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const DEFAULT_LOCAL_OKF_DIR = path.resolve(__dirname, '..', 'okf');
 export const DEFAULT_BASE_URL = 'https://api.mudraforge.in';
-export const STATUTORY_CLIENT_VERSION = '2.8.0';
+export const STATUTORY_CLIENT_VERSION = '2.8.1';
 
 /**
  * Pinned official release Merkle root digests.

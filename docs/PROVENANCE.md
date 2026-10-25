@@ -8,7 +8,7 @@ This document records the cryptographic provenance, normative specifications, an
 
 | Item | Value |
 |---|---|
-| **Package Release** | **`v2.8.0`** (Stable Minor Release) |
+| **Package Release** | **`v2.8.1`** (Stable Patch Release) |
 | **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2) + MudraForge Statutory Schema Extension** |
 | **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Baseline: October 2026** |
 | **Corpus Quality Card** | 100% Citation Resolution (15/15 URLs) in [`docs/CORPUS_QUALITY.md`](./CORPUS_QUALITY.md) |

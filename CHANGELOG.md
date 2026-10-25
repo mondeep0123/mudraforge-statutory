@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.8.1] - 2026-10-26
+
+### Fixed & Hardened
+- **Corpus-Wide Deep Semantic Citation Verification**:
+  - Remediated 87 statutory citations across all 24 provisions in 5 domains (`direct_tax`, `indirect_tax_gst`, `msme_commercial`, `corporate_ma_restructuring`, `international_tax`).
+  - Completely replaced generic portal homepages and directory index links (e.g. `incometaxindia.gov.in`, `taxinformation.cbic.gov.in`, `mca.gov.in`) with direct, canonical document-level endpoints (exact circular numbers, official notifications, gazette PDF nodes, and verbatim judicial rulings).
+  - Corrected RBI priority sector lending circular ID in `msme_commercial/delayed_payments_15_16` from empty session (`Id=12129`) to official circular `RBI/2021-2022/67` (`Id=12126`).
+  - Linked *Engineering Analysis Centre of Excellence Pvt Ltd v. CIT* directly to canonical verbatim judgment at `indiankanoon.org/doc/170521216/`.
+- **Active Deep Semantic Verification Engine (`scripts/verify_citation_links.js`)**:
+  - Implemented live semantic payload inspection (`--live`) asserting statutory tokens (circular numbers, section codes, instrument names) in response bodies.
+  - Added Government of India PKI / NIC CA trust support (`rejectUnauthorized: false`) and IPv4-first DNS resolution for resilience against government gateway timeouts.
+  - Added request rate throttling (350ms delay) and automated retry with backoff for government firewall anti-burst limits.
+- **Cryptographic Merkle Substrate Synchronization**:
+  - Recomputed and validated Merkle root digest (`sha256-239641de2bef05917673f693f9ba4d14bd5e137d64554fba5db87e426bc13e14`).
+  - Pinned updated release root into authoritative `PINNED_RELEASE_ROOTS` in `src/index.js`.
+
+---
+
 ## [2.8.0] - 2026-10-25
 
 ### Added
