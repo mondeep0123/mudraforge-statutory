@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.4.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-25T14:03:06.246Z
+> **Generated Timestamp**: 2026-10-25T14:12:18.510Z
 
 ---
 

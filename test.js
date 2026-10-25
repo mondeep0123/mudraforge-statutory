@@ -27,6 +27,7 @@ import {
     decodeTaxIdentifier,
     isValidGstinChecksum,
     verifyLocalSubstrate,
+    runStatutoryDoctor,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
 } from './src/index.js';
@@ -1570,8 +1571,40 @@ async function run() {
     }
     console.log('[PASS] Global --json flag verified across lookup, decode-id, list, and browse.');
 
+    // 62. Diagnostic Doctor — Programmatic Invocation (runStatutoryDoctor)
+    console.log('\n── Test 62: Diagnostic Doctor — Programmatic Invocation (runStatutoryDoctor) ──');
+    const docReport = await runStatutoryDoctor({ offline: true });
+    if (!docReport.healthy || docReport.exitCode !== 0) {
+        throw new Error(`Doctor reported unhealthy or non-zero exit code: ${docReport.exitCode}`);
+    }
+    if (!docReport.runtime.isSupportedNode) {
+        throw new Error(`Expected Node.js to be supported (>= v18), got ${docReport.runtime.nodeVersion}`);
+    }
+    if (!docReport.substrate.valid || docReport.substrate.integrity.mismatches.length > 0) {
+        throw new Error(`Doctor reported substrate integrity failure`);
+    }
+    if (docReport.edge.status !== 'SKIPPED_AIR_GAPPED') {
+        throw new Error(`Expected edge check to be skipped in air-gapped/offline mode, got ${docReport.edge.status}`);
+    }
+    console.log(`[PASS] runStatutoryDoctor correctly diagnosed environment, local substrate, and air-gapped mode.`);
+
+    // 63. CLI Integration Execution — node bin/cli.js doctor --json --offline
+    console.log('\n── Test 63: CLI Integration — node bin/cli.js doctor --json --offline ──');
+    const cliDoctorOutput = execFileSync(process.execPath, [path.resolve('bin/cli.js'), 'doctor', '--json', '--offline'], {
+        encoding: 'utf8',
+        cwd: path.resolve('.')
+    });
+    const parsedDoctor = JSON.parse(cliDoctorOutput);
+    if (!parsedDoctor.healthy || parsedDoctor.exitCode !== 0) {
+        throw new Error(`CLI doctor reported non-zero exit code: ${parsedDoctor.exitCode}`);
+    }
+    if (!parsedDoctor.runtime.isSupportedNode || !parsedDoctor.substrate.integrity.valid) {
+        throw new Error(`CLI doctor JSON output missing expected runtime or substrate status`);
+    }
+    console.log('[PASS] CLI doctor --json --offline executed cleanly with exitCode 0 and valid machine-readable output.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 61 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 63 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

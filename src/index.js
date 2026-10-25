@@ -510,6 +510,111 @@ export function verifyLocalSubstrate(okfDir = DEFAULT_LOCAL_OKF_DIR, options = {
 }
 
 /**
+ * MudraForge Statutory Environment & Substrate Doctor.
+ * Diagnoses host runtime environment, local OKF file health, air-gap state,
+ * and optional Cloudflare edge connectivity without failing offline verification.
+ *
+ * @param {Object} [options={}]
+ * @param {string} [options.okfDir] - Path to local OKF directory.
+ * @param {string} [options.baseUrl] - Base URL for edge endpoint.
+ * @param {boolean} [options.offline] - Force offline/air-gapped check (bypasses network).
+ * @param {number} [options.timeoutMs=2500] - Latency timeout for edge ping.
+ * @returns {Promise<{
+ *   healthy: boolean,
+ *   exitCode: number,
+ *   clientVersion: string,
+ *   runtime: Object,
+ *   substrate: Object,
+ *   edge: Object
+ * }>}
+ */
+export async function runStatutoryDoctor(options = {}) {
+    const okfDir = options.okfDir || DEFAULT_LOCAL_OKF_DIR;
+    const baseUrl = options.baseUrl || DEFAULT_BASE_URL;
+    const skipNetwork = Boolean(options.offline || options.skipNetwork || process.env.MUDRA_OFFLINE === '1');
+
+    // 1. Host Runtime Diagnostics
+    const nodeVersion = process.version;
+    const majorMatch = nodeVersion.match(/^v(\d+)/);
+    const majorVersion = majorMatch ? parseInt(majorMatch[1], 10) : 0;
+    const runtime = {
+        nodeVersion,
+        isSupportedNode: majorVersion >= 18,
+        platform: process.platform,
+        arch: process.arch,
+        pid: process.pid,
+        environment: process.env.NODE_ENV || 'development',
+        isCI: Boolean(process.env.CI === 'true'),
+        hasApiKey: Boolean(process.env.MUDRA_STATUTORY_API_KEY || process.env.MUDRA_API_KEY)
+    };
+
+    // 2. Local Substrate Diagnostics
+    const substrate = verifyLocalSubstrate(okfDir, options);
+
+    // 3. Optional Edge Connectivity Diagnostics
+    let edge = {
+        status: 'SKIPPED_AIR_GAPPED',
+        baseUrl,
+        latencyMs: null,
+        isReachable: null,
+        advisory: 'Edge check bypassed via offline/air-gapped mode.'
+    };
+
+    if (!skipNetwork) {
+        const start = Date.now();
+        try {
+            assertSecureEndpoint(baseUrl);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs || 2500);
+            const pingUrl = new URL('/api/v1/statutory/manifest.json', baseUrl);
+            const res = await fetch(pingUrl, {
+                method: 'HEAD',
+                signal: controller.signal,
+                headers: { 'User-Agent': buildUserAgent() }
+            });
+            clearTimeout(timeoutId);
+            const latencyMs = Date.now() - start;
+            edge = {
+                status: res.ok ? 'REACHABLE' : `HTTP_${res.status}`,
+                baseUrl,
+                latencyMs,
+                isReachable: res.ok,
+                advisory: res.ok ? 'Edge service operational.' : `Edge returned status HTTP ${res.status}.`
+            };
+        } catch (err) {
+            edge = {
+                status: 'UNREACHABLE',
+                baseUrl,
+                latencyMs: null,
+                isReachable: false,
+                advisory: `Edge endpoint unreachable (${err.message}). Local offline substrate remains 100% operational.`
+            };
+        }
+    }
+
+    // Determine overall health & exit code
+    let exitCode = STATUTORY_EXIT_CODES.SUCCESS;
+    let isHealthy = true;
+
+    if (!runtime.isSupportedNode) {
+        isHealthy = false;
+        exitCode = STATUTORY_EXIT_CODES.USAGE_ERROR;
+    } else if (!substrate.valid) {
+        isHealthy = false;
+        exitCode = substrate.exitCode;
+    }
+
+    return {
+        healthy: isHealthy,
+        exitCode,
+        clientVersion: STATUTORY_CLIENT_VERSION,
+        runtime,
+        substrate,
+        edge
+    };
+}
+
+/**
  * Safely parse JSON responses from remote endpoints, asserting Content-Type
  * to prevent uncaught SyntaxErrors when upstream proxies return HTML or text.
  */

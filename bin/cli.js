@@ -19,6 +19,7 @@ import {
     checkForPackageUpdate,
     decodeTaxIdentifier,
     verifyLocalSubstrate,
+    runStatutoryDoctor,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
@@ -29,11 +30,17 @@ const __dirname = path.dirname(__filename);
 
 const rawArgs = process.argv.slice(2);
 const isJsonMode = rawArgs.includes('--json') || rawArgs.includes('-j');
-const args = rawArgs.filter(a => a !== '--json' && a !== '-j');
+const isOfflineMode = rawArgs.includes('--offline') || rawArgs.includes('-o');
+const args = rawArgs.filter(a => a !== '--json' && a !== '-j' && a !== '--offline' && a !== '-o');
 const command = args[0] ? args[0].toLowerCase() : 'help';
 
 async function main() {
     switch (command) {
+        case 'doctor':
+        case 'diagnose':
+            await handleDoctor();
+            break;
+
         case 'verify':
         case 'audit':
         case 'check':
@@ -169,6 +176,75 @@ async function handleVerify(targetDir) {
             console.log(JSON.stringify({ valid: false, exitCode: STATUTORY_EXIT_CODES.USAGE_ERROR, error: err.message }, null, 2));
         } else {
             console.error(`[ERROR] Verification error: ${err.message}`);
+        }
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+}
+
+async function handleDoctor() {
+    try {
+        const report = await runStatutoryDoctor({ offline: isOfflineMode });
+        if (isJsonMode) {
+            console.log(JSON.stringify(report, null, 2));
+            process.exit(report.exitCode);
+        }
+
+        console.log('\n===========================================================================');
+        console.log(`MUDRAFORGE STATUTORY DIAGNOSTIC DOCTOR [v${report.clientVersion}]`);
+        console.log('===========================================================================');
+
+        console.log('── 1. RUNTIME & HOST ENVIRONMENT ──');
+        console.log(`Node.js:           ${report.runtime.nodeVersion} ${report.runtime.isSupportedNode ? '(Supported: v18+)' : '[UNSUPPORTED]'}`);
+        console.log(`Platform:          ${report.runtime.platform} (${report.runtime.arch})`);
+        console.log(`Environment:       ${report.runtime.environment}${report.runtime.isCI ? ' (CI Active)' : ''}`);
+        console.log(`API Key Config:    ${report.runtime.hasApiKey ? 'CONFIGURED (Enterprise Tier Enabled)' : 'NOT_CONFIGURED (Free Commons Mode)'}`);
+
+        console.log('\n── 2. LOCAL OKF SUBSTRATE HEALTH ──');
+        if (report.substrate.valid) {
+            console.log(`Directory:         ${DEFAULT_LOCAL_OKF_DIR}`);
+            console.log(`Manifest Version:  v${report.substrate.okfVersion} (Published: ${report.substrate.publishedAt})`);
+            console.log(`Files Checked:     ${report.substrate.integrity.totalFilesChecked} (0 mismatches, 0 missing, 0 untracked)`);
+            console.log(`Root Merkle Hash:  ${report.substrate.integrity.computedRoot}`);
+            console.log(`Integrity:         PASS`);
+            console.log(`Provenance:        AUTHENTIC (${report.substrate.authenticity.method})`);
+            console.log(`Statutory Policy:  PASS (All ${report.substrate.baselineCheck.baselineSections.length} mandatory baselines present)`);
+        } else {
+            console.error(`Substrate:         FAILED (Exit Code ${report.substrate.exitCode})`);
+            if (report.substrate.error) console.error(`Error:             ${report.substrate.error}`);
+            if (!report.substrate.integrity.valid) {
+                console.error(`Integrity Failure: ${report.substrate.integrity.mismatches.length} mismatch(es), ${report.substrate.integrity.missingFiles.length} missing files.`);
+            }
+            if (!report.substrate.authenticity.valid) {
+                console.error(`Authenticity:      Root hash not authenticated.`);
+            }
+            if (!report.substrate.baselineCheck.valid) {
+                console.error(`Missing Baselines: ${report.substrate.baselineCheck.missingBaseline.join(', ')}`);
+            }
+        }
+
+        console.log('\n── 3. CLOUDFLARE ANYCAST EDGE CONNECTIVITY ──');
+        console.log(`Endpoint:          ${report.edge.baseUrl}`);
+        if (report.edge.status === 'REACHABLE') {
+            console.log(`Status:            REACHABLE (Latency: ${report.edge.latencyMs}ms)`);
+        } else if (report.edge.status === 'SKIPPED_AIR_GAPPED') {
+            console.log(`Status:            SKIPPED (Air-Gapped / Offline Flag Enabled)`);
+        } else {
+            console.log(`Status:            ${report.edge.status} (Offline-first local mode operative)`);
+        }
+        console.log(`Advisory:          ${report.edge.advisory}`);
+
+        console.log('───────────────────────────────────────────────────────────────────────────');
+        if (report.healthy) {
+            console.log(`[PASS] All diagnostic checks passed with zero defects (Exit 0).\n`);
+        } else {
+            console.error(`[FAIL] Diagnostic doctor flagged health violations (Exit ${report.exitCode}).\n`);
+        }
+        process.exit(report.exitCode);
+    } catch (err) {
+        if (isJsonMode) {
+            console.log(JSON.stringify({ healthy: false, exitCode: STATUTORY_EXIT_CODES.USAGE_ERROR, error: err.message }, null, 2));
+        } else {
+            console.error(`[ERROR] Doctor diagnostic error: ${err.message}`);
         }
         process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
     }
@@ -496,6 +572,7 @@ Usage:
   npx @mudraforge/statutory <command> [options]
 
 Commands:
+  doctor [--offline]        Run full diagnostic check of runtime, substrate integrity, & edge status
   verify [path]             Cryptographically verify OKF substrate authenticity & file integrity
   browse                    Interactively browse local OKF statutory filesystem
   lookup <section> [date]   Look up section details & temporal status (e.g. 194Q 2025-06-01)
@@ -508,6 +585,7 @@ Commands:
 
 Options:
   --json, -j                Emit clean, machine-parseable JSON to stdout (suppresses banners)
+  --offline, -o             Bypass outbound network checks (air-gapped / offline environment mode)
 
 Exit Code Conventions:
   0                         Success / Verification passed

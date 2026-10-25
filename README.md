@@ -432,11 +432,18 @@ const isActive2025 = await isStatuteActive('206C(1H)', '2025-06-01'); // false (
 The CLI provides cryptographic provenance checking, offline integrity verification, and machine-readable JSON output for CI/CD audit pipelines:
 
 ```bash
+# Run full environment, local substrate health, and edge latency diagnostics
+npx @mudraforge/statutory doctor
+
+# Force air-gapped / offline diagnostics (zero outbound network requests)
+npx @mudraforge/statutory doctor --offline
+
 # Cryptographically verify local statutory substrate integrity & origin authenticity
 npx @mudraforge/statutory verify
 
 # Output machine-parseable JSON for CI/CD or jq integration
 npx @mudraforge/statutory verify --json
+npx @mudraforge/statutory doctor --json --offline
 
 # Query section in pure JSON format
 npx @mudraforge/statutory lookup 194Q --json
