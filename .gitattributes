@@ -1,0 +1,5 @@
+# Ensure deterministic LF line endings for cryptographic integrity across all platforms
+* text=auto eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.js text eol=lf

@@ -427,6 +427,35 @@ const isActive2024 = await isStatuteActive('206C(1H)', '2024-05-01'); // true
 const isActive2025 = await isStatuteActive('206C(1H)', '2025-06-01'); // false (omitted by Finance Act, 2025)
 ```
 
+### 4. CLI Verification, Auditing & Pipeline Integration
+
+The CLI provides cryptographic provenance checking, offline integrity verification, and machine-readable JSON output for CI/CD audit pipelines:
+
+```bash
+# Cryptographically verify local statutory substrate integrity & origin authenticity
+npx @mudraforge/statutory verify
+
+# Output machine-parseable JSON for CI/CD or jq integration
+npx @mudraforge/statutory verify --json
+
+# Query section in pure JSON format
+npx @mudraforge/statutory lookup 194Q --json
+
+# Decode and validate PAN / GSTIN offline with ISO Mod-36 checksum
+npx @mudraforge/statutory decode-id 27AAPFU0939F1ZV --json
+```
+
+#### Custom MudraForge Exit Code Contract
+Calling pipelines and CI/CD audit steps can inspect `$?` directly:
+
+| Exit Code | Classification | Meaning |
+|---|---|---|
+| `0` | `SUCCESS` | Substrate verified authentic, intact, and all baseline provisions present. |
+| `1` | `USAGE_OR_OPERATIONAL_ERROR` | Invalid CLI arguments, unknown command, or syntax error. |
+| `2` | `INTEGRITY_OR_SECURITY_VIOLATION` | Cryptographic signature failure, unpinned root hash, file tampering, or revoked key. |
+| `3` | `STATUTORY_POLICY_VIOLATION` | Statutory policy failure (e.g. missing mandatory baseline provision or sunset violation). |
+
+
 ---
 
 ## Enterprise Tier (Paid Cloud Execution & Analysis Mode)

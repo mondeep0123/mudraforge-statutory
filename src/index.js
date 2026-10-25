@@ -257,6 +257,259 @@ export function getLocalManifest(okfDir = DEFAULT_LOCAL_OKF_DIR) {
 }
 
 /**
+ * MudraForge Custom CLI Exit Code Conventions
+ */
+export const STATUTORY_EXIT_CODES = {
+    SUCCESS: 0,
+    USAGE_ERROR: 1,
+    INTEGRITY_OR_SECURITY_FAILURE: 2,
+    STATUTORY_POLICY_FAILURE: 3
+};
+
+/**
+ * Recursively scans a local OKF directory, verifies file-level SHA-256 hashes against
+ * manifest.json (Integrity), validates the Merkle root hash against authorized release roots
+ * or cryptographic Ed25519 signatures (Authenticity), and verifies mandatory statutory baselines.
+ *
+ * @param {string} [okfDir=DEFAULT_LOCAL_OKF_DIR] - Path to local OKF root directory.
+ * @param {Object} [options={}]
+ * @param {string} [options.publicKey] - Base64 SPKI public key for signature verification.
+ * @param {string} [options.expectedRootHash] - Explicit root hash expected by caller.
+ * @param {Array<string>} [options.requiredSections] - Baseline provisions required (defaults to MANDATORY_BASELINE_SECTIONS).
+ * @param {boolean} [options.allowUnverifiedRoot] - Permitted only in non-production.
+ * @returns {{
+ *   valid: boolean,
+ *   exitCode: number,
+ *   okfVersion: string,
+ *   publishedAt: string,
+ *   integrity: {
+ *     valid: boolean,
+ *     totalFilesChecked: number,
+ *     mismatches: Array<{ file: string, expected: string, actual: string }>,
+ *     missingFiles: string[],
+ *     untrackedFiles: string[],
+ *     computedRoot: string,
+ *     recordedRoot: string
+ *   },
+ *   authenticity: {
+ *     valid: boolean,
+ *     method: string,
+ *     rootHash: string,
+ *     isPinned: boolean,
+ *     isSigned: boolean,
+ *     keyId: string | null
+ *   },
+ *   baselineCheck: {
+ *     valid: boolean,
+ *     missingBaseline: string[],
+ *     baselineSections: string[]
+ *   }
+ * }}
+ */
+export function verifyLocalSubstrate(okfDir = DEFAULT_LOCAL_OKF_DIR, options = {}) {
+    const resolvedDir = path.resolve(okfDir);
+    if (!fs.existsSync(resolvedDir)) {
+        return {
+            valid: false,
+            exitCode: STATUTORY_EXIT_CODES.INTEGRITY_OR_SECURITY_FAILURE,
+            error: `[@mudraforge/statutory] Local OKF directory not found at: ${resolvedDir}`,
+            integrity: { valid: false, totalFilesChecked: 0, mismatches: [], missingFiles: [], untrackedFiles: [], computedRoot: null, recordedRoot: null },
+            authenticity: { valid: false, method: 'NONE', rootHash: null, isPinned: false, isSigned: false, keyId: null },
+            baselineCheck: { valid: false, missingBaseline: MANDATORY_BASELINE_SECTIONS, baselineSections: MANDATORY_BASELINE_SECTIONS }
+        };
+    }
+
+    const manifestPath = path.join(resolvedDir, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) {
+        return {
+            valid: false,
+            exitCode: STATUTORY_EXIT_CODES.INTEGRITY_OR_SECURITY_FAILURE,
+            error: `[@mudraforge/statutory] manifest.json missing in OKF directory: ${resolvedDir}`,
+            integrity: { valid: false, totalFilesChecked: 0, mismatches: [], missingFiles: [], untrackedFiles: [], computedRoot: null, recordedRoot: null },
+            authenticity: { valid: false, method: 'NONE', rootHash: null, isPinned: false, isSigned: false, keyId: null },
+            baselineCheck: { valid: false, missingBaseline: MANDATORY_BASELINE_SECTIONS, baselineSections: MANDATORY_BASELINE_SECTIONS }
+        };
+    }
+
+    let manifest;
+    try {
+        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    } catch (err) {
+        return {
+            valid: false,
+            exitCode: STATUTORY_EXIT_CODES.INTEGRITY_OR_SECURITY_FAILURE,
+            error: `[@mudraforge/statutory] Corrupted manifest.json: ${err.message}`,
+            integrity: { valid: false, totalFilesChecked: 0, mismatches: [], missingFiles: [], untrackedFiles: [], computedRoot: null, recordedRoot: null },
+            authenticity: { valid: false, method: 'NONE', rootHash: null, isPinned: false, isSigned: false, keyId: null },
+            baselineCheck: { valid: false, missingBaseline: MANDATORY_BASELINE_SECTIONS, baselineSections: MANDATORY_BASELINE_SECTIONS }
+        };
+    }
+
+    // 1. Gather all files on disk recursively
+    const fileList = [];
+    function scanDir(dir) {
+        if (!fs.existsSync(dir)) return;
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const full = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                if (!entry.name.startsWith('.') && !entry.name.startsWith('.staging-sync-')) {
+                    scanDir(full);
+                }
+            } else if (entry.isFile() && entry.name !== 'manifest.json' && !entry.name.startsWith('.')) {
+                fileList.push(full);
+            }
+        }
+    }
+    scanDir(resolvedDir);
+
+    const onDiskFileHashes = {};
+    const recordedFileHashes = manifest.files || manifest.fileHashes || {};
+    const mismatches = [];
+    const seenSections = new Set();
+
+    for (const fullPath of fileList) {
+        const relPath = path.relative(resolvedDir, fullPath).replace(/\\/g, '/');
+        let content = fs.readFileSync(fullPath);
+        if (fullPath.endsWith('.json') || fullPath.endsWith('.md')) {
+            content = Buffer.from(content.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
+        }
+        const hash = crypto.createHash('sha256').update(content).digest('hex');
+        onDiskFileHashes[relPath] = hash;
+
+        if (path.basename(fullPath) === 'section.json') {
+            try {
+                const sData = JSON.parse(content.toString('utf8'));
+                if (sData.sectionCode) {
+                    seenSections.add(sData.sectionCode.toLowerCase().trim());
+                }
+            } catch (_) {}
+        }
+
+        const expectedHash = recordedFileHashes[relPath];
+        if (expectedHash && expectedHash !== hash) {
+            mismatches.push({ file: relPath, expected: expectedHash, actual: hash });
+        }
+    }
+
+    const missingFiles = [];
+    for (const recordedRelPath of Object.keys(recordedFileHashes)) {
+        if (!onDiskFileHashes[recordedRelPath]) {
+            missingFiles.push(recordedRelPath);
+        }
+    }
+
+    const untrackedFiles = [];
+    for (const onDiskRelPath of Object.keys(onDiskFileHashes)) {
+        if (!recordedFileHashes[onDiskRelPath]) {
+            untrackedFiles.push(onDiskRelPath);
+        }
+    }
+
+    // Compute deterministic root hash from on-disk file hashes
+    const rootHasher = crypto.createHash('sha256');
+    for (const [relPath, hash] of Object.entries(onDiskFileHashes).sort(([a], [b]) => a.localeCompare(b))) {
+        rootHasher.update(`${relPath}:${hash}\n`);
+    }
+    const computedRoot = `sha256-${rootHasher.digest('hex')}`;
+
+    const integrityValid = mismatches.length === 0 &&
+        missingFiles.length === 0 &&
+        untrackedFiles.length === 0 &&
+        computedRoot === manifest.rootHash;
+
+    const integrity = {
+        valid: integrityValid,
+        totalFilesChecked: fileList.length,
+        mismatches,
+        missingFiles,
+        untrackedFiles,
+        computedRoot,
+        recordedRoot: manifest.rootHash
+    };
+
+    // 2. Authenticity Verification
+    const isPinned = PINNED_RELEASE_ROOTS.has(manifest.rootHash);
+    let isSigned = false;
+    let signingKeyId = manifest.keyId || null;
+
+    if (manifest.signature) {
+        const pubKey = options.publicKey || MUDRAFORGE_STATUTORY_ROOT_PUBLIC_KEY;
+        isSigned = verifyBundleSignature(manifest, pubKey, options);
+    }
+
+    const matchesExpected = options.expectedRootHash ? (options.expectedRootHash === manifest.rootHash) : false;
+    const isAllowedUnverified = !isProductionEnvironment() && Boolean(options.allowUnverifiedRoot);
+
+    let authenticityValid = false;
+    let authMethod = 'UNAUTHENTICATED';
+
+    if (isSigned) {
+        authenticityValid = true;
+        authMethod = 'ED25519_DIGITAL_SIGNATURE';
+    } else if (isPinned) {
+        authenticityValid = true;
+        authMethod = 'PINNED_RELEASE_ROOT';
+    } else if (matchesExpected) {
+        authenticityValid = true;
+        authMethod = 'EXPLICIT_EXPECTED_ROOT_PIN';
+    } else if (isAllowedUnverified) {
+        authenticityValid = true;
+        authMethod = 'DEVELOPMENT_UNVERIFIED_BYPASS';
+    }
+
+    const authenticity = {
+        valid: authenticityValid,
+        method: authMethod,
+        rootHash: manifest.rootHash,
+        isPinned,
+        isSigned,
+        keyId: signingKeyId
+    };
+
+    // 3. Baseline Statutory Provisions Check
+    const effectiveBaseline = Array.isArray(options.requiredSections)
+        ? options.requiredSections
+        : MANDATORY_BASELINE_SECTIONS;
+
+    const manifestSectionSet = new Set((manifest.sections || []).map(s => s.toLowerCase().trim()));
+    const missingBaseline = [];
+    for (const reqCode of effectiveBaseline) {
+        const codeNormalized = reqCode.toLowerCase().trim();
+        if (!manifestSectionSet.has(codeNormalized) && !seenSections.has(codeNormalized)) {
+            missingBaseline.push(reqCode);
+        }
+    }
+
+    const baselineCheck = {
+        valid: missingBaseline.length === 0,
+        missingBaseline,
+        baselineSections: effectiveBaseline
+    };
+
+    // Determine Exit Code based on MudraForge Custom Exit Code Contract:
+    // 0 = Success
+    // 2 = Cryptographic or file integrity failure
+    // 3 = Statutory policy failure
+    let exitCode = STATUTORY_EXIT_CODES.SUCCESS;
+    if (!integrity.valid || !authenticity.valid) {
+        exitCode = STATUTORY_EXIT_CODES.INTEGRITY_OR_SECURITY_FAILURE;
+    } else if (!baselineCheck.valid) {
+        exitCode = STATUTORY_EXIT_CODES.STATUTORY_POLICY_FAILURE;
+    }
+
+    return {
+        valid: exitCode === STATUTORY_EXIT_CODES.SUCCESS,
+        exitCode,
+        okfVersion: manifest.okfVersion,
+        publishedAt: manifest.publishedAt,
+        integrity,
+        authenticity,
+        baselineCheck
+    };
+}
+
+/**
  * Safely parse JSON responses from remote endpoints, asserting Content-Type
  * to prevent uncaught SyntaxErrors when upstream proxies return HTML or text.
  */
@@ -515,7 +768,7 @@ export async function checkUpdates(options = {}) {
  * @returns {Promise<{ updateAvailable: boolean, currentVersion: string, latestVersion: string } | null>}
  */
 export async function checkForPackageUpdate(options = {}) {
-    if (process.env.NO_UPDATE_NOTIFIER === '1' || process.env.CI === 'true') {
+    if (!options.force && (process.env.NO_UPDATE_NOTIFIER === '1' || (process.env.CI === 'true' && !options.registryUrl))) {
         return null;
     }
 

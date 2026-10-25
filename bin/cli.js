@@ -18,6 +18,8 @@ import {
     getLocalManifest,
     checkForPackageUpdate,
     decodeTaxIdentifier,
+    verifyLocalSubstrate,
+    STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
 } from '../src/index.js';
@@ -25,11 +27,19 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const args = process.argv.slice(2);
+const rawArgs = process.argv.slice(2);
+const isJsonMode = rawArgs.includes('--json') || rawArgs.includes('-j');
+const args = rawArgs.filter(a => a !== '--json' && a !== '-j');
 const command = args[0] ? args[0].toLowerCase() : 'help';
 
 async function main() {
     switch (command) {
+        case 'verify':
+        case 'audit':
+        case 'check':
+            await handleVerify(args[1]);
+            break;
+
         case 'init-skill':
         case 'install-skill':
             await handleInitSkill(args[1]);
@@ -90,7 +100,7 @@ async function main() {
     }
 
     // Non-intrusive background npm package update notice
-    if (!['check-update', 'status', 'version'].includes(command)) {
+    if (!isJsonMode && !['check-update', 'status', 'version', 'verify', 'audit', 'check'].includes(command)) {
         try {
             const updateInfo = await checkForPackageUpdate();
             if (updateInfo && updateInfo.updateAvailable) {
@@ -103,23 +113,83 @@ async function main() {
     }
 }
 
+async function handleVerify(targetDir) {
+    try {
+        let dest = DEFAULT_LOCAL_OKF_DIR;
+        if (targetDir) {
+            dest = path.resolve(process.cwd(), targetDir);
+        }
+        const report = verifyLocalSubstrate(dest);
+        if (isJsonMode) {
+            console.log(JSON.stringify(report, null, 2));
+            process.exit(report.exitCode);
+        }
+
+        console.log('\n===========================================================================');
+        console.log(`MUDRAFORGE OPEN KNOWLEDGE FORMAT (OKF) — CRYPTOGRAPHIC VERIFIER [v${report.okfVersion || 'Unknown'}]`);
+        console.log('===========================================================================');
+
+        if (report.integrity.valid) {
+            console.log(`[OK] Integrity: ${report.integrity.totalFilesChecked} files verified against Merkle manifest.`);
+            console.log(`     Root Merkle Hash: ${report.integrity.computedRoot}`);
+        } else {
+            console.error(`[FAIL] Integrity: Mismatches: ${report.integrity.mismatches.length}, Missing: ${report.integrity.missingFiles.length}, Untracked: ${report.integrity.untrackedFiles.length}`);
+            for (const m of report.integrity.mismatches) {
+                console.error(`     • ${m.file} (Expected ${m.expected.slice(0, 10)}..., actual ${m.actual.slice(0, 10)}...)`);
+            }
+            for (const mf of report.integrity.missingFiles) {
+                console.error(`     • Missing: ${mf}`);
+            }
+        }
+
+        if (report.authenticity.valid) {
+            console.log(`[OK] Authenticity: Provenance authenticated via ${report.authenticity.method}.`);
+            if (report.authenticity.keyId) {
+                console.log(`     Signer Key ID: ${report.authenticity.keyId}`);
+            }
+        } else {
+            console.error(`[FAIL] Authenticity: Root hash "${report.integrity.computedRoot}" is neither pinned nor signed by an authorized MudraForge trust anchor.`);
+        }
+
+        if (report.baselineCheck.valid) {
+            console.log(`[OK] Statutory Policy: All mandatory baseline provisions present (${report.baselineCheck.baselineSections.join(', ')}).`);
+        } else {
+            console.error(`[FAIL] Statutory Policy: Missing mandatory baseline provisions: ${report.baselineCheck.missingBaseline.join(', ')}`);
+        }
+
+        console.log('───────────────────────────────────────────────────────────────────────────');
+        if (report.valid) {
+            console.log(`[PASS] Statutory substrate is authentic, intact, and compliant (Exit ${report.exitCode}).\n`);
+        } else {
+            console.error(`[FAIL] Verification failed with Exit Code ${report.exitCode}.\n`);
+        }
+        process.exit(report.exitCode);
+    } catch (err) {
+        if (isJsonMode) {
+            console.log(JSON.stringify({ valid: false, exitCode: STATUTORY_EXIT_CODES.USAGE_ERROR, error: err.message }, null, 2));
+        } else {
+            console.error(`[ERROR] Verification error: ${err.message}`);
+        }
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+}
+
 async function handleCheckUpdate() {
     try {
-        console.log('\n[INFO] Checking npm package version against registry.npmjs.org...');
+        let pkgUpdate = null;
         try {
-            const pkgUpdate = await checkForPackageUpdate({ cacheTtlMs: 0 });
-            if (pkgUpdate && pkgUpdate.updateAvailable) {
-                console.log('───────────────────────────────────────────────────────────────────────────');
-                console.log(`[WARN] New npm package version available: v${pkgUpdate.latestVersion} (installed: v${pkgUpdate.currentVersion})`);
-                console.log(`Run: npm install @mudraforge/statutory@latest`);
-                console.log('───────────────────────────────────────────────────────────────────────────');
-            } else if (pkgUpdate) {
-                console.log(`[OK] npm package code is up to date (v${pkgUpdate.currentVersion}).`);
-            }
+            pkgUpdate = await checkForPackageUpdate({ cacheTtlMs: 0 });
         } catch (_) {}
 
-        console.log('\n[INFO] Checking OKF knowledge substrate status against Cloudflare edge...');
         const status = await checkUpdates();
+
+        if (isJsonMode) {
+            console.log(JSON.stringify({
+                packageUpdate: pkgUpdate,
+                substrateStatus: status
+            }, null, 2));
+            process.exit(0);
+        }
         console.log('───────────────────────────────────────────────────────────────────────────');
         console.log(`Local OKF Version:   ${status.localVersion}`);
         console.log(`Latest Edge Version: ${status.latestVersion}`);
@@ -185,6 +255,18 @@ async function handleSync(targetDir) {
 
 async function handleBrowse() {
     const manifest = getLocalManifest();
+
+    if (isJsonMode) {
+        console.log(JSON.stringify(manifest ? {
+            okfVersion: manifest.okfVersion,
+            publishedAt: manifest.publishedAt,
+            rootHash: manifest.rootHash,
+            totalSections: manifest.totalSections,
+            domains: manifest.domains,
+            sections: manifest.sections
+        } : { okfVersion: null, sections: [] }, null, 2));
+        process.exit(0);
+    }
 
     console.log('\n===========================================================================');
     console.log(`OPEN KNOWLEDGE FORMAT (OKF) — LOCAL BROWSER [v${manifest ? manifest.okfVersion : 'Local'}]`);
@@ -283,16 +365,26 @@ async function handleLookup(section, asOfDate) {
         let temporalStatus = 'ACTIVE';
 
         if (s) {
-            console.log(`\n[LOCAL OKF CACHE] Loaded section [${cleanSection}] from disk.`);
+            if (!isJsonMode) console.log(`\n[LOCAL OKF CACHE] Loaded section [${cleanSection}] from disk.`);
             if (asOfDate) {
                 if (asOfDate < s.effectivePeriod.validFrom) temporalStatus = 'PRE_EFFECTIVE';
                 else if (s.effectivePeriod.validTo && asOfDate > s.effectivePeriod.validTo) temporalStatus = 'SUNSET_SUPERSEDED';
             }
         } else {
-            console.log(`\n[EDGE LOOKUP] Querying MudraForge Live Commons for [${cleanSection}]${asOfDate ? ` (as-of: ${asOfDate})` : ''}...`);
+            if (!isJsonMode) console.log(`\n[EDGE LOOKUP] Querying MudraForge Live Commons for [${cleanSection}]${asOfDate ? ` (as-of: ${asOfDate})` : ''}...`);
             const remote = await lookupStatute(cleanSection, { asOfDate });
             s = remote.statute;
             temporalStatus = remote.temporalStatus;
+        }
+
+        if (isJsonMode) {
+            console.log(JSON.stringify({
+                status: 'SUCCESS',
+                sectionCode: cleanSection,
+                temporalStatus,
+                statute: s
+            }, null, 2));
+            process.exit(0);
         }
 
         console.log('───────────────────────────────────────────────────────────────────────────');
@@ -324,6 +416,14 @@ async function handleLookup(section, asOfDate) {
         }
         console.log('───────────────────────────────────────────────────────────────────────────\n');
     } catch (err) {
+        if (isJsonMode) {
+            console.error(JSON.stringify({
+                status: 'ERROR',
+                error: err.message,
+                availableSections: err.availableSections || []
+            }, null, 2));
+            process.exit(1);
+        }
         console.error(`[ERROR] Lookup failed: ${err.message}`);
         if (err.availableSections) {
             console.log(`Available sections: ${err.availableSections.join(', ')}`);
@@ -334,8 +434,13 @@ async function handleLookup(section, asOfDate) {
 
 async function handleList() {
     try {
-        console.log('\n[INFO] Fetching indexed statutory sections from MudraForge Commons...');
         const sections = await listSections();
+        if (isJsonMode) {
+            console.log(JSON.stringify({ sections, total: sections.length }, null, 2));
+            process.exit(0);
+        }
+
+        console.log('\n[INFO] Fetching indexed statutory sections from MudraForge Commons...');
         console.log('───────────────────────────────────────────────────────────────────────────');
         for (const s of sections) {
             const displayValidTo = (s.validTo === 'OPEN_ENDED' || s.validTo === '2099-12-31') ? 'In Force' : s.validTo;
@@ -343,6 +448,10 @@ async function handleList() {
         }
         console.log('───────────────────────────────────────────────────────────────────────────\n');
     } catch (err) {
+        if (isJsonMode) {
+            console.error(JSON.stringify({ status: 'ERROR', error: err.message }, null, 2));
+            process.exit(1);
+        }
         console.error(`[ERROR] Failed to list sections: ${err.message}`);
         process.exit(1);
     }
@@ -350,6 +459,11 @@ async function handleList() {
 
 function handleDecodeId(rawId) {
     const res = decodeTaxIdentifier(rawId);
+    if (isJsonMode) {
+        console.log(JSON.stringify(res, null, 2));
+        process.exit(res.isValid ? 0 : 1);
+    }
+
     console.log('\n===========================================================================');
     console.log('INDIAN TAX IDENTIFIER DECODER & OFFLINE MOD-36 VALIDATOR');
     console.log('===========================================================================');
@@ -382,6 +496,7 @@ Usage:
   npx @mudraforge/statutory <command> [options]
 
 Commands:
+  verify [path]             Cryptographically verify OKF substrate authenticity & file integrity
   browse                    Interactively browse local OKF statutory filesystem
   lookup <section> [date]   Look up section details & temporal status (e.g. 194Q 2025-06-01)
   decode-id <pan_or_gstin>  Offline ISO Mod-36 checksum, state name, and PAN entity decoding
@@ -390,6 +505,15 @@ Commands:
   list                      List all indexed statutory sections
   init-skill [path]         Install SKILL.md into your agent workspace (defaults to .agents/skills/)
   help                      Show this help message
+
+Options:
+  --json, -j                Emit clean, machine-parseable JSON to stdout (suppresses banners)
+
+Exit Code Conventions:
+  0                         Success / Verification passed
+  1                         Usage or operational error (invalid syntax / parameters)
+  2                         Cryptographic authenticity or integrity violation (mismatch/revocation)
+  3                         Statutory policy violation (e.g. missing baseline provision)
 `);
 }
 

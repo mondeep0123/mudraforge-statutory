@@ -40,7 +40,11 @@ function getFilesRecursively(dir) {
 }
 
 function computeFileHash(filePath) {
-    const content = fs.readFileSync(filePath);
+    let content = fs.readFileSync(filePath);
+    if (filePath.endsWith('.json') || filePath.endsWith('.md')) {
+        // Strip CRLF to ensure cross-platform deterministic SHA-256 integrity
+        content = Buffer.from(content.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
+    }
     return crypto.createHash('sha256').update(content).digest('hex');
 }
 

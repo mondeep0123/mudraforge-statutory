@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 if (dns.setDefaultResultOrder) {
     dns.setDefaultResultOrder('ipv4first');
 }
@@ -25,6 +26,8 @@ import {
     checkForPackageUpdate,
     decodeTaxIdentifier,
     isValidGstinChecksum,
+    verifyLocalSubstrate,
+    STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
 } from './src/index.js';
 
@@ -1404,8 +1407,171 @@ async function run() {
     }
     console.log('[PASS] Rule 48(4) Verified: > ₹5 Cr Turnover, 64-char IRN & Rule 48(5) Void Invoice Penalty.');
 
+    // 56. Cryptographic Substrate Verification — Clean Repository
+    console.log('\n── Test 56: Cryptographic Substrate Verification (verifyLocalSubstrate) ──');
+    const verifyReport = verifyLocalSubstrate();
+    if (!verifyReport.valid || verifyReport.exitCode !== 0) {
+        throw new Error(`Expected clean verification (exitCode 0), got exitCode ${verifyReport.exitCode}`);
+    }
+    if (!verifyReport.integrity.valid || verifyReport.integrity.mismatches.length > 0) {
+        throw new Error(`Integrity check failed with mismatches: ${JSON.stringify(verifyReport.integrity.mismatches)}`);
+    }
+    if (!verifyReport.authenticity.valid || !verifyReport.authenticity.isPinned) {
+        throw new Error(`Authenticity check failed or root was not pinned: ${JSON.stringify(verifyReport.authenticity)}`);
+    }
+    if (!verifyReport.baselineCheck.valid) {
+        throw new Error(`Baseline check failed: missing ${verifyReport.baselineCheck.missingBaseline.join(', ')}`);
+    }
+    console.log(`[PASS] verifyLocalSubstrate: Clean local OKF validated (71 files, ${verifyReport.authenticity.method}, exitCode 0).`);
+
+    // 57. Cryptographic Substrate Verification — File Tampering Detection (Exit Code 2)
+    console.log('\n── Test 57: Integrity Failure Detection on Tampered File (Exit Code 2) ──');
+    const tempTamperDir = path.join(os.tmpdir(), `okf-tamper-test-${Date.now()}`);
+    try {
+        fs.mkdirSync(path.join(tempTamperDir, 'direct_tax'), { recursive: true });
+        const mockManifest = {
+            okfVersion: '2.6.0',
+            rootHash: 'sha256-dummy_root',
+            sections: ['194Q', '194J', '17(5)', 'MSMED-15-16', '393'],
+            files: {
+                'direct_tax/section.json': '0000000000000000000000000000000000000000000000000000000000000000'
+            }
+        };
+        fs.writeFileSync(path.join(tempTamperDir, 'manifest.json'), JSON.stringify(mockManifest, null, 2), 'utf8');
+        fs.writeFileSync(path.join(tempTamperDir, 'direct_tax', 'section.json'), JSON.stringify({ sectionCode: '194Q' }), 'utf8');
+
+        const tamperReport = verifyLocalSubstrate(tempTamperDir);
+        if (tamperReport.valid || tamperReport.exitCode !== STATUTORY_EXIT_CODES.INTEGRITY_OR_SECURITY_FAILURE) {
+            throw new Error(`Expected exitCode 2 for file mismatch, got ${tamperReport.exitCode}`);
+        }
+        if (tamperReport.integrity.mismatches.length !== 1) {
+            throw new Error(`Expected 1 mismatch, got ${tamperReport.integrity.mismatches.length}`);
+        }
+        console.log('[PASS] verifyLocalSubstrate correctly detected file tampering and returned exitCode 2.');
+    } finally {
+        fs.rmSync(tempTamperDir, { recursive: true, force: true });
+    }
+
+    // 58. Cryptographic Substrate Verification — Untrusted Root Rejection (Exit Code 2)
+    console.log('\n── Test 58: Authenticity Failure on Untrusted Merkle Root (Exit Code 2) ──');
+    const tempUntrustedDir = path.join(os.tmpdir(), `okf-untrusted-test-${Date.now()}`);
+    try {
+        fs.mkdirSync(path.join(tempUntrustedDir, 'direct_tax'), { recursive: true });
+        const dummySecContent = JSON.stringify({ sectionCode: '194Q' }, null, 2);
+        const dummyHash = crypto.createHash('sha256').update(dummySecContent).digest('hex');
+        const computedRoot = `sha256-${crypto.createHash('sha256').update(`direct_tax/section.json:${dummyHash}\n`).digest('hex')}`;
+
+        const unpinnedManifest = {
+            okfVersion: '2.6.0',
+            rootHash: computedRoot, // valid integrity against file, but not pinned
+            sections: ['194Q', '194J', '17(5)', 'MSMED-15-16', '393'],
+            files: {
+                'direct_tax/section.json': dummyHash
+            }
+        };
+        fs.writeFileSync(path.join(tempUntrustedDir, 'manifest.json'), JSON.stringify(unpinnedManifest, null, 2), 'utf8');
+        fs.writeFileSync(path.join(tempUntrustedDir, 'direct_tax', 'section.json'), dummySecContent, 'utf8');
+
+        const untrustedReport = verifyLocalSubstrate(tempUntrustedDir);
+        if (untrustedReport.valid || untrustedReport.exitCode !== STATUTORY_EXIT_CODES.INTEGRITY_OR_SECURITY_FAILURE) {
+            throw new Error(`Expected exitCode 2 for untrusted unpinned root, got ${untrustedReport.exitCode}`);
+        }
+        if (untrustedReport.authenticity.valid) {
+            throw new Error('Authenticity should be invalid for unpinned root');
+        }
+        console.log('[PASS] verifyLocalSubstrate correctly rejected unpinned root and returned exitCode 2.');
+    } finally {
+        fs.rmSync(tempUntrustedDir, { recursive: true, force: true });
+    }
+
+    // 59. Cryptographic Substrate Verification — Missing Mandatory Baseline Section (Exit Code 3)
+    console.log('\n── Test 59: Statutory Policy Failure on Missing Baseline Provision (Exit Code 3) ──');
+    const tempBaselineDir = path.join(os.tmpdir(), `okf-baseline-test-${Date.now()}`);
+    try {
+        fs.mkdirSync(path.join(tempBaselineDir, 'direct_tax'), { recursive: true });
+        const secContent = JSON.stringify({ sectionCode: '194Q' }, null, 2);
+        const secHash = crypto.createHash('sha256').update(secContent).digest('hex');
+        const root = `sha256-${crypto.createHash('sha256').update(`direct_tax/section.json:${secHash}\n`).digest('hex')}`;
+
+        const partialManifest = {
+            okfVersion: '2.6.0',
+            rootHash: root,
+            sections: ['194Q'], // missing 194J, 17(5), MSMED-15-16, 393
+            files: {
+                'direct_tax/section.json': secHash
+            }
+        };
+        fs.writeFileSync(path.join(tempBaselineDir, 'manifest.json'), JSON.stringify(partialManifest, null, 2), 'utf8');
+        fs.writeFileSync(path.join(tempBaselineDir, 'direct_tax', 'section.json'), secContent, 'utf8');
+
+        const baselineReport = verifyLocalSubstrate(tempBaselineDir, { allowUnverifiedRoot: true });
+        if (baselineReport.valid || baselineReport.exitCode !== STATUTORY_EXIT_CODES.STATUTORY_POLICY_FAILURE) {
+            throw new Error(`Expected exitCode 3 for missing baseline provisions, got ${baselineReport.exitCode}`);
+        }
+        if (baselineReport.baselineCheck.missingBaseline.length === 0) {
+            throw new Error('Expected missing baseline provisions to be populated');
+        }
+        console.log('[PASS] verifyLocalSubstrate correctly triggered policy failure (exitCode 3) for missing baselines.');
+    } finally {
+        fs.rmSync(tempBaselineDir, { recursive: true, force: true });
+    }
+
+    // 60. CLI Integration Execution — verify --json
+    console.log('\n── Test 60: CLI Integration — node bin/cli.js verify --json ──');
+    const cliVerifyOutput = execFileSync(process.execPath, [path.resolve('bin/cli.js'), 'verify', '--json'], {
+        encoding: 'utf8',
+        cwd: path.resolve('.')
+    });
+    const parsedVerifyCli = JSON.parse(cliVerifyOutput);
+    if (!parsedVerifyCli.valid || parsedVerifyCli.exitCode !== 0) {
+        throw new Error(`CLI verify failed with exitCode ${parsedVerifyCli.exitCode}`);
+    }
+    if (parsedVerifyCli.authenticity.method !== 'PINNED_RELEASE_ROOT') {
+        throw new Error(`Expected PINNED_RELEASE_ROOT, got ${parsedVerifyCli.authenticity.method}`);
+    }
+    console.log('[PASS] CLI verify --json executed cleanly with exitCode 0 and machine-readable output.');
+
+    // 61. CLI Integration Execution — Global --json flag across commands
+    console.log('\n── Test 61: CLI Integration — Global --json Flag Support ──');
+    const cliLookupOutput = execFileSync(process.execPath, [path.resolve('bin/cli.js'), 'lookup', '194Q', '--json'], {
+        encoding: 'utf8',
+        cwd: path.resolve('.')
+    });
+    const parsedLookup = JSON.parse(cliLookupOutput);
+    if (parsedLookup.status !== 'SUCCESS' || parsedLookup.sectionCode !== '194Q') {
+        throw new Error('CLI lookup 194Q --json failed');
+    }
+
+    const cliDecodeOutput = execFileSync(process.execPath, [path.resolve('bin/cli.js'), 'decode-id', '27AAPFU0939F1ZV', '--json'], {
+        encoding: 'utf8',
+        cwd: path.resolve('.')
+    });
+    const parsedDecode = JSON.parse(cliDecodeOutput);
+    if (!parsedDecode.isValid || parsedDecode.stateCode !== '27') {
+        throw new Error('CLI decode-id --json failed');
+    }
+
+    const cliListOutput = execFileSync(process.execPath, [path.resolve('bin/cli.js'), 'list', '--json'], {
+        encoding: 'utf8',
+        cwd: path.resolve('.')
+    });
+    const parsedList = JSON.parse(cliListOutput);
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 24) {
+        throw new Error('CLI list --json failed');
+    }
+
+    const cliBrowseOutput = execFileSync(process.execPath, [path.resolve('bin/cli.js'), 'browse', '--json'], {
+        encoding: 'utf8',
+        cwd: path.resolve('.')
+    });
+    const parsedBrowse = JSON.parse(cliBrowseOutput);
+    if (!parsedBrowse.domains || !parsedBrowse.domains.direct_tax) {
+        throw new Error('CLI browse --json failed');
+    }
+    console.log('[PASS] Global --json flag verified across lookup, decode-id, list, and browse.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 55 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 61 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 
