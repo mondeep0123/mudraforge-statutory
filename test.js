@@ -445,7 +445,7 @@ async function run() {
     // 23. Fail-Closed Invariant & StatutoryIndeterminateError
     console.log('\n── Test 23: Fail-Closed Statutory Invariant ──');
     try {
-        await isStatuteActive('UNKNOWN_PROVISION', '2025-06-01', { failClosed: true });
+        await isStatuteActive('UNKNOWN_PROVISION', '2025-06-01', { failClosed: true, mode: 'local' });
         console.log('[PASS] Non-existent section returned false cleanly.');
     } catch (_) {
         throw new Error('FAILED: Non-existent section should return false when not found');
