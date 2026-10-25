@@ -7,10 +7,11 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
-  create-release:
-    name: Publish GitHub Release
+  publish:
+    name: Publish to NPM and GitHub
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -20,11 +21,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify Substrate & Conformance
+        run: |
+          node scripts/generate_manifest.js --check
+          node test.js
 
       - name: Package Distribution Tarball
         run: |
           npm pack
           sha256sum *.tgz > checksums.sha256
+
+      - name: Publish to NPM
+        if: env.NODE_AUTH_TOKEN != ''
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
