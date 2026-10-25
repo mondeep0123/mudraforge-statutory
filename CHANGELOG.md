@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.7.0] - 2026-10-25
+
+### Added
+- **Edge Sync Merkle Pinning & Trust Anchor Alignment**:
+  - Added v2.7.0 edge Merkle root digest (`sha256-6953ce79b63bb2a5809dc928178b4631f08448aa2dcde107dde10f84890bf5cb`) to authoritative `PINNED_RELEASE_ROOTS`.
+  - Unified local package, Edge Worker, and public manifest at OKF v2.7.0.
+  - Added CLI flag parsing for `--dest <path>`, `-d <path>`, and `--dest=<path>` in `bin/cli.js sync` command.
+  - Verified atomic remote sync downloads and unpacks all 24 statutory provisions cleanly into custom destination directories.
+
+---
+
 ## [2.6.0] - 2026-10-25
 
 ### Added

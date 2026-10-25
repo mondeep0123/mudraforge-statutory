@@ -43,9 +43,16 @@ async function main() {
 
         case 'sync':
         case 'pull':
-        case 'update':
-            await handleSync(args[1]);
+        case 'update': {
+            let target = args[1];
+            if (target === '--dest' || target === '-d') {
+                target = args[2];
+            } else if (target && target.startsWith('--dest=')) {
+                target = target.slice(7);
+            }
+            await handleSync(target);
             break;
+        }
 
         case 'browse':
         case 'nav':
