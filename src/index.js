@@ -1646,6 +1646,35 @@ export class StatutoryClient {
     async sync() {
         return await syncOkf({ baseUrl: this.baseUrl, okfDir: this.okfDir });
     }
+
+    /**
+     * Crosswalk a statutory provision across the 1961 Act and 2025 Act regimes
+     * resolving the crystallization date against the earlier of credit or payment.
+     */
+    crosswalk(section, options = {}) {
+        return crosswalkStatute(section, { ...options, okfDir: this.okfDir });
+    }
+
+    /**
+     * Query the statutory regulatory changelog and amendment tracker.
+     */
+    diff(options = {}) {
+        return getStatutoryDiff({ ...options, okfDir: this.okfDir });
+    }
+
+    /**
+     * Cryptographically verify the local OKF substrate authenticity and integrity.
+     */
+    verify(targetDir) {
+        return verifyLocalSubstrate(targetDir || this.okfDir);
+    }
+
+    /**
+     * Run statutory diagnostic doctor.
+     */
+    async doctor(options = {}) {
+        return await runStatutoryDoctor(options);
+    }
 }
 
 /**
@@ -1844,4 +1873,776 @@ export function decodeTaxIdentifier(rawId) {
         error: `Invalid identifier length (${clean.length}): Expected 10 characters for PAN or 15 characters for GSTIN.`
     };
 }
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * Authoritative Dual-Act Statutory Crosswalk Catalog
+ * Bridges provisions of the Income-tax Act, 1961 (Act No. 43 of 1961) with
+ * the Income-tax Act, 2025 (Act No. 1 of 2025, taking effect 1 April 2026).
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+export const STATUTORY_CROSSWALK_CATALOG = [
+    {
+        id: 'CROSSWALK_194Q_393_TABLE8_II',
+        domain: 'direct_tax',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '194Q',
+            statutorySection: 'Section 194Q',
+            title: 'Deduction of tax at source on payment of a certain sum for purchase of goods',
+            threshold: 'Buyer turnover > ₹10 Cr in preceding FY; annual purchases > ₹50 Lakhs in current FY',
+            standardRate: '0.1%',
+            penaltyRate: '5.0% (Section 206AA inoperative / non-furnished PAN)',
+            challan: 'ITNS 281',
+            returnForm: 'Form 26Q (Quarterly Return of TDS)'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+            sectionCode: '393',
+            statutorySection: 'Section 393(1), Table 8, Item (ii)',
+            title: 'Deduction of tax at source on payment of a certain sum for purchase of goods',
+            effectiveDate: '2026-04-01',
+            threshold: 'Buyer turnover > ₹10 Cr in preceding FY; annual purchases > ₹50 Lakhs in current FY',
+            standardRate: '0.1%',
+            penaltyRate: '5.0% (Section 397(2) Proviso)',
+            challan: 'Challan under Income-tax Act, 2025',
+            returnForm: 'Quarterly Statement of Tax Withholding (2025 Act Rules)'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Tax withholding liability crystallizes on the earlier of credit to payee account in books or payment disbursement. If the trigger event occurred on or before 31 March 2026, the 1961 Act governs the deduction, remittance, and compliance obligations, notwithstanding subsequent settlement.'
+        },
+        aliases: ['194q', 'sec194q', 'section 194q', '393', 'sec393', 'section 393', '393(1)', '393(1)(table 8)(ii)', 'goods tds', 'purchase of goods']
+    },
+    {
+        id: 'CROSSWALK_194J_393_TABLE6_III',
+        domain: 'direct_tax',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '194J',
+            statutorySection: 'Section 194J',
+            title: 'Deduction of tax at source on fees for professional or technical services',
+            threshold: '₹30,000 aggregate in financial year per category',
+            standardRate: '2.0% (Technical Services / Royalty / Call Centre) / 10.0% (Professional Fees)',
+            penaltyRate: '20.0% (Section 206AA)',
+            challan: 'ITNS 281',
+            returnForm: 'Form 26Q'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+            sectionCode: '393',
+            statutorySection: 'Section 393(1), Table 6, Item (iii)',
+            title: 'Deduction of tax at source on fees for professional or technical services',
+            effectiveDate: '2026-04-01',
+            threshold: '₹30,000 aggregate in financial year per category',
+            standardRate: '2.0% (FTS) / 10.0% (Professional)',
+            penaltyRate: '20.0% (Section 397(2))',
+            challan: 'Challan under Income-tax Act, 2025',
+            returnForm: 'Quarterly Statement of Tax Withholding (2025 Act Rules)'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
+        },
+        aliases: ['194j', 'sec194j', 'section 194j', '393(1)(table 6)', 'technical services tds', 'professional fees tds', 'fts']
+    },
+    {
+        id: 'CROSSWALK_194C_393_TABLE3_I',
+        domain: 'direct_tax',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '194C',
+            statutorySection: 'Section 194C',
+            title: 'Deduction of tax at source on payments to contractors',
+            threshold: 'Single contract > ₹30,000 or aggregate > ₹1,00,000 in FY',
+            standardRate: '1.0% (Individual/HUF payee) / 2.0% (Company/Firm payee)',
+            penaltyRate: '20.0% (Section 206AA)',
+            challan: 'ITNS 281',
+            returnForm: 'Form 26Q'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+            sectionCode: '393',
+            statutorySection: 'Section 393(1), Table 3, Item (i)',
+            title: 'Deduction of tax at source on payments to contractors',
+            effectiveDate: '2026-04-01',
+            threshold: 'Single contract > ₹30,000 or aggregate > ₹1,00,000 in FY',
+            standardRate: '1.0% (Individual/HUF) / 2.0% (Company/Firm)',
+            penaltyRate: '20.0% (Section 397(2))',
+            challan: 'Challan under Income-tax Act, 2025',
+            returnForm: 'Quarterly Statement of Tax Withholding (2025 Act Rules)'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
+        },
+        aliases: ['194c', 'sec194c', 'section 194c', '393(1)(table 3)', 'contractor tds', 'subcontractor tds']
+    },
+    {
+        id: 'CROSSWALK_194I_393_TABLE5_I',
+        domain: 'direct_tax',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '194I',
+            statutorySection: 'Section 194I',
+            title: 'Deduction of tax at source on rent',
+            threshold: '₹2,40,000 aggregate in financial year',
+            standardRate: '2.0% (Plant & Machinery) / 10.0% (Land & Building)',
+            penaltyRate: '20.0% (Section 206AA)',
+            challan: 'ITNS 281',
+            returnForm: 'Form 26Q'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+            sectionCode: '393',
+            statutorySection: 'Section 393(1), Table 5, Item (i)',
+            title: 'Deduction of tax at source on rent',
+            effectiveDate: '2026-04-01',
+            threshold: '₹2,40,000 aggregate in financial year',
+            standardRate: '2.0% (Plant & Machinery) / 10.0% (Land & Building)',
+            penaltyRate: '20.0% (Section 397(2))',
+            challan: 'Challan under Income-tax Act, 2025',
+            returnForm: 'Quarterly Statement of Tax Withholding (2025 Act Rules)'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
+        },
+        aliases: ['194i', 'sec194i', 'section 194i', '393(1)(table 5)', 'rent tds']
+    },
+    {
+        id: 'CROSSWALK_194H_393_TABLE4_I',
+        domain: 'direct_tax',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '194H',
+            statutorySection: 'Section 194H',
+            title: 'Deduction of tax at source on commission or brokerage',
+            threshold: '₹15,000 aggregate in financial year',
+            standardRate: '2.0% (Amended from 5% w.e.f. 01-10-2024 by Finance Act, 2024)',
+            penaltyRate: '20.0% (Section 206AA)',
+            challan: 'ITNS 281',
+            returnForm: 'Form 26Q'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+            sectionCode: '393',
+            statutorySection: 'Section 393(1), Table 4, Item (i)',
+            title: 'Deduction of tax at source on commission or brokerage',
+            effectiveDate: '2026-04-01',
+            threshold: '₹15,000 aggregate in financial year',
+            standardRate: '2.0%',
+            penaltyRate: '20.0% (Section 397(2))',
+            challan: 'Challan under Income-tax Act, 2025',
+            returnForm: 'Quarterly Statement of Tax Withholding (2025 Act Rules)'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
+        },
+        aliases: ['194h', 'sec194h', 'section 194h', '393(1)(table 4)', 'commission tds', 'brokerage tds']
+    },
+    {
+        id: 'CROSSWALK_194R_393_TABLE8_12',
+        domain: 'direct_tax',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '194R',
+            statutorySection: 'Section 194R',
+            title: 'Deduction of tax at source on benefit or perquisite in respect of business or profession',
+            threshold: '₹20,000 aggregate value in financial year',
+            standardRate: '10.0%',
+            penaltyRate: '20.0% (Section 206AA)',
+            challan: 'ITNS 281',
+            returnForm: 'Form 26Q'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+            sectionCode: '393',
+            statutorySection: 'Section 393(1), Table 8, Item 12',
+            title: 'Deduction of tax at source on benefit or perquisite in respect of business or profession',
+            effectiveDate: '2026-04-01',
+            threshold: '₹20,000 aggregate value in financial year',
+            standardRate: '10.0%',
+            penaltyRate: '20.0% (Section 397(2))',
+            challan: 'Challan under Income-tax Act, 2025',
+            returnForm: 'Quarterly Statement of Tax Withholding (2025 Act Rules)'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
+        },
+        aliases: ['194r', 'sec194r', 'section 194r', 'perquisites tds', 'business benefits tds']
+    },
+    {
+        id: 'CROSSWALK_195_393_2',
+        domain: 'international_tax',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '195',
+            statutorySection: 'Section 195',
+            title: 'Deduction of tax at source on payment of other sums to non-residents',
+            threshold: 'Any sum chargeable under the provisions of this Act (no de minimis threshold)',
+            standardRate: 'Rates in force (or DTAA rate under Section 90(2), whichever is more beneficial)',
+            penaltyRate: '20.0% (Section 206AA subject to DTAA TRC exceptions)',
+            challan: 'ITNS 281',
+            returnForm: 'Form 27Q (Quarterly Return of TDS for Non-Residents)'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+            sectionCode: '393(2)',
+            statutorySection: 'Section 393(2)',
+            title: 'Deduction of tax at source on payment of other sums to non-residents',
+            effectiveDate: '2026-04-01',
+            threshold: 'Any sum chargeable under the provisions of the 2025 Act',
+            standardRate: 'Rates in force or DTAA rate under Section 158(2)',
+            penaltyRate: '20.0% (Section 397(2))',
+            challan: 'Challan under Income-tax Act, 2025',
+            returnForm: 'Non-Resident Tax Withholding Statement (2025 Act Rules)'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
+        },
+        aliases: ['195', 'sec195', 'section 195', '393(2)', 'foreign remittance tds', 'non resident tds']
+    },
+    {
+        id: 'CROSSWALK_206AB_397_3',
+        domain: 'direct_tax',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '206AB',
+            statutorySection: 'Section 206AB',
+            title: 'Special provision for deduction of tax at source for non-filers of income-tax return',
+            threshold: 'Aggregate TDS/TCS >= ₹50,000 in preceding FY and return not filed u/s 139(1)',
+            standardRate: 'Higher of: 2x specified rate, 2x rates in force, or 5.0%',
+            penaltyRate: 'Higher rate applies automatically',
+            challan: 'ITNS 281',
+            returnForm: 'Form 26Q'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+            sectionCode: '397(3)',
+            statutorySection: 'Section 397(3)',
+            title: 'Higher withholding rates for non-filers of income-tax returns',
+            effectiveDate: '2026-04-01',
+            threshold: 'Aggregate TDS/TCS >= ₹50,000 in preceding FY and return not filed within due date',
+            standardRate: 'Higher of: 2x specified rate, 2x rates in force, or 5.0%',
+            penaltyRate: 'Higher rate applies automatically',
+            challan: 'Challan under Income-tax Act, 2025',
+            returnForm: 'Quarterly Statement of Tax Withholding (2025 Act Rules)'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Pre-April 1, 2026 non-filer verifications governed by Section 206AB compliance portal.'
+        },
+        aliases: ['206ab', 'sec206ab', 'section 206ab', '397(3)', 'non filer higher tds']
+    },
+    {
+        id: 'CROSSWALK_206C_1H_SUNSET',
+        domain: 'direct_tax',
+        isOmittedSunset: true,
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '206C(1H)',
+            statutorySection: 'Section 206C(1H)',
+            title: 'Collection of tax at source by seller on receipt of consideration for sale of goods',
+            threshold: 'Seller turnover > ₹10 Cr in preceding FY; receipts from buyer > ₹50 Lakhs in FY',
+            standardRate: '0.1%',
+            penaltyRate: '1.0% (Section 206CC non-furnishing of PAN)',
+            challan: 'ITNS 281 (TCS Code 0021/0020)',
+            returnForm: 'Form 27EQ (Quarterly Statement of TCS)'
+        },
+        successor: {
+            act: 'Finance Act, 2025 (Statutory Sunset & Omission)',
+            sectionCode: '206C(1H) [OMITTED]',
+            statutorySection: 'Section 206C(1H) Omitted',
+            title: 'Formally omitted by Finance Act, 2025 effective 1 April 2025 (No successor in 2025 Act)',
+            effectiveDate: '2025-04-01',
+            threshold: 'N/A (Provision repealed; zero seller collection obligation)',
+            standardRate: '0.0%',
+            penaltyRate: '0.0%',
+            challan: 'N/A',
+            returnForm: 'N/A'
+        },
+        transitionCutoffDate: '2025-04-01',
+        savingsAuthority: {
+            statute: 'Finance Act, 2025 Section 206C(1H) Sunset Clause',
+            subsidiary: 'General Clauses Act, 1897 Section 6',
+            legalPrinciple: 'Receipts on or before 31 March 2025 remain assessable under 1961 Act. Receipts on or after 1 April 2025 attract ZERO seller TCS; tax withholding is governed strictly by buyer TDS under Section 194Q / Section 393.'
+        },
+        aliases: ['206c(1h)', 'sec206c(1h)', 'section 206c(1h)', '206c1h', 'seller tcs', 'tcs goods sunset']
+    },
+    {
+        id: 'CROSSWALK_50B_78',
+        domain: 'corporate_ma_restructuring',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
+            sectionCode: '50B',
+            statutorySection: 'Section 50B',
+            title: 'Special provision for computation of capital gains in case of slump sale',
+            threshold: 'Transfer of one or more undertakings as a result of the sale for a lump sum consideration without values being assigned to individual assets',
+            standardRate: '20.0% (LTCG) / Normal corporate rate (STCG if undertaking held <= 36 months)',
+            penaltyRate: 'N/A',
+            challan: 'Advance Tax / Self-Assessment Tax',
+            returnForm: 'Form 3CEA (Accountant Net Worth & Rule 11UAE Report)'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+            sectionCode: '78',
+            statutorySection: 'Section 78',
+            title: 'Capital gains on slump sale of undertakings',
+            effectiveDate: '2026-04-01',
+            threshold: 'Transfer of one or more undertakings for a lump sum consideration without individual asset values',
+            standardRate: 'Statutory capital gains rates under 2025 Act',
+            penaltyRate: 'N/A',
+            challan: 'Advance Tax / Self-Assessment Tax (2025 Act)',
+            returnForm: 'Accountant Report under 2025 Act Rules'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Slump sales executed prior to 1 April 2026 governed by Section 50B and Rule 11UAE.'
+        },
+        aliases: ['50b', 'sec50b', 'section 50b', '78', 'sec78', 'section 78', 'slump sale']
+    },
+    {
+        id: 'CROSSWALK_MSMED_43BH_37_2_G',
+        domain: 'msme_commercial',
+        predecessor: {
+            act: 'Income-tax Act, 1961 (Act No. 43 of 1961) read with MSMED Act, 2006',
+            sectionCode: 'MSMED-15-16',
+            statutorySection: 'Section 43B(h) read with Sections 15 & 16 of MSMED Act, 2006',
+            title: 'Timely payment to Micro and Small Enterprises and deduction disallowance for delayed payments',
+            threshold: '15 days without written agreement; maximum 45 days under written agreement',
+            standardRate: 'Disallowance of 100% overdue sum; compound interest at 3x RBI Bank Rate',
+            penaltyRate: 'Section 23 MSMED permanent income-tax addback on penal interest',
+            challan: 'N/A (Business Income Adjustment)',
+            returnForm: 'ITR-6 Schedule BP & Tax Audit Form 3CD Clause 22'
+        },
+        successor: {
+            act: 'Income-tax Act, 2025 (Act No. 1 of 2025) read with MSMED Act, 2006',
+            sectionCode: '37(2)(g)',
+            statutorySection: 'Section 37(2)(g) of Income-tax Act, 2025 read with MSMED Act, 2006',
+            title: 'Disallowance of expenditure for delayed payments to Micro and Small Enterprises',
+            effectiveDate: '2026-04-01',
+            threshold: '15 days default / maximum 45 days under written agreement',
+            standardRate: '100% expenditure disallowance in year of incurrence; deductible in year of actual payment',
+            penaltyRate: 'Penal interest disallowed under Section 37(2)(g)',
+            challan: 'N/A',
+            returnForm: 'Corporate Tax Return & Tax Audit Report under 2025 Act Rules'
+        },
+        transitionCutoffDate: '2026-04-01',
+        savingsAuthority: {
+            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
+            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
+            legalPrinciple: 'Deductions disallowed in FY 2023-24 / 2024-25 / 2025-26 under Section 43B(h) remain eligible for deduction upon actual payment under savings provisions.'
+        },
+        aliases: ['msmed', 'msmed-15-16', '43b(h)', '43bh', 'sec43b(h)', '37(2)(g)', 'msme delayed payments']
+    }
+];
+
+/**
+ * Crosswalk a statutory section between the Income-tax Act, 1961 and Income-tax Act, 2025,
+ * rigorously resolving the applicable governing law based on the earlier of credit or payment.
+ * 
+ * @param {string} sectionCode Section code or alias (e.g. '194Q', '393', '194J', '206C(1H)')
+ * @param {Object} [options]
+ * @param {string} [options.creditDate] ISO date string (YYYY-MM-DD) of credit in books
+ * @param {string} [options.paymentDate] ISO date string (YYYY-MM-DD) of payment disbursement
+ * @param {string} [options.asOfDate] ISO date string (YYYY-MM-DD) fallback audit reference date
+ * @param {string} [options.date] Alias for asOfDate
+ * @param {string} [options.okfDir] Local OKF directory path
+ * @returns {Object} Deterministic crosswalk report
+ */
+export function crosswalkStatute(sectionCode, options = {}) {
+    if (!sectionCode || typeof sectionCode !== 'string' || !sectionCode.trim()) {
+        throw new Error('[@mudraforge/statutory] Section code query must be a non-empty string.');
+    }
+
+    const clean = sectionCode.normalize('NFKC').replace(/[\u200B-\u200D\uFEFF]/g, '').trim().toLowerCase();
+
+    // Match crosswalk entry
+    const entry = STATUTORY_CROSSWALK_CATALOG.find(c => {
+        if (c.predecessor.sectionCode.toLowerCase() === clean) return true;
+        if (c.successor.sectionCode.toLowerCase() === clean) return true;
+        if (c.aliases.includes(clean)) return true;
+        if (c.predecessor.statutorySection.toLowerCase() === clean) return true;
+        if (c.successor.statutorySection.toLowerCase() === clean) return true;
+        return false;
+    });
+
+    if (!entry) {
+        throw new Error(
+            `[@mudraforge/statutory] Section "${sectionCode}" could not be resolved to a known statutory crosswalk provision. ` +
+            `Supported provisions include: 194Q, 194J, 194C, 194I, 194H, 194R, 195, 206AB, 206C(1H), 50B, MSMED-15-16, 393.`
+        );
+    }
+
+    // Validate dates if provided
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (options.creditDate) {
+        const cd = options.creditDate.trim();
+        if (!datePattern.test(cd) || isNaN(new Date(cd).getTime())) {
+            throw new Error(`[@mudraforge/statutory] Invalid creditDate format "${options.creditDate}". Expected ISO 8601 YYYY-MM-DD.`);
+        }
+    }
+    if (options.paymentDate) {
+        const pd = options.paymentDate.trim();
+        if (!datePattern.test(pd) || isNaN(new Date(pd).getTime())) {
+            throw new Error(`[@mudraforge/statutory] Invalid paymentDate format "${options.paymentDate}". Expected ISO 8601 YYYY-MM-DD.`);
+        }
+    }
+    const asOf = options.asOfDate || options.date;
+    if (asOf && asOf !== 'CURRENT_ACTIVE') {
+        const ad = asOf.trim();
+        if (!datePattern.test(ad) || isNaN(new Date(ad).getTime())) {
+            throw new Error(`[@mudraforge/statutory] Invalid date format "${asOf}". Expected ISO 8601 YYYY-MM-DD.`);
+        }
+    }
+
+    const creditDate = options.creditDate ? options.creditDate.trim() : null;
+    const paymentDate = options.paymentDate ? options.paymentDate.trim() : null;
+
+    let triggerDate = null;
+    let triggerReason = '';
+    let triggerDescription = '';
+
+    if (creditDate && paymentDate) {
+        if (creditDate < paymentDate) {
+            triggerDate = creditDate;
+            triggerReason = 'EARLIER_EVENT_CREDIT_IN_BOOKS';
+            triggerDescription = `Credit to payee account in books occurred on ${creditDate}, prior to payment disbursement on ${paymentDate}.`;
+        } else if (paymentDate < creditDate) {
+            triggerDate = paymentDate;
+            triggerReason = 'EARLIER_EVENT_PAYMENT_DISBURSEMENT';
+            triggerDescription = `Payment disbursement occurred on ${paymentDate}, prior to credit in books on ${creditDate}.`;
+        } else {
+            triggerDate = creditDate;
+            triggerReason = 'SIMULTANEOUS_CREDIT_AND_PAYMENT';
+            triggerDescription = `Credit in books and payment disbursement occurred simultaneously on ${creditDate}.`;
+        }
+    } else if (creditDate) {
+        triggerDate = creditDate;
+        triggerReason = 'SPECIFIED_CREDIT_DATE';
+        triggerDescription = `Evaluated against date of credit to payee account in books (${creditDate}).`;
+    } else if (paymentDate) {
+        triggerDate = paymentDate;
+        triggerReason = 'SPECIFIED_PAYMENT_DATE';
+        triggerDescription = `Evaluated against date of payment disbursement (${paymentDate}).`;
+    } else if (asOf && asOf !== 'CURRENT_ACTIVE') {
+        triggerDate = asOf.trim();
+        triggerReason = 'SPECIFIED_AS_OF_DATE';
+        triggerDescription = `Evaluated against explicit reference date (${triggerDate}).`;
+    } else {
+        triggerDate = new Date().toISOString().slice(0, 10);
+        triggerReason = 'DEFAULT_CURRENT_DATE';
+        triggerDescription = `Evaluated against current runtime timestamp (${triggerDate}).`;
+    }
+
+    const cutoff = entry.transitionCutoffDate;
+    let governingAct = '';
+    let applicableSection = '';
+    let temporalStatus = '';
+    let legalAnalysis = '';
+    let savingsApplied = false;
+    let isOmitted = Boolean(entry.isOmittedSunset);
+
+    if (entry.isOmittedSunset) {
+        // e.g. 206C(1H)
+        if (triggerDate < cutoff) {
+            governingAct = entry.predecessor.act;
+            applicableSection = entry.predecessor.statutorySection;
+            temporalStatus = 'GOVERNED_BY_1961_ACT';
+            legalAnalysis = `Trigger event crystallized on ${triggerDate} (prior to 1 April 2025 sunset). Governed by ${entry.predecessor.statutorySection} of the ${entry.predecessor.act}. Seller was obligated to collect 0.1% TCS on receipts exceeding ₹50 Lakhs unless buyer was liable and deducted TDS u/s 194Q.`;
+        } else {
+            governingAct = entry.successor.act;
+            applicableSection = entry.successor.statutorySection;
+            temporalStatus = 'SUNSET_OMITTED';
+            legalAnalysis = `Section 206C(1H) was formally omitted by the Finance Act, 2025 w.e.f. 1 April 2025 to eliminate double-compliance overlap. No seller TCS liability attaches to transactions on or after 1 April 2025. Tax withholding on sale of goods is governed exclusively by buyer TDS under Section 194Q / Section 393.`;
+        }
+    } else {
+        // Standard transition to 2025 Act
+        if (triggerDate < cutoff) {
+            governingAct = entry.predecessor.act;
+            applicableSection = entry.predecessor.statutorySection;
+            temporalStatus = 'GOVERNED_BY_1961_ACT';
+            savingsApplied = true;
+            legalAnalysis = `Because the statutory withholding event crystallized on ${triggerDate} (${triggerReason}), the transaction is governed by ${entry.predecessor.act} ${entry.predecessor.statutorySection}. Under ${entry.savingsAuthority.statute} read with ${entry.savingsAuthority.subsidiary}, pre-April 1, 2026 liabilities are preserved and enforced under the 1961 Act regime (Challan ${entry.predecessor.challan}, ${entry.predecessor.returnForm}), even if remittance or payment settlement occurs on or after 1 April 2026.`;
+        } else {
+            governingAct = entry.successor.act;
+            applicableSection = entry.successor.statutorySection;
+            temporalStatus = 'GOVERNED_BY_2025_ACT';
+            savingsApplied = false;
+            legalAnalysis = `The trigger event crystallized on ${triggerDate} (on or after 1 April 2026). The transaction is governed by the successor provision ${entry.successor.statutorySection} of the ${entry.successor.act}. This provision directly supersedes ${entry.predecessor.statutorySection} of the 1961 Act.`;
+        }
+    }
+
+    return {
+        status: 'SUCCESS',
+        isValid: true,
+        querySection: sectionCode,
+        triggerDate,
+        triggerReason,
+        triggerDescription,
+        creditDate,
+        paymentDate,
+        transitionCutoffDate: cutoff,
+        governingAct,
+        applicableSection,
+        temporalStatus,
+        savingsApplied,
+        isOmittedSunset: isOmitted,
+        crosswalk: {
+            id: entry.id,
+            domain: entry.domain,
+            predecessor: entry.predecessor,
+            successor: entry.successor,
+            savingsAuthority: entry.savingsAuthority
+        },
+        legalAnalysis
+    };
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * Authoritative Semantic Regulatory Amendments Changelog
+ * Curated timeline of major legislative, regulatory, and procedural amendments.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+export const STATUTORY_AMENDMENTS_CHANGELOG = [
+    {
+        id: 'DIFF-2021-05-24-50B',
+        sectionCode: '50B',
+        domain: 'corporate_ma_restructuring',
+        title: 'Capital Gains on Slump Sale — Rule 11UAE Fair Market Value Mandate',
+        effectiveDate: '2021-05-24',
+        amendmentType: 'VALUATION_MANDATE',
+        statute: 'Income-tax Act, 1961',
+        legalAuthority: 'Finance Act, 2021 & CBDT Notification No. 68/2021 (Rule 11UAE)',
+        previousValue: 'Book value of undertaking accepted as Net Worth',
+        amendedValue: 'Deemed full value of consideration determined as higher of FMV1 (market value of transferred capital assets) or FMV2 (market value of consideration received)',
+        changeSummary: 'CBDT notified Rule 11UAE prescribing mandatory fair market value computation for slump sale undertakings to prevent tax avoidance via undervalued asset transfers.',
+        statutoryImpact: 'Mandatory Form 3CEA report by an Accountant verifying net worth and Rule 11UAE calculation.',
+        aliases: ['50b', 'slump sale']
+    },
+    {
+        id: 'DIFF-2021-07-01-194Q',
+        sectionCode: '194Q',
+        domain: 'direct_tax',
+        title: 'Introduction of TDS on Purchase of Goods',
+        effectiveDate: '2021-07-01',
+        amendmentType: 'NEW_WITHHOLDING_LEVY',
+        statute: 'Income-tax Act, 1961',
+        legalAuthority: 'Finance Act, 2021 & CBDT Circular No. 13 of 2021',
+        previousValue: 'No withholding tax by buyers on purchase of goods',
+        amendedValue: '0.1% TDS on aggregate purchases exceeding ₹50 Lakhs where buyer turnover > ₹10 Cr',
+        changeSummary: 'Mandated 0.1% TDS on purchase of goods exceeding ₹50 Lakhs in a financial year at earlier of credit or payment.',
+        statutoryImpact: 'Buyer TDS overrides seller TCS u/s 206C(1H). Requires PAN validation; 5% penalty rate for inoperative PAN.',
+        aliases: ['194q', 'goods tds']
+    },
+    {
+        id: 'DIFF-2022-01-01-16_2',
+        sectionCode: '16(2)',
+        domain: 'indirect_tax_gst',
+        title: 'Introduction of Section 16(2)(aa) — Mandatory Invoice Upload Matching',
+        effectiveDate: '2022-01-01',
+        amendmentType: 'ITC_RESTRICTION',
+        statute: 'Central Goods and Services Tax Act, 2017',
+        legalAuthority: 'Finance Act, 2021 (Notified w.e.f. 1 January 2022) & Notification No. 39/2021-CT',
+        previousValue: 'Provisional ITC permitted under Rule 36(4) with 5% provisional cushion',
+        amendedValue: 'Zero provisional ITC; invoice details must be furnished by supplier in GSTR-1 and communicated to recipient in GSTR-2B',
+        changeSummary: 'Sub-clause (aa) inserted into Section 16(2), making supplier filing in GSTR-1 and reflection in GSTR-2B an absolute statutory precondition for claiming input tax credit.',
+        statutoryImpact: 'Eliminates provisional credit; recipients cannot take credit unless invoice appears in auto-populated GSTR-2B.',
+        aliases: ['16(2)', '16_2', 'itc eligibility', 'gstr 2b']
+    },
+    {
+        id: 'DIFF-2022-04-01-206AB',
+        sectionCode: '206AB',
+        domain: 'direct_tax',
+        title: 'Relaxation of Higher TDS Non-Filer Lookback Period',
+        effectiveDate: '2022-04-01',
+        amendmentType: 'COMPLIANCE_ADJUSTMENT',
+        statute: 'Income-tax Act, 1961',
+        legalAuthority: 'Finance Act, 2022',
+        previousValue: '2 preceding financial years non-filing requirement',
+        amendedValue: '1 preceding financial year non-filing requirement with aggregate TDS/TCS >= ₹50,000',
+        changeSummary: 'Reduced the non-filing lookback threshold under Section 206AB from 2 years to 1 year preceding the relevant financial year.',
+        statutoryImpact: 'Payers must verify non-filer status using the Compliance Check functionality on the Income Tax Portal.',
+        aliases: ['206ab', 'non filer']
+    },
+    {
+        id: 'DIFF-2022-07-01-194R',
+        sectionCode: '194R',
+        domain: 'direct_tax',
+        title: 'Introduction of TDS on Business Perquisites and Benefits',
+        effectiveDate: '2022-07-01',
+        amendmentType: 'NEW_WITHHOLDING_LEVY',
+        statute: 'Income-tax Act, 1961',
+        legalAuthority: 'Finance Act, 2022 & CBDT Circular No. 12 of 2022',
+        previousValue: 'No withholding tax on business gifts, dealer incentives, or perquisites',
+        amendedValue: '10% TDS on value or aggregate value of benefits/perquisites exceeding ₹20,000 in FY',
+        changeSummary: 'Enacted Section 194R imposing 10% withholding tax on any benefit or perquisite arising from business or exercise of profession.',
+        statutoryImpact: 'Applies to non-cash benefits; deductor must ensure tax is paid prior to releasing benefit in kind.',
+        aliases: ['194r', 'perquisites']
+    },
+    {
+        id: 'DIFF-2022-07-16-195',
+        sectionCode: '195',
+        domain: 'international_tax',
+        title: 'Mandatory Electronic Filing of Form 10F for Foreign Remittances',
+        effectiveDate: '2022-07-16',
+        amendmentType: 'PROCEDURAL_DIGITIZATION',
+        statute: 'Income-tax Act, 1961',
+        legalAuthority: 'CBDT Notification No. 03/2022',
+        previousValue: 'Manual physical signed paper Form 10F accepted for Treaty relief u/s 90(2)',
+        amendedValue: 'Mandatory electronic submission of Form 10F on the Income Tax e-filing portal',
+        changeSummary: 'CBDT mandated electronic filing of Form 10F for non-resident payees claiming DTAA benefits where TRC lacks specific details.',
+        statutoryImpact: 'Foreign payees must obtain PAN or use non-resident portal credentials to generate electronic Form 10F.',
+        aliases: ['195', 'form 10f', 'foreign remittance']
+    },
+    {
+        id: 'DIFF-2023-08-01-RULE48_4',
+        sectionCode: 'RULE-48(4)',
+        domain: 'indirect_tax_gst',
+        title: 'E-Invoicing Turnover Threshold Lowered to ₹5 Crore',
+        effectiveDate: '2023-08-01',
+        amendmentType: 'THRESHOLD_LOWERING',
+        statute: 'Central Goods and Services Tax Rules, 2017',
+        legalAuthority: 'CBIC Notification No. 10/2023-Central Tax',
+        previousValue: '₹10 Crore aggregate turnover threshold',
+        amendedValue: '₹5 Crore aggregate turnover threshold in any preceding FY from 2017-18 onward',
+        changeSummary: 'Lowered the mandatory e-invoicing threshold under Rule 48(4) from ₹10 Crore to ₹5 Crore.',
+        statutoryImpact: 'Invoices issued without 64-character IRN and signed QR code are deemed void under Rule 48(5); buyer ITC blocked.',
+        aliases: ['rule-48(4)', 'rule 48(4)', 'einvoicing', 'irn']
+    },
+    {
+        id: 'DIFF-2024-04-01-MSMED_43B_H',
+        sectionCode: 'MSMED-15-16',
+        domain: 'msme_commercial',
+        title: 'Enforcement of Section 43B(h) — Timely Payment to Micro & Small Enterprises',
+        effectiveDate: '2024-04-01',
+        amendmentType: 'DISALLOWANCE_ENFORCEMENT',
+        statute: 'Income-tax Act, 1961',
+        legalAuthority: 'Finance Act, 2023',
+        previousValue: 'Deduction allowable on accrual basis if paid before tax return filing date u/s 139(1)',
+        amendedValue: 'Proviso to Section 43B removed for MSE dues; deduction disallowed in FY unless paid within Section 15 MSMED timeline (15 or 45 days)',
+        changeSummary: 'Enacted clause (h) in Section 43B disallowing deductions for sums payable to Micro and Small Enterprises if not paid within MSMED Section 15 timelines.',
+        statutoryImpact: 'Overdue amounts added back to taxable income; allowable only in year of actual payment. Compound interest u/s 16 is permanently disallowed u/s 23.',
+        aliases: ['msmed', 'msmed-15-16', '43b(h)', '43bh']
+    },
+    {
+        id: 'DIFF-2024-10-01-194H',
+        sectionCode: '194H',
+        domain: 'direct_tax',
+        title: 'Section 194H Commission & Brokerage Rate Cut from 5% to 2%',
+        effectiveDate: '2024-10-01',
+        amendmentType: 'RATE_REDUCTION',
+        statute: 'Income-tax Act, 1961',
+        legalAuthority: 'Finance (No. 2) Act, 2024',
+        previousValue: '5.0% TDS',
+        amendedValue: '2.0% TDS',
+        changeSummary: 'Reduced statutory withholding tax rate on commission and brokerage payments from 5% to 2% to improve working capital for agents and distributors.',
+        statutoryImpact: 'All credits or payments on or after 1 October 2024 attract 2% TDS. Cumulative ₹15,000 threshold remains unchanged.',
+        aliases: ['194h', 'commission tds', 'brokerage tds']
+    },
+    {
+        id: 'DIFF-2025-04-01-206C_1H',
+        sectionCode: '206C(1H)',
+        domain: 'direct_tax',
+        title: 'Statutory Sunset & Formal Omission of Section 206C(1H) Seller TCS',
+        effectiveDate: '2025-04-01',
+        amendmentType: 'STATUTORY_OMISSION',
+        statute: 'Income-tax Act, 1961',
+        legalAuthority: 'Finance Act, 2025',
+        previousValue: '0.1% TCS on sale of goods receipts exceeding ₹50 Lakhs',
+        amendedValue: 'OMITTED (Section 206C(1H) repealed; 0% TCS / No collection obligation)',
+        changeSummary: 'Finance Act, 2025 formally omitted Section 206C(1H) effective 1 April 2025 to eliminate regulatory overlap with buyer TDS under Section 194Q.',
+        statutoryImpact: 'Sellers no longer collect TCS on sale of goods. Tax withholding attaches solely through Section 194Q buyer TDS where buyer criteria are met.',
+        aliases: ['206c(1h)', 'tcs goods', 'seller tcs']
+    },
+    {
+        id: 'DIFF-2026-04-01-ITA2025',
+        sectionCode: '393',
+        domain: 'direct_tax',
+        title: 'Enactment of Income-tax Act, 2025 — Unified Table-Based Withholding Regime',
+        effectiveDate: '2026-04-01',
+        amendmentType: 'ACT_TRANSITION',
+        statute: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
+        legalAuthority: 'Parliament of India / Income-tax Act, 2025',
+        previousValue: 'Income-tax Act, 1961 (Scattered Chapter XVII-B sections: 194C, 194J, 194Q, 194I, 194H, 194R, 195)',
+        amendedValue: 'Income-tax Act, 2025 Section 393 Tables (Table 3: Contractors, Table 4: Commission, Table 5: Rent, Table 6: Professional/FTS, Table 8: Goods/Perquisites)',
+        changeSummary: 'The Income-tax Act, 2025 consolidates and restructures direct tax withholding into unified schedules under Section 393, repealing the 1961 Act subject to Section 536 savings.',
+        statutoryImpact: 'Withholding liabilities on or after 1 April 2026 are governed by 2025 Act section references and procedural compliance.',
+        aliases: ['393', 'income tax act 2025', '2025 act']
+    }
+];
+
+/**
+ * Retrieve statutory amendments and regulatory diffs filtered by section, date, and domain.
+ * 
+ * @param {Object} [options]
+ * @param {string} [options.section] Filter by section code or alias (e.g. '194H', '206C(1H)', '16(2)')
+ * @param {string} [options.since] ISO date string (YYYY-MM-DD); returns amendments taking effect on or after this date
+ * @param {string} [options.domain] Filter by statutory domain (e.g. 'direct_tax', 'indirect_tax_gst')
+ * @param {string} [options.okfDir] Local OKF directory path
+ * @returns {Object} Deterministic diff report
+ */
+export function getStatutoryDiff(options = {}) {
+    const since = options.since ? options.since.trim() : null;
+    if (since) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(since) || isNaN(new Date(since).getTime())) {
+            throw new Error(`[@mudraforge/statutory] Invalid since date format "${options.since}". Expected ISO 8601 YYYY-MM-DD.`);
+        }
+    }
+
+    const sectionFilter = options.section ? options.section.trim().toLowerCase() : null;
+    const domainFilter = options.domain ? options.domain.trim().toLowerCase() : null;
+
+    let matched = STATUTORY_AMENDMENTS_CHANGELOG.filter(item => {
+        if (since && item.effectiveDate < since) {
+            return false;
+        }
+        if (domainFilter && item.domain.toLowerCase() !== domainFilter) {
+            return false;
+        }
+        if (sectionFilter) {
+            const matchesCode = item.sectionCode.toLowerCase() === sectionFilter;
+            const matchesAlias = item.aliases && item.aliases.some(a => a.toLowerCase() === sectionFilter);
+            if (!matchesCode && !matchesAlias) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    matched.sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate));
+
+    return {
+        status: 'SUCCESS',
+        filterSection: options.section || null,
+        filterSince: since,
+        filterDomain: options.domain || null,
+        totalAmendments: matched.length,
+        amendments: matched
+    };
+}
+
 

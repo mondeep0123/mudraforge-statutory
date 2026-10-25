@@ -425,7 +425,20 @@ npx @mudraforge/statutory doctor --offline
 # Cryptographically verify local statutory substrate integrity & origin authenticity
 npx @mudraforge/statutory verify
 
+# Dual-act 1961 <-> 2025 statutory crosswalk (earlier of credit vs payment)
+npx @mudraforge/statutory crosswalk 194Q --credit 2026-03-25 --payment 2026-04-10
+
+# Reverse crosswalk from 2025 Act provision
+npx @mudraforge/statutory crosswalk 393 --date 2025-08-01
+
+# Query semantic regulatory changelog and amendment tracker
+npx @mudraforge/statutory diff --section 194H
+npx @mudraforge/statutory diff --since 2025-01-01
+npx @mudraforge/statutory diff --domain indirect_tax_gst
+
 # Output machine-parseable JSON for CI/CD or jq integration
+npx @mudraforge/statutory crosswalk 194Q --credit 2026-03-25 --payment 2026-04-10 --json
+npx @mudraforge/statutory diff --section 194H --json
 npx @mudraforge/statutory verify --json
 npx @mudraforge/statutory doctor --json --offline
 

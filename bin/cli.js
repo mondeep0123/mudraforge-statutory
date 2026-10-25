@@ -20,6 +20,8 @@ import {
     decodeTaxIdentifier,
     verifyLocalSubstrate,
     runStatutoryDoctor,
+    crosswalkStatute,
+    getStatutoryDiff,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
@@ -34,6 +36,21 @@ const isOfflineMode = rawArgs.includes('--offline') || rawArgs.includes('-o');
 const args = rawArgs.filter(a => a !== '--json' && a !== '-j' && a !== '--offline' && a !== '-o');
 const command = args[0] ? args[0].toLowerCase() : 'help';
 
+function getNamedArg(nameList, argList) {
+    for (let i = 0; i < argList.length; i++) {
+        const item = argList[i];
+        for (const name of nameList) {
+            if (item === name && i + 1 < argList.length && !argList[i + 1].startsWith('-')) {
+                return argList[i + 1];
+            }
+            if (item.startsWith(`${name}=`)) {
+                return item.slice(name.length + 1);
+            }
+        }
+    }
+    return null;
+}
+
 async function main() {
     switch (command) {
         case 'doctor':
@@ -46,6 +63,31 @@ async function main() {
         case 'check':
             await handleVerify(args[1]);
             break;
+
+        case 'crosswalk':
+        case 'bridge':
+        case 'transition': {
+            const section = (args[1] && !args[1].startsWith('-')) ? args[1] : getNamedArg(['--section', '-s'], rawArgs);
+            const creditDate = getNamedArg(['--credit', '-c'], rawArgs);
+            const paymentDate = getNamedArg(['--payment', '-p'], rawArgs);
+            const asOfDate = getNamedArg(['--date', '-d', '--as-of'], rawArgs);
+            if (!section) {
+                console.error('[ERROR] Please specify a section to crosswalk, e.g. npx @mudraforge/statutory crosswalk 194Q --credit 2026-03-25 --payment 2026-04-10');
+                process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+            }
+            await handleCrosswalk(section, { creditDate, paymentDate, asOfDate });
+            break;
+        }
+
+        case 'diff':
+        case 'changelog':
+        case 'amendments': {
+            const section = (args[1] && !args[1].startsWith('-')) ? args[1] : getNamedArg(['--section', '-s'], rawArgs);
+            const since = getNamedArg(['--since'], rawArgs);
+            const domain = getNamedArg(['--domain'], rawArgs);
+            await handleDiff({ section, since, domain });
+            break;
+        }
 
         case 'init-skill':
         case 'install-skill':
@@ -107,7 +149,7 @@ async function main() {
     }
 
     // Non-intrusive background npm package update notice
-    if (!isJsonMode && !['check-update', 'status', 'version', 'verify', 'audit', 'check'].includes(command)) {
+    if (!isJsonMode && !['check-update', 'status', 'version', 'verify', 'audit', 'check', 'crosswalk', 'bridge', 'transition', 'diff', 'changelog', 'amendments'].includes(command)) {
         try {
             const updateInfo = await checkForPackageUpdate();
             if (updateInfo && updateInfo.updateAvailable) {
@@ -245,6 +287,98 @@ async function handleDoctor() {
             console.log(JSON.stringify({ healthy: false, exitCode: STATUTORY_EXIT_CODES.USAGE_ERROR, error: err.message }, null, 2));
         } else {
             console.error(`[ERROR] Doctor diagnostic error: ${err.message}`);
+        }
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+}
+
+async function handleCrosswalk(section, options) {
+    try {
+        const result = crosswalkStatute(section, options);
+        if (isJsonMode) {
+            console.log(JSON.stringify(result, null, 2));
+            process.exit(0);
+        }
+
+        console.log('\n===========================================================================');
+        console.log('MUDRAFORGE DUAL-ACT STATUTORY CROSSWALK (1961 ACT <-> 2025 ACT)');
+        console.log('===========================================================================');
+        console.log(`Query Section:       ${result.querySection}`);
+        console.log(`Governing Statute:   ${result.governingAct}`);
+        console.log(`Applicable Section:  ${result.applicableSection}`);
+        console.log(`Temporal Status:     ${result.temporalStatus}`);
+
+        console.log('\n── TEMPORAL CRYSTALLIZATION (EARLIER OF CREDIT OR PAYMENT) ──');
+        if (result.creditDate) console.log(`Credit in Books:     ${result.creditDate}`);
+        if (result.paymentDate) console.log(`Payment Rail:        ${result.paymentDate}`);
+        console.log(`Trigger Date:        ${result.triggerDate}`);
+        console.log(`Trigger Event:       ${result.triggerReason}`);
+        console.log(`Event Context:       ${result.triggerDescription}`);
+
+        console.log('\n── STATUTORY BRIDGE & DUAL-ACT MAPPING ──');
+        console.log(`Predecessor (1961):  ${result.crosswalk.predecessor.statutorySection} (${result.crosswalk.predecessor.title})`);
+        console.log(`                     Rate: ${result.crosswalk.predecessor.standardRate} | Challan: ${result.crosswalk.predecessor.challan} | Return: ${result.crosswalk.predecessor.returnForm}`);
+        console.log(`Successor (2025):    ${result.crosswalk.successor.statutorySection} (Effective ${result.crosswalk.successor.effectiveDate})`);
+        console.log(`                     Rate: ${result.crosswalk.successor.standardRate} | Return: ${result.crosswalk.successor.returnForm}`);
+
+        console.log('\n── STATUTORY SAVINGS & LEGAL GROUNDING ──');
+        console.log(`Primary Authority:   ${result.crosswalk.savingsAuthority.statute}`);
+        console.log(`Subsidiary Principle: ${result.crosswalk.savingsAuthority.subsidiary}`);
+        console.log(`Legal Analysis:      ${result.legalAnalysis}`);
+
+        console.log('───────────────────────────────────────────────────────────────────────────');
+        console.log('[PASS] Statutory crosswalk resolved successfully (Exit 0).\n');
+        process.exit(0);
+    } catch (err) {
+        if (isJsonMode) {
+            console.log(JSON.stringify({ status: 'ERROR', exitCode: STATUTORY_EXIT_CODES.USAGE_ERROR, error: err.message }, null, 2));
+        } else {
+            console.error(`[ERROR] Crosswalk failure: ${err.message}`);
+        }
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+}
+
+async function handleDiff(options) {
+    try {
+        const result = getStatutoryDiff(options);
+        if (isJsonMode) {
+            console.log(JSON.stringify(result, null, 2));
+            process.exit(0);
+        }
+
+        console.log('\n===========================================================================');
+        console.log('MUDRAFORGE STATUTORY REGULATORY CHANGELOG & AMENDMENT TRACKER');
+        console.log('===========================================================================');
+        console.log(`Filter Section:      ${result.filterSection || 'ALL SECTIONS'}`);
+        console.log(`Filter Since:        ${result.filterSince || 'ALL TIME'}`);
+        console.log(`Filter Domain:       ${result.filterDomain || 'ALL DOMAINS'}`);
+        console.log(`Total Amendments:    ${result.totalAmendments}`);
+
+        if (result.amendments.length === 0) {
+            console.log('\n[NOTICE] No statutory amendments matched the specified query filters.');
+        } else {
+            for (const am of result.amendments) {
+                console.log(`\n── [${am.id}] ${am.sectionCode} (${am.domain}) ──`);
+                console.log(`Title:               ${am.title}`);
+                console.log(`Effective Date:      ${am.effectiveDate} (${am.amendmentType})`);
+                console.log(`Governing Statute:   ${am.statute}`);
+                console.log(`Enacted By:          ${am.legalAuthority}`);
+                console.log(`Previous Baseline:   ${am.previousValue}`);
+                console.log(`Amended Baseline:    ${am.amendedValue}`);
+                console.log(`Summary:             ${am.changeSummary}`);
+                console.log(`Statutory Impact:    ${am.statutoryImpact}`);
+            }
+        }
+
+        console.log('───────────────────────────────────────────────────────────────────────────');
+        console.log(`[PASS] Statutory diff completed successfully (${result.totalAmendments} amendment(s) found) (Exit 0).\n`);
+        process.exit(0);
+    } catch (err) {
+        if (isJsonMode) {
+            console.log(JSON.stringify({ status: 'ERROR', exitCode: STATUTORY_EXIT_CODES.USAGE_ERROR, error: err.message }, null, 2));
+        } else {
+            console.error(`[ERROR] Statutory diff failure: ${err.message}`);
         }
         process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
     }
@@ -574,6 +708,8 @@ Usage:
 Commands:
   doctor [--offline]        Run full diagnostic check of runtime, substrate integrity, & edge status
   verify [path]             Cryptographically verify OKF substrate authenticity & file integrity
+  crosswalk <section>       Dual-act 1961 <-> 2025 bridge (earlier of credit vs payment)
+  diff                      Semantic regulatory changelog (--section, --since, --domain)
   browse                    Interactively browse local OKF statutory filesystem
   lookup <section> [date]   Look up section details & temporal status (e.g. 194Q 2025-06-01)
   decode-id <pan_or_gstin>  Offline ISO Mod-36 checksum, state name, and PAN entity decoding
@@ -584,6 +720,11 @@ Commands:
   help                      Show this help message
 
 Options:
+  --credit <YYYY-MM-DD>     Date of credit to vendor/payee account in books (used in crosswalk)
+  --payment <YYYY-MM-DD>    Date of actual payment/disbursement (used in crosswalk)
+  --since <YYYY-MM-DD>      Filter amendments taking effect on or after date (used in diff)
+  --section, -s <section>   Filter amendments by section code (used in diff)
+  --domain <domain>         Filter amendments by statutory domain (used in diff)
   --json, -j                Emit clean, machine-parseable JSON to stdout (suppresses banners)
   --offline, -o             Bypass outbound network checks (air-gapped / offline environment mode)
 

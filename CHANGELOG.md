@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.8.0] - 2026-10-25
 
 ### Added
+- **Dual-Act Statutory Crosswalk Engine (`crosswalk`)**:
+  - Implemented `crosswalkStatute()` in core library and exposed via `npx @mudraforge/statutory crosswalk <section> [--credit <date>] [--payment <date>] [--date <date>] [--json]`.
+  - Bridges provisions across the *Income-tax Act, 1961* and *Income-tax Act, 2025* (taking effect 1 April 2026).
+  - Enforces statutory withholding crystallization rule: tax withholding liability attaches on the earlier of credit in books or payment disbursement.
+  - Cites statutory savings authority under Section 536 of Income-tax Act, 2025 read with Section 6 of General Clauses Act, 1897.
+  - Correctly evaluates Section 206C(1H) seller TCS statutory sunset and formal omission w.e.f. 1 April 2025.
+  - Supports bidirectional crosswalks (both forward from 1961 Act and backward from 2025 Act).
+- **Semantic Regulatory Diff & Amendment Tracker (`diff`)**:
+  - Implemented `getStatutoryDiff()` and exposed via `npx @mudraforge/statutory diff [--section <sec>] [--since <date>] [--domain <domain>] [--json]`.
+  - Compiles structured semantic regulatory changelogs across all 5 statutory domains.
+  - Tracks key legislative amendments: Section 194H rate cut (5% to 2% w.e.f. 2024-10-01), Section 206C(1H) sunset omission, Rule 48(4) e-invoicing ₹5 Cr threshold, Section 16(2)(aa) GSTR-2B mandatory matching, Section 43B(h) MSME disallowance, and Section 393 2025 Act transition.
+- **StatutoryClient Parity**:
+  - Added `client.crosswalk()`, `client.diff()`, `client.verify()`, and `client.doctor()` methods to `StatutoryClient`.
 - **Cryptographic Substrate Verifier (`verify`)**:
   - Implemented `verifyLocalSubstrate()` in core library and exposed via `npx @mudraforge/statutory verify [path]`.
   - Cryptographically verifies local file-level SHA-256 hashes against `manifest.json` (Integrity) and validates root Merkle digests against immutable release roots / Ed25519 signatures (Authenticity).

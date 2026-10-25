@@ -28,6 +28,8 @@ import {
     isValidGstinChecksum,
     verifyLocalSubstrate,
     runStatutoryDoctor,
+    crosswalkStatute,
+    getStatutoryDiff,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
 } from './src/index.js';
@@ -1603,8 +1605,150 @@ async function run() {
     }
     console.log('[PASS] CLI doctor --json --offline executed cleanly with exitCode 0 and valid machine-readable output.');
 
+    // 64. Dual-Act Crosswalk — Temporal Crystallization (Credit in March 2026, Payment in April 2026)
+    console.log('\n── Test 64: Dual-Act Crosswalk — Temporal Crystallization (Credit March 2026, Payment April 2026) ──');
+    const cw1 = crosswalkStatute('194Q', { creditDate: '2026-03-25', paymentDate: '2026-04-10' });
+    if (!cw1.isValid || cw1.triggerDate !== '2026-03-25' || cw1.triggerReason !== 'EARLIER_EVENT_CREDIT_IN_BOOKS') {
+        throw new Error(`Crosswalk 1 failed: Expected triggerDate 2026-03-25, got ${cw1.triggerDate}`);
+    }
+    if (cw1.temporalStatus !== 'GOVERNED_BY_1961_ACT' || cw1.applicableSection !== 'Section 194Q' || !cw1.savingsApplied) {
+        throw new Error(`Crosswalk 1 failed: Expected GOVERNED_BY_1961_ACT and Section 194Q with savings applied`);
+    }
+    if (!cw1.crosswalk.predecessor.challan.includes('ITNS 281')) {
+        throw new Error(`Crosswalk 1 failed: Expected Challan ITNS 281`);
+    }
+    console.log('[PASS] Crosswalk correctly determined 1961 Act governs when credit occurred on 2026-03-25 prior to payment on 2026-04-10.');
+
+    // 65. Dual-Act Crosswalk — Advance Payment Disbursement (Payment in March 2026, Credit in April 2026)
+    console.log('\n── Test 65: Dual-Act Crosswalk — Advance Payment Disbursement (Payment March 2026, Credit April 2026) ──');
+    const cw2 = crosswalkStatute('194Q', { creditDate: '2026-04-05', paymentDate: '2026-03-28' });
+    if (!cw2.isValid || cw2.triggerDate !== '2026-03-28' || cw2.triggerReason !== 'EARLIER_EVENT_PAYMENT_DISBURSEMENT') {
+        throw new Error(`Crosswalk 2 failed: Expected triggerDate 2026-03-28, got ${cw2.triggerDate}`);
+    }
+    if (cw2.temporalStatus !== 'GOVERNED_BY_1961_ACT' || cw2.applicableSection !== 'Section 194Q') {
+        throw new Error(`Crosswalk 2 failed: Expected 1961 Act governance on advance disbursement`);
+    }
+    console.log('[PASS] Crosswalk correctly resolved 1961 Act governance when advance payment occurred on 2026-03-28 prior to invoice credit.');
+
+    // 66. Dual-Act Crosswalk — Post-2026-04-01 Full Transition to Income-tax Act, 2025
+    console.log('\n── Test 66: Dual-Act Crosswalk — Post-2026-04-01 Full Transition to Income-tax Act, 2025 ──');
+    const cw3 = crosswalkStatute('194Q', { creditDate: '2026-04-02', paymentDate: '2026-04-10' });
+    if (!cw3.isValid || cw3.triggerDate !== '2026-04-02') {
+        throw new Error(`Crosswalk 3 failed: Expected triggerDate 2026-04-02, got ${cw3.triggerDate}`);
+    }
+    if (cw3.temporalStatus !== 'GOVERNED_BY_2025_ACT' || cw3.applicableSection !== 'Section 393(1), Table 8, Item (ii)' || cw3.savingsApplied) {
+        throw new Error(`Crosswalk 3 failed: Expected GOVERNED_BY_2025_ACT and Section 393(1), Table 8, Item (ii)`);
+    }
+    if (!cw3.governingAct.includes('2025')) {
+        throw new Error(`Crosswalk 3 failed: Expected governingAct to be Income-tax Act, 2025`);
+    }
+    console.log('[PASS] Crosswalk correctly transitioned to Income-tax Act, 2025 Section 393(1) Table 8 Item (ii) post-1 April 2026.');
+
+    // 67. Dual-Act Crosswalk — Section 206C(1H) Omission Post-1 April 2025
+    console.log('\n── Test 67: Dual-Act Crosswalk — Section 206C(1H) Omission Post-1 April 2025 ──');
+    const cwSunsetActive = crosswalkStatute('206C(1H)', { paymentDate: '2025-02-15' });
+    if (cwSunsetActive.temporalStatus !== 'GOVERNED_BY_1961_ACT' || cwSunsetActive.applicableSection !== 'Section 206C(1H)') {
+        throw new Error(`Crosswalk sunset active failed: Expected 1961 Act active status before 1 April 2025`);
+    }
+    const cwSunsetOmitted = crosswalkStatute('206C(1H)', { paymentDate: '2025-05-10' });
+    if (cwSunsetOmitted.temporalStatus !== 'SUNSET_OMITTED' || !cwSunsetOmitted.isOmittedSunset || !cwSunsetOmitted.applicableSection.includes('Omitted')) {
+        throw new Error(`Crosswalk sunset omitted failed: Expected SUNSET_OMITTED after 1 April 2025`);
+    }
+    console.log('[PASS] Section 206C(1H) correctly identified as active before 1 April 2025 and SUNSET_OMITTED post-sunset.');
+
+    // 68. Dual-Act Crosswalk — Backward Crosswalk from 2025 Provision (Section 393)
+    console.log('\n── Test 68: Dual-Act Crosswalk — Backward Crosswalk from 2025 Provision (Section 393) ──');
+    const cwBack = crosswalkStatute('393', { date: '2025-08-01' });
+    if (cwBack.temporalStatus !== 'GOVERNED_BY_1961_ACT' || cwBack.applicableSection !== 'Section 194Q') {
+        throw new Error(`Backward crosswalk failed: Expected 1961 Act Section 194Q when queried before 2026-04-01`);
+    }
+    const cwForward = crosswalkStatute('393', { date: '2026-05-01' });
+    if (cwForward.temporalStatus !== 'GOVERNED_BY_2025_ACT' || cwForward.applicableSection !== 'Section 393(1), Table 8, Item (ii)') {
+        throw new Error(`Forward crosswalk from 393 failed: Expected 2025 Act Section 393 when queried on or after 2026-04-01`);
+    }
+    console.log('[PASS] Backward & forward crosswalk on Section 393 verified with bidirectional fidelity.');
+
+    // 69. Semantic Regulatory Diff — Section Filter (Section 194H Rate Cut)
+    console.log('\n── Test 69: Semantic Regulatory Diff — Section Filter (Section 194H Rate Cut) ──');
+    const diff194H = getStatutoryDiff({ section: '194H' });
+    if (diff194H.status !== 'SUCCESS' || diff194H.totalAmendments !== 1) {
+        throw new Error(`Diff 194H failed: Expected 1 amendment, got ${diff194H.totalAmendments}`);
+    }
+    const am194H = diff194H.amendments[0];
+    if (am194H.effectiveDate !== '2024-10-01' || am194H.amendmentType !== 'RATE_REDUCTION' || am194H.amendedValue !== '2.0% TDS') {
+        throw new Error(`Diff 194H details failed: unexpected amendment data`);
+    }
+    console.log(`[PASS] Section 194H regulatory diff retrieved: 5% to 2% rate reduction w.e.f. ${am194H.effectiveDate}.`);
+
+    // 70. Semantic Regulatory Diff — Date Filter (since: '2025-01-01')
+    console.log('\n── Test 70: Semantic Regulatory Diff — Date Filter (since: 2025-01-01) ──');
+    const diffSince = getStatutoryDiff({ since: '2025-01-01' });
+    if (diffSince.status !== 'SUCCESS' || diffSince.totalAmendments < 2) {
+        throw new Error(`Diff since 2025-01-01 failed: Expected >= 2 amendments, got ${diffSince.totalAmendments}`);
+    }
+    for (const am of diffSince.amendments) {
+        if (am.effectiveDate < '2025-01-01') {
+            throw new Error(`Found amendment earlier than 2025-01-01: ${am.effectiveDate} (${am.id})`);
+        }
+    }
+    console.log(`[PASS] Temporal diff filtering verified: ${diffSince.totalAmendments} amendments retrieved since 2025-01-01.`);
+
+    // 71. Semantic Regulatory Diff — Domain Filter (indirect_tax_gst)
+    console.log('\n── Test 71: Semantic Regulatory Diff — Domain Filter (indirect_tax_gst) ──');
+    const diffGst = getStatutoryDiff({ domain: 'indirect_tax_gst' });
+    if (diffGst.totalAmendments < 2) {
+        throw new Error(`Diff GST failed: Expected at least 2 GST amendments, got ${diffGst.totalAmendments}`);
+    }
+    for (const am of diffGst.amendments) {
+        if (am.domain !== 'indirect_tax_gst') {
+            throw new Error(`Expected domain indirect_tax_gst, got ${am.domain}`);
+        }
+    }
+    console.log(`[PASS] Domain diff filtering verified: ${diffGst.totalAmendments} GST amendments retrieved.`);
+
+    // 72. CLI Integration — node bin/cli.js crosswalk 194Q --credit 2026-03-25 --payment 2026-04-10 --json
+    console.log('\n── Test 72: CLI Integration — node bin/cli.js crosswalk 194Q --credit 2026-03-25 --payment 2026-04-10 --json ──');
+    const cliCrosswalkOutput = execFileSync(process.execPath, [
+        path.resolve('bin/cli.js'), 'crosswalk', '194Q', '--credit', '2026-03-25', '--payment', '2026-04-10', '--json'
+    ], {
+        encoding: 'utf8',
+        cwd: path.resolve('.')
+    });
+    const parsedCw = JSON.parse(cliCrosswalkOutput);
+    if (!parsedCw.isValid || parsedCw.triggerDate !== '2026-03-25' || parsedCw.temporalStatus !== 'GOVERNED_BY_1961_ACT') {
+        throw new Error(`CLI crosswalk --json returned unexpected payload`);
+    }
+    console.log('[PASS] CLI crosswalk --json executed cleanly with exitCode 0 and machine-readable payload.');
+
+    // 73. CLI Integration — node bin/cli.js diff --section 194H --json
+    console.log('\n── Test 73: CLI Integration — node bin/cli.js diff --section 194H --json ──');
+    const cliDiffOutput = execFileSync(process.execPath, [
+        path.resolve('bin/cli.js'), 'diff', '--section', '194H', '--json'
+    ], {
+        encoding: 'utf8',
+        cwd: path.resolve('.')
+    });
+    const parsedDiff = JSON.parse(cliDiffOutput);
+    if (parsedDiff.totalAmendments !== 1 || parsedDiff.amendments[0].sectionCode !== '194H') {
+        throw new Error(`CLI diff --json returned unexpected payload`);
+    }
+    console.log('[PASS] CLI diff --json executed cleanly with exitCode 0 and machine-readable payload.');
+
+    // 74. StatutoryClient Integration — client.crosswalk() & client.diff()
+    console.log('\n── Test 74: StatutoryClient Integration — client.crosswalk() & client.diff() ──');
+    const client = new StatutoryClient();
+    const clientCw = client.crosswalk('194Q', { creditDate: '2026-03-25', paymentDate: '2026-04-10' });
+    if (!clientCw.isValid || clientCw.applicableSection !== 'Section 194Q') {
+        throw new Error(`client.crosswalk() failed`);
+    }
+    const clientDiff = client.diff({ section: '194H' });
+    if (clientDiff.totalAmendments !== 1) {
+        throw new Error(`client.diff() failed`);
+    }
+    console.log('[PASS] StatutoryClient crosswalk() and diff() programmatic methods verified with complete parity.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 63 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 74 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

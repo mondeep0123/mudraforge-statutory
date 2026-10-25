@@ -189,7 +189,111 @@ export declare class StatutoryClient {
     listSections(): Promise<SectionSummary[]>;
     checkUpdates(): Promise<UpdateInfo>;
     sync(): Promise<SyncResult>;
+    crosswalk(section: string, options?: CrosswalkOptions): CrosswalkResult;
+    diff(options?: StatutoryDiffOptions): StatutoryDiffResult;
+    verify(targetDir?: string): any;
+    doctor(options?: any): Promise<any>;
 }
+
+export interface CrosswalkOptions {
+    creditDate?: string;
+    paymentDate?: string;
+    asOfDate?: string;
+    date?: string;
+    okfDir?: string;
+}
+
+export interface CrosswalkProvision {
+    act: string;
+    sectionCode: string;
+    statutorySection: string;
+    title: string;
+    threshold?: string;
+    standardRate?: string;
+    penaltyRate?: string;
+    challan?: string;
+    returnForm?: string;
+    effectiveDate?: string;
+}
+
+export interface CrosswalkResult {
+    status: 'SUCCESS' | 'ERROR';
+    isValid: boolean;
+    querySection: string;
+    triggerDate: string;
+    triggerReason: string;
+    triggerDescription: string;
+    creditDate: string | null;
+    paymentDate: string | null;
+    transitionCutoffDate: string;
+    governingAct: string;
+    applicableSection: string;
+    temporalStatus: 'GOVERNED_BY_1961_ACT' | 'GOVERNED_BY_2025_ACT' | 'SUNSET_OMITTED';
+    savingsApplied: boolean;
+    isOmittedSunset: boolean;
+    crosswalk: {
+        id: string;
+        domain: string;
+        predecessor: CrosswalkProvision;
+        successor: CrosswalkProvision;
+        savingsAuthority: {
+            statute: string;
+            subsidiary: string;
+            legalPrinciple: string;
+        };
+    };
+    legalAnalysis: string;
+}
+
+export interface StatutoryDiffOptions {
+    section?: string;
+    since?: string;
+    domain?: string;
+    okfDir?: string;
+}
+
+export interface StatutoryAmendment {
+    id: string;
+    sectionCode: string;
+    domain: string;
+    title: string;
+    effectiveDate: string;
+    amendmentType: string;
+    statute: string;
+    legalAuthority: string;
+    previousValue: string;
+    amendedValue: string;
+    changeSummary: string;
+    statutoryImpact: string;
+    aliases?: string[];
+}
+
+export interface StatutoryDiffResult {
+    status: 'SUCCESS' | 'ERROR';
+    filterSection: string | null;
+    filterSince: string | null;
+    filterDomain: string | null;
+    totalAmendments: number;
+    amendments: StatutoryAmendment[];
+}
+
+export declare function crosswalkStatute(
+    sectionCode: string,
+    options?: CrosswalkOptions
+): CrosswalkResult;
+
+export declare function getStatutoryDiff(
+    options?: StatutoryDiffOptions
+): StatutoryDiffResult;
+
+export declare function verifyLocalSubstrate(
+    okfDir?: string,
+    options?: any
+): any;
+
+export declare function runStatutoryDoctor(
+    options?: any
+): Promise<any>;
 
 export interface TaxIdentifierResult {
     isValid: boolean;
