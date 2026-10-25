@@ -9,7 +9,7 @@ valid_to: 2026-03-31
 temporal_status: TRANSITIONED_TO_ACT_2025
 sunset_notes: Governed transactions under Income-tax Act, 1961 until 31 March 2026. Substantive guidelines (excess over ₹50L calculation, advance payment netting, and non-resident PE exclusion) continue under Section 393(1) Table 8(ii) of the Income-tax Act, 2025 effective 1 April 2026.
 subject: Threshold calculation, advance payment netting, and non-resident exemption
-official_url: https://incometaxindia.gov.in/communications/circular/circular_13_2021.pdf
+official_url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

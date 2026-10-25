@@ -1,0 +1,58 @@
+{
+  "sectionId": "CGST2017_SEC8",
+  "sectionCode": "8",
+  "aliases": [
+    "section 8",
+    "sec 8",
+    "composite supply",
+    "mixed supply",
+    "bundled contracts",
+    "principal supply",
+    "naturally bundled",
+    "highest rate supply"
+  ],
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 8 of CGST Act, 2017 read with Section 2(30) and Section 2(74)",
+  "title": "Tax liability on composite and mixed supplies and classification of bundled goods and services contracts",
+  "effectivePeriod": {
+    "validFrom": "2017-07-01",
+    "validTo": "OPEN_ENDED"
+  },
+  "plainTextSummary": "Section 8 of the CGST Act, 2017 governs the determination of tax liability on bundled supplies comprising two or more taxable goods or services. Under Section 8(a), a 'composite supply' consisting of two or more supplies that are naturally bundled and provided in conjunction with each other in the ordinary course of business, one of which is a 'principal supply' (Section 2(30)), is treated as a supply of such principal supply and taxed entirely at the principal supply's applicable rate. Under Section 8(b), a 'mixed supply' consisting of two or more individual supplies of goods or services made in conjunction with each other for a single price, which does not constitute a composite supply (Section 2(74)), is treated as a supply of that particular supply which attracts the highest rate of tax. In corporate finance and accounts payable, bundled procurement contracts (such as hardware supply with software licensing or installation) must be tested against commercial bundling norms, single-price versus segregated billing, and ancillary versus distinct performance obligations.",
+  "keyStatutoryThresholds": {
+    "compositeSupplyRule": "Section 8(a): Naturally bundled supplies are taxed entirely at the GST rate of the Principal Supply",
+    "mixedSupplyRule": "Section 8(b): Unbundled supplies billed for a single combined price are taxed at the Highest Rate among all components",
+    "principalSupplyDefinition": "Section 2(90): The supply of goods or services which constitutes the predominant element of a composite supply and to which any other supply forming part of that composite supply is ancillary",
+    "segregatedPricingSafeHarbor": "Separate, commercially independent line items with distinct itemized prices generally do not constitute a mixed supply, allowing independent statutory classification per line item",
+    "procurementRisk": "Treating a mixed supply with an unsegregated lump-sum price under a lower component rate creates immediate short-payment exposure and interest liabilities under Section 50"
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)",
+      "subject": "Section 8: Tax liability on composite and mixed supplies",
+      "officialUrl": "https://taxinformation.cbic.gov.in"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Circular No. 47/21/2018-GST dated 8 June 2018",
+      "subject": "Clarifications on classification of composite and mixed supplies and taxability of ancillary services",
+      "officialUrl": "https://taxinformation.cbic.gov.in"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Circular No. 11/11/2017-GST dated 20 October 2017",
+      "subject": "Clarification on taxability of printing contracts as composite supplies",
+      "officialUrl": "https://taxinformation.cbic.gov.in"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Master Services Agreement (MSA) / Procurement Purchase Order establishing contractual scope",
+    "Tax invoice showing itemized line-item pricing versus single composite price",
+    "Statement of Work (SOW) defining principal performance deliverables versus ancillary support",
+    "Commercial proof of natural bundling (Industry standard practice and trade packaging)",
+    "HSN/SAC classification crosswalk for each distinct supply component"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

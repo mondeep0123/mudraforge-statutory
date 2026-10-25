@@ -144,12 +144,12 @@ function run() {
     }
 
     const updatedManifest = {
-        okfVersion: previous.okfVersion || '2.4.0',
+        okfVersion: '2.6.0',
         publishedAt: new Date().toISOString(),
         rootHash,
         totalSections: sections.length,
         totalFiles: allFiles.length,
-        changelog: previous.changelog || 'Automated cryptographic manifest signature.',
+        changelog: 'Expanded statutory commons with foundational AP provisions: Section 194C (Contractors), Section 194I (Rent), and Section 194H (Commission & Brokerage).',
         domains,
         sections,
         files: fileHashes

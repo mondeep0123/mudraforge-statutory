@@ -1,0 +1,31 @@
+{
+  "formId": "FORM_26Q_194I",
+  "title": "Quarterly Statement of Tax Deducted at Source on Payment of Rent",
+  "applicableSectionCode": "194I",
+  "tdsSectionCode": "94I",
+  "governingRule": "Income-tax Rules, 1962 (Rule 31A)",
+  "filingFrequency": "QUARTERLY",
+  "dueDates": {
+    "Q1_Apr_Jun": "July 31",
+    "Q2_Jul_Sep": "October 31",
+    "Q3_Oct_Dec": "January 31",
+    "Q4_Jan_Mar": "May 31"
+  },
+  "requiredChallanFields": [
+    "BSR_CODE_7_DIGIT",
+    "CHALLAN_TENDER_DATE",
+    "CHALLAN_SERIAL_NO_5_DIGIT",
+    "TAX_DEPOSITED_AMOUNT_INR",
+    "MAJOR_HEAD_0021_OR_0020"
+  ],
+  "deducteeRecordFields": [
+    "PAN_OF_LANDLORD_OR_LESSOR",
+    "NAME_OF_LANDLORD_OR_LESSOR",
+    "RENT_CATEGORY_PLANT_MACHINERY_OR_LAND_BUILDING",
+    "GROSS_RENT_PAID_OR_CREDITED_INR",
+    "TDS_RATE_APPLIED_PERCENT",
+    "TAX_DEDUCTED_AMOUNT_INR",
+    "DATE_OF_DEDUCTION",
+    "REASON_FOR_LOWER_OR_NON_DEDUCTION"
+  ]
+}

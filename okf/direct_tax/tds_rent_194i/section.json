@@ -1,0 +1,63 @@
+{
+  "sectionId": "ITA1961_SEC194I",
+  "sectionCode": "194I",
+  "aliases": [
+    "194I",
+    "194i",
+    "sec194i",
+    "rent tds",
+    "tds on rent",
+    "commercial rent",
+    "office rent",
+    "equipment rent"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Section 194I",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 5, Item (i)",
+  "title": "Deduction of tax at source on payment of rent",
+  "effectivePeriod": {
+    "validFrom": "1994-06-01",
+    "validTo": "2026-03-31",
+    "annualReset": "Every April 1 (Cumulative Rent Resets Annually)",
+    "sunsetNotes": "Transitions to Section 393(1) Table 5 Item (i) of the Income-tax Act, 2025 effective 1 April 2026."
+  },
+  "plainTextSummary": "Any person (other than an individual or a HUF not subject to tax audit) paying any income by way of rent to a resident is required to deduct tax at source. Statutory Rates: (a) 2% for the use of any machinery, plant, or equipment; (b) 10% for the use of any land, building (including factory building), land appurtenant to a building, furniture, or fittings. Threshold: Tax is deductible only if the aggregate amount of rent credited or paid during the financial year exceeds ₹2,40,000. Non-PAN / Inoperative PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated in the invoice, TDS applies strictly on the basic rent excluding GST.",
+  "keyStatutoryThresholds": {
+    "annualAggregateThresholdInr": 240000,
+    "plantMachineryEquipmentRatePercent": 2.0,
+    "landBuildingFurnitureRatePercent": 10.0,
+    "nonCompliantPanPenaltyRatePercent": 20.0,
+    "rentDefinitionScope": "Any payment under any lease, sub-lease, tenancy, or other agreement for use of land, building, machinery, plant, equipment, furniture, or fittings, whether or not owned by payee.",
+    "cbdtCircular23GstExclusion": "TDS applies strictly on basic rent excluding separately stated GST."
+  },
+  "officialCitations": [
+    {
+      "authority": "Ministry of Law & Justice / CBDT",
+      "instrument": "Section 194I, Income-tax Act, 1961",
+      "subject": "Deduction of tax at source on payment of rent",
+      "officialUrl": "https://incometaxindia.gov.in"
+    },
+    {
+      "authority": "Parliament of India / Ministry of Finance",
+      "instrument": "Income-tax Act, 2025 Section 393(1), Table 5, Item (i)",
+      "subject": "TDS on rent under new Direct Tax Code",
+      "officialUrl": "https://incometaxindia.gov.in"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 23 of 2017",
+      "subject": "Exclusion of GST component from rent value for tax deduction at source",
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/communications/circulars.aspx"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Executed Lease Agreement / Rent Agreement specifying premises or equipment and monthly rent",
+    "Landlord / Lessor PAN verification",
+    "Cumulative Rent Ledger for current FY establishing date threshold of ₹2,40,000 was crossed",
+    "Rent invoice or debit note with GST separately broken out (if lessor is GST registered)",
+    "Lower deduction certificate under Section 197 / Section 395 (if lessor provides certificate)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.5.0"
+}

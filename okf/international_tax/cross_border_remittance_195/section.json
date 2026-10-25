@@ -1,0 +1,74 @@
+{
+  "sectionId": "IT1961_SEC195",
+  "sectionCode": "195",
+  "aliases": [
+    "section 195",
+    "sec 195",
+    "cross border remittance",
+    "nri tds",
+    "non-resident withholding",
+    "dtaa",
+    "dtaa section 90",
+    "form 15ca",
+    "form 15cb",
+    "form 10f",
+    "trc",
+    "tax residency certificate",
+    "engineering analysis",
+    "saas royalty exemption"
+  ],
+  "governingStatute": "Income-tax Act, 1961 read with Double Taxation Avoidance Agreements (DTAA) under Section 90",
+  "statutorySection": "Section 195 of Income-tax Act, 1961 read with Section 90(2), Section 90(4), and Rule 37BB",
+  "successorStatute": "Income-tax Act, 2025 Section 393(2)",
+  "successorSection": "Section 393(2) of Income-tax Act, 2025",
+  "title": "Deduction of tax at source on foreign cross-border payments to non-residents, DTAA treaty benefits, documentation, Form 15CA/15CB, and cloud software exemption",
+  "effectivePeriod": {
+    "validFrom": "1962-04-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Annual Treaty & Rule 37BB Reporting Compliance",
+    "sunsetNotes": "Continues under Section 393(2) of the Income-tax Act, 2025."
+  },
+  "plainTextSummary": "Section 195 of the Income-tax Act, 1961 mandates that any person responsible for paying to a non-resident or foreign company any sum chargeable under the provisions of the Act must deduct income tax at source at the rates in force. Under Section 90(2), the provisions of the domestic Act or the Double Taxation Avoidance Agreement (DTAA), whichever is more beneficial to the assessee, shall apply. To avail of beneficial treaty rates (typically 10%–15% for Royalties or Fees for Technical Services vs. domestic 20% + surcharge/cess), the non-resident must furnish: (1) Tax Residency Certificate (TRC) under Section 90(4), (2) Form 10F electronically filed under Rule 21AB, and (3) a No-Permanent Establishment (No-PE) and Beneficial Ownership declaration under Article 5 and Article 7. Crucially for modern technology enterprise finance, the Supreme Court of India in Engineering Analysis Centre of Excellence v. CIT (2021) established that payments by Indian resident end-users or distributors for standard off-the-shelf software or automated cloud SaaS infrastructure do not constitute royalties under Article 12 of DTAAs. Rule 37BB mandates electronic filing of Form 15CA (and Form 15CB Chartered Accountant certificate where remittance exceeds ₹5 Lakh and is chargeable to tax) prior to authorized dealer bank remittance.",
+  "keyStatutoryThresholds": {
+    "domesticDefaultWithholdingRatePercent": 20,
+    "treatyBeneficialProvision": "Section 90(2): Taxpayer entitled to lower rate between domestic IT Act and bilateral DTAA treaty",
+    "mandatoryTreatyDocumentation": [
+      "Tax Residency Certificate (TRC) issued by foreign government authority under Section 90(4)",
+      "Form 10F electronically verified on IT portal under Rule 21AB",
+      "No-PE and Beneficial Ownership Declaration under Article 5 & Article 7"
+    ],
+    "rule37bbBankingGate": "Bank cannot remit funds abroad without valid Form 15CA acknowledgement and Form 15CB CA certification (for taxable payments > ₹5,00,000)",
+    "supremeCourtEngineeringAnalysisDoctrine": "Payments for standardized automated cloud infrastructure, hosting, and off-the-shelf SaaS subscriptions are business profits under Article 7 and NOT royalties; exempt from withholding in the absence of a Permanent Establishment",
+    "surchargeAndCessRule": "Health & Education Cess (4%) and applicable Surcharge apply on domestic Act rates, but DO NOT apply when deducting at DTAA treaty rates unless treaty explicitly provides otherwise"
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+      "subject": "Section 195: Other sums & Section 90: Agreement with foreign countries or specified territories",
+      "officialUrl": "https://incometaxindia.gov.in"
+    },
+    {
+      "authority": "Supreme Court of India",
+      "instrument": "Civil Appeal Nos. 8733-8734 of 2018 (Engineering Analysis Centre of Excellence Pvt Ltd v. CIT)",
+      "subject": "Landmark ruling on characterization of software and SaaS payments under DTAA",
+      "officialUrl": "https://sci.gov.in"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Notification No. 03/2022 / F.No. 370142/14/2022-TPL dated 16 July 2022 & Circular 03/2023",
+      "subject": "Electronic filing of Form 10F by non-residents not having PAN",
+      "officialUrl": "https://incometaxindia.gov.in"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Tax Residency Certificate (TRC) valid for the relevant fiscal year from foreign jurisdiction",
+    "Form 10F generated and verified through Income Tax e-filing portal",
+    "No-Permanent Establishment (No-PE) and Beneficial Ownership declaration on vendor letterhead",
+    "Underlying Master Services Agreement (MSA) / End User License Agreement (EULA) confirming SaaS / service nature",
+    "Form 15CB certificate issued by an independent Chartered Accountant in practice",
+    "Form 15CA acknowledgment submitted to Authorized Dealer Category-I bank"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

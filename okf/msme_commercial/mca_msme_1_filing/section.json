@@ -1,0 +1,56 @@
+{
+  "sectionId": "MCA2013_SEC405_MSME1",
+  "sectionCode": "MCA-MSME-1",
+  "aliases": [
+    "msme-1",
+    "msme 1",
+    "form msme-1",
+    "form msme 1",
+    "mca msme",
+    "section 405",
+    "specified companies order",
+    "half-yearly msme return",
+    "45 days mca return"
+  ],
+  "governingStatute": "Companies Act, 2013 read with Specified Companies (Furnishing of information about payment to micro and small enterprise suppliers) Order, 2019",
+  "statutorySection": "Section 405 of Companies Act, 2013",
+  "title": "Mandatory half-yearly reporting of outstanding dues exceeding 45 days to Micro & Small Enterprises (Form MSME-1)",
+  "effectivePeriod": {
+    "validFrom": "2019-01-22",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Half-Yearly Reporting Cycles (April 30 & October 31)"
+  },
+  "plainTextSummary": "Under Section 405 of the Companies Act, 2013 and the Specified Companies Order, 2019, every specified company that receives supplies of goods or services from Micro or Small enterprises and has payments outstanding for more than 45 days from the date of acceptance (or deemed acceptance) must file Form MSME-1 with the Registrar of Companies (ROC). The return is due half-yearly: for the April-September period by October 31, and for the October-March period by April 30. Form MSME-1 requires detailed line-by-line disclosures including supplier PAN, name, date from which payment is due, amount outstanding, and the specific justifiable reason for non-payment. Failure to furnish this information or providing false information attracts penal liabilities under Section 405(4) of the Companies Act, 2013.",
+  "keyStatutoryThresholds": {
+    "overdueTriggerDays": 45,
+    "filingFrequency": "Half-Yearly (Every 6 months)",
+    "halfYear1Period": "April 1 to September 30 (Filing Due Date: October 31)",
+    "halfYear2Period": "October 1 to March 31 (Filing Due Date: April 30)",
+    "applicableEntities": "All Companies registered under Companies Act, 2013 with overdue trade payables to Micro/Small enterprises > 45 days",
+    "penalProvisions": "Section 405(4): Company liable to penalty of ₹20,000, continuing penalty ₹1,000/day up to ₹3,00,000; Officer in default liable to penalty up to ₹3,00,000",
+    "traderExclusion": "Traders (NIC 45/46/47) excluded from Chapter V protection do not trigger Form MSME-1 45-day overdue reporting"
+  },
+  "officialCitations": [
+    {
+      "authority": "Ministry of Corporate Affairs (MCA)",
+      "instrument": "Specified Companies (Furnishing of information about payment to micro and small enterprise suppliers) Order, 2019 (S.O. 368(E))",
+      "subject": "Mandatory filing of Form MSME-1 by specified companies",
+      "officialUrl": "https://www.mca.gov.in"
+    },
+    {
+      "authority": "Ministry of Law and Justice",
+      "instrument": "Companies Act, 2013 (Act No. 18 of 2013)",
+      "subject": "Section 405: Power of Central Government to direct companies to furnish information or statistics",
+      "officialUrl": "https://www.mca.gov.in"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Accounts Payable aging schedule segregated by Micro and Small enterprises",
+    "Supplier Udyam Registration number and enterprise category verification",
+    "Written purchase contracts establishing agreed payment terms (capped at 45 days)",
+    "Invoices and Goods Receipt Notes (GRN) establishing acceptance dates",
+    "Formal dispute communications lodged within 15 days of delivery (if payment is withheld due to defect)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

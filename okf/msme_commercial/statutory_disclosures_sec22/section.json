@@ -1,0 +1,65 @@
+{
+  "sectionId": "MSMED2006_SEC22_DISCLOSURE",
+  "sectionCode": "MSMED-SEC-22",
+  "aliases": [
+    "section 22",
+    "sec 22",
+    "msme disclosures",
+    "schedule iii msme",
+    "trade payables aging",
+    "caro 2020 msme",
+    "section 23 addback",
+    "notes to accounts msme"
+  ],
+  "governingStatute": "Micro, Small and Medium Enterprises Development Act, 2006 read with Companies Act, 2013 Schedule III",
+  "statutorySection": "Section 22 of MSMED Act, 2006 read with Section 23 of MSMED Act, 2006 and Schedule III Division I & II",
+  "title": "Mandatory statutory disclosures in annual audited financial statements regarding dues to Micro and Small Enterprises and tax non-deductibility of penal interest",
+  "effectivePeriod": {
+    "validFrom": "2006-10-02",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Annual Financial Year-End Audited Financial Statements (March 31)"
+  },
+  "plainTextSummary": "Section 22 of the MSMED Act, 2006 mandates that any buyer required to have its accounts audited under any law must furnish five specific disclosures in its annual financial statements regarding trade payables to micro and small enterprises: (1) Principal and interest due remaining unpaid at year-end, (2) Interest paid along with delayed payments made during the year, (3) Interest due and payable for delays without added interest, (4) Interest accrued and remaining unpaid at year-end, and (5) Further interest remaining due and payable in succeeding years. In parallel, Schedule III of the Companies Act, 2013 prescribes a mandatory Trade Payables Aging Schedule segregating MSME dues (undisputed and disputed) into buckets: less than 1 year, 1-2 years, 2-3 years, and more than 3 years. Under Section 23 of the MSMED Act, compound penal interest payable or paid under Section 16 is strictly prohibited from being claimed as an income tax deduction, requiring an explicit book-to-tax add-back.",
+  "keyStatutoryThresholds": {
+    "mandatoryDisclosureCount": 5,
+    "scheduleIiiAgingBuckets": [
+      "Less than 1 year",
+      "1-2 years",
+      "2-3 years",
+      "More than 3 years"
+    ],
+    "disputeSegregation": "Mandatory separate aging disclosure for Undisputed MSME dues vs. Disputed MSME dues",
+    "taxAddbackMandate": "Section 23 strictly disallows Section 16 penal interest under Income-tax Act, 1961 (and Act 2025)",
+    "statutoryAuditVerification": "CARO 2020 Clause (xvi)(d) / (xix) requires statutory auditors to verify material uncertainty on settlement of MSME payables",
+    "applicableEntities": "All corporate and non-corporate entities subject to statutory audit having transactions with registered Micro/Small enterprises"
+  },
+  "officialCitations": [
+    {
+      "authority": "Ministry of Law and Justice",
+      "instrument": "Micro, Small and Medium Enterprises Development Act, 2006 (Act No. 27 of 2006)",
+      "subject": "Section 22: Requirement to specify unpaid amount with interest in the annual statement of accounts & Section 23: Interest not to be allowed as deduction from income",
+      "officialUrl": "https://msme.gov.in"
+    },
+    {
+      "authority": "Ministry of Corporate Affairs (MCA)",
+      "instrument": "Companies Act, 2013 Schedule III (Division I & II Amendment Notification G.S.R. 207(E) dated 24 March 2021)",
+      "subject": "Mandatory Trade Payables Aging Schedule Disclosures",
+      "officialUrl": "https://www.mca.gov.in"
+    },
+    {
+      "authority": "Institute of Chartered Accountants of India (ICAI)",
+      "instrument": "Guidance Note on Division I, II and III of Schedule III to the Companies Act, 2013",
+      "subject": "Accounting and Disclosure of Dues to Micro and Small Enterprises",
+      "officialUrl": "https://www.icai.org"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Audited Balance Sheet Notes to Accounts for Trade Payables",
+    "Schedule III Trade Payables Aging Table (<1yr, 1-2yr, 2-3yr, >3yr)",
+    "General Ledger interest accrual schedule under Section 16 (compounded at 3x RBI Bank Rate)",
+    "Computation of Total Income showing Section 23 disallowance add-back in tax return",
+    "Confirmation letters from registered MSME suppliers on their status and outstanding dues"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

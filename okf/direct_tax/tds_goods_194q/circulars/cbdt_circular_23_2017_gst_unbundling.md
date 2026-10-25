@@ -8,7 +8,7 @@ valid_from: 2017-07-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Exclusion of separately stated GST from basic taxable amount for TDS purposes
-official_url: https://incometaxindia.gov.in/communications/circular/circular23_2017.pdf
+official_url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

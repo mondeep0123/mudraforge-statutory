@@ -1,0 +1,51 @@
+{
+  "formCode": "COMPOSITE_MIXED_ASSESSMENT_MATRIX",
+  "title": "CGST Section 8 Bundled Contract Classification & Tax Determination Matrix",
+  "statutoryBasis": "Section 8 read with Section 2(30) and Section 2(74) of CGST Act, 2017",
+  "schema": {
+    "contractReference": {
+      "type": "string",
+      "required": true
+    },
+    "contractDate": {
+      "type": "string",
+      "format": "date",
+      "required": true
+    },
+    "pricingStructure": {
+      "type": "string",
+      "enum": ["SINGLE_COMBINED_PRICE", "SEPARATELY_ITEMIZED_PRICES"],
+      "required": true
+    },
+    "supplyComponents": {
+      "type": "array",
+      "required": true,
+      "items": {
+        "description": { "type": "string", "required": true },
+        "hsnSacCode": { "type": "string", "required": true },
+        "applicableGstRatePercent": { "type": "number", "required": true },
+        "taxableValueInr": { "type": "number", "required": true },
+        "isPrincipalSupplyCandidate": { "type": "boolean", "required": true }
+      }
+    },
+    "bundlingCharacteristics": {
+      "type": "object",
+      "required": true,
+      "properties": {
+        "isNaturallyBundledInOrdinaryCourse": { "type": "boolean", "required": true },
+        "canSuppliesBeProcuredIndependently": { "type": "boolean", "required": true },
+        "isAncillaryToPrincipalDeliverable": { "type": "boolean", "required": true }
+      }
+    },
+    "statutoryDetermination": {
+      "type": "string",
+      "enum": ["COMPOSITE_SUPPLY", "MIXED_SUPPLY", "INDEPENDENT_SEPARATE_SUPPLIES"],
+      "required": true
+    },
+    "effectiveTaxRatePercent": {
+      "type": "number",
+      "required": true,
+      "description": "Determined GST rate under Section 8(a) principal supply rate or Section 8(b) highest rate"
+    }
+  }
+}

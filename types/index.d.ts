@@ -190,3 +190,24 @@ export declare class StatutoryClient {
     checkUpdates(): Promise<UpdateInfo>;
     sync(): Promise<SyncResult>;
 }
+
+export interface TaxIdentifierResult {
+    isValid: boolean;
+    checksumValid?: boolean;
+    type?: 'GSTIN' | 'PAN';
+    gstin?: string;
+    pan?: string;
+    stateCode?: string;
+    stateName?: string;
+    entityCode?: string;
+    entityType?: string;
+    isIndividualOrHuf?: boolean;
+    standard194cRatePercent?: number;
+    error?: string | null;
+}
+
+export declare const INDIAN_STATE_CODES: Record<string, string>;
+export declare const PAN_ENTITY_TYPES: Record<string, { code: string; name: string; isIndividualOrHuf: boolean; standard194cRatePercent: number }>;
+export declare function isValidGstinChecksum(gstin: string): boolean;
+export declare function decodeTaxIdentifier(rawId: string): TaxIdentifierResult;
+

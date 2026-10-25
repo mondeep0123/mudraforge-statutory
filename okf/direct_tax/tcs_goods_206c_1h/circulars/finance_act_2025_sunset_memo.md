@@ -10,7 +10,7 @@ valid_to: 2025-03-31
 temporal_status: SUNSET_OMITTED
 sunset_effective_date: 2025-04-01
 successor_rule: Section 194Q buyer TDS applies conditionally
-official_url: https://incometaxindia.gov.in/communications/circular/circular_17_2020.pdf
+official_url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
 ---
 
 > [TEMPORAL STATUS: SUNSET & OMITTED]  

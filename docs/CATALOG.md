@@ -13,13 +13,29 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | Domain | Section | Governing Statute | Validity Period | Temporal Status | Key Statutory Threshold | Primary Form / Schedule |
 |---|---|---|---|---|---|---|
 | `corporate_ma_restructuring` | [**50B**](#50b) | Income-tax Act, 1961 | 2000-04-01 &rarr; In Force | `Active` | General Provision | `form_3cea_chartered_accountant_report` |
+| `direct_tax` | [**206AB**](#206ab) | Income-tax Act, 1961 | 2021-07-01 &rarr; In Force | `Active` | General Provision | N/A |
 | `direct_tax` | [**206C(1H)**](#206c-1h-) | Income-tax Act, 1961 | 2020-10-01 &rarr; 2025-03-31 | **Sunset** (2025-03-31) | Seller > ₹10Cr; Receipts > ₹50L | N/A |
+| `direct_tax` | [**194H**](#194h) | Income-tax Act, 1961 | 2001-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
+| `direct_tax` | [**194C**](#194c) | Income-tax Act, 1961 | 1972-04-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
 | `direct_tax` | [**194Q**](#194q) | Income-tax Act, 1961 | 2021-07-01 &rarr; 2026-03-31 | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | `form_26q_quarterly_return` |
 | `direct_tax` | [**393**](#393) | Income-tax Act, 2025 | 2026-04-01 &rarr; In Force | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | N/A |
+| `direct_tax` | [**194R**](#194r) | Income-tax Act, 1961 | 2022-07-01 &rarr; In Force | `Active` | General Provision | N/A |
+| `direct_tax` | [**194I**](#194i) | Income-tax Act, 1961 | 1994-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
 | `direct_tax` | [**194J**](#194j) | Income-tax Act, 1961 | 1995-07-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_16a_tds_certificate` |
 | `indirect_tax_gst` | [**17(5)**](#17-5-) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_2b_ineligible_reconciliation` |
+| `indirect_tax_gst` | [**8**](#8) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `composite_mixed_supply_assessment_matrix` |
+| `indirect_tax_gst` | [**10**](#10) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | N/A |
+| `indirect_tax_gst` | [**34**](#34) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | N/A |
+| `indirect_tax_gst` | [**RULE-48(4)**](#rule-48-4-) | Central Goods and Services Tax Rules, 2017 | 2020-10-01 &rarr; In Force | `Active` | General Provision | N/A |
+| `indirect_tax_gst` | [**51**](#51) | Central Goods and Services Tax Act, 2017 | 2018-10-01 &rarr; In Force | `Active` | General Provision | N/A |
+| `indirect_tax_gst` | [**16(2)**](#16-2-) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_3b_table_4_itc_reversal` |
+| `indirect_tax_gst` | [**9(3)**](#9-3-) | Central Goods and Services Tax Act, 2017 read with Notification No. 13/2017-Central Tax | 2017-07-01 &rarr; In Force | `Active` | General Provision | `rcm_self_invoice_payment_voucher` |
+| `international_tax` | [**195**](#195) | Income-tax Act, 1961 read with Double Taxation Avoidance Agreements | 1962-04-01 &rarr; In Force | `Active` | General Provision | `form_15ca_15cb_compliance_checklist` |
 | `international_tax` | [**IRC-901-904**](#irc-901-904) | Internal Revenue Code of 1986 | 2021-01-01 &rarr; In Force | `Active` | General Provision | `form_67_statement_of_foreign_tax` |
 | `msme_commercial` | [**MSMED-15-16**](#msmed-15-16) | Micro, Small and Medium Enterprises Development Act, 2006 read with Income-tax Act, 1961 Section 43B | 2006-10-02 &rarr; In Force | `Active` | 15 Days (Oral) / 45 Days (Written) | `schedule_iii_msme_disclosure` |
+| `msme_commercial` | [**MSMED-SEC-7**](#msmed-sec-7) | Micro, Small and Medium Enterprises Development Act, 2006 read with Ministry of MSME Notification S.O. 2119 | 2020-07-01 &rarr; In Force | `Active` | General Provision | `udyam_composite_calculation_worksheet` |
+| `msme_commercial` | [**MCA-MSME-1**](#mca-msme-1) | Companies Act, 2013 read with Specified Companies | 2019-01-22 &rarr; In Force | `Active` | General Provision | `form_msme_1_half_yearly_return` |
+| `msme_commercial` | [**MSMED-SEC-22**](#msmed-sec-22) | Micro, Small and Medium Enterprises Development Act, 2006 read with Companies Act, 2013 Schedule III | 2006-10-02 &rarr; In Force | `Active` | General Provision | `schedule_iii_msme_aging_table` |
 
 ---
 
@@ -69,9 +85,9 @@ The table below records the provenance baseline, verification standard, and expl
 ```
 
 **Official Citations & Trust Anchors**:
-- **Income Tax Department, Ministry of Finance** — [Section 50B, Income-tax Act, 1961](https://incometaxindia.gov.in/acts/income-tax-act-1961/section-50b.htm): *Special provision for computation of capital gains in case of slump sale*
-- **Central Board of Direct Taxes (CBDT)** — [Notification No. 68/2021 (Dated 24 May 2021)](https://incometaxindia.gov.in/communications/notification/notification_68_2021.pdf): *Rule 11UAE: Computation of fair market value of capital assets for the purposes of section 50B*
-- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 12/2017-Central Tax (Rate) Entry 2](https://cbic-gst.gov.in/pdf/central-tax-rate/notf-12-2017-cgst-rate-english.pdf): *Services by way of transfer of a going concern, as a whole or an independent part thereof, attract 0% GST*
+- **Income Tax Department, Ministry of Finance** — [Section 50B, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Special provision for computation of capital gains in case of slump sale*
+- **Central Board of Direct Taxes (CBDT)** — [Notification No. 68/2021 (Dated 24 May 2021)](https://www.incometaxindia.gov.in/pages/communications/notifications.aspx): *Rule 11UAE: Computation of fair market value of capital assets for the purposes of section 50B*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 12/2017-Central Tax (Rate) Entry 2](https://taxinformation.cbic.gov.in/): *Services by way of transfer of a going concern, as a whole or an independent part thereof, attract 0% GST*
 
 **Executive Circulars Bundled**:
 - [`cbdt_notification_68_2021_rule_11uae_fmv.md`](./okf/corporate_ma_restructuring/slump_sale_50b/circulars/cbdt_notification_68_2021_rule_11uae_fmv.md)
@@ -84,6 +100,44 @@ The table below records the provenance baseline, verification standard, and expl
 ---
 
 ### Direct Tax (Income-tax Act, 1961 / Income-tax Act, 2025)
+
+#### Section 206AB: Special provision for deduction of tax at source for non-filers of income-tax return
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 397(3)
+- **Temporal Validity**: `2021-07-01` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/direct_tax/special_rates_non_filer_206ab/section.json`](./okf/direct_tax/special_rates_non_filer_206ab/section.json)
+
+**Statutory Summary**:
+> Where tax is required to be deducted at source on any sum paid or payable to a specified person (a person who has not filed their ITR for the preceding financial year and has aggregate TDS/TCS of ₹50,000 or more in said year), the tax shall be deducted at the higher of: (i) twice the rate specified in the relevant Act, (ii) twice the rate in force, or (iii) 5%. If Section 206AA (no-PAN) also applies, tax is deducted at the higher of 206AA or 206AB rates. Does NOT apply to non-residents without a PE in India, or to Sections 192, 192A, 194B, 194BA, 194BB, 194-IA, 194-IB, 194M, 194N.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "priorYearAggregateTdsTcsThresholdInr": 50000,
+  "penaltyMultiplier": "Twice the applicable rate or 5%, whichever is higher",
+  "section206aaHarmonization": "Higher of Section 206AA rate (20%) or Section 206AB rate",
+  "exemptedSections": [
+    "192",
+    "192A",
+    "194B",
+    "194BA",
+    "194BB",
+    "194-IA",
+    "194-IB",
+    "194M",
+    "194N"
+  ]
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 11 of 2021](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Compliance Check functionality for Section 206AB & Section 206CCA*
+
+**Executive Circulars Bundled**:
+- [`cbdt_circular_11_2021_compliance_check.md`](./okf/direct_tax/special_rates_non_filer_206ab/circulars/cbdt_circular_11_2021_compliance_check.md)
+
+---
 
 #### Section 206C(1H): Collection of tax at source by seller on receipt of consideration for sale of goods (Omitted effective 1 April 2025)
 
@@ -107,11 +161,88 @@ The table below records the provenance baseline, verification standard, and expl
 ```
 
 **Official Citations & Trust Anchors**:
-- **Parliament of India / Ministry of Finance** — [Finance Act, 2025 (Section 206C(1H) Sunset Clause)](https://incometaxindia.gov.in/communications/circular/circular_17_2020.pdf): *Omission of Section 206C(1H) effective 1 April 2025*
-- **Central Board of Direct Taxes (CBDT)** — [Circular No. 17 of 2020](https://incometaxindia.gov.in/communications/circular/circular_17_2020.pdf): *Guidelines for collection of tax at source under section 206C(1H)*
+- **Parliament of India / Ministry of Finance** — [Finance Act, 2025 (Section 206C(1H) Sunset Clause)](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Omission of Section 206C(1H) effective 1 April 2025*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 17 of 2020](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Guidelines for collection of tax at source under section 206C(1H)*
 
 **Executive Circulars Bundled**:
 - [`finance_act_2025_sunset_memo.md`](./okf/direct_tax/tcs_goods_206c_1h/circulars/finance_act_2025_sunset_memo.md)
+
+---
+
+#### Section 194H: Deduction of tax at source on commission or brokerage
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 4, Item (i)
+- **Temporal Validity**: `2001-06-01` to `2026-03-31`
+- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 4 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Machine-Readable Source**: [`okf/direct_tax/tds_commission_194h/section.json`](./okf/direct_tax/tds_commission_194h/section.json)
+
+**Statutory Summary**:
+> Any person responsible for paying any income by way of commission or brokerage to a resident is required to deduct tax at source. Statutory Rate: 2% effective 1 October 2024 as amended by Finance (No. 2) Act, 2024 (prior to 1 October 2024, the rate was 5%). Threshold: Tax is deductible only if the aggregate amount of commission or brokerage credited or paid during the financial year exceeds ₹15,000. Statutory Exclusions: Does not apply to insurance commission (covered under Section 194D) or underwriting commission. Non-PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated, TDS applies on commission excluding GST.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "annualAggregateThresholdInr": 15000,
+  "standardRatePercent": 2,
+  "preOct2024RatePercent": 5,
+  "rateChangeEffectiveDate": "2024-10-01",
+  "nonCompliantPanPenaltyRatePercent": 20,
+  "commissionBrokerageScope": "Includes any payment received or receivable, directly or indirectly, by a person acting on behalf of another person for services rendered (not being professional services) or in the course of buying or selling of goods or in relation to any transaction relating to any asset, valuable article or thing, not being securities.",
+  "cbdtCircular23GstExclusion": "TDS applies on basic commission amount excluding separately stated GST."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Parliament of India / Ministry of Finance** — [Finance (No. 2) Act, 2024 (Act No. 15 of 2024) amending Section 194H](https://incometaxindia.gov.in): *Reduction of TDS rate on commission and brokerage from 5% to 2% w.e.f. 1 October 2024*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 4, Item (i)](https://incometaxindia.gov.in): *TDS on commission and brokerage under new Direct Tax Code*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Exclusion of GST component from value of commission for tax deduction at source*
+
+**Executive Circulars Bundled**:
+- [`finance_act_2024_rate_cut_memo.md`](./okf/direct_tax/tds_commission_194h/circulars/finance_act_2024_rate_cut_memo.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_26q_quarterly_return.json`](./okf/direct_tax/tds_commission_194h/forms/form_26q_quarterly_return.json)
+
+---
+
+#### Section 194C: Deduction of tax at source on payments to contractors and sub-contractors
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 3, Item (i)
+- **Temporal Validity**: `1972-04-01` to `2026-03-31`
+- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 3 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Machine-Readable Source**: [`okf/direct_tax/tds_contractor_194c/section.json`](./okf/direct_tax/tds_contractor_194c/section.json)
+
+**Statutory Summary**:
+> Any person responsible for paying any sum to a resident contractor for carrying out any work (including supply of labour for carrying out any work) in pursuance of a contract between the contractor and a specified person must deduct tax at source. Statutory Rates: (a) 1% where the payment is being made or credited to an individual or a Hindu Undivided Family (HUF); (b) 2% where the payment is being made or credited to any person other than an individual or a HUF (companies, partnership firms, LLPs, AOPs, BOIs). Thresholds: Tax is deductible if a single contract or invoice exceeds ₹30,000, OR if the aggregate of amounts paid or credited to the contractor during the financial year exceeds ₹1,00,000. Transport Operator Exemption: Under Section 194C(6), no deduction shall be made from any sum credited or paid to a contractor during the course of business of plying, hiring, or leasing goods carriages, where such contractor owns 10 or fewer goods carriages at any time during the previous year and furnishes a declaration to that effect along with their PAN. Non-PAN penalty rate under Section 206AA is 20%.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "singleContractThresholdInr": 30000,
+  "annualAggregateThresholdInr": 100000,
+  "individualHufRatePercent": 1,
+  "otherEntitiesRatePercent": 2,
+  "nonCompliantPanPenaltyRatePercent": 20,
+  "transporterGoodsCarriageLimit": 10,
+  "transporterExemptionRule": "No deduction under Section 194C(6) if transporter owns <= 10 goods carriages and furnishes written declaration with valid PAN.",
+  "workDefinitionScope": "Includes advertising, broadcasting and telecasting, carriage of goods or passengers by any mode of transport other than railways, and catering. Does not include manufacturing or supplying a product according to requirements of customer using materials purchased from a person other than such customer.",
+  "cbdtCircular23GstExclusion": "TDS applies on basic contract amount excluding separately stated GST."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Law & Justice / CBDT** — [Section 194C, Income-tax Act, 1961](https://incometaxindia.gov.in): *Payments to contractors and sub-contractors*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 3, Item (i)](https://incometaxindia.gov.in): *TDS on contractor payments under new Direct Tax Code*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Exclusion of GST component from value of contract for tax deduction at source*
+
+**Executive Circulars Bundled**:
+- [`cbdt_circular_23_2017_gst_unbundling.md`](./okf/direct_tax/tds_contractor_194c/circulars/cbdt_circular_23_2017_gst_unbundling.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_26q_quarterly_return.json`](./okf/direct_tax/tds_contractor_194c/forms/form_26q_quarterly_return.json)
+- [`transporter_194c_declaration.json`](./okf/direct_tax/tds_contractor_194c/forms/transporter_194c_declaration.json)
 
 ---
 
@@ -138,8 +269,8 @@ The table below records the provenance baseline, verification standard, and expl
 ```
 
 **Official Citations & Trust Anchors**:
-- **Central Board of Direct Taxes (CBDT)** — [Circular No. 13 of 2021 (Dated 30 June 2021)](https://incometaxindia.gov.in/communications/circular/circular_13_2021.pdf): *Guidelines under section 194Q of the Income-tax Act, 1961 - Threshold calculation & advance netting*
-- **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://incometaxindia.gov.in/communications/circular/circular23_2017.pdf): *Exclusion of separately stated GST from basic taxable amount for TDS purposes*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 13 of 2021 (Dated 30 June 2021)](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Guidelines under section 194Q of the Income-tax Act, 1961 - Threshold calculation & advance netting*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Exclusion of separately stated GST from basic taxable amount for TDS purposes*
 
 **Executive Circulars Bundled**:
 - [`cbdt_circular_13_2021_guidelines.md`](./okf/direct_tax/tds_goods_194q/circulars/cbdt_circular_13_2021_guidelines.md)
@@ -176,7 +307,73 @@ The table below records the provenance baseline, verification standard, and expl
 **Official Citations & Trust Anchors**:
 - **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 8, Item (ii)](https://incometaxindia.gov.in): *TDS on purchase of goods exceeding ₹50 Lakhs*
 - **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 397(2)](https://incometaxindia.gov.in): *Higher withholding rate (5%) for failure to furnish PAN*
-- **Central Board of Direct Taxes (CBDT)** — [Circular No. 13 of 2021 (Principles saved under Section 536(2) transitional savings)](https://incometaxindia.gov.in/communications/circular/circular_13_2021.pdf): *Threshold calculation & advance netting guidelines saved under 2025 Act*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 13 of 2021 (Principles saved under Section 536(2) transitional savings)](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Threshold calculation & advance netting guidelines saved under 2025 Act*
+
+---
+
+#### Section 194R: Deduction of tax at source on benefit or perquisite in respect of business or profession
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 8, Item 12
+- **Temporal Validity**: `2022-07-01` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/direct_tax/tds_perquisites_194r/section.json`](./okf/direct_tax/tds_perquisites_194r/section.json)
+
+**Statutory Summary**:
+> Any person responsible for providing to a resident any benefit or perquisite, whether convertible into money or not, arising from business or the exercise of a profession, shall ensure that tax has been deducted at source at the rate of 10% of the value or aggregate of value of such benefit or perquisite, provided the value exceeds ₹20,000 in the financial year. Where the benefit is wholly in kind or partly in kind, the person providing it must ensure that tax is paid before releasing the benefit.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "annualExemptionLimitInr": 20000,
+  "standardDeductionRatePercent": 10,
+  "inoperativePanPenaltyRatePercent": 20,
+  "providerTurnoverPrerequisite": "Turnover > ₹1 Cr (business) or > ₹50L (profession) in preceding FY for individuals/HUFs. Companies/LLPs have no turnover floor.",
+  "benefitScope": "Covers free samples above de minimis, foreign/domestic dealer incentive trips, sponsor gifts, hotel accommodations, and capital assets transferred without adequate consideration per CBDT Circular 12/2022."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 12 of 2022](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Guidelines under section 194R of the Income-tax Act, 1961 - Benefit or perquisite in respect of business or profession*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 18 of 2022](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Clarifications and removal of difficulties under section 194R*
+
+**Executive Circulars Bundled**:
+- [`cbdt_circular_12_2022_perquisites.md`](./okf/direct_tax/tds_perquisites_194r/circulars/cbdt_circular_12_2022_perquisites.md)
+
+---
+
+#### Section 194I: Deduction of tax at source on payment of rent
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 5, Item (i)
+- **Temporal Validity**: `1994-06-01` to `2026-03-31`
+- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 5 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Machine-Readable Source**: [`okf/direct_tax/tds_rent_194i/section.json`](./okf/direct_tax/tds_rent_194i/section.json)
+
+**Statutory Summary**:
+> Any person (other than an individual or a HUF not subject to tax audit) paying any income by way of rent to a resident is required to deduct tax at source. Statutory Rates: (a) 2% for the use of any machinery, plant, or equipment; (b) 10% for the use of any land, building (including factory building), land appurtenant to a building, furniture, or fittings. Threshold: Tax is deductible only if the aggregate amount of rent credited or paid during the financial year exceeds ₹2,40,000. Non-PAN / Inoperative PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated in the invoice, TDS applies strictly on the basic rent excluding GST.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "annualAggregateThresholdInr": 240000,
+  "plantMachineryEquipmentRatePercent": 2,
+  "landBuildingFurnitureRatePercent": 10,
+  "nonCompliantPanPenaltyRatePercent": 20,
+  "rentDefinitionScope": "Any payment under any lease, sub-lease, tenancy, or other agreement for use of land, building, machinery, plant, equipment, furniture, or fittings, whether or not owned by payee.",
+  "cbdtCircular23GstExclusion": "TDS applies strictly on basic rent excluding separately stated GST."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Law & Justice / CBDT** — [Section 194I, Income-tax Act, 1961](https://incometaxindia.gov.in): *Deduction of tax at source on payment of rent*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 5, Item (i)](https://incometaxindia.gov.in): *TDS on rent under new Direct Tax Code*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Exclusion of GST component from rent value for tax deduction at source*
+
+**Executive Circulars Bundled**:
+- [`cbdt_circular_23_2017_gst_unbundling.md`](./okf/direct_tax/tds_rent_194i/circulars/cbdt_circular_23_2017_gst_unbundling.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_26q_quarterly_return.json`](./okf/direct_tax/tds_rent_194i/forms/form_26q_quarterly_return.json)
 
 ---
 
@@ -207,8 +404,8 @@ The table below records the provenance baseline, verification standard, and expl
 ```
 
 **Official Citations & Trust Anchors**:
-- **Ministry of Law & Justice / CBDT** — [Finance Act, 2020 (Act No. 12 of 2020), Section 80 amending Section 194J(1)](https://incometaxindia.gov.in/communications/circular/circular_03_2020.pdf): *Reduction of TDS rate on Fees for Technical Services (FTS) from 10% to 2%*
-- **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://incometaxindia.gov.in/communications/circular/circular23_2017.pdf): *Exclusion of GST component from value of service for tax deduction at source*
+- **Ministry of Law & Justice / CBDT** — [Finance Act, 2020 (Act No. 12 of 2020), Section 80 amending Section 194J(1)](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Reduction of TDS rate on Fees for Technical Services (FTS) from 10% to 2%*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx): *Exclusion of GST component from value of service for tax deduction at source*
 
 **Executive Circulars Bundled**:
 - [`cbdt_circular_03_2020_fts_rate_cut.md`](./okf/direct_tax/tds_services_194j/circulars/cbdt_circular_03_2020_fts_rate_cut.md)
@@ -260,7 +457,293 @@ The table below records the provenance baseline, verification standard, and expl
 
 ---
 
+#### Section 8: Tax liability on composite and mixed supplies and classification of bundled goods and services contracts
+
+- **Governing Statute**: Central Goods and Services Tax Act, 2017
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2017-07-01` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/indirect_tax_gst/composite_mixed_supplies_sec8/section.json`](./okf/indirect_tax_gst/composite_mixed_supplies_sec8/section.json)
+
+**Statutory Summary**:
+> Section 8 of the CGST Act, 2017 governs the determination of tax liability on bundled supplies comprising two or more taxable goods or services. Under Section 8(a), a 'composite supply' consisting of two or more supplies that are naturally bundled and provided in conjunction with each other in the ordinary course of business, one of which is a 'principal supply' (Section 2(30)), is treated as a supply of such principal supply and taxed entirely at the principal supply's applicable rate. Under Section 8(b), a 'mixed supply' consisting of two or more individual supplies of goods or services made in conjunction with each other for a single price, which does not constitute a composite supply (Section 2(74)), is treated as a supply of that particular supply which attracts the highest rate of tax. In corporate finance and accounts payable, bundled procurement contracts (such as hardware supply with software licensing or installation) must be tested against commercial bundling norms, single-price versus segregated billing, and ancillary versus distinct performance obligations.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "compositeSupplyRule": "Section 8(a): Naturally bundled supplies are taxed entirely at the GST rate of the Principal Supply",
+  "mixedSupplyRule": "Section 8(b): Unbundled supplies billed for a single combined price are taxed at the Highest Rate among all components",
+  "principalSupplyDefinition": "Section 2(90): The supply of goods or services which constitutes the predominant element of a composite supply and to which any other supply forming part of that composite supply is ancillary",
+  "segregatedPricingSafeHarbor": "Separate, commercially independent line items with distinct itemized prices generally do not constitute a mixed supply, allowing independent statutory classification per line item",
+  "procurementRisk": "Treating a mixed supply with an unsegregated lump-sum price under a lower component rate creates immediate short-payment exposure and interest liabilities under Section 50"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)](https://taxinformation.cbic.gov.in): *Section 8: Tax liability on composite and mixed supplies*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 47/21/2018-GST dated 8 June 2018](https://taxinformation.cbic.gov.in): *Clarifications on classification of composite and mixed supplies and taxability of ancillary services*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 11/11/2017-GST dated 20 October 2017](https://taxinformation.cbic.gov.in): *Clarification on taxability of printing contracts as composite supplies*
+
+**Executive Circulars Bundled**:
+- [`cbic_circular_47_2018_composite_mixed_supplies.md`](./okf/indirect_tax_gst/composite_mixed_supplies_sec8/circulars/cbic_circular_47_2018_composite_mixed_supplies.md)
+
+**Compliance Return Schemas & Templates**:
+- [`composite_mixed_supply_assessment_matrix.json`](./okf/indirect_tax_gst/composite_mixed_supplies_sec8/forms/composite_mixed_supply_assessment_matrix.json)
+
+---
+
+#### Section 10: Composition levy and ineligible tax invoice restrictions
+
+- **Governing Statute**: Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2017-07-01` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/indirect_tax_gst/composition_levy_sec10/section.json`](./okf/indirect_tax_gst/composition_levy_sec10/section.json)
+
+**Statutory Summary**:
+> A registered person whose aggregate turnover in the preceding financial year did not exceed ₹1.5 Crore (₹75 Lakhs for Special Category States) may opt to pay an amount in lieu of tax under the composition scheme. A composition taxpayer is strictly prohibited from collecting any tax from the recipient and cannot issue a tax invoice (must issue a Bill of Supply). Consequently, a recipient purchasing from a composition supplier is legally prohibited from claiming any Input Tax Credit (ITC) under Section 16(2) and Section 10(4). Any tax erroneously charged by a composition dealer is uncollectible and blocked.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "turnoverCeilingGeneralStatesInr": 15000000,
+  "turnoverCeilingSpecialCategoryStatesInr": 7500000,
+  "taxCollectionProhibition": "Strictly prohibited from collecting tax from recipient u/s 10(4)",
+  "itcEligibility": "Zero ITC available to recipient purchasing from composition supplier",
+  "mandatoryInvoiceHeader": "COMPOSITION TAXABLE PERSON, NOT ELIGIBLE TO COLLECT TAX ON SUPPLIES"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 14/2019-Central Tax](https://taxinformation.cbic.gov.in/): *Prescribing threshold limits for composition levy under Section 10 of CGST Act*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Central Goods and Services Tax Rules, 2017 Rule 5](https://taxinformation.cbic.gov.in/): *Conditions and restrictions for composition levy and bill of supply mandates*
+
+**Executive Circulars Bundled**:
+- [`cbic_notification_14_2019_composition.md`](./okf/indirect_tax_gst/composition_levy_sec10/circulars/cbic_notification_14_2019_composition.md)
+
+---
+
+#### Section 34: Credit and debit notes statutory adjustments and return filing deadlines
+
+- **Governing Statute**: Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2017-07-01` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/indirect_tax_gst/credit_debit_notes_sec34/section.json`](./okf/indirect_tax_gst/credit_debit_notes_sec34/section.json)
+
+**Statutory Summary**:
+> Where one or more tax invoices have been issued for supply of any goods or services and the taxable value or tax charged in that tax invoice is found to exceed the taxable value or tax payable in respect of such supply, or where goods supplied are returned, the registered supplier may issue to the recipient one or more credit notes. The supplier must declare details of such credit note in the return for the month during which such credit note has been issued, but not later than the thirtieth day of November following the end of the financial year in which such supply was made, or date of furnishing of the relevant annual return, whichever is earlier. No reduction in output tax liability of supplier is permitted if the tax incidence has been passed on to any other person.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "annualAdjustmentCutoffDate": "30th November following the end of the FY (amended from September w.e.f. Finance Act 2022)",
+  "statutoryLinkagePrerequisite": "Must contain serial number and date of the corresponding original tax invoice(s)",
+  "unjustEnrichmentBar": "No reduction in supplier output tax if incidence has been passed on to recipient",
+  "debitNoteEffect": "Debit note issued when taxable value or tax charged is found to be less than actual supply; treated as invoice for recipient ITC claim"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 137/07/2020-GST](https://taxinformation.cbic.gov.in/): *Clarification on issues relating to credit notes under Section 34 of CGST Act*
+- **Ministry of Finance** — [Finance Act, 2022 (Act No. 6 of 2022)](https://taxinformation.cbic.gov.in/): *Amendment to Section 34(2) extending credit note declaration deadline from 30 September to 30 November*
+
+**Executive Circulars Bundled**:
+- [`cbic_circular_137_2020_credit_notes.md`](./okf/indirect_tax_gst/credit_debit_notes_sec34/circulars/cbic_circular_137_2020_credit_notes.md)
+
+---
+
+#### Section RULE-48(4): Mandatory electronic invoicing (E-Invoicing), IRN generation, and invoice validity
+
+- **Governing Statute**: Central Goods and Services Tax Rules, 2017
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2020-10-01` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/indirect_tax_gst/e_invoicing_rule48_4/section.json`](./okf/indirect_tax_gst/e_invoicing_rule48_4/section.json)
+
+**Statutory Summary**:
+> The invoice shall be prepared by such class of registered persons as may be notified, by including such particulars contained in Form GST INV-01 after obtaining an Invoice Reference Number (IRN) by uploading the information on the common Invoice Registration Portal (IRP). Every registered person whose aggregate turnover in any preceding financial year from 2017-18 onwards exceeds ₹5 Crore must issue e-invoices for B2B supplies. Under Rule 48(5), every invoice issued by a person to whom Rule 48(4) applies, in any manner other than the manner specified in Rule 48(4), SHALL NOT BE TREATED AS AN INVOICE. Receipt of an invalid invoice without an IRN legally blocks the buyer from claiming Input Tax Credit under Section 16(2)(a).
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "aggregateTurnoverThresholdInr": 50000000,
+  "turnoverHistoryScanWindow": "Any financial year from 2017-18 onwards",
+  "irnLength": "64-character SHA-256 hexadecimal cryptographic hash",
+  "mandatoryVisualArtifacts": "Signed QR code containing IRN, supplier GSTIN, buyer GSTIN, invoice date, taxable value, and tax amounts",
+  "statutoryConsequenceRule48_5": "Invoice without IRN is legally non-existent; recipient ITC blocked under Section 16(2)(a)"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 10/2023-Central Tax](https://taxinformation.cbic.gov.in/): *Lowering aggregate turnover threshold for mandatory e-invoicing to ₹5 Crore w.e.f. 01.08.2023*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 160/16/2021-GST](https://taxinformation.cbic.gov.in/): *Clarifications regarding e-invoicing applicability, exemptions, and validity*
+
+**Executive Circulars Bundled**:
+- [`cbic_notification_10_2023_einvoicing.md`](./okf/indirect_tax_gst/e_invoicing_rule48_4/circulars/cbic_notification_10_2023_einvoicing.md)
+
+---
+
+#### Section 51: Tax deduction at source under Goods and Services Tax
+
+- **Governing Statute**: Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2018-10-01` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/indirect_tax_gst/gst_tds_sec51/section.json`](./okf/indirect_tax_gst/gst_tds_sec51/section.json)
+
+**Statutory Summary**:
+> Departments or establishments of the Central Government or State Government, local authorities, governmental agencies, and specified PSUs must deduct tax at source at the rate of 2% (1% CGST + 1% SGST or 2% IGST) from payment made or credited to the supplier where the total value of supply under a contract exceeds ₹2,50,000 (excluding GST). No deduction is made if the location of supplier and place of supply are in a different State/UT from the State/UT of registration of the recipient.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "contractThresholdExcludingGstInr": 250000,
+  "cgstTdsRatePercent": 1,
+  "sgstTdsRatePercent": 1,
+  "igstTdsRatePercent": 2,
+  "totalCompositeGstTdsRatePercent": 2,
+  "depositDeadline": "10th day of the following month in Form GSTR-7",
+  "tdsCertificateForm": "Form GSTR-7A generated on common portal within 5 days of crediting amount to Government"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 50/2018-Central Tax](https://taxinformation.cbic.gov.in/): *Notifying entities and authorities liable to deduct TDS under Section 51 of CGST Act*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Standard Operating Procedure (SOP) on TDS under GST (Dated 28.09.2018)](https://taxinformation.cbic.gov.in/): *Operational guidelines and threshold calculation for GST TDS deductors*
+
+**Executive Circulars Bundled**:
+- [`cbic_notification_50_2018_gst_tds.md`](./okf/indirect_tax_gst/gst_tds_sec51/circulars/cbic_notification_50_2018_gst_tds.md)
+
+---
+
+#### Section 16(2): Eligibility and conditions for taking input tax credit and mandatory 180-day payment rule
+
+- **Governing Statute**: Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)
+- **Successor Provision**: CGST Act, 2017 (In force) &mdash; Section 16(2), (3), (4), (5), (6)
+- **Temporal Validity**: `2017-07-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Active statutory framework amended by Finance Act 2021 (clause aa w.e.f. 01-01-2022), Finance Act 2022 (clause ba and Nov 30 cutoff w.e.f. 01-10-2022), and Finance (No. 2) Act 2024 (subsections 5 & 6 retrospective relief).
+- **Machine-Readable Source**: [`okf/indirect_tax_gst/itc_eligibility_16_2/section.json`](./okf/indirect_tax_gst/itc_eligibility_16_2/section.json)
+
+**Statutory Summary**:
+> Under Section 16(2) of the CGST Act, 2017, no registered person is entitled to input tax credit (ITC) on any supply of goods or services unless five cumulative statutory conditions are met: (a) Possession of a tax invoice or debit note issued by a registered supplier under Section 31; (aa) Details of the invoice/debit note have been furnished by the supplier in the statement of outward supplies under Section 37 (GSTR-1) and communicated to the recipient in the manner specified under Section 38 (auto-drafted in GSTR-2B); (b) Recipient has received the goods or services or both (including 'bill-to-ship-to' deemed receipt under Explanation); (ba) Details of ITC communicated under Section 38 have not been restricted; (c) Tax charged has been actually paid to the Government, either in cash or through utilization of admissible ITC; (d) Return under Section 39 (GSTR-3B) has been furnished. Second Proviso (180-Day Rule): Where a recipient fails to pay the supplier the amount towards the value of supply along with tax payable within 180 days from the invoice date, an amount equal to the ITC availed must be paid by the recipient along with interest under Section 50, reported in Table 4(B)(2) of GSTR-3B under Rule 37. Third Proviso: The recipient is entitled to re-avail such ITC in Table 4(A)(5) and Table 4(D)(1) upon subsequent payment of the invoice amount to the supplier. Statutory Exceptions to 180-Day Rule: Does not apply to supplies where tax is payable on reverse charge basis under Section 9(3)/9(4), deemed supplies without consideration under Schedule I, or additions to value under Section 15(2)(b). Relationship to Section 16(4): Section 16(4) establishes an annual cutoff deadline (30th November following the financial year or filing of annual return under Section 44, whichever is earlier), subject to retrospective statutory relief under subsections (5) and (6) for FY 2017-18 through 2020-21.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "mandatoryEligibilityConditions": [
+    "16(2)(a): Possession of valid Tax Invoice / Debit Note under Section 31",
+    "16(2)(aa): Supplier reporting in GSTR-1 (Section 37) and communication in GSTR-2B (Section 38)",
+    "16(2)(b): Actual or deemed constructive receipt of goods or services",
+    "16(2)(ba): Input tax credit not restricted in Section 38 communication",
+    "16(2)(c): Tax charged actually discharged by supplier to Government",
+    "16(2)(d): Furnishing of valid GSTR-3B return under Section 39"
+  ],
+  "vendorPaymentWindowDays": 180,
+  "reversalInterestSection": "Section 50",
+  "reversalReportingTable": "GSTR-3B Table 4(B)(2)",
+  "reclaimReportingTable": "GSTR-3B Table 4(A)(5) and Table 4(D)(1)",
+  "statutoryReversalExceptions": [
+    "Supplies on which tax is payable under Reverse Charge Mechanism (RCM) under Section 9(3) or Section 9(4)",
+    "Deemed supplies without consideration under Schedule I of the CGST Act",
+    "Amounts added to value of supply on account of supplier's liability incurred by recipient under Section 15(2)(b)"
+  ],
+  "annualCutoffDeadline": "30th November following the end of the financial year to which the invoice pertains, or date of filing Annual Return (GSTR-9), whichever is earlier (Section 16(4) as amended by Finance Act, 2022 w.e.f. 01-10-2022)",
+  "retrospectiveReliefProvisions": "Section 16(5) & Section 16(6) inserted by Finance (No. 2) Act, 2024 provide retrospective extension for invoices pertaining to FY 2017-18, 2018-19, 2019-20, and 2020-21 where GSTR-3B was filed up to 30th November 2021."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Central Goods and Services Tax Act, 2017 Section 16](https://taxinformation.cbic.gov.in): *Statutory eligibility conditions, 180-day proviso, and annual cutoff rules for Input Tax Credit*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 170/02/2022-GST (CBIC-20001/2/2022-GST)](https://taxinformation.cbic.gov.in): *Mandatory reporting of temporary ITC reversals under Rule 37 in Table 4(B)(2) and subsequent re-availment in Table 4(A)(5) and Table 4(D)(1) of GSTR-3B*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 39/2021-Central Tax (Dated 21 December 2021)](https://cbic-gst.gov.in): *Notifying effective date of 1 January 2022 for Section 16(2)(aa) mandatory GSTR-2B reconciliation*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Central Goods and Services Tax Rules, 2017 Rule 37](https://taxinformation.cbic.gov.in): *Reversal of input tax credit in case of non-payment of consideration within 180 days and subsequent re-availment upon payment*
+
+**Executive Circulars Bundled**:
+- [`cbic_circular_170_2022_itc_reporting.md`](./okf/indirect_tax_gst/itc_eligibility_16_2/circulars/cbic_circular_170_2022_itc_reporting.md)
+
+**Compliance Return Schemas & Templates**:
+- [`gstr_3b_table_4_itc_reversal.json`](./okf/indirect_tax_gst/itc_eligibility_16_2/forms/gstr_3b_table_4_itc_reversal.json)
+
+---
+
+#### Section 9(3): Reverse Charge Mechanism (RCM) mandatory tax liability on recipient, self-invoicing, payment voucher issuance, and electronic cash discharge
+
+- **Governing Statute**: Central Goods and Services Tax Act, 2017 read with Notification No. 13/2017-Central Tax (Rate)
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2017-07-01` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/indirect_tax_gst/rcm_liability_sec9_3/section.json`](./okf/indirect_tax_gst/rcm_liability_sec9_3/section.json)
+
+**Statutory Summary**:
+> Under Section 9(3) of the CGST Act, 2017 read with Notification No. 13/2017-Central Tax (Rate), the government specifies categories of supply of goods or services the tax on which shall be paid on reverse charge basis by the recipient of such supplies, and all the provisions of the Act apply to such recipient as if they were the person liable for paying the tax. Specified corporate supplies include Goods Transport Agency (GTA) services, legal services provided by an individual advocate or senior advocate, services provided by directors to a company, sponsorship services, and security personnel services. Crucially under GST law, RCM tax liability cannot be discharged using accumulated input tax credit (ITC) and must be paid strictly in cash via the Electronic Cash Ledger. Under Section 31(3)(f), the recipient must issue a 'Self-Invoice' on the date of receipt of goods or services from an unregistered supplier, and a 'Payment Voucher' under Section 31(3)(g) at the time of making payment. Once discharged in cash, the RCM tax paid is eligible for input tax credit under Section 16(2) in the same tax period.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "specifiedRcmCategories": [
+    "Goods Transport Agency (GTA) not opting for forward charge 12%",
+    "Legal services provided by individual advocates / firms of advocates",
+    "Services provided by a Director of a company/body corporate to the company",
+    "Services by way of sponsorship to any body corporate or partnership firm",
+    "Services provided by way of supply of security personnel to a registered person"
+  ],
+  "mandatoryCashPaymentRule": "RCM liability CANNOT be adjusted against Electronic Credit Ledger (ITC); must strictly be discharged via Electronic Cash Ledger under Section 49(4)",
+  "selfInvoiceMandate": "Section 31(3)(f): Recipient liable to pay tax under Section 9(3) or 9(4) must issue a self-invoice within 30 days of receiving supply from unregistered supplier",
+  "paymentVoucherMandate": "Section 31(3)(g): Recipient must issue a Payment Voucher at the time of making payment to the supplier",
+  "itcEligibilityTiming": "Tax discharged under RCM in month M is eligible for full ITC in month M under GSTR-3B Table 4(A)(3), provided underlying supply is for business purposes and not blocked under Section 17(5)"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)](https://taxinformation.cbic.gov.in): *Section 9(3): Levy and collection under Reverse Charge Mechanism & Section 31(3)(f)/(g): Self-invoicing and payment vouchers*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 13/2017-Central Tax (Rate) dated 28 June 2017](https://taxinformation.cbic.gov.in): *Categories of services on which tax is payable under reverse charge mechanism by the recipient*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 102/21/2019-GST dated 28 June 2019](https://taxinformation.cbic.gov.in): *Clarification regarding applicability of GST on additional/penal interest and RCM applicability*
+
+**Executive Circulars Bundled**:
+- [`cbic_circular_102_2019_rcm_clarifications.md`](./okf/indirect_tax_gst/rcm_liability_sec9_3/circulars/cbic_circular_102_2019_rcm_clarifications.md)
+
+**Compliance Return Schemas & Templates**:
+- [`rcm_self_invoice_payment_voucher.json`](./okf/indirect_tax_gst/rcm_liability_sec9_3/forms/rcm_self_invoice_payment_voucher.json)
+
+---
+
 ### Cross-Border & International Tax (Internal Revenue Code)
+
+#### Section 195: Deduction of tax at source on foreign cross-border payments to non-residents, DTAA treaty benefits, documentation, Form 15CA/15CB, and cloud software exemption
+
+- **Governing Statute**: Income-tax Act, 1961 read with Double Taxation Avoidance Agreements (DTAA) under Section 90
+- **Successor Provision**: Income-tax Act, 2025 Section 393(2) &mdash; Section 393(2) of Income-tax Act, 2025
+- **Temporal Validity**: `1962-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Continues under Section 393(2) of the Income-tax Act, 2025.
+- **Machine-Readable Source**: [`okf/international_tax/cross_border_remittance_195/section.json`](./okf/international_tax/cross_border_remittance_195/section.json)
+
+**Statutory Summary**:
+> Section 195 of the Income-tax Act, 1961 mandates that any person responsible for paying to a non-resident or foreign company any sum chargeable under the provisions of the Act must deduct income tax at source at the rates in force. Under Section 90(2), the provisions of the domestic Act or the Double Taxation Avoidance Agreement (DTAA), whichever is more beneficial to the assessee, shall apply. To avail of beneficial treaty rates (typically 10%–15% for Royalties or Fees for Technical Services vs. domestic 20% + surcharge/cess), the non-resident must furnish: (1) Tax Residency Certificate (TRC) under Section 90(4), (2) Form 10F electronically filed under Rule 21AB, and (3) a No-Permanent Establishment (No-PE) and Beneficial Ownership declaration under Article 5 and Article 7. Crucially for modern technology enterprise finance, the Supreme Court of India in Engineering Analysis Centre of Excellence v. CIT (2021) established that payments by Indian resident end-users or distributors for standard off-the-shelf software or automated cloud SaaS infrastructure do not constitute royalties under Article 12 of DTAAs. Rule 37BB mandates electronic filing of Form 15CA (and Form 15CB Chartered Accountant certificate where remittance exceeds ₹5 Lakh and is chargeable to tax) prior to authorized dealer bank remittance.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "domesticDefaultWithholdingRatePercent": 20,
+  "treatyBeneficialProvision": "Section 90(2): Taxpayer entitled to lower rate between domestic IT Act and bilateral DTAA treaty",
+  "mandatoryTreatyDocumentation": [
+    "Tax Residency Certificate (TRC) issued by foreign government authority under Section 90(4)",
+    "Form 10F electronically verified on IT portal under Rule 21AB",
+    "No-PE and Beneficial Ownership Declaration under Article 5 & Article 7"
+  ],
+  "rule37bbBankingGate": "Bank cannot remit funds abroad without valid Form 15CA acknowledgement and Form 15CB CA certification (for taxable payments > ₹5,00,000)",
+  "supremeCourtEngineeringAnalysisDoctrine": "Payments for standardized automated cloud infrastructure, hosting, and off-the-shelf SaaS subscriptions are business profits under Article 7 and NOT royalties; exempt from withholding in the absence of a Permanent Establishment",
+  "surchargeAndCessRule": "Health & Education Cess (4%) and applicable Surcharge apply on domestic Act rates, but DO NOT apply when deducting at DTAA treaty rates unless treaty explicitly provides otherwise"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Direct Taxes (CBDT)** — [Income-tax Act, 1961 (Act No. 43 of 1961)](https://incometaxindia.gov.in): *Section 195: Other sums & Section 90: Agreement with foreign countries or specified territories*
+- **Supreme Court of India** — [Civil Appeal Nos. 8733-8734 of 2018 (Engineering Analysis Centre of Excellence Pvt Ltd v. CIT)](https://sci.gov.in): *Landmark ruling on characterization of software and SaaS payments under DTAA*
+- **Central Board of Direct Taxes (CBDT)** — [Notification No. 03/2022 / F.No. 370142/14/2022-TPL dated 16 July 2022 & Circular 03/2023](https://incometaxindia.gov.in): *Electronic filing of Form 10F by non-residents not having PAN*
+
+**Executive Circulars Bundled**:
+- [`cbdt_circular_03_2022_form10f_electronic.md`](./okf/international_tax/cross_border_remittance_195/circulars/cbdt_circular_03_2022_form10f_electronic.md)
+- [`supreme_court_engineering_analysis_doctrine.md`](./okf/international_tax/cross_border_remittance_195/circulars/supreme_court_engineering_analysis_doctrine.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_15ca_15cb_compliance_checklist.json`](./okf/international_tax/cross_border_remittance_195/forms/form_15ca_15cb_compliance_checklist.json)
+
+---
 
 #### Section IRC-901-904: Foreign Tax Credit authorization, separate basket limitation, and partnership pass-through reporting (Form 1116 / Schedule K-3)
 
@@ -284,7 +767,7 @@ The table below records the provenance baseline, verification standard, and expl
 
 **Official Citations & Trust Anchors**:
 - **Internal Revenue Service (IRS)** — [Instructions for Form 1116 (Foreign Tax Credit)](https://www.irs.gov/forms-pubs/about-form-1116): *Substantiation requirements and separate basket allocations*
-- **Internal Revenue Service (IRS)** — [Instructions for Schedule K-3 (Form 1065)](https://www.irs.gov/forms-pubs/about-schedule-k-3-form-1065): *Partner Share of Income, Deductions, Credits, etc. - International*
+- **Internal Revenue Service (IRS)** — [Instructions for Schedule K-3 (Form 1065)](https://www.irs.gov/forms-pubs/about-form-1065): *Partner Share of Income, Deductions, Credits, etc. - International*
 
 **Compliance Return Schemas & Templates**:
 - [`form_67_statement_of_foreign_tax.json`](./okf/international_tax/foreign_tax_credit_irc_901_904/forms/form_67_statement_of_foreign_tax.json)
@@ -322,7 +805,7 @@ The table below records the provenance baseline, verification standard, and expl
 
 **Official Citations & Trust Anchors**:
 - **Ministry of Law and Justice** — [Micro, Small and Medium Enterprises Development Act, 2006 (Act No. 27 of 2006)](https://msme.gov.in): *Chapter V: Delayed Payments to Micro and Small Enterprises (Sections 15, 16, 23)*
-- **Ministry of MSME** — [Office Memorandum No. 5/2(2)/2021-E/P & G/Policy (Dated 2 July 2021) & OM No. 1/4(1)/2021-P&G/Policy](https://msme.gov.in/sites/default/files/OM_Retail_Wholesale.pdf): *Inclusion of Retail and Wholesale Trade under MSME - Restriction on Chapter V delayed payment benefits*
+- **Ministry of MSME** — [Office Memorandum No. 5/2(2)/2021-E/P & G/Policy (Dated 2 July 2021) & OM No. 1/4(1)/2021-P&G/Policy](https://dcmsme.gov.in/): *Inclusion of Retail and Wholesale Trade under MSME - Restriction on Chapter V delayed payment benefits*
 - **Reserve Bank of India** — [Circular RBI/2021-2022/67 FIDD.MSME & NFS.BC.No.13/06.02.31/2021-22](https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12129&Mode=0): *Lending to Micro, Small & Medium Enterprises - Retail and Wholesale Trade PSL Eligibility*
 - **Central Board of Direct Taxes (CBDT)** — [Finance Act, 2023 (Enacting Section 43B(h) of Income-tax Act, 1961)](https://incometaxindia.gov.in): *Disallowance of expenditure for delayed payments to Micro and Small Enterprises*
 
@@ -332,6 +815,126 @@ The table below records the provenance baseline, verification standard, and expl
 **Compliance Return Schemas & Templates**:
 - [`schedule_iii_msme_disclosure.md`](./okf/msme_commercial/delayed_payments_15_16/forms/schedule_iii_msme_disclosure.md)
 - [`udyam_registration_verification.json`](./okf/msme_commercial/delayed_payments_15_16/forms/udyam_registration_verification.json)
+
+---
+
+#### Section MSMED-SEC-7: Composite criteria for classification of Micro, Small and Medium Enterprises, investment calculations, and statutory exclusion of export turnover
+
+- **Governing Statute**: Micro, Small and Medium Enterprises Development Act, 2006 read with Ministry of MSME Notification S.O. 2119(E)
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2020-07-01` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/msme_commercial/enterprise_classification_sec7/section.json`](./okf/msme_commercial/enterprise_classification_sec7/section.json)
+
+**Statutory Summary**:
+> Under Section 7 of the MSMED Act, 2006 read with Ministry of MSME Notification S.O. 2119(E) dated 26 June 2020, an enterprise is classified under composite criteria evaluating both Investment in Plant & Machinery/Equipment and Annual Turnover. The thresholds are: (1) Micro: Investment not exceeding ₹1 Crore AND Turnover not exceeding ₹5 Crore; (2) Small: Investment not exceeding ₹10 Crore AND Turnover not exceeding ₹50 Crore; (3) Medium: Investment not exceeding ₹50 Crore AND Turnover not exceeding ₹250 Crore. If an enterprise crosses the ceiling limits for its present category in either of the two criteria, it ceases to exist in that category and graduates to the next higher category. Crucially for corporate finance, Paragraph 4 of Notification 2119(E) dictates that Exports of goods or services or both shall be strictly excluded while calculating the turnover of any enterprise for classification purposes.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "microLimits": {
+    "maxInvestmentInPlantAndMachineryInr": 10000000,
+    "maxTurnoverExcludingExportsInr": 50000000
+  },
+  "smallLimits": {
+    "maxInvestmentInPlantAndMachineryInr": 100000000,
+    "maxTurnoverExcludingExportsInr": 500000000
+  },
+  "mediumLimits": {
+    "maxInvestmentInPlantAndMachineryInr": 500000000,
+    "maxTurnoverExcludingExportsInr": 2500000000
+  },
+  "compositePrinciple": "Both investment and turnover criteria must be satisfied simultaneously; crossing either moves entity to next higher category",
+  "exportTurnoverExclusionRule": "Exports of goods or services or both are completely excluded from qualifying turnover under Paragraph 4 of Notification 2119(E)",
+  "investmentComputationBasis": "Written Down Value (WDV) at the end of the year as per Income-tax return, excluding cost of pollution control, R&D, and safety devices",
+  "graduationTransitionRule": "In case of upward graduation, entity retains prevailing status for 1 year from the close of the financial year of transition"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Micro, Small and Medium Enterprises** — [Notification S.O. 2119(E) dated 26 June 2020](https://udyamregistration.gov.in): *Criteria for classification of micro, small and medium enterprises and registration process*
+- **Ministry of Law and Justice** — [Micro, Small and Medium Enterprises Development Act, 2006 (Act No. 27 of 2006)](https://msme.gov.in): *Section 7: Classification of enterprises*
+
+**Executive Circulars Bundled**:
+- [`msme_notification_2119_e_composite_criteria.md`](./okf/msme_commercial/enterprise_classification_sec7/circulars/msme_notification_2119_e_composite_criteria.md)
+
+**Compliance Return Schemas & Templates**:
+- [`udyam_composite_calculation_worksheet.json`](./okf/msme_commercial/enterprise_classification_sec7/forms/udyam_composite_calculation_worksheet.json)
+
+---
+
+#### Section MCA-MSME-1: Mandatory half-yearly reporting of outstanding dues exceeding 45 days to Micro & Small Enterprises (Form MSME-1)
+
+- **Governing Statute**: Companies Act, 2013 read with Specified Companies (Furnishing of information about payment to micro and small enterprise suppliers) Order, 2019
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2019-01-22` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/msme_commercial/mca_msme_1_filing/section.json`](./okf/msme_commercial/mca_msme_1_filing/section.json)
+
+**Statutory Summary**:
+> Under Section 405 of the Companies Act, 2013 and the Specified Companies Order, 2019, every specified company that receives supplies of goods or services from Micro or Small enterprises and has payments outstanding for more than 45 days from the date of acceptance (or deemed acceptance) must file Form MSME-1 with the Registrar of Companies (ROC). The return is due half-yearly: for the April-September period by October 31, and for the October-March period by April 30. Form MSME-1 requires detailed line-by-line disclosures including supplier PAN, name, date from which payment is due, amount outstanding, and the specific justifiable reason for non-payment. Failure to furnish this information or providing false information attracts penal liabilities under Section 405(4) of the Companies Act, 2013.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "overdueTriggerDays": 45,
+  "filingFrequency": "Half-Yearly (Every 6 months)",
+  "halfYear1Period": "April 1 to September 30 (Filing Due Date: October 31)",
+  "halfYear2Period": "October 1 to March 31 (Filing Due Date: April 30)",
+  "applicableEntities": "All Companies registered under Companies Act, 2013 with overdue trade payables to Micro/Small enterprises > 45 days",
+  "penalProvisions": "Section 405(4): Company liable to penalty of ₹20,000, continuing penalty ₹1,000/day up to ₹3,00,000; Officer in default liable to penalty up to ₹3,00,000",
+  "traderExclusion": "Traders (NIC 45/46/47) excluded from Chapter V protection do not trigger Form MSME-1 45-day overdue reporting"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Corporate Affairs (MCA)** — [Specified Companies (Furnishing of information about payment to micro and small enterprise suppliers) Order, 2019 (S.O. 368(E))](https://www.mca.gov.in): *Mandatory filing of Form MSME-1 by specified companies*
+- **Ministry of Law and Justice** — [Companies Act, 2013 (Act No. 18 of 2013)](https://www.mca.gov.in): *Section 405: Power of Central Government to direct companies to furnish information or statistics*
+
+**Executive Circulars Bundled**:
+- [`mca_order_2019_specified_companies.md`](./okf/msme_commercial/mca_msme_1_filing/circulars/mca_order_2019_specified_companies.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_msme_1_half_yearly_return.json`](./okf/msme_commercial/mca_msme_1_filing/forms/form_msme_1_half_yearly_return.json)
+
+---
+
+#### Section MSMED-SEC-22: Mandatory statutory disclosures in annual audited financial statements regarding dues to Micro and Small Enterprises and tax non-deductibility of penal interest
+
+- **Governing Statute**: Micro, Small and Medium Enterprises Development Act, 2006 read with Companies Act, 2013 Schedule III
+- **Successor Provision**: undefined &mdash; undefined
+- **Temporal Validity**: `2006-10-02` to `OPEN_ENDED`
+- **Machine-Readable Source**: [`okf/msme_commercial/statutory_disclosures_sec22/section.json`](./okf/msme_commercial/statutory_disclosures_sec22/section.json)
+
+**Statutory Summary**:
+> Section 22 of the MSMED Act, 2006 mandates that any buyer required to have its accounts audited under any law must furnish five specific disclosures in its annual financial statements regarding trade payables to micro and small enterprises: (1) Principal and interest due remaining unpaid at year-end, (2) Interest paid along with delayed payments made during the year, (3) Interest due and payable for delays without added interest, (4) Interest accrued and remaining unpaid at year-end, and (5) Further interest remaining due and payable in succeeding years. In parallel, Schedule III of the Companies Act, 2013 prescribes a mandatory Trade Payables Aging Schedule segregating MSME dues (undisputed and disputed) into buckets: less than 1 year, 1-2 years, 2-3 years, and more than 3 years. Under Section 23 of the MSMED Act, compound penal interest payable or paid under Section 16 is strictly prohibited from being claimed as an income tax deduction, requiring an explicit book-to-tax add-back.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "mandatoryDisclosureCount": 5,
+  "scheduleIiiAgingBuckets": [
+    "Less than 1 year",
+    "1-2 years",
+    "2-3 years",
+    "More than 3 years"
+  ],
+  "disputeSegregation": "Mandatory separate aging disclosure for Undisputed MSME dues vs. Disputed MSME dues",
+  "taxAddbackMandate": "Section 23 strictly disallows Section 16 penal interest under Income-tax Act, 1961 (and Act 2025)",
+  "statutoryAuditVerification": "CARO 2020 Clause (xvi)(d) / (xix) requires statutory auditors to verify material uncertainty on settlement of MSME payables",
+  "applicableEntities": "All corporate and non-corporate entities subject to statutory audit having transactions with registered Micro/Small enterprises"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Law and Justice** — [Micro, Small and Medium Enterprises Development Act, 2006 (Act No. 27 of 2006)](https://msme.gov.in): *Section 22: Requirement to specify unpaid amount with interest in the annual statement of accounts & Section 23: Interest not to be allowed as deduction from income*
+- **Ministry of Corporate Affairs (MCA)** — [Companies Act, 2013 Schedule III (Division I & II Amendment Notification G.S.R. 207(E) dated 24 March 2021)](https://www.mca.gov.in): *Mandatory Trade Payables Aging Schedule Disclosures*
+- **Institute of Chartered Accountants of India (ICAI)** — [Guidance Note on Division I, II and III of Schedule III to the Companies Act, 2013](https://www.icai.org): *Accounting and Disclosure of Dues to Micro and Small Enterprises*
+
+**Executive Circulars Bundled**:
+- [`icai_guidance_note_schedule_iii_trade_payables.md`](./okf/msme_commercial/statutory_disclosures_sec22/circulars/icai_guidance_note_schedule_iii_trade_payables.md)
+
+**Compliance Return Schemas & Templates**:
+- [`schedule_iii_msme_aging_table.json`](./okf/msme_commercial/statutory_disclosures_sec22/forms/schedule_iii_msme_aging_table.json)
+- [`section_23_tax_addback_schedule.json`](./okf/msme_commercial/statutory_disclosures_sec22/forms/section_23_tax_addback_schedule.json)
 
 ---
 

@@ -1,0 +1,60 @@
+{
+  "formCode": "SCHEDULE_III_MSME_AGING",
+  "title": "Companies Act Schedule III Trade Payables Aging Schedule",
+  "statutoryBasis": "Schedule III (Division I and Division II) to the Companies Act, 2013",
+  "applicableStandards": ["AS", "IND_AS"],
+  "schema": {
+    "reportingDate": {
+      "type": "string",
+      "format": "date",
+      "required": true
+    },
+    "agingCategories": {
+      "type": "object",
+      "required": true,
+      "properties": {
+        "msmeUndisputed": {
+          "type": "object",
+          "properties": {
+            "lessThan1YearInr": { "type": "number", "required": true },
+            "oneToTwoYearsInr": { "type": "number", "required": true },
+            "twoToThreeYearsInr": { "type": "number", "required": true },
+            "moreThan3YearsInr": { "type": "number", "required": true },
+            "totalInr": { "type": "number", "required": true }
+          }
+        },
+        "msmeDisputed": {
+          "type": "object",
+          "properties": {
+            "lessThan1YearInr": { "type": "number", "required": true },
+            "oneToTwoYearsInr": { "type": "number", "required": true },
+            "twoToThreeYearsInr": { "type": "number", "required": true },
+            "moreThan3YearsInr": { "type": "number", "required": true },
+            "totalInr": { "type": "number", "required": true }
+          }
+        },
+        "othersUndisputed": {
+          "type": "object",
+          "properties": {
+            "lessThan1YearInr": { "type": "number", "required": true },
+            "oneToTwoYearsInr": { "type": "number", "required": true },
+            "twoToThreeYearsInr": { "type": "number", "required": true },
+            "moreThan3YearsInr": { "type": "number", "required": true },
+            "totalInr": { "type": "number", "required": true }
+          }
+        },
+        "othersDisputed": {
+          "type": "object",
+          "properties": {
+            "lessThan1YearInr": { "type": "number", "required": true },
+            "oneToTwoYearsInr": { "type": "number", "required": true },
+            "twoToThreeYearsInr": { "type": "number", "required": true },
+            "moreThan3YearsInr": { "type": "number", "required": true },
+            "totalInr": { "type": "number", "required": true }
+          }
+        },
+        "unbilledDuesInr": { "type": "number", "required": true }
+      }
+    }
+  }
+}

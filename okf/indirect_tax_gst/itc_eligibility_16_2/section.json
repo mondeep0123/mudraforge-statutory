@@ -1,0 +1,84 @@
+{
+  "sectionId": "CGST2017_SEC16_2",
+  "sectionCode": "16(2)",
+  "aliases": [
+    "16(2)",
+    "sec16(2)",
+    "section 16(2)",
+    "section 16",
+    "itc conditions",
+    "180 day rule",
+    "itc reversal",
+    "gstr-2b itc",
+    "gstr2b"
+  ],
+  "governingStatute": "Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)",
+  "statutorySection": "Section 16(2)",
+  "successorStatute": "CGST Act, 2017 (In force)",
+  "successorSection": "Section 16(2), (3), (4), (5), (6)",
+  "title": "Eligibility and conditions for taking input tax credit and mandatory 180-day payment rule",
+  "effectivePeriod": {
+    "validFrom": "2017-07-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Every November 30 (Statutory ITC cutoff deadline under Section 16(4))",
+    "sunsetNotes": "Active statutory framework amended by Finance Act 2021 (clause aa w.e.f. 01-01-2022), Finance Act 2022 (clause ba and Nov 30 cutoff w.e.f. 01-10-2022), and Finance (No. 2) Act 2024 (subsections 5 & 6 retrospective relief)."
+  },
+  "plainTextSummary": "Under Section 16(2) of the CGST Act, 2017, no registered person is entitled to input tax credit (ITC) on any supply of goods or services unless five cumulative statutory conditions are met: (a) Possession of a tax invoice or debit note issued by a registered supplier under Section 31; (aa) Details of the invoice/debit note have been furnished by the supplier in the statement of outward supplies under Section 37 (GSTR-1) and communicated to the recipient in the manner specified under Section 38 (auto-drafted in GSTR-2B); (b) Recipient has received the goods or services or both (including 'bill-to-ship-to' deemed receipt under Explanation); (ba) Details of ITC communicated under Section 38 have not been restricted; (c) Tax charged has been actually paid to the Government, either in cash or through utilization of admissible ITC; (d) Return under Section 39 (GSTR-3B) has been furnished. Second Proviso (180-Day Rule): Where a recipient fails to pay the supplier the amount towards the value of supply along with tax payable within 180 days from the invoice date, an amount equal to the ITC availed must be paid by the recipient along with interest under Section 50, reported in Table 4(B)(2) of GSTR-3B under Rule 37. Third Proviso: The recipient is entitled to re-avail such ITC in Table 4(A)(5) and Table 4(D)(1) upon subsequent payment of the invoice amount to the supplier. Statutory Exceptions to 180-Day Rule: Does not apply to supplies where tax is payable on reverse charge basis under Section 9(3)/9(4), deemed supplies without consideration under Schedule I, or additions to value under Section 15(2)(b). Relationship to Section 16(4): Section 16(4) establishes an annual cutoff deadline (30th November following the financial year or filing of annual return under Section 44, whichever is earlier), subject to retrospective statutory relief under subsections (5) and (6) for FY 2017-18 through 2020-21.",
+  "keyStatutoryThresholds": {
+    "mandatoryEligibilityConditions": [
+      "16(2)(a): Possession of valid Tax Invoice / Debit Note under Section 31",
+      "16(2)(aa): Supplier reporting in GSTR-1 (Section 37) and communication in GSTR-2B (Section 38)",
+      "16(2)(b): Actual or deemed constructive receipt of goods or services",
+      "16(2)(ba): Input tax credit not restricted in Section 38 communication",
+      "16(2)(c): Tax charged actually discharged by supplier to Government",
+      "16(2)(d): Furnishing of valid GSTR-3B return under Section 39"
+    ],
+    "vendorPaymentWindowDays": 180,
+    "reversalInterestSection": "Section 50",
+    "reversalReportingTable": "GSTR-3B Table 4(B)(2)",
+    "reclaimReportingTable": "GSTR-3B Table 4(A)(5) and Table 4(D)(1)",
+    "statutoryReversalExceptions": [
+      "Supplies on which tax is payable under Reverse Charge Mechanism (RCM) under Section 9(3) or Section 9(4)",
+      "Deemed supplies without consideration under Schedule I of the CGST Act",
+      "Amounts added to value of supply on account of supplier's liability incurred by recipient under Section 15(2)(b)"
+    ],
+    "annualCutoffDeadline": "30th November following the end of the financial year to which the invoice pertains, or date of filing Annual Return (GSTR-9), whichever is earlier (Section 16(4) as amended by Finance Act, 2022 w.e.f. 01-10-2022)",
+    "retrospectiveReliefProvisions": "Section 16(5) & Section 16(6) inserted by Finance (No. 2) Act, 2024 provide retrospective extension for invoices pertaining to FY 2017-18, 2018-19, 2019-20, and 2020-21 where GSTR-3B was filed up to 30th November 2021."
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Central Goods and Services Tax Act, 2017 Section 16",
+      "subject": "Statutory eligibility conditions, 180-day proviso, and annual cutoff rules for Input Tax Credit",
+      "officialUrl": "https://taxinformation.cbic.gov.in"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Circular No. 170/02/2022-GST (CBIC-20001/2/2022-GST)",
+      "subject": "Mandatory reporting of temporary ITC reversals under Rule 37 in Table 4(B)(2) and subsequent re-availment in Table 4(A)(5) and Table 4(D)(1) of GSTR-3B",
+      "officialUrl": "https://taxinformation.cbic.gov.in"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Notification No. 39/2021-Central Tax (Dated 21 December 2021)",
+      "subject": "Notifying effective date of 1 January 2022 for Section 16(2)(aa) mandatory GSTR-2B reconciliation",
+      "officialUrl": "https://cbic-gst.gov.in"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Central Goods and Services Tax Rules, 2017 Rule 37",
+      "subject": "Reversal of input tax credit in case of non-payment of consideration within 180 days and subsequent re-availment upon payment",
+      "officialUrl": "https://taxinformation.cbic.gov.in"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Tax Invoice or Debit Note issued by supplier complying with Rule 46 requirements",
+    "GSTR-2B monthly auto-drafted statement verifying appearance under Section 38 communication",
+    "Proof of Receipt: Goods Receipt Note (GRN), Material Inward Slip, or Work Completion Certificate",
+    "180-day Vendor Payment Aging Schedule tracking unpaid bills from invoice date",
+    "Reconciliation Register tracking Table 4(B)(2) temporary reversals against bank payment UTRs for Table 4(D)(1) re-availment",
+    "E-Way Bill and E-Invoice IRN verification where applicable under Rule 48(4)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.6.0"
+}

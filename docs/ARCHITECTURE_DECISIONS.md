@@ -82,15 +82,19 @@ To maintain institutional credibility, public documentation must never blur the 
 
 | Subsystem / Capability | Architectural Layer | Operational Status | Availability / Access | Verification Evidence |
 | :--- | :--- | :--- | :--- | :--- |
-| **Bundled OKF Starter Seed (6 Provisions)** | Layer 1 (Open Knowledge) | `PUBLIC_BUNDLED` | Immediate (NPM package) | 11/11 tests passing; SHA-256 Merkle root verified |
-| **Zero-Network CLI (`mudraforge-statutory`)** | Layer 1 (Open Knowledge) | `PUBLIC_BUNDLED` | Immediate (Global / NPX) | `bin/cli.js` verified across Windows & Ubuntu |
-| **Vendor-Neutral Conformance Suite** | Layer 1 (Open Knowledge) | `PUBLIC_BUNDLED` | Immediate (`conformance/`) | 12/12 fixture tests passing |
-| **Cloudflare Anycast Edge Sync** | Layer 2 (Hosted Services) | `PUBLIC_EDGE_SYNC` | Free Beta (`api.mudraforge.in`) | Cloudflare Edge Worker manifest endpoint |
-| **11-Domain Catalog Discovery** | Layer 2 (Hosted Services) | `PUBLIC_EDGE_SYNC` | Free Beta | Remote catalog indexing |
-| **Differential Tax Calculators** | Layer 3 (Deduction Engine) | `ENTERPRISE_INTERNAL` | Paid Enterprise API | Deterministic calculation engine |
-| **Dual-Custody Mobile Approval Harness** | Layer 4 (Adesha Runtime) | `ENTERPRISE_INTERNAL` | Enterprise License / Pilot | Android APK & TLA+ payment state machine |
-| **ERP Two-Way Sync (SAP/Tally/Zoho)** | Layer 4 (Adesha Runtime) | `ENTERPRISE_INTERNAL` | Enterprise License | Two-way database connectors & journal writebacks |
-| **Bank Rail API Execution (ICICI/HDFC)** | Layer 4 (Adesha Runtime) | `ENTERPRISE_INTERNAL` | Enterprise License | Host-to-Host banking integration |
+| **Bundled OKF Statutory Corpus (11 Provisions)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Local repo & release candidate) | 40/40 test suites passing; SHA-256 Merkle root verified |
+| **Zero-Network CLI (`mudraforge-statutory`)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Global / NPX) | `bin/cli.js` verified across Windows & Linux |
+| **Vendor-Neutral Conformance Suite** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (`conformance/`) | 12/12 fixture tests passing |
+| **Local Query SDK (`src/index.js`)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Node.js v18+) | Zero-dependency offline lookup and temporal checks |
+| **Synthetic AP Execution Trace (`examples/`)** | Layer 1: Public Package | `PUBLIC_DEMO_SYNTHETIC` | Immediate (`npm run example:trace`) | Modeled 7-stage lifecycle with synthetic test fixtures |
+| **Cloudflare Anycast Edge Sync** | Layer 2: Public Edge Service | `PUBLIC_EDGE_SYNC` | Free Beta (`api.mudraforge.in`) | Cloudflare Edge Worker manifest & bundle endpoints |
+| **Interactive API Documentation** | Layer 2: Public Edge Service | `PUBLIC_EDGE_SYNC` | Free Beta (`/api/v1/statutory/docs`) | OpenAPI 3.1 schema rendered live on Anycast edge |
+| **Deterministic Tax Calculators** | Layer 3: Enterprise Internal | `PILOT_STAGE_INTERNAL` | Metered Enterprise API (Selective) | Deterministic arithmetic engine under test harness |
+| **Dual-Custody Mobile Approval Harness** | Layer 4: Adesha Runtime | `INTERNAL_PROTOTYPE` | Enterprise License / Pilot Proposal | Mobile passkey approval prototype & TLA+ state machine |
+| **ERP Two-Way Connectors (SAP/Tally/Zoho)** | Layer 4: Adesha Runtime | `INTERNAL_DEVELOPMENT` | Custom Enterprise Pilot | Shadow-mode test connectors; no turnkey plug-ins shipped |
+| **Bank Rail API Adapters (ICICI/HDFC/RazorpayX)**| Layer 4: Adesha Runtime | `INTERNAL_DEVELOPMENT` | Custom Enterprise Pilot | Sandbox banking adapters requiring corporate partner onboarding |
+
+> **Critical Operational Distinction**: Items marked `PUBLIC_BUNDLED` and `PUBLIC_EDGE_SYNC` represent inspectable, working software. Items marked `PILOT_STAGE_INTERNAL`, `INTERNAL_PROTOTYPE`, and `INTERNAL_DEVELOPMENT` represent proprietary or developing enterprise capabilities; they are not shipped as generally available consumer software and their execution traces rely on modeled synthetic data.
 
 ---
 

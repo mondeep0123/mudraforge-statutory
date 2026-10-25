@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.6.0] - 2026-10-25
+
+### Added
+- **100% Complete Corporate Finance AP Corpus (24 Provisions across 5 Core Domains)**:
+  - `direct_tax`: Added **Section 194R** (10% TDS on business perquisites & benefits > ₹20k, Circulars 12/2022 & 18/2022) and **Section 206AB** (Higher withholding rate on non-filers: higher of 2× statutory rate or 5%).
+  - `indirect_tax_gst`: Added **Section 51** (2% GST TDS on government/PSU contracts > ₹2.5L), **Section 34** (Credit and debit notes statutory adjustments & 30th November cutoff), **Section 10** (Composition scheme: restrictions on tax collection and ITC blockage), and **Rule 48(4)** (Mandatory E-Invoicing & B2B QR code mandate for turnover > ₹5 Cr with Rule 48(5) void invoice penalty).
+  - Expanded test coverage from 49 to 55 comprehensive regression suites with 100% pass rate.
+- **Cognitive AI Explanation Toggle**:
+  - `POST /api/v1/statutory/calculate` now supports an `explain: true` toggle and rich `mode: 'analysis'` senior legal counsel opinion generated via Google Gemini 2.5 Flash / Workers AI Llama 3.3.
+  - Sub-10ms fast path preserved for `mode: 'standard'` and `explain: false` for high-throughput automated ERP batch processing.
+- **Section 194J Category Normalization & Fail-Closed Safety**:
+  - Flexible case-insensitive synonym mapping (`'professional'`, `'prof'`, `'ca'`, `'legal'`, `'fts'`, `'technical'`, `'director'`).
+  - Unknown service categories strictly reject with HTTP 400 `INVALID_SERVICE_CATEGORY` instead of defaulting silently to 2%.
+- **MSME Wholesale & Retail Trader Exclusion (NIC 45, 46, 47)**:
+  - Deterministically enforces Ministry of MSME OM dated 02.07.2021, setting delayed payment interest to ₹0 with `EXEMPT_TRADER_EXCLUSION`.
+
+---
+
+## [2.5.1] - 2026-10-25
+
+### Fixed
+- **Citation Link Integrity & Canonical Landing Pages**: Audited all 70 statutory citation links across the OKF corpus, resolving broken direct PDF paths on `incometaxindia.gov.in` and `msme.gov.in` with canonical regulatory portal landing pages. Replaced decommissioned `main.sci.gov.in` with active `sci.gov.in`.
+- **Government PKI TLS Transport**: Added recognition for Government of India Controller of Certifying Authorities (CCA / NIC CA) leaf certificate verification on `taxinformation.cbic.gov.in`.
+
+### Added
+- **Automated Citation Verifier**: Added `scripts/verify_citation_links.js` (`npm run citations`) enforcing regulatory domain whitelisting, 100% HTTPS protocol compliance, and live network reachability probing (`--live`).
+- **OKF Maintenance Standard Operating Procedure**: Documented normative engineering and legal standard in [`docs/OKF_MAINTENANCE_SOP.md`](./docs/OKF_MAINTENANCE_SOP.md) defining the 10-step statutory provision lifecycle, the Dual-Tier URL Standard, Merkle tree cryptographic re-pinning, and anti-drift invariants.
+
+---
+
+## [2.5.0] - 2026-10-24
+
+### Added
+- **Multi-Domain Corpus Expansion**: Expanded statutory coverage from 8 to 18 provisions across 5 foundational domains:
+  - `corporate_ma_restructuring` (Section 50B Slump Sale)
+  - `direct_tax` (Sections 194C, 194H, 194I, 194J, 194Q, 206C(1H) sunset, 393 forward law)
+  - `indirect_tax_gst` (Sections 8 composite/mixed supplies, 9(3) RCM, 16(2) ITC eligibility, 17(5) blocked ITC)
+  - `international_tax` (Section 195 cross-border remittances, IRC §§ 901/904 foreign tax credits)
+  - `msme_commercial` (Sections 7, 15, 16, 22 of MSMED Act, 2006, MCA Form MSME-1)
+- **Offline ISO/IEC 7064 Mod-36 Checksum**: Deterministic Indian GSTIN and PAN checksum validator in `verifyGstinChecksum()`.
+- **Two-Pass Precision Resolution**: Enhanced `lookupLocalStatute()` with exact-match priority, resolving single-digit section numbers (e.g., Section 8, Section 9(3)) without sub-string prefix collisions.
+
+---
+
 ## [2.4.2] - 2026-10-24
 
 ### Added

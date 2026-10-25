@@ -1,0 +1,64 @@
+{
+  "sectionId": "MSMED2006_SEC7_CLASSIFICATION",
+  "sectionCode": "MSMED-SEC-7",
+  "aliases": [
+    "section 7",
+    "sec 7",
+    "msme classification",
+    "composite criteria",
+    "udyam classification",
+    "export turnover exclusion",
+    "micro small medium threshold",
+    "investment in plant and machinery"
+  ],
+  "governingStatute": "Micro, Small and Medium Enterprises Development Act, 2006 read with Ministry of MSME Notification S.O. 2119(E)",
+  "statutorySection": "Section 7 of MSMED Act, 2006",
+  "title": "Composite criteria for classification of Micro, Small and Medium Enterprises, investment calculations, and statutory exclusion of export turnover",
+  "effectivePeriod": {
+    "validFrom": "2020-07-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Annual Classification Re-evaluation on July 1 based on ITR and GST Filings"
+  },
+  "plainTextSummary": "Under Section 7 of the MSMED Act, 2006 read with Ministry of MSME Notification S.O. 2119(E) dated 26 June 2020, an enterprise is classified under composite criteria evaluating both Investment in Plant & Machinery/Equipment and Annual Turnover. The thresholds are: (1) Micro: Investment not exceeding ₹1 Crore AND Turnover not exceeding ₹5 Crore; (2) Small: Investment not exceeding ₹10 Crore AND Turnover not exceeding ₹50 Crore; (3) Medium: Investment not exceeding ₹50 Crore AND Turnover not exceeding ₹250 Crore. If an enterprise crosses the ceiling limits for its present category in either of the two criteria, it ceases to exist in that category and graduates to the next higher category. Crucially for corporate finance, Paragraph 4 of Notification 2119(E) dictates that Exports of goods or services or both shall be strictly excluded while calculating the turnover of any enterprise for classification purposes.",
+  "keyStatutoryThresholds": {
+    "microLimits": {
+      "maxInvestmentInPlantAndMachineryInr": 10000000,
+      "maxTurnoverExcludingExportsInr": 50000000
+    },
+    "smallLimits": {
+      "maxInvestmentInPlantAndMachineryInr": 100000000,
+      "maxTurnoverExcludingExportsInr": 500000000
+    },
+    "mediumLimits": {
+      "maxInvestmentInPlantAndMachineryInr": 500000000,
+      "maxTurnoverExcludingExportsInr": 2500000000
+    },
+    "compositePrinciple": "Both investment and turnover criteria must be satisfied simultaneously; crossing either moves entity to next higher category",
+    "exportTurnoverExclusionRule": "Exports of goods or services or both are completely excluded from qualifying turnover under Paragraph 4 of Notification 2119(E)",
+    "investmentComputationBasis": "Written Down Value (WDV) at the end of the year as per Income-tax return, excluding cost of pollution control, R&D, and safety devices",
+    "graduationTransitionRule": "In case of upward graduation, entity retains prevailing status for 1 year from the close of the financial year of transition"
+  },
+  "officialCitations": [
+    {
+      "authority": "Ministry of Micro, Small and Medium Enterprises",
+      "instrument": "Notification S.O. 2119(E) dated 26 June 2020",
+      "subject": "Criteria for classification of micro, small and medium enterprises and registration process",
+      "officialUrl": "https://udyamregistration.gov.in"
+    },
+    {
+      "authority": "Ministry of Law and Justice",
+      "instrument": "Micro, Small and Medium Enterprises Development Act, 2006 (Act No. 27 of 2006)",
+      "subject": "Section 7: Classification of enterprises",
+      "officialUrl": "https://msme.gov.in"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Udyam Registration Certificate with dynamic QR code",
+    "Audited Balance Sheet showing Written Down Value (WDV) of Plant & Machinery",
+    "Income Tax Return (ITR) depreciation schedule (Schedule DPM/DOA)",
+    "GST Returns (GSTR-1 and GSTR-3B) with explicit export turnover segregation (Zero-rated supplies / Table 6A)",
+    "Chartered Accountant certificate certifying eligible deductions from gross turnover (Exports) and plant investment (Pollution control/R&D)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.4.0"
+}

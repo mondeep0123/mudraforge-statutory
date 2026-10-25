@@ -1,0 +1,52 @@
+{
+  "sectionId": "CGST2017_SEC51",
+  "sectionCode": "51",
+  "aliases": [
+    "51",
+    "sec51",
+    "section 51",
+    "gst tds",
+    "tds under gst",
+    "psu gst tds"
+  ],
+  "governingStatute": "Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)",
+  "statutorySection": "Section 51",
+  "title": "Tax deduction at source under Goods and Services Tax",
+  "effectivePeriod": {
+    "validFrom": "2018-10-01",
+    "validTo": "OPEN_ENDED"
+  },
+  "plainTextSummary": "Departments or establishments of the Central Government or State Government, local authorities, governmental agencies, and specified PSUs must deduct tax at source at the rate of 2% (1% CGST + 1% SGST or 2% IGST) from payment made or credited to the supplier where the total value of supply under a contract exceeds ₹2,50,000 (excluding GST). No deduction is made if the location of supplier and place of supply are in a different State/UT from the State/UT of registration of the recipient.",
+  "keyStatutoryThresholds": {
+    "contractThresholdExcludingGstInr": 250000,
+    "cgstTdsRatePercent": 1.0,
+    "sgstTdsRatePercent": 1.0,
+    "igstTdsRatePercent": 2.0,
+    "totalCompositeGstTdsRatePercent": 2.0,
+    "depositDeadline": "10th day of the following month in Form GSTR-7",
+    "tdsCertificateForm": "Form GSTR-7A generated on common portal within 5 days of crediting amount to Government"
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Notification No. 50/2018-Central Tax",
+      "subject": "Notifying entities and authorities liable to deduct TDS under Section 51 of CGST Act",
+      "officialUrl": "https://taxinformation.cbic.gov.in/"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Standard Operating Procedure (SOP) on TDS under GST (Dated 28.09.2018)",
+      "subject": "Operational guidelines and threshold calculation for GST TDS deductors",
+      "officialUrl": "https://taxinformation.cbic.gov.in/"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Contract copy establishing total value of supply exceeding ₹2,50,000 (excluding taxes)",
+    "Tax invoice with basic value and GST breakdown",
+    "Form GSTR-7 return filing acknowledgment",
+    "Form GSTR-7A certificate furnished to supplier",
+    "Place of supply vs location of supplier jurisdictional determination"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.6.0"
+}

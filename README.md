@@ -11,6 +11,39 @@
 
 ---
 
+## 30-Second Quick Start
+
+```bash
+npm install @mudraforge/statutory
+```
+
+```javascript
+import { MudraStatutoryClient } from '@mudraforge/statutory';
+const client = new MudraStatutoryClient({ apiKey: process.env.MUDRA_API_KEY });
+
+// 1. Compute Section 194Q TDS (excess over ₹50L with dual-act temporal routing):
+const tds = await client.calculate({ invoiceAmount: 8000000, priorFyPurchases: 4000000 });
+console.log(tds.taxAmount); // 7000 (0.1% on ₹70L excess)
+
+// 2. Compute MSMED 3x RBI compounding interest (monthly rests):
+const interest = await client.calculate({ section: 'MSMED', invoiceAmount: 1000000, dueDate: '2025-01-01', paymentDate: '2025-04-01' });
+console.log(interest.penalInterestAmount); // 41601.37 (20.25% p.a. compound)
+
+// 3. Look up statutory rule by phrase or section code:
+const statute = await client.lookup('delayed payment');
+console.log(statute.statute.title); // MSMED statutory payment timelines & compound interest
+```
+
+---
+
+### Plain-English Orientation
+
+`@mudraforge/statutory` provides an open, machine-readable statutory knowledge layer for Indian and cross-border financial workflows, grounding compliance rules in primary legislation rather than probabilistic LLM guesswork. It serves software developers building financial applications, corporate finance operations teams seeking auditable withholding and delayed-payment rules, and autonomous AI agents requiring deterministic reference boundaries. The statutory commons acts as an open, inspectable reference substrate, while MudraForge's broader Adesha initiative governs downstream transactional execution, human authorization, and enterprise ledger writebacks. Developers can proceed directly to [Installation & Quick Start](#quick-start-free-tier), while finance leaders, controllers, and tax practitioners can inspect the indexed statutes, cumulative thresholds, and executive circulars in [docs/CATALOG.md](./docs/CATALOG.md).
+
+> **Statutory Dual-Act Temporal Boundary**: The *Income-tax Act, 2025* takes statutory effect on 1 April 2026. Relevant earlier tax years and prior transactions continue to be governed by the *Income-tax Act, 1961* under legislative transitional savings provisions (including Section 536(2) of the 2025 Act). This package explicitly models both legislative eras with date-bound temporal state machine evaluation.
+
+---
+
 ## Published Release & Provenance Ledger
 
 | Item | Value |
@@ -33,6 +66,7 @@
 
 ## Table of Contents
 
+- [Plain-English Orientation](#plain-english-orientation)
 - [Quick Start (Free Tier)](#quick-start-free-tier)
   - [1. Installation via npm](#1-installation-via-npm)
   - [2. Initialize AI Agent Skill](#2-initialize-ai-agent-skill)
@@ -41,7 +75,8 @@
   - [1. AI Agents & LLM Tooling](#1-ai-agents--llm-tooling)
   - [2. Finance Software & Accounts-Payable Workflows](#2-finance-software--accounts-payable-workflows)
   - [3. Developer Tooling & Audit Verification](#3-developer-tooling--audit-verification)
-- [Tier Separation: Free Commons vs. Hosted Calculation Engine](#architectural-boundaries-open-substrate-vs-hosted-edge-vs-adesha-platform)
+- [Product Capability Status & Operational Boundaries](#product-capability-status--operational-boundaries)
+- [Proposed Pilot Evaluation Guide (docs/PILOT_EVALUATION_GUIDE.md)](./docs/PILOT_EVALUATION_GUIDE.md)
 - [Legal Domains Currently Covered](#legal-domains-currently-covered)
 - [Structured OKF Directory Hierarchy](#structured-okf-domain-hierarchy-zero-token-discovery)
 - [Canonical Edge Synchronization](#canonical-edge-synchronization-full-statutory-universe)
@@ -146,9 +181,9 @@ Provisions in this repository adhere to the **Open Knowledge Format (OKF v0.2)**
 The repository currently publishes a verified starter seed across five regulatory domains, accompanied by official executive guidance and compliance schemas:
 
 - **5 Foundational Regulatory Domains**: Direct Tax (TDS/TCS), Indirect Tax (GST), MSME & Working Capital, International Tax, Corporate M&A & Restructuring.
-- **7 Indexed Core Provisions**: Section 194Q, Section 194J, Section 206C(1H) sunset, CGST Section 17(5), MSMED Act Sections 15 & 16, US Internal Revenue Code §§ 901 & 904, Section 50B (Slump Sale & Successor Liability).
-- **8 Official Executive Circulars & Memoranda**: CBDT Circular 13/2021, CBDT Circular 23/2017, CBDT Circular 03/2020, Finance Act 2025 Sunset Memorandum, CBIC Circular 172/04/2022-GST, Ministry of MSME OM 1/4(1)/2021-P&G/Policy, CBDT Notification 68/2021 (Rule 11UAE FMV), CBIC Notification 12/2017 Entry 2 (0% GST going concern).
-- **10 Compliance Form Schemas & Verification Checklists**: Form 26Q quarterly TDS return, Form 16A certificate, GSTR-2B Table 4(B) ineligible ITC reconciliation, UDYAM portal registration verification, Companies Act Schedule III corporate balance sheet notes, Form 67 (Rule 128), US IRS Schedule K-3, Form 3CEA CA slump sale report schema, Section 281 & Section 313 M&A tax due diligence checklist, and Vendor PAN / Section 206AB declarations.
+- **12 Indexed Core Provisions**: Section 194Q, Section 194J, Section 194C, Section 194I, Section 194H, Section 206C(1H) sunset, Section 393 (Act 2025 crosswalk), CGST Section 16(2) (ITC conditions & 180-day rule), CGST Section 17(5) (blocked credits), MSMED Act Sections 15 & 16, US Internal Revenue Code §§ 901 & 904, Section 50B (Slump Sale & Successor Liability).
+- **12 Official Executive Circulars & Memoranda**: CBDT Circular 13/2021, CBDT Circular 23/2017, CBDT Circular 03/2020, Finance Act 2024 Rate Cut Memo, Finance Act 2025 Sunset Memorandum, CBIC Circular 170/02/2022-GST (GSTR-3B Table 4 reporting), CBIC Circular 172/04/2022-GST, Ministry of MSME OM 1/4(1)/2021-P&G/Policy, CBDT Notification 68/2021 (Rule 11UAE FMV), CBIC Notification 12/2017 Entry 2 (0% GST going concern), CBIC Notification 39/2021-CT.
+- **15 Compliance Form Schemas & Verification Checklists**: Form 26Q quarterly TDS return, Form 16A certificate, Transporter declaration, GSTR-3B Table 4 reversal/reclaim reconciliation, GSTR-2B Table 4(B) ineligible ITC reconciliation, UDYAM portal registration verification, Companies Act Schedule III corporate balance sheet notes, Form 67 (Rule 128), US IRS Schedule K-3, Form 3CEA CA slump sale report schema, Section 281 & Section 313 M&A tax due diligence checklist, and Vendor PAN / Section 206AB declarations.
 - **100% Corpus Verification Suite**: Validated against statutory threshold resets, non-PAN penalty rate caps, and statutory sunset interceptions.
 
 ---
@@ -197,18 +232,27 @@ The OKF substrate currently indexes and enforces ground truth across five major 
 ### 1. Direct Tax (Income Tax & TDS/TCS)
 - **Section 194Q**: 0.1% TDS on purchase of goods exceeding ₹50 Lakhs cumulative annual threshold (calculating strictly on the excess).
 - **Section 206C(1H)**: TCS on sale of goods, with automated temporal interception of its **1 April 2025 sunset** under the Finance Act, 2025.
+- **Section 194C**: Payments to contractors and sub-contractors (1% individuals, 2% companies/LLPs), single-invoice ₹30,000 / aggregate ₹1,00,000 thresholds, transporter 10-carriage exemption.
 - **Section 194J**: Fees for Technical Services (2% FTS) vs. Professional Fees (10%), enforcing standard 20% non-PAN penalty rate under Section 206AA(1)(iii) / Section 397(2)(a).
+- **Section 194I**: Rent withholding (2% plant & machinery, 10% land & building) exceeding ₹2.4 Lakhs annual threshold.
+- **Section 194H**: Commission and brokerage withholding (2% amended rate w.e.f. 1 October 2024) exceeding ₹15,000 threshold.
 - **Dual-Act Forward Mapping**: Complete cross-compilation bridge from the legacy *Income-tax Act, 1961* to the *Income-tax Act, 2025* (which took effect 1 April 2026), mapping historical provisions seamlessly (e.g., Section 194Q $\rightarrow$ Section 393(1), Table 8, Item (ii)).
 
 ### 2. Indirect Tax (Goods & Services Tax - GST)
+- **CGST Section 8**: Composite and mixed supplies—naturally bundled supplies taxed at the principal supply rate under Section 8(a); unbundled supplies billed for a single price taxed at the highest rate under Section 8(b).
+- **CGST Section 9(3)**: Reverse Charge Mechanism (RCM)—mandatory tax discharge by recipient strictly via Electronic Cash Ledger for notified categories (GTA, legal services, directors, security), self-invoicing under Section 31(3)(f), payment vouchers under Section 31(3)(g), and subsequent Section 16(2) ITC re-availment.
+- **CGST Section 16(2)**: Core statutory conditions for availing Input Tax Credit (clauses a-d), mandatory supplier communication under Section 37/38 (GSTR-2B), Rule 37 180-day vendor payment reversal with Section 50 interest reported in Table 4(B)(2), subsequent re-availment in Table 4(A)(5) and Table 4(D)(1), RCM statutory exceptions, and Section 16(4) annual cutoff.
 - **CGST Section 17(5)**: Comprehensive statutory negative list for Blocked Input Tax Credit (ITC)—including motor vehicles, catering, employee benefits, and the statutory employer obligation proviso under CBIC Circular 172/04/2022-GST.
 
-### 3. Micro, Small & Medium Enterprises (MSME & Section 43B(h))
+### 3. Micro, Small & Medium Enterprises (MSME & Commercial)
 - **MSMED Act, 2006 (Sections 15 & 16)**: Strict statutory payment clock (15 days without agreement, max 45 days with written agreement) and non-negotiable compound penal interest at **3 times the RBI Bank Rate** (compounded monthly).
 - **Trader Exclusion Rule**: Automated enforcement of Ministry of MSME OM No. 1/4(1)/2021-P&G/Policy, strictly excluding wholesale and retail traders (NIC 45, 46, 47) from delayed payment protections and Section 43B(h) addbacks.
-- **Balance Sheet Disclosures**: Companies Act, 2013 Schedule III compliance reporting format for unpaid MSME supplier principal and interest.
+- **MCA Form MSME-1**: Companies Act, 2013 Section 405 mandatory half-yearly return (due October 31 & April 30) for trade payables outstanding beyond 45 days.
+- **Section 22 & Schedule III Disclosures**: 5-point statutory Notes to Accounts, Trade Payables aging schedule (<1yr, 1-2yr, 2-3yr, >3yr), and Section 23 tax deduction add-back.
+- **Section 7 Composite Classification**: Micro, Small, and Medium classification criteria (Investment + Turnover) with mandatory statutory deduction of export turnover under Notification S.O. 2119(E).
 
 ### 4. Cross-Border & International Tax
+- **Section 195 & DTAA**: Outbound cross-border remittances to non-residents, Section 90(2) treaty rates, Tax Residency Certificate (TRC) Section 90(4), electronic Form 10F, Rule 37BB Form 15CA/15CB banking gate, and Supreme Court *Engineering Analysis* cloud SaaS royalty exemption.
 - **US Internal Revenue Code (IRC §§ 901 & 904)**: Foreign Tax Credit (FTC) limitation baskets (General Category vs. Passive Category), Pass-Through Entity (PTE) tax pass-throughs, and Schedule K-3 dual-reporting compliance for Indo-US cross-border ventures.
 - **Indian Rule 128 (Form 67)**: Statement of foreign tax credit compliance schema and filing deadlines.
 
@@ -217,22 +261,44 @@ The OKF substrate currently indexes and enforces ground truth across five major 
 
 ---
 
+## Product Capability Status & Operational Boundaries
+
+To ensure absolute clarity for developers, finance leaders, prospective pilot customers, and investors, the capabilities of MudraForge are delineated below into working public software, hosted edge services, and internal/pilot enterprise runtime layers (see [ADR-0005](./docs/ARCHITECTURE_DECISIONS.md#adr-0005-formal-product-capability-status-register) for the authoritative architectural status register):
+
+| Subsystem / Capability | Operational Classification | Availability / Access | Current Verification Evidence |
+| :--- | :--- | :--- | :--- |
+| **Bundled OKF Statutory Corpus (11 Provisions)** | **Public Package** | Shipped in repository & release candidates (`okf/`) | 40/40 test suites passing; deterministic SHA-256 Merkle root |
+| **Zero-Network CLI (`mudraforge-statutory`)** | **Public Package** | Immediate via `npx @mudraforge/statutory` | `bin/cli.js` verified across Windows and Linux |
+| **Vendor-Neutral Conformance Suite** | **Public Package** | Immediate via `conformance/` (`npm run conformance`) | 12/12 fixture tests passing |
+| **Local Query SDK (`src/index.js`)** | **Public Package** | Immediate via `import { lookupStatute }` | Zero runtime dependencies; offline temporal state evaluation |
+| **Synthetic AP Execution Trace (`examples/`)** | **Public Package (Modeled Demo)** | Immediate via `npm run example:trace` | Synthetic invoice trace demonstrating 7-stage lifecycle with modeled fixtures |
+| **Cloudflare Anycast Edge Sync** | **Public Edge Service** | Free Beta via `api.mudraforge.in` | Global edge sync (`npx @mudraforge/statutory sync`) with ETag 304 caching |
+| **Interactive API Documentation** | **Public Edge Service** | Free Beta via `/api/v1/statutory/docs` | OpenAPI 3.1 schema and interactive documentation rendered on Anycast edge |
+| **Deterministic Tax Calculators** | **Enterprise Internal** | Metered Enterprise API (Selective) | Deterministic arithmetic engine verified under private test harness |
+| **Dual-Custody Mobile Approval Harness** | **Enterprise Internal / Pilot** | Enterprise Pilot Proposal | Mobile passkey approval prototype & TLA+ state machine (`specs/`) |
+| **ERP Two-Way Connectors (SAP/Tally/Zoho)** | **Enterprise Internal / Pilot** | Custom Enterprise Pilot Integration | Shadow-mode test connectors; no turnkey plug-ins shipped |
+| **Bank Rail API Adapters (ICICI/HDFC/RazorpayX)** | **Enterprise Internal / Pilot** | Custom Enterprise Pilot Integration | Modeled sandbox adapters requiring corporate bank partner onboarding |
+
+> **Operational Distinction**: Items classified as **Public Package** and **Public Edge Service** represent working, independently inspectable software. Items classified as **Enterprise Internal / Pilot** represent developing or internal capabilities of the commercial Adesha runtime. Execution traces in `examples/` use synthetic test data; they do not represent active commercial bank or live customer ERP deployments. Organizations interested in testing MudraForge against real accounting data should review the [Proposed Pilot Evaluation Guide](./docs/PILOT_EVALUATION_GUIDE.md).
+
+---
+
 ## Architectural Boundaries: Open Substrate vs. Hosted Edge vs. Adesha Platform
 
-To ensure clarity for developers, CAs, and prospective enterprise clients, the capabilities across the three operational tiers are explicitly delineated below:
+To ensure clarity for developers, CAs, and prospective enterprise clients, the operational separation between layers is summarized below:
 
-| Capability / Layer | Tier 1: Open Substrate (This NPM Package) | Tier 2: Hosted Edge API (Cloudflare Anycast) | Tier 3: Commercial Adesha Runtime (Enterprise Platform) |
+| Dimension / Layer | Layer 1: Open Substrate (This NPM Package) | Layer 2: Hosted Edge API (Cloudflare Anycast) | Layer 3: Commercial Adesha Runtime (Enterprise Platform) |
 | :--- | :--- | :--- | :--- |
-| **Pricing & License** | **100% Free** (MIT Code / CC BY 4.0 Data) | **Best-Effort Free Beta** (Transitions to Paid) | **Commercial Enterprise SaaS** |
+| **Pricing & License** | **100% Free** (MIT Code / CC BY 4.0 Data) | **Best-Effort Free Beta** (Transitions to Metered) | **Commercial Enterprise SaaS** |
 | **Execution Location** | 100% Local Filesystem (0 Network Calls) | Cloudflare Edge (Global 300+ PoPs, typical 20–80ms Anycast latency) | Private Enterprise VPC / On-Premise Worker |
-| **Statutory Knowledge** | Bundled 4-Domain Starter Seed (6 Core Sections) | 4 Active Domains (11-Domain Roadmap Catalog in expansion) | Full 11-Domain Sovereign Catalog + Custom Private Contracts |
+| **Statutory Knowledge** | Bundled Starter Seed (11 Verified Sections) | 11 Active Provisions (Roadmap Catalog in expansion) | Full Sovereign Catalog + Custom Private Enterprise Contracts |
 | **Lookup Engine** | Exact code, alias & folder path resolution | System-1 Semantic Intent & Rule Discovery | Multi-tenant RAG & Context Assembler |
 | **Temporal Status** | Offline deterministic evaluation (`computeTemporalStatus`) | Live temporal state machine resolution | In-flight temporal locks across transaction lifecycle |
 | **Deterministic Calculators**| *Not included* (declarative schemas only) | Hosted calculation endpoint (`POST /calculate`) | Full arithmetic engine with ₹50L excess & 3x RBI interest |
 | **Payment Authorization** | *Not included* | *Not included* | **Single-Use Cryptographic Payment Leases (TLA+ verified)** |
 | **Banking Execution** | *Not included* | *Not included* | **Host-to-Host Bank Rails (RazorpayX / ICICI / HDFC)** |
 | **ERP Writebacks** | *Not included* | *Not included* | **Balanced double-entry journal writebacks (SAP / Zoho)** |
-| **How to Access** | `npm install @mudraforge/statutory` | `npx @mudraforge/statutory sync` | Contact: `hello@mudraforge.in` |
+| **How to Access** | `npm install @mudraforge/statutory` | `npx @mudraforge/statutory sync` | Review [Pilot Guide](./docs/PILOT_EVALUATION_GUIDE.md) / Contact `hello@mudraforge.in` |
 
 > **Operational Distinction**: This open-source repository provides the **declarative knowledge foundation**. It does not perform live banking transfers, hold funds, or mutate corporate ERP databases. Those consequential actions are strictly isolated within the **MudraForge Adesha Enterprise Governance Engine** (see [`docs/ENTERPRISE_GOVERNANCE.md`](./docs/ENTERPRISE_GOVERNANCE.md)).
 

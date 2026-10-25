@@ -22,7 +22,10 @@ import {
     resolveSafeStatuteFilename,
     StatutoryIndeterminateError,
     compareSemver,
-    checkForPackageUpdate
+    checkForPackageUpdate,
+    decodeTaxIdentifier,
+    isValidGstinChecksum,
+    STATUTORY_CLIENT_VERSION
 } from './src/index.js';
 
 async function run() {
@@ -189,7 +192,7 @@ async function run() {
             }
             res.writeHead(200, { 'Content-Type': 'application/json', 'ETag': `"${mockHash}"` });
             return res.end(JSON.stringify({
-                okfVersion: '2.5.0',
+                okfVersion: STATUTORY_CLIENT_VERSION,
                 publishedAt: '2026-10-24T00:00:00.000Z',
                 rootHash: mockHash,
                 totalSections: 1,
@@ -204,7 +207,7 @@ async function run() {
             }
             res.writeHead(200, { 'Content-Type': 'application/json', 'ETag': `"${mockHash}"` });
             return res.end(JSON.stringify({
-                okfVersion: '2.5.0',
+                okfVersion: STATUTORY_CLIENT_VERSION,
                 publishedAt: '2026-10-24T00:00:00.000Z',
                 rootHash: mockHash,
                 totalSections: 1,
@@ -544,7 +547,7 @@ async function run() {
     const spoofServer = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
-            okfVersion: '2.5.0',
+            okfVersion: STATUTORY_CLIENT_VERSION,
             rootHash: recomputedTamperedRoot,
             publishedAt: '2026-10-24T00:00:00.000Z',
             statutes: [tamperedStatute]
@@ -597,7 +600,7 @@ async function run() {
     const incompleteServer = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
-            okfVersion: '2.5.0',
+            okfVersion: STATUTORY_CLIENT_VERSION,
             rootHash: recomputedTamperedRoot,
             publishedAt: '2026-10-24T00:00:00.000Z',
             statutes: [tamperedStatute] // Only has 194Q, missing 194J, 17(5), MSMED-15-16
@@ -649,7 +652,7 @@ async function run() {
     signedRootHasher.update(`${signedFileName}:${signedFileHash}\n`);
     const signedRootHash = `sha256-${signedRootHasher.digest('hex')}`;
 
-    const okfVersion = '2.5.0';
+    const okfVersion = STATUTORY_CLIENT_VERSION;
     const publishedAt = '2026-10-24T00:00:00.000Z';
     const canonicalPayload = `${okfVersion}|${signedRootHash}|${publishedAt}`;
     const validSignature = crypto.sign(null, Buffer.from(canonicalPayload, 'utf8'), testPrivKey).toString('base64');
@@ -1027,8 +1030,382 @@ async function run() {
         mockNpmServer.close();
     }
 
+    // 38. Direct Tax: Section 194C (Payments to Contractors & Sub-contractors)
+    console.log('\n── Test 38: Direct Tax — Section 194C (TDS on Payments to Contractors) ──');
+    const res194C = await lookupStatute('194C');
+    if (res194C.status !== 'SUCCESS') {
+        throw new Error(`lookupStatute(194C) failed: ${JSON.stringify(res194C)}`);
+    }
+    const cThresholds = res194C.statute.keyStatutoryThresholds;
+    if (cThresholds.singleContractThresholdInr !== 30000 || cThresholds.annualAggregateThresholdInr !== 100000) {
+        throw new Error('Section 194C thresholds invalid: expected ₹30k single / ₹1L aggregate');
+    }
+    if (cThresholds.individualHufRatePercent !== 1.0 || cThresholds.otherEntitiesRatePercent !== 2.0) {
+        throw new Error('Section 194C rates invalid: expected 1% Individual/HUF, 2% Other entities');
+    }
+    if (cThresholds.transporterGoodsCarriageLimit !== 10) {
+        throw new Error('Section 194C(6) goods carriage limit invalid: expected 10');
+    }
+    if (res194C.statute.successorSection !== 'Section 393(1), Table 3, Item (i)') {
+        throw new Error('Section 194C successor section invalid under Income-tax Act, 2025');
+    }
+    console.log(`[PASS] 194C Statutory Baseline Verified: ₹30k Single / ₹1L Aggregate, 1% Individual, 2% Company, 10-Carriage Transporter Rule.`);
+
+    // 39. Direct Tax: Section 194I (Rent on Land, Building, Furniture, Machinery)
+    console.log('\n── Test 39: Direct Tax — Section 194I (TDS on Rent) ──');
+    const res194I = await lookupStatute('194I');
+    if (res194I.status !== 'SUCCESS') {
+        throw new Error(`lookupStatute(194I) failed: ${JSON.stringify(res194I)}`);
+    }
+    const iThresholds = res194I.statute.keyStatutoryThresholds;
+    if (iThresholds.annualAggregateThresholdInr !== 240000) {
+        throw new Error('Section 194I threshold invalid: expected ₹2,40,000 aggregate');
+    }
+    if (iThresholds.plantMachineryEquipmentRatePercent !== 2.0 || iThresholds.landBuildingFurnitureRatePercent !== 10.0) {
+        throw new Error('Section 194I rates invalid: expected 2% Machinery/Plant, 10% Land/Building');
+    }
+    if (res194I.statute.successorSection !== 'Section 393(1), Table 5, Item (i)') {
+        throw new Error('Section 194I successor section invalid under Income-tax Act, 2025');
+    }
+    console.log(`[PASS] 194I Statutory Baseline Verified: ₹2.4L Aggregate Threshold, 2% Machinery / 10% Land & Building.`);
+
+    // 40. Direct Tax: Section 194H (Commission and Brokerage)
+    console.log('\n── Test 40: Direct Tax — Section 194H (TDS on Commission & Brokerage) ──');
+    const res194H = await lookupStatute('194H');
+    if (res194H.status !== 'SUCCESS') {
+        throw new Error(`lookupStatute(194H) failed: ${JSON.stringify(res194H)}`);
+    }
+    const hThresholds = res194H.statute.keyStatutoryThresholds;
+    if (hThresholds.annualAggregateThresholdInr !== 15000) {
+        throw new Error('Section 194H threshold invalid: expected ₹15,000 aggregate');
+    }
+    if (hThresholds.standardRatePercent !== 2.0 || hThresholds.preOct2024RatePercent !== 5.0) {
+        throw new Error('Section 194H rate change invalid: expected 2% post-Oct 2024 (was 5%)');
+    }
+    if (res194H.statute.successorSection !== 'Section 393(1), Table 4, Item (i)') {
+        throw new Error('Section 194H successor section invalid under Income-tax Act, 2025');
+    }
+    console.log(`[PASS] 194H Statutory Baseline Verified: ₹15k Aggregate Threshold, 2% Rate (amended from 5% w.e.f. 01-10-2024).`);
+
+    // 41. Deterministic Tax Identifier Decoding & Offline Mod-36 GSTIN Checksum
+    console.log('\n── Test 41: Tax Identifier Decoding & Offline ISO/IEC 7064 Mod-36 Checksum ──');
+    // Valid GSTIN: 27AAPFU0939F1ZV
+    const validGstinRes = decodeTaxIdentifier('27AAPFU0939F1ZV');
+    if (!validGstinRes.isValid || !validGstinRes.checksumValid) {
+        throw new Error(`Expected 27AAPFU0939F1ZV to be valid, got: ${JSON.stringify(validGstinRes)}`);
+    }
+    if (validGstinRes.pan !== 'AAPFU0939F' || validGstinRes.stateCode !== '27' || validGstinRes.stateName !== 'Maharashtra') {
+        throw new Error(`GSTIN metadata extraction failed: ${JSON.stringify(validGstinRes)}`);
+    }
+    if (validGstinRes.entityCode !== 'F' || validGstinRes.isIndividualOrHuf !== false || validGstinRes.standard194cRatePercent !== 2.0) {
+        throw new Error(`Firm PAN 194C classification failed: expected 2% for Firm, got: ${JSON.stringify(validGstinRes)}`);
+    }
+
+    // Corrupted GSTIN Check Character
+    const corruptGstinRes = decodeTaxIdentifier('27AAPFU0939F1Z0');
+    if (corruptGstinRes.isValid !== false || corruptGstinRes.checksumValid !== false) {
+        throw new Error('Expected corrupted check digit in GSTIN to be rejected');
+    }
+    if (!corruptGstinRes.error || !corruptGstinRes.error.includes('checksum mismatch')) {
+        throw new Error(`Expected checksum mismatch error, got: ${corruptGstinRes.error}`);
+    }
+
+    // Individual PAN: ABCPK5678Z (4th char P)
+    const indPanRes = decodeTaxIdentifier('ABCPK5678Z');
+    if (!indPanRes.isValid || indPanRes.type !== 'PAN' || indPanRes.entityCode !== 'P') {
+        throw new Error(`Individual PAN decoding failed: ${JSON.stringify(indPanRes)}`);
+    }
+    if (indPanRes.isIndividualOrHuf !== true || indPanRes.standard194cRatePercent !== 1.0) {
+        throw new Error(`Individual PAN 194C classification failed: expected 1%, got: ${JSON.stringify(indPanRes)}`);
+    }
+
+    // Company PAN: AAACA1234C (4th char C)
+    const compPanRes = decodeTaxIdentifier('AAACA1234C');
+    if (!compPanRes.isValid || compPanRes.isIndividualOrHuf !== false || compPanRes.standard194cRatePercent !== 2.0) {
+        throw new Error(`Company PAN 194C classification failed: expected 2%, got: ${JSON.stringify(compPanRes)}`);
+    }
+
+    // Direct Checksum utility validation
+    if (!isValidGstinChecksum('27AAPFU0939F1ZV') || isValidGstinChecksum('27AAPFU0939F1Z0')) {
+        throw new Error('Direct isValidGstinChecksum check failed');
+    }
+
+    console.log('[PASS] Tax Identifier Decoder & Mod-36 Checksum Verified: 100% Deterministic PAN/GSTIN Parsing & 194C Classification.');
+
+    // 42. Indirect Tax (GST) — Section 16(2) (ITC Eligibility Conditions & 180-Day Rule)
+    console.log('\n── Test 42: Indirect Tax (GST) — Section 16(2) (ITC Eligibility Conditions & 180-Day Rule) ──');
+    const res16_2 = await lookupStatute('16(2)');
+    if (res16_2.status !== 'SUCCESS' || res16_2.temporalStatus !== 'ACTIVE') {
+        throw new Error(`Section 16(2) lookup failed: ${JSON.stringify(res16_2)}`);
+    }
+    const sec16Thresholds = res16_2.statute.keyStatutoryThresholds;
+    if (!sec16Thresholds || sec16Thresholds.vendorPaymentWindowDays !== 180) {
+        throw new Error(`Section 16(2) 180-day threshold missing: ${JSON.stringify(sec16Thresholds)}`);
+    }
+    if (sec16Thresholds.reversalReportingTable !== 'GSTR-3B Table 4(B)(2)') {
+        throw new Error(`Section 16(2) Table 4(B)(2) reversal mapping invalid: ${sec16Thresholds.reversalReportingTable}`);
+    }
+    if (!sec16Thresholds.reversalReportingTable || !sec16Thresholds.reclaimReportingTable.includes('Table 4(D)(1)')) {
+        throw new Error('Section 16(2) reclaim table disclosure missing Table 4(D)(1)');
+    }
+    if (!Array.isArray(sec16Thresholds.statutoryReversalExceptions) || sec16Thresholds.statutoryReversalExceptions.length < 3) {
+        throw new Error('Section 16(2) statutory reversal exceptions missing RCM/Schedule I entries');
+    }
+    if (!sec16Thresholds.annualCutoffDeadline.includes('30th November') || !sec16Thresholds.retrospectiveReliefProvisions.includes('Section 16(5)')) {
+        throw new Error('Section 16(4) 30th November cutoff or 16(5) retrospective relief missing');
+    }
+    const sec16Docs = res16_2.statute.supportingDocuments;
+    if (!sec16Docs || !sec16Docs.circulars.includes('cbic_circular_170_2022_itc_reporting.md') || !sec16Docs.forms.includes('gstr_3b_table_4_itc_reversal.json')) {
+        throw new Error(`Section 16(2) supporting circulars/forms missing: ${JSON.stringify(sec16Docs)}`);
+    }
+    console.log('[PASS] 16(2) Statutory Baseline Verified: 5 Conditions (a-d), 180-Day Reversal Clock, RCM Exceptions, Table 4(B)(2)/4(D)(1) Mappings & Nov 30 Cutoff.');
+
+    // 43. Domain-Preserving Synchronization & Anti-Redundancy Verification
+    console.log('\n── Test 43: Domain-Preserving syncOkf() & Zero Redundant sections/ Directory ──');
+    const tempDomainSyncDir = fs.mkdtempSync(path.join(os.tmpdir(), 'okf-domain-sync-test-'));
+    const domainStatute = {
+        sectionId: 'CGST2017_SEC16_2',
+        sectionCode: '16(2)',
+        domain: 'indirect_tax_gst',
+        relPath: 'indirect_tax_gst/itc_eligibility_16_2/section.json',
+        title: 'Eligibility and conditions for taking input tax credit',
+        effectivePeriod: { validFrom: '2017-07-01', validTo: '2099-12-31' }
+    };
+    const domainJsonStr = JSON.stringify(domainStatute, null, 2);
+    const domainFileHash = crypto.createHash('sha256').update(domainJsonStr).digest('hex');
+    const domainBaseName = resolveSafeStatuteFilename(domainStatute);
+    const domainRootHash = `sha256-${crypto.createHash('sha256').update(`${domainBaseName}:${domainFileHash}\n`).digest('hex')}`;
+
+    const domainMockServer = http.createServer((req, res) => {
+        if (req.url === '/api/v1/statutory/bundle.json') {
+            res.writeHead(200, { 'Content-Type': 'application/json', 'ETag': `"${domainRootHash}"` });
+            return res.end(JSON.stringify({
+                okfVersion: '2.6.0',
+                publishedAt: '2026-10-24T19:45:00.000Z',
+                rootHash: domainRootHash,
+                totalSections: 1,
+                statutes: [domainStatute]
+            }));
+        }
+        res.writeHead(404);
+        res.end();
+    });
+
+    await new Promise(resolve => domainMockServer.listen(0, '127.0.0.1', resolve));
+    const domainMockPort = domainMockServer.address().port;
+
+    try {
+        const syncResult = await syncOkf({
+            baseUrl: `http://127.0.0.1:${domainMockPort}`,
+            okfDir: tempDomainSyncDir,
+            allowUnverifiedRoot: true,
+            skipMandatoryBaselineCheck: true
+        });
+
+        if (!syncResult.success) {
+            throw new Error('syncOkf domain sync failed');
+        }
+
+        const expectedSectionPath = path.join(tempDomainSyncDir, 'indirect_tax_gst', 'itc_eligibility_16_2', 'section.json');
+        if (!fs.existsSync(expectedSectionPath)) {
+            throw new Error(`Domain hierarchy not preserved on disk: ${expectedSectionPath} not found`);
+        }
+
+        const redundantSectionsDir = path.join(tempDomainSyncDir, 'sections');
+        if (fs.existsSync(redundantSectionsDir)) {
+            throw new Error(`Redundant sections/ directory was created during domain-aware sync!`);
+        }
+
+        const manifestPath = path.join(tempDomainSyncDir, 'manifest.json');
+        if (!fs.existsSync(manifestPath)) {
+            throw new Error('Manifest not generated in target directory');
+        }
+        const syncedManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        if (!syncedManifest.domains || !syncedManifest.domains.indirect_tax_gst || !syncedManifest.domains.indirect_tax_gst.includes('16(2)')) {
+            throw new Error(`Synced manifest missing domain mapping: ${JSON.stringify(syncedManifest.domains)}`);
+        }
+
+        console.log('[PASS] Domain-Preserving Sync Verified: Files unpacked into domain directories with ZERO redundant sections/ folder.');
+    } finally {
+        await new Promise(resolve => domainMockServer.close(resolve));
+        try {
+            fs.rmSync(tempDomainSyncDir, { recursive: true, force: true });
+        } catch (_) {}
+    }
+
+    // 44. Indirect Tax (GST) — Section 8 (Composite & Mixed Supplies)
+    console.log('\n── Test 44: Indirect Tax (GST) — Section 8 (Composite & Mixed Supplies) ──');
+    const resSec8 = await lookupStatute('8');
+    if (!resSec8 || resSec8.status !== 'SUCCESS') {
+        throw new Error('lookupStatute(8) failed to resolve Section 8');
+    }
+    const sec8Thresholds = resSec8.statute.keyStatutoryThresholds;
+    if (!sec8Thresholds.compositeSupplyRule.includes('Principal Supply') || !sec8Thresholds.mixedSupplyRule.includes('Highest Rate')) {
+        throw new Error('Section 8 composite/mixed supply statutory rules missing');
+    }
+    const sec8Docs = resSec8.statute.supportingDocuments;
+    if (!sec8Docs || !sec8Docs.circulars.includes('cbic_circular_47_2018_composite_mixed_supplies.md') || !sec8Docs.forms.includes('composite_mixed_supply_assessment_matrix.json')) {
+        throw new Error(`Section 8 supporting documents missing: ${JSON.stringify(sec8Docs)}`);
+    }
+    console.log('[PASS] Section 8 Verified: Composite Supply (Principal Rate) vs. Mixed Supply (Highest Rate) & Matrix Schema.');
+
+    // 45. Indirect Tax (GST) — Section 9(3) (Reverse Charge Mechanism - RCM)
+    console.log('\n── Test 45: Indirect Tax (GST) — Section 9(3) (Reverse Charge Mechanism) ──');
+    const resSec9_3 = await lookupStatute('9(3)');
+    if (!resSec9_3 || resSec9_3.status !== 'SUCCESS') {
+        throw new Error('lookupStatute(9(3)) failed to resolve Section 9(3)');
+    }
+    const sec9_3Thresholds = resSec9_3.statute.keyStatutoryThresholds;
+    if (!sec9_3Thresholds.mandatoryCashPaymentRule.includes('Electronic Cash Ledger') || !sec9_3Thresholds.selfInvoiceMandate.includes('Section 31(3)(f)')) {
+        throw new Error('Section 9(3) cash payment mandate or self-invoicing rules missing');
+    }
+    const sec9_3Docs = resSec9_3.statute.supportingDocuments;
+    if (!sec9_3Docs || !sec9_3Docs.circulars.includes('cbic_circular_102_2019_rcm_clarifications.md') || !sec9_3Docs.forms.includes('rcm_self_invoice_payment_voucher.json')) {
+        throw new Error(`Section 9(3) supporting documents missing: ${JSON.stringify(sec9_3Docs)}`);
+    }
+    console.log('[PASS] Section 9(3) Verified: RCM Categories, Mandatory Cash Discharge, Self-Invoice & Payment Voucher Schemas.');
+
+    // 46. International Tax — Section 195 (Cross-Border Remittances & DTAA)
+    console.log('\n── Test 46: International Tax — Section 195 (Cross-Border Remittances & DTAA) ──');
+    const resSec195 = await lookupStatute('195');
+    if (!resSec195 || resSec195.status !== 'SUCCESS') {
+        throw new Error('lookupStatute(195) failed to resolve Section 195');
+    }
+    const sec195Thresholds = resSec195.statute.keyStatutoryThresholds;
+    if (!sec195Thresholds.treatyBeneficialProvision.includes('Section 90(2)') || !sec195Thresholds.supremeCourtEngineeringAnalysisDoctrine.includes('business profits')) {
+        throw new Error('Section 195 DTAA treaty rules or Supreme Court Engineering Analysis doctrine missing');
+    }
+    const sec195Docs = resSec195.statute.supportingDocuments;
+    if (!sec195Docs || !sec195Docs.circulars.includes('supreme_court_engineering_analysis_doctrine.md') || !sec195Docs.forms.includes('form_15ca_15cb_compliance_checklist.json')) {
+        throw new Error(`Section 195 supporting documents missing: ${JSON.stringify(sec195Docs)}`);
+    }
+    console.log('[PASS] Section 195 Verified: Section 90(2) DTAA, Electronic Form 10F, Rule 37BB Form 15CA/CB & Cloud SaaS Exemption.');
+
+    // 47. Commercial & MSME — MCA Form MSME-1 Filing
+    console.log('\n── Test 47: Commercial & MSME — MCA Form MSME-1 Filing (Companies Act §405) ──');
+    const resMsme1 = await lookupStatute('MCA-MSME-1');
+    if (!resMsme1 || resMsme1.status !== 'SUCCESS') {
+        throw new Error('lookupStatute(MCA-MSME-1) failed to resolve Form MSME-1');
+    }
+    const msme1Thresholds = resMsme1.statute.keyStatutoryThresholds;
+    if (msme1Thresholds.overdueTriggerDays !== 45 || !msme1Thresholds.halfYear1Period.includes('October 31') || !msme1Thresholds.halfYear2Period.includes('April 30')) {
+        throw new Error('Form MSME-1 45-day overdue trigger or half-yearly deadlines missing');
+    }
+    const msme1Docs = resMsme1.statute.supportingDocuments;
+    if (!msme1Docs || !msme1Docs.circulars.includes('mca_order_2019_specified_companies.md') || !msme1Docs.forms.includes('form_msme_1_half_yearly_return.json')) {
+        throw new Error(`Form MSME-1 supporting documents missing: ${JSON.stringify(msme1Docs)}`);
+    }
+    console.log('[PASS] MCA Form MSME-1 Verified: 45-Day Overdue Trigger, Half-Yearly Deadlines (Oct 31/Apr 30) & Section 405 Penalties.');
+
+    // 48. Commercial & MSME — Section 22 / Schedule III Disclosures
+    console.log('\n── Test 48: Commercial & MSME — Section 22 Disclosures & Schedule III Aging ──');
+    const resSec22 = await lookupStatute('MSMED-SEC-22');
+    if (!resSec22 || resSec22.status !== 'SUCCESS') {
+        throw new Error('lookupStatute(MSMED-SEC-22) failed to resolve Section 22');
+    }
+    const sec22Thresholds = resSec22.statute.keyStatutoryThresholds;
+    if (sec22Thresholds.mandatoryDisclosureCount !== 5 || !Array.isArray(sec22Thresholds.scheduleIiiAgingBuckets) || sec22Thresholds.scheduleIiiAgingBuckets.length < 4) {
+        throw new Error('Section 22 5-point disclosures or Schedule III 4-bucket aging schedule missing');
+    }
+    const sec22Docs = resSec22.statute.supportingDocuments;
+    if (!sec22Docs || !sec22Docs.circulars.includes('icai_guidance_note_schedule_iii_trade_payables.md') || !sec22Docs.forms.includes('schedule_iii_msme_aging_table.json')) {
+        throw new Error(`Section 22 supporting documents missing: ${JSON.stringify(sec22Docs)}`);
+    }
+    console.log('[PASS] Section 22 Verified: 5 Mandatory Notes to Accounts, Schedule III Aging Table & Section 23 Tax Add-Back.');
+
+    // 49. Commercial & MSME — Section 7 Composite Classification & Export Turnover Carve-Out
+    console.log('\n── Test 49: Commercial & MSME — Section 7 Composite Criteria & Export Carve-Out ──');
+    const resSec7 = await lookupStatute('MSMED-SEC-7');
+    if (!resSec7 || resSec7.status !== 'SUCCESS') {
+        throw new Error('lookupStatute(MSMED-SEC-7) failed to resolve Section 7');
+    }
+    const sec7Thresholds = resSec7.statute.keyStatutoryThresholds;
+    if (sec7Thresholds.microLimits.maxTurnoverExcludingExportsInr !== 50000000 || sec7Thresholds.smallLimits.maxTurnoverExcludingExportsInr !== 500000000) {
+        throw new Error('Section 7 Micro (₹5Cr) / Small (₹50Cr) turnover thresholds missing');
+    }
+    if (!sec7Thresholds.exportTurnoverExclusionRule.includes('Exports of goods or services')) {
+        throw new Error('Section 7 statutory export turnover exclusion rule missing');
+    }
+    const sec7Docs = resSec7.statute.supportingDocuments;
+    if (!sec7Docs || !sec7Docs.circulars.includes('msme_notification_2119_e_composite_criteria.md') || !sec7Docs.forms.includes('udyam_composite_calculation_worksheet.json')) {
+        throw new Error(`Section 7 supporting documents missing: ${JSON.stringify(sec7Docs)}`);
+    }
+    console.log('[PASS] Section 7 Verified: Composite Criteria (Micro/Small/Medium), Paragraph 4 Export Carve-Out & Worksheet Schema.');
+
+    // 50. Direct Tax — Section 194R (Business Perquisites & Benefits)
+    console.log('\n── Test 50: Direct Tax — Section 194R (Business Perquisites & Benefits) ──');
+    const res194R = await lookupStatute('194R');
+    if (res194R.status !== 'SUCCESS' || res194R.temporalStatus !== 'ACTIVE') {
+        throw new Error('lookupStatute(194R) failed to resolve Section 194R');
+    }
+    const rThresholds = res194R.statute.keyStatutoryThresholds;
+    if (rThresholds.annualExemptionLimitInr !== 20000 || rThresholds.standardDeductionRatePercent !== 10) {
+        throw new Error('Section 194R baseline mismatch (expected ₹20k ceiling, 10% rate)');
+    }
+    console.log('[PASS] Section 194R Verified: 10% TDS, ₹20k Ceiling & Circular 12/2022 Valuation.');
+
+    // 51. Direct Tax — Section 206AB (Higher Rates for Non-Filers)
+    console.log('\n── Test 51: Direct Tax — Section 206AB (Higher Rates for Non-Filers) ──');
+    const res206AB = await lookupStatute('206AB');
+    if (res206AB.status !== 'SUCCESS' || res206AB.temporalStatus !== 'ACTIVE') {
+        throw new Error('lookupStatute(206AB) failed to resolve Section 206AB');
+    }
+    const abThresholds = res206AB.statute.keyStatutoryThresholds;
+    if (abThresholds.priorYearAggregateTdsTcsThresholdInr !== 50000) {
+        throw new Error('Section 206AB ₹50k threshold mismatch');
+    }
+    console.log('[PASS] Section 206AB Verified: Specified Person Non-Filer Higher Rate (2x or 5%).');
+
+    // 52. Indirect Tax (GST) — Section 51 (TDS under GST)
+    console.log('\n── Test 52: Indirect Tax (GST) — Section 51 (TDS under GST) ──');
+    const res51 = await lookupStatute('51');
+    if (res51.status !== 'SUCCESS' || res51.temporalStatus !== 'ACTIVE') {
+        throw new Error('lookupStatute(51) failed to resolve Section 51');
+    }
+    const gst51Thresholds = res51.statute.keyStatutoryThresholds;
+    if (gst51Thresholds.contractThresholdExcludingGstInr !== 250000 || gst51Thresholds.totalCompositeGstTdsRatePercent !== 2) {
+        throw new Error('Section 51 baseline mismatch (expected ₹2.5L contract threshold, 2% rate)');
+    }
+    console.log('[PASS] Section 51 Verified: 2% GST TDS (1% CGST + 1% SGST), ₹2.5L Contract Ceiling & GSTR-7.');
+
+    // 53. Indirect Tax (GST) — Section 34 (Credit & Debit Notes)
+    console.log('\n── Test 53: Indirect Tax (GST) — Section 34 (Credit & Debit Notes) ──');
+    const res34 = await lookupStatute('34');
+    if (res34.status !== 'SUCCESS' || res34.temporalStatus !== 'ACTIVE') {
+        throw new Error('lookupStatute(34) failed to resolve Section 34');
+    }
+    const sec34Thresholds = res34.statute.keyStatutoryThresholds;
+    if (!sec34Thresholds.annualAdjustmentCutoffDate.includes('30th November')) {
+        throw new Error('Section 34 November 30 cutoff date missing');
+    }
+    console.log('[PASS] Section 34 Verified: Credit/Debit Note Tax Adjustments & 30th November Cutoff.');
+
+    // 54. Indirect Tax (GST) — Section 10 (Composition Scheme & Bill of Supply)
+    console.log('\n── Test 54: Indirect Tax (GST) — Section 10 (Composition Scheme & Bill of Supply) ──');
+    const res10 = await lookupStatute('10');
+    if (res10.status !== 'SUCCESS' || res10.temporalStatus !== 'ACTIVE') {
+        throw new Error('lookupStatute(10) failed to resolve Section 10');
+    }
+    const sec10Thresholds = res10.statute.keyStatutoryThresholds;
+    if (sec10Thresholds.turnoverCeilingGeneralStatesInr !== 15000000) {
+        throw new Error('Section 10 ₹1.5 Cr turnover ceiling missing');
+    }
+    console.log('[PASS] Section 10 Verified: ₹1.5 Cr Ceiling, Zero Tax Collection u/s 10(4) & Zero Recipient ITC.');
+
+    // 55. Indirect Tax (GST) — Rule 48(4) (Mandatory E-Invoicing & IRN Validity)
+    console.log('\n── Test 55: Indirect Tax (GST) — Rule 48(4) (Mandatory E-Invoicing & IRN Validity) ──');
+    const res48 = await lookupStatute('RULE-48(4)');
+    if (res48.status !== 'SUCCESS' || res48.temporalStatus !== 'ACTIVE') {
+        throw new Error('lookupStatute(RULE-48(4)) failed to resolve Rule 48(4)');
+    }
+    const r48Thresholds = res48.statute.keyStatutoryThresholds;
+    if (r48Thresholds.aggregateTurnoverThresholdInr !== 50000000) {
+        throw new Error('Rule 48(4) ₹5 Cr threshold missing');
+    }
+    console.log('[PASS] Rule 48(4) Verified: > ₹5 Cr Turnover, 64-char IRN & Rule 48(5) Void Invoice Penalty.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 37 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 55 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

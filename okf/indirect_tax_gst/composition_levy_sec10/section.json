@@ -1,0 +1,50 @@
+{
+  "sectionId": "CGST2017_SEC10",
+  "sectionCode": "10",
+  "aliases": [
+    "10",
+    "sec10",
+    "section 10",
+    "composition scheme",
+    "composition levy",
+    "bill of supply",
+    "composition dealer"
+  ],
+  "governingStatute": "Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)",
+  "statutorySection": "Section 10",
+  "title": "Composition levy and ineligible tax invoice restrictions",
+  "effectivePeriod": {
+    "validFrom": "2017-07-01",
+    "validTo": "OPEN_ENDED"
+  },
+  "plainTextSummary": "A registered person whose aggregate turnover in the preceding financial year did not exceed ₹1.5 Crore (₹75 Lakhs for Special Category States) may opt to pay an amount in lieu of tax under the composition scheme. A composition taxpayer is strictly prohibited from collecting any tax from the recipient and cannot issue a tax invoice (must issue a Bill of Supply). Consequently, a recipient purchasing from a composition supplier is legally prohibited from claiming any Input Tax Credit (ITC) under Section 16(2) and Section 10(4). Any tax erroneously charged by a composition dealer is uncollectible and blocked.",
+  "keyStatutoryThresholds": {
+    "turnoverCeilingGeneralStatesInr": 15000000,
+    "turnoverCeilingSpecialCategoryStatesInr": 7500000,
+    "taxCollectionProhibition": "Strictly prohibited from collecting tax from recipient u/s 10(4)",
+    "itcEligibility": "Zero ITC available to recipient purchasing from composition supplier",
+    "mandatoryInvoiceHeader": "COMPOSITION TAXABLE PERSON, NOT ELIGIBLE TO COLLECT TAX ON SUPPLIES"
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Notification No. 14/2019-Central Tax",
+      "subject": "Prescribing threshold limits for composition levy under Section 10 of CGST Act",
+      "officialUrl": "https://taxinformation.cbic.gov.in/"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Central Goods and Services Tax Rules, 2017 Rule 5",
+      "subject": "Conditions and restrictions for composition levy and bill of supply mandates",
+      "officialUrl": "https://taxinformation.cbic.gov.in/"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Bill of Supply issued by supplier under Rule 49 (tax invoice is invalid)",
+    "Verification of mandatory declaration 'composition taxable person, not eligible to collect tax on supplies'",
+    "GST portal registration status confirmation (Taxpayer Type: Composition)",
+    "Accounting entry ensuring zero GST charged and zero ITC claimed"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.6.0"
+}

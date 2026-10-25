@@ -17,6 +17,7 @@ import {
     syncOkf,
     getLocalManifest,
     checkForPackageUpdate,
+    decodeTaxIdentifier,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
 } from '../src/index.js';
@@ -63,6 +64,16 @@ async function main() {
         case 'list':
         case 'sections':
             await handleList();
+            break;
+
+        case 'decode-id':
+        case 'validate-id':
+        case 'check-id':
+            if (!args[1]) {
+                console.error('[ERROR] Please specify a PAN or GSTIN to decode, e.g. npx @mudraforge/statutory decode-id 27AAPFU0939F1ZV');
+                process.exit(1);
+            }
+            handleDecodeId(args[1]);
             break;
 
         case 'help':
@@ -112,7 +123,18 @@ async function handleCheckUpdate() {
         if (status.isOutdated) {
             console.log(`[WARN] New legal data version available: v${status.latestVersion}`);
             console.log(`Changelog: ${status.changelog}`);
-            console.log(`Run: npx @mudraforge/statutory sync to pull the latest rules.\n`);
+            try {
+                const pkgUpdate = await checkForPackageUpdate();
+                if (pkgUpdate && pkgUpdate.updateAvailable) {
+                    console.log(`\n[RECOMMENDED] Update the npm package to receive the newest release roots:`);
+                    console.log(`  npm install @mudraforge/statutory@latest`);
+                    console.log(`  npx @mudraforge/statutory sync\n`);
+                } else {
+                    console.log(`Run: npx @mudraforge/statutory sync to pull the latest rules.\n`);
+                }
+            } catch (_) {
+                console.log(`Run: npx @mudraforge/statutory sync to pull the latest rules.\n`);
+            }
         } else {
             console.log(`[OK] OKF substrate is up to date (v${status.localVersion}).\n`);
         }
@@ -142,7 +164,14 @@ async function handleSync(targetDir) {
         console.log(`Saved to: ${res.destDir}`);
         console.log('───────────────────────────────────────────────────────────────────────────\n');
     } catch (err) {
-        console.error(`[ERROR] Sync failed: ${err.message}`);
+        if (err.message && err.message.includes('Untrusted bundle rootHash')) {
+            console.error('\n' + '─'.repeat(75));
+            console.error('[NOTICE] Cryptographic verification required an updated release anchor.');
+            console.error(err.message.replace('[@mudraforge/statutory] ', ''));
+            console.error('─'.repeat(75) + '\n');
+        } else {
+            console.error(`[ERROR] Sync failed: ${err.message}`);
+        }
         process.exit(1);
     }
 }
@@ -312,6 +341,32 @@ async function handleList() {
     }
 }
 
+function handleDecodeId(rawId) {
+    const res = decodeTaxIdentifier(rawId);
+    console.log('\n===========================================================================');
+    console.log('INDIAN TAX IDENTIFIER DECODER & OFFLINE MOD-36 VALIDATOR');
+    console.log('===========================================================================');
+    if (!res.isValid) {
+        console.log(`Input:        ${rawId}`);
+        console.log(`Type:         ${res.type || 'UNKNOWN'}`);
+        console.log(`Status:       INVALID`);
+        console.log(`Failure:      ${res.error}\n`);
+        return;
+    }
+
+    console.log(`Identifier:   ${res.gstin || res.pan}`);
+    console.log(`Type:         ${res.type}`);
+    if (res.type === 'GSTIN') {
+        console.log(`Mod-36 Check: VALID (Check Character: "${res.gstin[14]}")`);
+        console.log(`State:        [${res.stateCode}] ${res.stateName}`);
+    }
+    console.log(`PAN:          ${res.pan}`);
+    console.log(`Entity Code:  [${res.entityCode}] ${res.entityType}`);
+    console.log(`Class:        ${res.isIndividualOrHuf ? 'Individual / HUF' : 'Company / Non-Individual'}`);
+    console.log(`Sec 194C TDS: ${res.standard194cRatePercent}% (Statutory Rate)`);
+    console.log('───────────────────────────────────────────────────────────────────────────\n');
+}
+
 function printHelp() {
     console.log(`
 MudraForge Statutory Commons CLI (@mudraforge/statutory)
@@ -322,6 +377,7 @@ Usage:
 Commands:
   browse                    Interactively browse local OKF statutory filesystem
   lookup <section> [date]   Look up section details & temporal status (e.g. 194Q 2025-06-01)
+  decode-id <pan_or_gstin>  Offline ISO Mod-36 checksum, state name, and PAN entity decoding
   check-update              Check if newer OKF versions or legal changes exist on Cloudflare edge
   sync [path]               Download/sync latest versioned OKF bundle to disk (default: package okf/ or custom dir)
   list                      List all indexed statutory sections

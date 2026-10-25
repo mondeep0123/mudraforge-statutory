@@ -1,0 +1,14 @@
+{
+  "formId": "TRANSPORTER_DECLARATION_194C_6",
+  "title": "Declaration by Goods Transport Operator under Section 194C(6) for Non-Deduction of TDS",
+  "applicableSectionCode": "194C",
+  "governingStatute": "Income-tax Act, 1961 Section 194C(6)",
+  "purpose": "Statutory proof exempting payment to goods carriage operator from TDS deduction",
+  "requiredDeclarations": [
+    "TRANSPORTER_LEGAL_NAME",
+    "TRANSPORTER_VALID_PAN",
+    "DECLARATION_MAX_10_CARRIAGES_OWNED_DURING_FY",
+    "VEHICLE_REGISTRATION_NUMBERS_LIST",
+    "AUTHORIZED_SIGNATURE_AND_STAMP"
+  ]
+}

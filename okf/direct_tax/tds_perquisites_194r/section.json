@@ -1,0 +1,54 @@
+{
+  "sectionId": "ITA1961_SEC194R",
+  "sectionCode": "194R",
+  "aliases": [
+    "194R",
+    "194r",
+    "sec194r",
+    "section 194r",
+    "perquisites tds",
+    "business benefit",
+    "dealer incentives",
+    "sales incentives"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Section 194R",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 8, Item 12",
+  "title": "Deduction of tax at source on benefit or perquisite in respect of business or profession",
+  "effectivePeriod": {
+    "validFrom": "2022-07-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Every April 1 (Cumulative ₹20,000 Threshold Resets Annually)"
+  },
+  "plainTextSummary": "Any person responsible for providing to a resident any benefit or perquisite, whether convertible into money or not, arising from business or the exercise of a profession, shall ensure that tax has been deducted at source at the rate of 10% of the value or aggregate of value of such benefit or perquisite, provided the value exceeds ₹20,000 in the financial year. Where the benefit is wholly in kind or partly in kind, the person providing it must ensure that tax is paid before releasing the benefit.",
+  "keyStatutoryThresholds": {
+    "annualExemptionLimitInr": 20000,
+    "standardDeductionRatePercent": 10.0,
+    "inoperativePanPenaltyRatePercent": 20.0,
+    "providerTurnoverPrerequisite": "Turnover > ₹1 Cr (business) or > ₹50L (profession) in preceding FY for individuals/HUFs. Companies/LLPs have no turnover floor.",
+    "benefitScope": "Covers free samples above de minimis, foreign/domestic dealer incentive trips, sponsor gifts, hotel accommodations, and capital assets transferred without adequate consideration per CBDT Circular 12/2022."
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 12 of 2022",
+      "subject": "Guidelines under section 194R of the Income-tax Act, 1961 - Benefit or perquisite in respect of business or profession",
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/communications/circulars.aspx"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 18 of 2022",
+      "subject": "Clarifications and removal of difficulties under section 194R",
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/communications/circulars.aspx"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Fair market value invoice / valuation report for benefits provided in kind",
+    "Proof of advance tax / ITNS 281 challan if tax was discharged in cash prior to benefit release",
+    "Recipient Permanent Account Number (PAN) validation record",
+    "Company annual dealer / channel incentive scheme documentation"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.6.0"
+}

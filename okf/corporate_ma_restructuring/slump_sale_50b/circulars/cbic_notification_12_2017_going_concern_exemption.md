@@ -8,7 +8,7 @@ valid_from: 2017-07-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Services by way of transfer of a going concern, as a whole or an independent part thereof, attract 0% GST (exempt supply)
-official_url: https://cbic-gst.gov.in/pdf/central-tax-rate/notf-12-2017-cgst-rate-english.pdf
+official_url: https://taxinformation.cbic.gov.in/
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

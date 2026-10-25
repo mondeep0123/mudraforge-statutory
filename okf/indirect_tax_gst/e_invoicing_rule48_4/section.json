@@ -1,0 +1,52 @@
+{
+  "sectionId": "CGSTRULES2017_RULE48_4",
+  "sectionCode": "RULE-48(4)",
+  "aliases": [
+    "RULE-48(4)",
+    "rule 48(4)",
+    "rule 48",
+    "e-invoicing",
+    "e-invoice",
+    "irn",
+    "qr code mandate",
+    "e-invoicing mandate"
+  ],
+  "governingStatute": "Central Goods and Services Tax Rules, 2017",
+  "statutorySection": "Rule 48(4) read with Rule 48(5)",
+  "title": "Mandatory electronic invoicing (E-Invoicing), IRN generation, and invoice validity",
+  "effectivePeriod": {
+    "validFrom": "2020-10-01",
+    "validTo": "OPEN_ENDED"
+  },
+  "plainTextSummary": "The invoice shall be prepared by such class of registered persons as may be notified, by including such particulars contained in Form GST INV-01 after obtaining an Invoice Reference Number (IRN) by uploading the information on the common Invoice Registration Portal (IRP). Every registered person whose aggregate turnover in any preceding financial year from 2017-18 onwards exceeds ₹5 Crore must issue e-invoices for B2B supplies. Under Rule 48(5), every invoice issued by a person to whom Rule 48(4) applies, in any manner other than the manner specified in Rule 48(4), SHALL NOT BE TREATED AS AN INVOICE. Receipt of an invalid invoice without an IRN legally blocks the buyer from claiming Input Tax Credit under Section 16(2)(a).",
+  "keyStatutoryThresholds": {
+    "aggregateTurnoverThresholdInr": 50000000,
+    "turnoverHistoryScanWindow": "Any financial year from 2017-18 onwards",
+    "irnLength": "64-character SHA-256 hexadecimal cryptographic hash",
+    "mandatoryVisualArtifacts": "Signed QR code containing IRN, supplier GSTIN, buyer GSTIN, invoice date, taxable value, and tax amounts",
+    "statutoryConsequenceRule48_5": "Invoice without IRN is legally non-existent; recipient ITC blocked under Section 16(2)(a)"
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Notification No. 10/2023-Central Tax",
+      "subject": "Lowering aggregate turnover threshold for mandatory e-invoicing to ₹5 Crore w.e.f. 01.08.2023",
+      "officialUrl": "https://taxinformation.cbic.gov.in/"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Circular No. 160/16/2021-GST",
+      "subject": "Clarifications regarding e-invoicing applicability, exemptions, and validity",
+      "officialUrl": "https://taxinformation.cbic.gov.in/"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Tax invoice with valid 64-character Invoice Reference Number (IRN) clearly printed",
+    "Machine-readable digitally signed Quick Response (QR) code issued by IRP portal",
+    "Supplier aggregate turnover verification (confirming whether > ₹5 Crore in any year from 2017-18)",
+    "IRP verification payload / e-invoice JSON validation record",
+    "Confirmation that supplier is not in exempted category (insurance, banking, GTA, passenger transport, multiplex cinema)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.6.0"
+}

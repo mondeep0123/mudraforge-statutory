@@ -1,0 +1,50 @@
+{
+  "sectionId": "CGST2017_SEC34",
+  "sectionCode": "34",
+  "aliases": [
+    "34",
+    "sec34",
+    "section 34",
+    "credit note",
+    "debit note",
+    "gst credit note",
+    "tax invoice adjustment"
+  ],
+  "governingStatute": "Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)",
+  "statutorySection": "Section 34",
+  "title": "Credit and debit notes statutory adjustments and return filing deadlines",
+  "effectivePeriod": {
+    "validFrom": "2017-07-01",
+    "validTo": "OPEN_ENDED"
+  },
+  "plainTextSummary": "Where one or more tax invoices have been issued for supply of any goods or services and the taxable value or tax charged in that tax invoice is found to exceed the taxable value or tax payable in respect of such supply, or where goods supplied are returned, the registered supplier may issue to the recipient one or more credit notes. The supplier must declare details of such credit note in the return for the month during which such credit note has been issued, but not later than the thirtieth day of November following the end of the financial year in which such supply was made, or date of furnishing of the relevant annual return, whichever is earlier. No reduction in output tax liability of supplier is permitted if the tax incidence has been passed on to any other person.",
+  "keyStatutoryThresholds": {
+    "annualAdjustmentCutoffDate": "30th November following the end of the FY (amended from September w.e.f. Finance Act 2022)",
+    "statutoryLinkagePrerequisite": "Must contain serial number and date of the corresponding original tax invoice(s)",
+    "unjustEnrichmentBar": "No reduction in supplier output tax if incidence has been passed on to recipient",
+    "debitNoteEffect": "Debit note issued when taxable value or tax charged is found to be less than actual supply; treated as invoice for recipient ITC claim"
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Circular No. 137/07/2020-GST",
+      "subject": "Clarification on issues relating to credit notes under Section 34 of CGST Act",
+      "officialUrl": "https://taxinformation.cbic.gov.in/"
+    },
+    {
+      "authority": "Ministry of Finance",
+      "instrument": "Finance Act, 2022 (Act No. 6 of 2022)",
+      "subject": "Amendment to Section 34(2) extending credit note declaration deadline from 30 September to 30 November",
+      "officialUrl": "https://taxinformation.cbic.gov.in/"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Original Tax Invoice number, date, and basic taxable value",
+    "Credit / Debit note document satisfying Section 34 and Rule 53 requirements",
+    "Proof of commercial discount agreement / return of goods / price deficiency",
+    "Declaration of credit note in Form GSTR-1 and adjustment in Form GSTR-3B Table 4(B)(2)",
+    "Recipient ledger confirmation ensuring corresponding ITC reversal"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.6.0"
+}

@@ -1,0 +1,56 @@
+{
+  "sectionId": "ITA1961_SEC206AB",
+  "sectionCode": "206AB",
+  "aliases": [
+    "206AB",
+    "206ab",
+    "sec206ab",
+    "section 206ab",
+    "non-filer tds",
+    "specified person higher rate",
+    "higher tds non-filer"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Section 206AB",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 397(3)",
+  "title": "Special provision for deduction of tax at source for non-filers of income-tax return",
+  "effectivePeriod": {
+    "validFrom": "2021-07-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Every assessment year based on preceding FY return filing deadline"
+  },
+  "plainTextSummary": "Where tax is required to be deducted at source on any sum paid or payable to a specified person (a person who has not filed their ITR for the preceding financial year and has aggregate TDS/TCS of ₹50,000 or more in said year), the tax shall be deducted at the higher of: (i) twice the rate specified in the relevant Act, (ii) twice the rate in force, or (iii) 5%. If Section 206AA (no-PAN) also applies, tax is deducted at the higher of 206AA or 206AB rates. Does NOT apply to non-residents without a PE in India, or to Sections 192, 192A, 194B, 194BA, 194BB, 194-IA, 194-IB, 194M, 194N.",
+  "keyStatutoryThresholds": {
+    "priorYearAggregateTdsTcsThresholdInr": 50000,
+    "penaltyMultiplier": "Twice the applicable rate or 5%, whichever is higher",
+    "section206aaHarmonization": "Higher of Section 206AA rate (20%) or Section 206AB rate",
+    "exemptedSections": [
+      "192",
+      "192A",
+      "194B",
+      "194BA",
+      "194BB",
+      "194-IA",
+      "194-IB",
+      "194M",
+      "194N"
+    ]
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 11 of 2021",
+      "subject": "Compliance Check functionality for Section 206AB & Section 206CCA",
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/communications/circulars.aspx"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Compliance Check for Section 206AB & 206CCA verification report from Income Tax e-filing portal",
+    "Acknowledgment of Income Tax Return (ITR-V) for preceding assessment year",
+    "Vendor PAN Card / TRACES status verification",
+    "Form 26AS / AIS reconciliation confirming aggregate TDS/TCS history"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.6.0"
+}

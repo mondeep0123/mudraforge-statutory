@@ -1,0 +1,32 @@
+{
+  "formId": "GSTR_3B_TABLE_4_REVERSAL_RECLAIM",
+  "title": "GSTR-3B Table 4 Input Tax Credit Reversal & Re-availment Reconciliation",
+  "governingStatute": "Central Goods and Services Tax Act, 2017 (Section 16(2) Proviso & Rule 37)",
+  "validFrom": "2022-07-06",
+  "validTo": "OPEN_ENDED",
+  "temporalStatus": "ACTIVE",
+  "reportingTables": {
+    "temporaryReversal": "Table 4(B)(2) (Others - Reversible under Rule 37 / 180-day non-payment)",
+    "reavailmentGross": "Table 4(A)(5) (All other ITC - Ingested in month of vendor payment)",
+    "reclaimDisclosure": "Table 4(D)(1) (ITC reclaimed which was reversed under Table 4(B)(2) in earlier tax period)"
+  },
+  "reconciliationFields": [
+    "SUPPLIER_GSTIN_15_CHAR",
+    "SUPPLIER_LEGAL_NAME",
+    "INVOICE_NUMBER",
+    "INVOICE_DATE",
+    "INVOICE_TOTAL_AMOUNT_WITH_TAX_INR",
+    "ITC_AVAILED_IGST_INR",
+    "ITC_AVAILED_CGST_INR",
+    "ITC_AVAILED_SGST_INR",
+    "AGING_DAYS_FROM_INVOICE_DATE",
+    "PAYMENT_STATUS_PAID_OR_UNPAID",
+    "PAYMENT_DATE_IF_PAID",
+    "PAYMENT_BANK_UTR_REFERENCE",
+    "RULE_37_180_DAY_BREACH_BOOL",
+    "STATUTORY_EXCEPTION_APPLIED_CODE",
+    "SECTION_50_INTEREST_CALCULATED_INR",
+    "TABLE_4B2_REVERSAL_PERIOD_YYYY_MM",
+    "TABLE_4D1_RECLAIM_PERIOD_YYYY_MM"
+  ]
+}

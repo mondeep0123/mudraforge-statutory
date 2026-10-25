@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.4.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-24T05:46:25.842Z
+> **Generated Timestamp**: 2026-10-24T15:20:46.069Z
 
 ---
 
@@ -11,11 +11,11 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 21 resolvable gazette URLs | 21 total citations declared | **100.0%** | VERIFIED |
-| **Temporal Validity Bounds** | 8 sections with explicit dates | 8 total bundled sections | **100.0%** | VERIFIED |
-| **Dual-Act 2025 Transition Bridges** | 3 direct tax provisions mapped | 4 direct tax provisions | **75.0%** | VERIFIED |
-| **Attached Administrative Circulars** | 8 official circulars | 6 sections across 4 domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 10 schemas/templates | 6 sections across 4 domains | **100% Attached** | VERIFIED |
+| **Primary Source Citations** | 30 resolvable gazette URLs | 30 total citations declared | **100.0%** | VERIFIED |
+| **Temporal Validity Bounds** | 11 sections with explicit dates | 11 total bundled sections | **100.0%** | VERIFIED |
+| **Dual-Act 2025 Transition Bridges** | 6 direct tax provisions mapped | 7 direct tax provisions | **85.7%** | VERIFIED |
+| **Attached Administrative Circulars** | 11 official circulars | 6 sections across 4 domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 14 schemas/templates | 6 sections across 4 domains | **100% Attached** | VERIFIED |
 | **Cryptographic Merkle Verification** | 20 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
@@ -50,8 +50,11 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **50B** | Special provision for computation of capital gains in case of slump sale | Income-tax Act, 1961 (Act No. 43 of 1961) | `2000-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 2 | 2 | Income-tax Act, 2025 (Section 78 (Capital gains on slump sale of undertakings)) |
 | **206C(1H)** | Collection of tax at source by seller on receipt of consideration for sale of goods (Omitted effective 1 April 2025) | Income-tax Act, 1961 | `2020-10-01` to `2025-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 0 | Finance Act, 2025 (Statutory Sunset) (Section 206C(1H) Omitted) |
+| **194H** | Deduction of tax at source on commission or brokerage | Income-tax Act, 1961 (Act No. 43 of 1961) | `2001-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 4, Item (i)) |
+| **194C** | Deduction of tax at source on payments to contractors and sub-contractors | Income-tax Act, 1961 (Act No. 43 of 1961) | `1972-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 3, Item (i)) |
 | **194Q** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 2 | 2 | Income-tax Act, 2025 (Section 393(1), Table 8, Item (ii)) |
 | **393** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 2025 (Act No. 1 of 2025) | `2026-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 0 | 0 | N/A |
+| **194I** | Deduction of tax at source on payment of rent | Income-tax Act, 1961 (Act No. 43 of 1961) | `1994-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (i)) |
 | **194J** | Fees for professional or technical services, royalty, and non-compete fees | Income-tax Act, 1961 | `1995-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 6, Item (iii)) |
 | **17(5)** | Apportionment of credit and blocked input tax credits | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | CGST Act, 2017 (In force) (Section 17(5)(b)(i) & (b)(iii)) |
 | **IRC-901-904** | Foreign Tax Credit authorization, separate basket limitation, and partnership pass-through reporting (Form 1116 / Schedule K-3) | Internal Revenue Code of 1986 (Title 26, U.S. Code) | `2021-01-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 0 | 2 | Title 26, U.S. Code (Continuous) (26 U.S.C. §§ 901, 904(d), 904(j), 469) |

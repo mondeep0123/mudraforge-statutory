@@ -18,13 +18,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const DEFAULT_LOCAL_OKF_DIR = path.resolve(__dirname, '..', 'okf');
 export const DEFAULT_BASE_URL = 'https://api.mudraforge.in';
-export const STATUTORY_CLIENT_VERSION = '2.4.2';
+export const STATUTORY_CLIENT_VERSION = '2.6.0';
 
 /**
  * Pinned official release Merkle root digests.
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-ce88c2255df1c30c15bfe184c8117336ebc302c2ac5ef25e96a6957402ae11ae', // v2.6.0 Verified Citation Merkle Root (24 Sections across 5 Domains - 100% Complete AP)
+    'sha256-3f25fc3941d29de5b8befc0ddb24d1bb2632067f00b200680cf784961616424c', // v2.5.0 Verified Citation Merkle Root (18 Sections across 5 Domains)
+    'sha256-c32be389bfb82a52ffc40670b74103216c45f3b284c66d2b0020097eb36a25f9', // v2.5.0 Merkle Manifest Root (18 Sections across 5 Domains)
+    'sha256-f3b230a0774eb55d607403b5a656bbe2950a32d07145a46f0eb083232ec12986', // v2.6.0 Edge Sync Bundle Root (12 Sections across 5 Domains)
+    'sha256-4e9d9c064e55748dc6389eae1b5cb2fec1ad7f1c811097afd57e4fb0a6f6454e', // v2.6.0 Local Static Manifest Root (12 Sections across 5 Domains)
+    'sha256-b421910e35f4f16321f6a72382377db66a05ead521ff09d18a91ec9d534d0069', // v2.6.0 Edge Sync Bundle Root (11 Sections)
+    'sha256-dbbd3bc618b7807c4e76861329bd8c6903ef7f9cb28efc9a8693abc06915c9c1', // v2.6.0 Local Static Manifest Root (11 Sections)
     'sha256-7fe98cf432db5d31ee6b65bbb9d77575ce8c9192eec6f318e3ad3382af0ba900', // v2.5.0 Edge Sync Bundle Root
     'sha256-96089fe2835d0b9493293a1e5205e0b6b46f16771c9380d1f571969b453ba80d', // v2.4.0 Local Static Manifest Root
     'sha256-d9612074241f7c2cc1d05fa5eee254996f21db56ad1ab71ac36a084ffd4169e1'  // Baseline Release Root
@@ -34,14 +41,16 @@ export const PINNED_RELEASE_ROOTS = new Set([
  * Canonical MudraForge Statutory Root Ed25519 Public Key (SPKI DER Base64).
  * Used for verifying digital signatures on remote statutory update bundles.
  */
-export const MUDRAFORGE_STATUTORY_ROOT_PUBLIC_KEY = 'MCowBQYDK2VwAyEAw/XsE6QGtQzdq3EUP3xFpPFHu1x87VSNreXmXr6W17s=';
+export const MUDRAFORGE_STATUTORY_ROOT_PUBLIC_KEY = 'MCowBQYDK2VwAyEAYN4ZtkUBOwybN68SiVUI9YMDlEBNiCa1CAgUNx6rXUo=';
+export const LEGACY_STATUTORY_ROOT_PUBLIC_KEY = 'MCowBQYDK2VwAyEAw/XsE6QGtQzdq3EUP3xFpPFHu1x87VSNreXmXr6W17s=';
 
 /**
  * Authoritative set of trusted MudraForge Root Public Keys.
  * Public keys supplied through options that are not present in this set are rejected.
  */
 export const TRUSTED_STATUTORY_PUBLIC_KEYS = new Set([
-    MUDRAFORGE_STATUTORY_ROOT_PUBLIC_KEY
+    MUDRAFORGE_STATUTORY_ROOT_PUBLIC_KEY,
+    LEGACY_STATUTORY_ROOT_PUBLIC_KEY
 ]);
 
 /**
@@ -51,7 +60,15 @@ export const TRUSTED_STATUTORY_KEYS_METADATA = {
     [MUDRAFORGE_STATUTORY_ROOT_PUBLIC_KEY]: {
         keyId: 'mudraforge-root-2026-v1',
         algorithm: 'Ed25519',
-        purpose: 'MudraForge Open Knowledge Format Statutory Root Authority',
+        purpose: 'MudraForge Open Knowledge Format Statutory Root Authority (Active)',
+        validFrom: '2026-01-01T00:00:00Z',
+        validTo: '2027-12-31T23:59:59Z',
+        status: 'ACTIVE'
+    },
+    [LEGACY_STATUTORY_ROOT_PUBLIC_KEY]: {
+        keyId: 'mudraforge-root-2026-v0',
+        algorithm: 'Ed25519',
+        purpose: 'MudraForge Statutory Genesis Anchor (Legacy)',
         validFrom: '2026-01-01T00:00:00Z',
         validTo: '2027-12-31T23:59:59Z',
         status: 'ACTIVE'
@@ -305,6 +322,7 @@ export function lookupLocalStatute(section, okfDir = DEFAULT_LOCAL_OKF_DIR) {
     }
 
     const files = findJsonFilesRecursively(okfDir);
+    const records = [];
     for (const filePath of files) {
         let data;
         try {
@@ -312,55 +330,109 @@ export function lookupLocalStatute(section, okfDir = DEFAULT_LOCAL_OKF_DIR) {
         } catch (_) {
             continue;
         }
-
-        // Must be a valid statutory record with sectionCode
         if (!data || !data.sectionCode || typeof data.sectionCode !== 'string') continue;
+        records.push({ filePath, data });
+    }
 
-        let isMatch = false;
+    let matchedRecord = null;
+
+    // Pass 1: Authoritative exact match on sectionCode, sectionId, or aliases
+    for (const rec of records) {
+        const { data } = rec;
         const secCode = data.sectionCode.toLowerCase();
         const secId = (data.sectionId && typeof data.sectionId === 'string') ? data.sectionId.toLowerCase() : '';
 
         // 1. Direct sectionCode / sectionId match
         if (secCode === rawClean || (secId && secId === rawClean)) {
-            isMatch = true;
+            matchedRecord = rec;
+            break;
         }
 
         // 2. Normalized alphanumeric match (handles "17_5", "17(5)", "17-5", "msmed_15_16")
         if (
-            !isMatch && (
-                secCode.replace(/[()_-\s]+/g, '') === normalized ||
-                (secId && secId.replace(/[()_-\s]+/g, '') === normalized)
-            )
+            secCode.replace(/[()_-\s]+/g, '') === normalized ||
+            (secId && secId.replace(/[()_-\s]+/g, '') === normalized)
         ) {
-            isMatch = true;
+            matchedRecord = rec;
+            break;
         }
 
         // 3. Aliases match
         if (
-            !isMatch &&
             data.aliases &&
             data.aliases.some(
                 a => a.toLowerCase() === rawClean || a.toLowerCase().replace(/[()_-\s]+/g, '') === normalized
             )
         ) {
-            isMatch = true;
+            matchedRecord = rec;
+            break;
         }
+    }
 
-        // 4. Folder or filename match (handles "tds_goods_194q", "194Q-tds-on-purchase...")
-        if (!isMatch) {
+    // Pass 2: Heuristic folder or filename match (only if no authoritative code match found)
+    if (!matchedRecord) {
+        const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const tokenRegex = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'i');
+        for (const rec of records) {
+            const { filePath } = rec;
             const fileName = path.basename(filePath).toLowerCase().replace(/\.json$/, '');
             const folderName = path.basename(path.dirname(filePath)).toLowerCase();
+
             if (
-                fileName.startsWith(rawClean) || fileName.startsWith(normalized) ||
-                folderName.includes(rawClean) || folderName.includes(normalized)
+                fileName.startsWith(`${rawClean}-`) || fileName.startsWith(`${normalized}-`) ||
+                tokenRegex.test(folderName) || tokenRegex.test(fileName)
             ) {
-                isMatch = true;
+                matchedRecord = rec;
+                break;
+            }
+        }
+    }
+
+    // Pass 3: Token / keyword search across aliases, title, and plainTextSummary
+    if (!matchedRecord) {
+        const stopWords = new Set(['and', 'for', 'the', 'with', 'from', 'under', 'etc', 'to', 'in', 'of', 'a', 'an', 'is', 'by', 'section', 'sec', 'act', 'rule', 'non', 'not', 'no', 'any', 'all', 'existent']);
+        const tokens = rawClean.split(/[\s,+/_-]+/).filter(t => t.length >= 2 && !stopWords.has(t));
+        let bestRec = null;
+        let bestScore = 0;
+
+        for (const rec of records) {
+            let score = 0;
+            const { data } = rec;
+            const title = (data.title || '').toLowerCase();
+            const summary = (data.plainTextSummary || '').toLowerCase();
+            const statute = (data.statutorySection || '').toLowerCase();
+
+            for (const alias of data.aliases || []) {
+                const cleanAlias = alias.toLowerCase();
+                if (rawClean.includes(cleanAlias) || cleanAlias.includes(rawClean)) {
+                    score += 50;
+                }
+            }
+
+            for (const token of tokens) {
+                for (const alias of data.aliases || []) {
+                    if (alias.toLowerCase().includes(token)) score += 15;
+                }
+                if (title.includes(token)) score += 10;
+                if (statute.includes(token)) score += 8;
+                if (summary.includes(token)) score += 3;
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestRec = rec;
             }
         }
 
-        if (isMatch) {
-            // Attach supporting circulars and compliance forms if present in domain hierarchy
-            const parentDir = path.dirname(filePath);
+        if (bestScore >= 35) {
+            matchedRecord = bestRec;
+        }
+    }
+
+    if (matchedRecord) {
+        const { filePath, data } = matchedRecord;
+        // Attach supporting circulars and compliance forms if present in domain hierarchy
+        const parentDir = path.dirname(filePath);
             const circularsDir = path.join(parentDir, 'circulars');
             const formsDir = path.join(parentDir, 'forms');
 
@@ -370,7 +442,6 @@ export function lookupLocalStatute(section, okfDir = DEFAULT_LOCAL_OKF_DIR) {
             };
 
             return data;
-        }
     }
     return null;
 }
@@ -539,7 +610,6 @@ export async function syncOkf(options = {}) {
     assertSecureEndpoint(baseUrl);
 
     const okfDir = options.okfDir || DEFAULT_LOCAL_OKF_DIR;
-    const sectionsDir = path.join(okfDir, 'sections');
     const localManifest = getLocalManifest(okfDir);
 
     const bundleUrl = new URL('/api/v1/statutory/bundle.json', baseUrl);
@@ -627,6 +697,7 @@ export async function syncOkf(options = {}) {
         const fileHashes = {};
         const syncedSectionCodes = [];
         const seenCodes = new Set();
+        const stagedRelPaths = [];
 
         for (const statute of bundle.statutes) {
             // Verify core required statutory fields
@@ -640,20 +711,30 @@ export async function syncOkf(options = {}) {
             }
             seenCodes.add(codeKey);
 
-            const fileName = resolveSafeStatuteFilename(statute);
-            const targetPath = path.resolve(stagingDir, fileName);
+            // Determine relative deployment target:
+            // If statute provides relPath, preserve domain hierarchy (e.g. "direct_tax/tds_goods_194q/section.json")
+            // Otherwise, fall back to flat "sections/<filename>.json" for legacy compatibility
+            const relTarget = statute.relPath 
+                ? statute.relPath.replace(/\\/g, '/')
+                : path.join('sections', resolveSafeStatuteFilename(statute));
+
+            const targetPath = path.resolve(stagingDir, relTarget);
 
             // Path Traversal Containment Assertion
             if (!targetPath.startsWith(path.resolve(stagingDir) + path.sep)) {
-                throw new Error(`[@mudraforge/statutory] Security violation: Path traversal detected in filename "${fileName}".`);
+                throw new Error(`[@mudraforge/statutory] Security violation: Path traversal detected in target "${relTarget}".`);
             }
+
+            fs.mkdirSync(path.dirname(targetPath), { recursive: true });
 
             const jsonStr = JSON.stringify(statute, null, 2);
             fs.writeFileSync(targetPath, jsonStr, 'utf8');
 
+            const fileName = resolveSafeStatuteFilename(statute);
             const fileHash = crypto.createHash('sha256').update(jsonStr).digest('hex');
             fileHashes[fileName] = fileHash;
             syncedSectionCodes.push(statute.sectionCode);
+            stagedRelPaths.push(relTarget);
         }
 
         // 2.5 Cryptographic Root Merkle Digest Verification
@@ -694,7 +775,14 @@ export async function syncOkf(options = {}) {
             const isPinned = PINNED_RELEASE_ROOTS.has(bundle.rootHash);
 
             if (!isSignatureValid && !isPinned) {
-                throw new Error(`[@mudraforge/statutory] Security violation: Untrusted bundle rootHash "${bundle.rootHash}". Bundle is neither cryptographically signed by MudraForge Root Authority nor pinned in authorized release roots. Set options.allowUnverifiedRoot=true for local non-production fixtures.`);
+                const isEdgeNewer = bundle.okfVersion && compareSemver(bundle.okfVersion, STATUTORY_CLIENT_VERSION) >= 0;
+                const remediation = isEdgeNewer
+                    ? `The remote legal bundle (OKF v${bundle.okfVersion}) has a newer cryptographic release root than recognized by your installed package (v${STATUTORY_CLIENT_VERSION}).\n` +
+                      `  To receive the updated release roots and trust anchors, update your client:\n` +
+                      `    npm install @mudraforge/statutory@latest\n` +
+                      `    npx @mudraforge/statutory@latest sync`
+                    : `Bundle is neither cryptographically signed by MudraForge Root Authority nor pinned in authorized release roots. Set options.allowUnverifiedRoot=true for local non-production fixtures.`;
+                throw new Error(`[@mudraforge/statutory] Security violation: Untrusted bundle rootHash "${bundle.rootHash}". ${remediation}`);
             }
         }
 
@@ -720,18 +808,17 @@ export async function syncOkf(options = {}) {
         }
 
         // 3. Atomically deploy from staging to destination
-        fs.mkdirSync(sectionsDir, { recursive: true });
-
-        const stagedFiles = fs.readdirSync(stagingDir);
-        for (const stagedFile of stagedFiles) {
-            const srcPath = path.join(stagingDir, stagedFile);
-            const destPath = path.join(sectionsDir, stagedFile);
+        for (const relTarget of stagedRelPaths) {
+            const srcPath = path.join(stagingDir, relTarget);
+            const destPath = path.join(okfDir, relTarget);
 
             // Safety assertion on destination path containment
             const resolvedDest = path.resolve(destPath);
-            if (!resolvedDest.startsWith(path.resolve(sectionsDir) + path.sep)) {
-                throw new Error(`[@mudraforge/statutory] Security violation: Destination path traversal detected in "${stagedFile}".`);
+            if (!resolvedDest.startsWith(path.resolve(okfDir) + path.sep)) {
+                throw new Error(`[@mudraforge/statutory] Security violation: Destination path traversal detected in "${relTarget}".`);
             }
+
+            fs.mkdirSync(path.dirname(destPath), { recursive: true });
 
             try {
                 fs.renameSync(srcPath, destPath);
@@ -742,12 +829,20 @@ export async function syncOkf(options = {}) {
         }
 
         // 4. Write verified manifest
+        const manifestDomains = {};
+        for (const statute of bundle.statutes) {
+            const domain = statute.domain || (statute.relPath ? statute.relPath.split('/')[0] : 'sections');
+            if (!manifestDomains[domain]) manifestDomains[domain] = [];
+            if (statute.sectionCode) manifestDomains[domain].push(statute.sectionCode);
+        }
+
         const manifest = {
             okfVersion: bundle.okfVersion,
             publishedAt: bundle.publishedAt || new Date().toISOString(),
             rootHash: bundle.rootHash,
             totalSections: bundle.statutes.length,
             changelog: bundle.changelog || 'Synchronized from Cloudflare Edge API',
+            domains: manifestDomains,
             sections: syncedSectionCodes
         };
         fs.writeFileSync(path.join(okfDir, 'manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
@@ -1193,3 +1288,201 @@ export class StatutoryClient {
         return await syncOkf({ baseUrl: this.baseUrl, okfDir: this.okfDir });
     }
 }
+
+/**
+ * Standard Indian State & Union Territory Codes (Census 2011 / GSTN 2-digit prefix).
+ */
+export const INDIAN_STATE_CODES = {
+    '01': 'Jammu & Kashmir',
+    '02': 'Himachal Pradesh',
+    '03': 'Punjab',
+    '04': 'Chandigarh',
+    '05': 'Uttarakhand',
+    '06': 'Haryana',
+    '07': 'Delhi',
+    '08': 'Rajasthan',
+    '09': 'Uttar Pradesh',
+    '10': 'Bihar',
+    '11': 'Sikkim',
+    '12': 'Arunachal Pradesh',
+    '13': 'Nagaland',
+    '14': 'Manipur',
+    '15': 'Mizoram',
+    '16': 'Tripura',
+    '17': 'Meghalaya',
+    '18': 'Assam',
+    '19': 'West Bengal',
+    '20': 'Jharkhand',
+    '21': 'Odisha',
+    '22': 'Chhattisgarh',
+    '23': 'Madhya Pradesh',
+    '24': 'Gujarat',
+    '26': 'Dadra & Nagar Haveli and Daman & Diu',
+    '27': 'Maharashtra',
+    '29': 'Karnataka',
+    '30': 'Goa',
+    '31': 'Lakshadweep',
+    '32': 'Kerala',
+    '33': 'Tamil Nadu',
+    '34': 'Puducherry',
+    '35': 'Andaman & Nicobar Islands',
+    '36': 'Telangana',
+    '37': 'Andhra Pradesh',
+    '38': 'Ladakh',
+    '97': 'Other Territory',
+    '99': 'Centre Jurisdiction'
+};
+
+/**
+ * Statutory 4th character legal status classification for Indian Permanent Account Numbers (PAN).
+ * Enacted under Section 139A of the Income-tax Act, 1961 read with Rule 114 of Income Tax Rules.
+ */
+export const PAN_ENTITY_TYPES = {
+    'P': { code: 'P', name: 'Individual', isIndividualOrHuf: true, standard194cRatePercent: 1.0 },
+    'H': { code: 'H', name: 'Hindu Undivided Family (HUF)', isIndividualOrHuf: true, standard194cRatePercent: 1.0 },
+    'C': { code: 'C', name: 'Company', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
+    'F': { code: 'F', name: 'Partnership Firm / LLP', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
+    'T': { code: 'T', name: 'Trust', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
+    'A': { code: 'A', name: 'Association of Persons (AOP)', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
+    'B': { code: 'B', name: 'Body of Individuals (BOI)', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
+    'L': { code: 'L', name: 'Local Authority', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
+    'J': { code: 'J', name: 'Artificial Juridical Person', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
+    'G': { code: 'G', name: 'Government Agency', isIndividualOrHuf: false, standard194cRatePercent: 2.0 }
+};
+
+const BASE36_ALPHANUMERIC = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+/**
+ * Validates the check digit of a 15-character Goods and Services Tax Identification Number (GSTIN)
+ * using the official ISO/IEC 7064 Mod 36, 36 check digit algorithm.
+ * 
+ * Offline, zero-dependency, and deterministic. Requires zero network calls.
+ * 
+ * @param {string} gstin 15-character alphanumeric GSTIN string
+ * @returns {boolean} True if the 15th character exactly matches the calculated check character
+ */
+export function isValidGstinChecksum(gstin) {
+    if (!gstin || typeof gstin !== 'string') return false;
+    const clean = gstin.trim().toUpperCase();
+
+    // Structural syntax: State (2 digits) + PAN (10 chars) + Entity (1 char) + Z (1 char) + Check (1 char)
+    const pattern = /^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/;
+    if (!pattern.test(clean)) return false;
+
+    let total = 0;
+    for (let i = 0; i < 14; i++) {
+        const val = BASE36_ALPHANUMERIC.indexOf(clean[i]);
+        if (val === -1) return false;
+        const factor = (i % 2 === 0) ? 1 : 2;
+        const product = val * factor;
+        total += Math.floor(product / 36) + (product % 36);
+    }
+
+    const expectedIndex = (36 - (total % 36)) % 36;
+    const expectedChar = BASE36_ALPHANUMERIC[expectedIndex];
+    return clean[14] === expectedChar;
+}
+
+/**
+ * Deterministically decodes an Indian Tax Identifier (PAN or GSTIN).
+ * 
+ * Capabilities:
+ * - Structural regular expression pattern validation
+ * - Offline ISO/IEC 7064 Mod 36, 36 checksum calculation for GSTIN
+ * - State code and name extraction from GSTIN prefix
+ * - Embedded 10-character PAN extraction from GSTIN positions 3..12
+ * - Statutory legal entity classification via 4th character of PAN (Individual, HUF, Company, Firm, etc.)
+ * - Statutory Section 194C withholding rate derivation (1% for Individual/HUF vs 2% for Other Entities)
+ * 
+ * Zero dependencies, 0-neuron, zero network calls.
+ * 
+ * @param {string} rawId PAN (10 characters) or GSTIN (15 characters)
+ * @returns {Object} Decoded tax entity metadata
+ */
+export function decodeTaxIdentifier(rawId) {
+    if (!rawId || typeof rawId !== 'string') {
+        return {
+            isValid: false,
+            error: 'Tax identifier must be a non-empty string.'
+        };
+    }
+
+    const clean = rawId.trim().toUpperCase();
+
+    // 1. Process 15-character GSTIN
+    if (clean.length === 15) {
+        const pattern = /^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/;
+        if (!pattern.test(clean)) {
+            return {
+                isValid: false,
+                type: 'GSTIN',
+                gstin: clean,
+                error: 'Malformed GSTIN format: expected 2 digits state + 10 chars PAN + 1 entity char + Z + 1 check char.'
+            };
+        }
+
+        const isChecksumValid = isValidGstinChecksum(clean);
+        const stateCode = clean.slice(0, 2);
+        const pan = clean.slice(2, 12);
+        const entityCode = pan[3];
+        const entityMeta = PAN_ENTITY_TYPES[entityCode] || {
+            code: entityCode,
+            name: 'Other Entity / Non-Individual',
+            isIndividualOrHuf: false,
+            standard194cRatePercent: 2.0
+        };
+
+        return {
+            isValid: isChecksumValid,
+            checksumValid: isChecksumValid,
+            type: 'GSTIN',
+            gstin: clean,
+            pan,
+            stateCode,
+            stateName: INDIAN_STATE_CODES[stateCode] || 'Unknown Territory',
+            entityCode,
+            entityType: entityMeta.name,
+            isIndividualOrHuf: entityMeta.isIndividualOrHuf,
+            standard194cRatePercent: entityMeta.standard194cRatePercent,
+            error: isChecksumValid ? null : 'GSTIN checksum mismatch under ISO/IEC 7064 Mod 36, 36.'
+        };
+    }
+
+    // 2. Process 10-character PAN
+    if (clean.length === 10) {
+        const panPattern = /^[A-Z]{5}\d{4}[A-Z]$/;
+        if (!panPattern.test(clean)) {
+            return {
+                isValid: false,
+                type: 'PAN',
+                pan: clean,
+                error: 'Malformed PAN format: expected 5 letters + 4 digits + 1 letter.'
+            };
+        }
+
+        const entityCode = clean[3];
+        const entityMeta = PAN_ENTITY_TYPES[entityCode] || {
+            code: entityCode,
+            name: 'Other Entity / Non-Individual',
+            isIndividualOrHuf: false,
+            standard194cRatePercent: 2.0
+        };
+
+        return {
+            isValid: true,
+            type: 'PAN',
+            pan: clean,
+            entityCode,
+            entityType: entityMeta.name,
+            isIndividualOrHuf: entityMeta.isIndividualOrHuf,
+            standard194cRatePercent: entityMeta.standard194cRatePercent,
+            error: null
+        };
+    }
+
+    return {
+        isValid: false,
+        error: `Invalid identifier length (${clean.length}): Expected 10 characters for PAN or 15 characters for GSTIN.`
+    };
+}
+
