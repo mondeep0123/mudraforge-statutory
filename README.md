@@ -65,7 +65,7 @@ console.log(statute.statute.title); // MSMED statutory payment timelines & compo
 - [Structured OKF Directory Hierarchy](#structured-okf-domain-hierarchy-zero-token-discovery)
 - [Canonical Edge Synchronization](#canonical-edge-synchronization-full-statutory-universe)
 - [Enterprise Tier (Paid Cloud Execution)](#enterprise-tier-paid-cloud-execution--analysis-mode)
-  - [Edge API Endpoints & Quotas](#enterprise-edge-api-endpoints--quotas)
+  - [Edge API Endpoints & Rate Limits](#enterprise-edge-api-endpoints--rate-limits)
   - [Error Semantics & Response Codes](#error-semantics--response-codes)
 - [System Origin & Validation Baseline](#system-origin--validation-baseline)
 - [The Payment Instruction Boundary & End-to-End AP Architecture](#the-payment-instruction-boundary--end-to-end-ap-architecture)
@@ -486,9 +486,9 @@ console.log(result.taxableBase); // ₹70,00,000 (Calculates strictly on excess 
 console.log(result.taxAmount);   // ₹7,000 (0.1% TDS on taxable base)
 ```
 
-### Enterprise Edge API Endpoints & Quotas
+### Enterprise Edge API Endpoints & Rate Limits
 
-| Endpoint | Method | Auth Required | Quota Limit | Response |
+| Endpoint | Method | Auth Required | Rate Limit (Per Client / IP) | Response |
 |---|---|---|---|---|
 | `/api/v1/statutory/sections` | `GET` | No | 180 req/min | JSON array of indexed OKF sections |
 | `/api/v1/statutory/lookup` | `GET` | No | 180 req/min | Parametric section details & temporal validity |
@@ -520,7 +520,7 @@ All error responses from `@mudraforge/statutory` and the hosted edge API return 
 | `405 Method Not Allowed` | `METHOD_NOT_ALLOWED` | Non-GET request sent to read-only commons endpoints. |
 | `413 Payload Too Large` | `PAYLOAD_TOO_LARGE` | JSON request body on `/calculate` exceeds 64KB security threshold. |
 | `415 Unsupported Media` | `UNSUPPORTED_MEDIA_TYPE` | Non-JSON payload sent to calculation engine. Set `Content-Type: application/json`. |
-| `429 Too Many Requests` | `RATE_LIMIT_EXCEEDED` | Request quota breached. Check `Retry-After` header before retrying. |
+| `429 Too Many Requests` | `RATE_LIMIT_EXCEEDED` | Rate limit threshold breached. Check `Retry-After` header before retrying. |
 
 ---
 
