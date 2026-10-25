@@ -36,11 +36,13 @@ console.log(statute.statute.title); // MSMED statutory payment timelines & compo
 
 ---
 
-### Plain-English Orientation
+## Overview
 
-`@mudraforge/statutory` provides an open, machine-readable statutory knowledge layer for Indian and cross-border financial workflows, grounding compliance rules in primary legislation rather than probabilistic LLM guesswork. It serves software developers building financial applications, corporate finance operations teams seeking auditable withholding and delayed-payment rules, and autonomous AI agents requiring deterministic reference boundaries. The statutory commons acts as an open, inspectable reference substrate, while MudraForge's broader Adesha initiative governs downstream transactional execution, human authorization, and enterprise ledger writebacks. Developers can proceed directly to [Installation & Quick Start](#quick-start-free-tier), while finance leaders, controllers, and tax practitioners can inspect the indexed statutes, cumulative thresholds, and executive circulars in [docs/CATALOG.md](./docs/CATALOG.md).
+`@mudraforge/statutory` is an offline, zero-dependency statutory knowledge substrate for Indian and cross-border financial compliance (Direct Tax, GST, MSME, Corporate M&A, International Tax). It grounds withholding rates, cumulative thresholds, and filing timelines in primary legislation and circulars rather than ungrounded LLM text generation.
 
-> **Statutory Dual-Act Temporal Boundary**: The *Income-tax Act, 2025* takes statutory effect on 1 April 2026. Relevant earlier tax years and prior transactions continue to be governed by the *Income-tax Act, 1961* under legislative transitional savings provisions (including Section 536(2) of the 2025 Act). This package explicitly models both legislative eras with date-bound temporal state machine evaluation.
+* **Deterministic Knowledge**: Provides structured, offline rule definitions (`okf/**/section.json`) and ISO Mod-36 identifier decoding without outbound network calls.
+* **Dual-Act Temporal Boundary**: Explicitly models both the *Income-tax Act, 1961* and the *Income-tax Act, 2025* (effective 1 April 2026), evaluating date-bound transitional savings rules automatically.
+* **Separation of Concerns**: This open-source commons provides declarative statutory truth; downstream transactional execution, payment authorization, and bank disbursements belong to the governed execution layer (Adesha).
 
 ---
 
@@ -48,7 +50,7 @@ console.log(statute.statute.title); // MSMED statutory payment timelines & compo
 
 | Item | Value |
 |---|---|
-| **Package Release** | **`v2.4.2`** (Public Beta) |
+| **Package Release** | **`v2.7.0`** (Public Beta) |
 | **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2) + MudraForge Statutory Schema Extension** |
 | **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Baseline: October 2026** |
 | **Corpus Quality Card** | 100% Citation Resolution (15/15 URLs) in [`docs/CORPUS_QUALITY.md`](./docs/CORPUS_QUALITY.md) |
@@ -66,7 +68,7 @@ console.log(statute.statute.title); // MSMED statutory payment timelines & compo
 
 ## Table of Contents
 
-- [Plain-English Orientation](#plain-english-orientation)
+- [Overview](#overview)
 - [Quick Start (Free Tier)](#quick-start-free-tier)
   - [1. Installation via npm](#1-installation-via-npm)
   - [2. Initialize AI Agent Skill](#2-initialize-ai-agent-skill)
