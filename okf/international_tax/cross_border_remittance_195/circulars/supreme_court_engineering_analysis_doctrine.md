@@ -7,7 +7,7 @@ statutory_section: Section 195 and Section 9(1)(vi) of Income-tax Act, 1961 read
 valid_from: 2021-03-02
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://sci.gov.in
+official_url: https://indiankanoon.org/doc/170521216/
 ---
 
 # Supreme Court of India: Engineering Analysis Centre of Excellence v. CIT (2021)

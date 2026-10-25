@@ -8,7 +8,7 @@ valid_from: 2017-07-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Clarification on proviso applicability across Section 17(5)(b) for statutory employer obligations
-official_url: https://taxinformation.cbic.gov.in/
+official_url: https://cbic-gst.gov.in/pdf/Circular-172-04-2022-GST.pdf
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

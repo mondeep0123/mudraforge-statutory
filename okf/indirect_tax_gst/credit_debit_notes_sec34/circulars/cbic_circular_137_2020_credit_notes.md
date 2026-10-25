@@ -7,7 +7,7 @@ statutory_section: 34
 valid_from: 2020-04-13
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://taxinformation.cbic.gov.in/
+official_url: https://cbic-gst.gov.in/pdf/Circular_Refund_137_7_2020.pdf
 ---
 
 # CBIC Circular No. 137/07/2020-GST — Credit Notes under Section 34

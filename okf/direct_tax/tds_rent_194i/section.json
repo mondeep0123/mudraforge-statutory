@@ -25,9 +25,9 @@
   "plainTextSummary": "Any person (other than an individual or a HUF not subject to tax audit) paying any income by way of rent to a resident is required to deduct tax at source. Statutory Rates: (a) 2% for the use of any machinery, plant, or equipment; (b) 10% for the use of any land, building (including factory building), land appurtenant to a building, furniture, or fittings. Threshold: Tax is deductible only if the aggregate amount of rent credited or paid during the financial year exceeds ₹2,40,000. Non-PAN / Inoperative PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated in the invoice, TDS applies strictly on the basic rent excluding GST.",
   "keyStatutoryThresholds": {
     "annualAggregateThresholdInr": 240000,
-    "plantMachineryEquipmentRatePercent": 2.0,
-    "landBuildingFurnitureRatePercent": 10.0,
-    "nonCompliantPanPenaltyRatePercent": 20.0,
+    "plantMachineryEquipmentRatePercent": 2,
+    "landBuildingFurnitureRatePercent": 10,
+    "nonCompliantPanPenaltyRatePercent": 20,
     "rentDefinitionScope": "Any payment under any lease, sub-lease, tenancy, or other agreement for use of land, building, machinery, plant, equipment, furniture, or fittings, whether or not owned by payee.",
     "cbdtCircular23GstExclusion": "TDS applies strictly on basic rent excluding separately stated GST."
   },
@@ -36,19 +36,19 @@
       "authority": "Ministry of Law & Justice / CBDT",
       "instrument": "Section 194I, Income-tax Act, 1961",
       "subject": "Deduction of tax at source on payment of rent",
-      "officialUrl": "https://incometaxindia.gov.in"
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },
     {
       "authority": "Parliament of India / Ministry of Finance",
       "instrument": "Income-tax Act, 2025 Section 393(1), Table 5, Item (i)",
       "subject": "TDS on rent under new Direct Tax Code",
-      "officialUrl": "https://incometaxindia.gov.in"
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },
     {
       "authority": "Central Board of Direct Taxes (CBDT)",
       "instrument": "Circular No. 23 of 2017",
       "subject": "Exclusion of GST component from rent value for tax deduction at source",
-      "officialUrl": "https://www.incometaxindia.gov.in/pages/communications/circulars.aspx"
+      "officialUrl": "https://www.incometaxindia.gov.in/w/circular-no.-23/2017-modification-of-circular-no.1-of-2014-in-view-of-substitution-of-service-tax-by-goods-and-services-tax-gst-"
     }
   ],
   "requiredDocumentChecklist": [

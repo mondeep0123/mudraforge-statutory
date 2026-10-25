@@ -8,7 +8,7 @@ valid_from: 2021-04-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Computation of Full Value of Consideration for Slump Sale under Section 50B(2)(ii)
-official_url: https://www.incometaxindia.gov.in/pages/communications/notifications.aspx
+official_url: https://www.incometaxindia.gov.in/w/notification-no.68/2021-f.-no.370142/16/2021-tpl-/-gsr-338-e-income-tax-16th-amendment-rules-2021
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

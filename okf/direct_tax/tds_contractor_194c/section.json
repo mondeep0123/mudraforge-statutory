@@ -25,9 +25,9 @@
   "keyStatutoryThresholds": {
     "singleContractThresholdInr": 30000,
     "annualAggregateThresholdInr": 100000,
-    "individualHufRatePercent": 1.0,
-    "otherEntitiesRatePercent": 2.0,
-    "nonCompliantPanPenaltyRatePercent": 20.0,
+    "individualHufRatePercent": 1,
+    "otherEntitiesRatePercent": 2,
+    "nonCompliantPanPenaltyRatePercent": 20,
     "transporterGoodsCarriageLimit": 10,
     "transporterExemptionRule": "No deduction under Section 194C(6) if transporter owns <= 10 goods carriages and furnishes written declaration with valid PAN.",
     "workDefinitionScope": "Includes advertising, broadcasting and telecasting, carriage of goods or passengers by any mode of transport other than railways, and catering. Does not include manufacturing or supplying a product according to requirements of customer using materials purchased from a person other than such customer.",
@@ -38,19 +38,19 @@
       "authority": "Ministry of Law & Justice / CBDT",
       "instrument": "Section 194C, Income-tax Act, 1961",
       "subject": "Payments to contractors and sub-contractors",
-      "officialUrl": "https://incometaxindia.gov.in"
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },
     {
       "authority": "Parliament of India / Ministry of Finance",
       "instrument": "Income-tax Act, 2025 Section 393(1), Table 3, Item (i)",
       "subject": "TDS on contractor payments under new Direct Tax Code",
-      "officialUrl": "https://incometaxindia.gov.in"
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },
     {
       "authority": "Central Board of Direct Taxes (CBDT)",
       "instrument": "Circular No. 23 of 2017",
       "subject": "Exclusion of GST component from value of contract for tax deduction at source",
-      "officialUrl": "https://www.incometaxindia.gov.in/pages/communications/circulars.aspx"
+      "officialUrl": "https://www.incometaxindia.gov.in/w/circular-no.-23/2017-modification-of-circular-no.1-of-2014-in-view-of-substitution-of-service-tax-by-goods-and-services-tax-gst-"
     }
   ],
   "requiredDocumentChecklist": [

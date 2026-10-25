@@ -7,7 +7,7 @@ statutory_section: Section 8 read with Section 2(30) and 2(74) of CGST Act, 2017
 valid_from: 2017-07-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://taxinformation.cbic.gov.in
+official_url: https://cbic-gst.gov.in/pdf/Circular_47.pdf
 ---
 
 # CBIC Circular No. 47/21/2018-GST: Composite and Mixed Supplies Guidance

@@ -7,7 +7,7 @@ statutory_section: Section 9(3) and Section 31 of CGST Act, 2017
 valid_from: 2017-07-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://taxinformation.cbic.gov.in
+official_url: https://cbic-gst.gov.in/pdf/circular-cgst-102.pdf
 ---
 
 # CBIC Circular No. 102/21/2019-GST: RCM Mechanics & Statutory Obligations

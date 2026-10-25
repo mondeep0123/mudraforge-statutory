@@ -7,7 +7,7 @@ statutory_section: Section 90(5) of Income-tax Act, 1961 read with Rule 21AB
 valid_from: 2022-07-16
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://incometaxindia.gov.in
+official_url: https://www.incometax.gov.in/iec/foportal/sites/default/files/2023-03/Refer%20Notification.pdf
 ---
 
 # CBDT Notification 03/2022: Electronic Filing of Form 10F

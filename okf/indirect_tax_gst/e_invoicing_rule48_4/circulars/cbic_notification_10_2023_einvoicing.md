@@ -7,7 +7,7 @@ statutory_section: RULE-48(4)
 valid_from: 2023-08-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://taxinformation.cbic.gov.in/
+official_url: https://www.gstcouncil.gov.in/node/4365
 ---
 
 # CBIC Notification No. 10/2023-Central Tax — E-Invoicing Threshold

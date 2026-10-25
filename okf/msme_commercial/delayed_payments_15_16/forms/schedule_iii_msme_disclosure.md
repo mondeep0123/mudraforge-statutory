@@ -8,7 +8,7 @@ valid_from: 2014-04-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Statutory notes to financial statements for MSME dues and compound interest
-official_url: https://www.mca.gov.in/
+official_url: https://www.mca.gov.in/Ministry/pdf/ScheduleIIIAmendComp_24032021.pdf
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

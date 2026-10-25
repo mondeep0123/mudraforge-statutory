@@ -7,7 +7,7 @@ statutory_section: Section 7 of MSMED Act, 2006
 valid_from: 2020-07-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://udyamregistration.gov.in
+official_url: https://udyamregistration.gov.in/docs/NIC-code-for-MSME-classification-definition.pdf
 ---
 
 # Ministry of MSME Notification S.O. 2119(E) dated 26 June 2020

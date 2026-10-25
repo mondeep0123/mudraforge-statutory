@@ -8,7 +8,7 @@ valid_from: 2020-04-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Reduction of TDS rate for Fees for Technical Services (FTS) from 10% to 2%
-official_url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
+official_url: https://www.incometaxindia.gov.in/pages/acts/finance-acts.aspx
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

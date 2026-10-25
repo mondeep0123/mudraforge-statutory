@@ -24,10 +24,10 @@
   "plainTextSummary": "Any person responsible for paying any income by way of commission or brokerage to a resident is required to deduct tax at source. Statutory Rate: 2% effective 1 October 2024 as amended by Finance (No. 2) Act, 2024 (prior to 1 October 2024, the rate was 5%). Threshold: Tax is deductible only if the aggregate amount of commission or brokerage credited or paid during the financial year exceeds ₹15,000. Statutory Exclusions: Does not apply to insurance commission (covered under Section 194D) or underwriting commission. Non-PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated, TDS applies on commission excluding GST.",
   "keyStatutoryThresholds": {
     "annualAggregateThresholdInr": 15000,
-    "standardRatePercent": 2.0,
-    "preOct2024RatePercent": 5.0,
+    "standardRatePercent": 2,
+    "preOct2024RatePercent": 5,
     "rateChangeEffectiveDate": "2024-10-01",
-    "nonCompliantPanPenaltyRatePercent": 20.0,
+    "nonCompliantPanPenaltyRatePercent": 20,
     "commissionBrokerageScope": "Includes any payment received or receivable, directly or indirectly, by a person acting on behalf of another person for services rendered (not being professional services) or in the course of buying or selling of goods or in relation to any transaction relating to any asset, valuable article or thing, not being securities.",
     "cbdtCircular23GstExclusion": "TDS applies on basic commission amount excluding separately stated GST."
   },
@@ -36,19 +36,19 @@
       "authority": "Parliament of India / Ministry of Finance",
       "instrument": "Finance (No. 2) Act, 2024 (Act No. 15 of 2024) amending Section 194H",
       "subject": "Reduction of TDS rate on commission and brokerage from 5% to 2% w.e.f. 1 October 2024",
-      "officialUrl": "https://incometaxindia.gov.in"
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/finance-acts.aspx"
     },
     {
       "authority": "Parliament of India / Ministry of Finance",
       "instrument": "Income-tax Act, 2025 Section 393(1), Table 4, Item (i)",
       "subject": "TDS on commission and brokerage under new Direct Tax Code",
-      "officialUrl": "https://incometaxindia.gov.in"
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },
     {
       "authority": "Central Board of Direct Taxes (CBDT)",
       "instrument": "Circular No. 23 of 2017",
       "subject": "Exclusion of GST component from value of commission for tax deduction at source",
-      "officialUrl": "https://www.incometaxindia.gov.in/pages/communications/circulars.aspx"
+      "officialUrl": "https://www.incometaxindia.gov.in/w/circular-no.-23/2017-modification-of-circular-no.1-of-2014-in-view-of-substitution-of-service-tax-by-goods-and-services-tax-gst-"
     }
   ],
   "requiredDocumentChecklist": [

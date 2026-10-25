@@ -7,7 +7,7 @@ statutory_section: 206AB
 valid_from: 2021-07-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
+official_url: https://www.incometaxindia.gov.in/w/circular-no.-11/2021-circular-regarding-use-of-functionality-under-section-206ab-and-206cca-of-the-income-tax-act-1961
 ---
 
 # CBDT Circular No. 11 of 2021 — Compliance Check for Section 206AB

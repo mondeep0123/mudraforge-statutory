@@ -9,7 +9,7 @@ valid_from: 2021-07-02
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Restriction of retail and wholesale trade to Priority Sector Lending and exclusion from delayed payment benefits
-official_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12129&Mode=0
+official_url: https://rbi.org.in/Scripts/NotificationUser.aspx?Id=12126
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

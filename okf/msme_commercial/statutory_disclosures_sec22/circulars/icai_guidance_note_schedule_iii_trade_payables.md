@@ -7,7 +7,7 @@ statutory_section: Section 22 and Section 23 of MSMED Act, 2006 read with Schedu
 valid_from: 2021-04-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://www.icai.org
+official_url: https://www.icai.org/post/icai-publications-corporate-laws-corporate-governance-committee
 ---
 
 # ICAI Guidance Note: Trade Payables Aging & MSMED Statutory Reporting

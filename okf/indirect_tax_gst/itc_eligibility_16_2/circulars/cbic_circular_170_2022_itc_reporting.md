@@ -8,7 +8,7 @@ valid_from: 2022-07-06
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Mandatory disclosure of permanent vs temporary ITC reversals and subsequent re-availment in GSTR-3B
-official_url: https://taxinformation.cbic.gov.in/
+official_url: https://cbic-gst.gov.in/pdf/Circular-170-02-2022-GST.pdf
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

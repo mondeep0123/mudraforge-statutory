@@ -7,7 +7,7 @@ statutory_section: 51
 valid_from: 2018-10-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://taxinformation.cbic.gov.in/
+official_url: https://www.gstcouncil.gov.in/node/4057
 ---
 
 # CBIC Notification No. 50/2018-Central Tax — TDS under GST

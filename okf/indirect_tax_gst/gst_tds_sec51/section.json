@@ -19,10 +19,10 @@
   "plainTextSummary": "Departments or establishments of the Central Government or State Government, local authorities, governmental agencies, and specified PSUs must deduct tax at source at the rate of 2% (1% CGST + 1% SGST or 2% IGST) from payment made or credited to the supplier where the total value of supply under a contract exceeds ₹2,50,000 (excluding GST). No deduction is made if the location of supplier and place of supply are in a different State/UT from the State/UT of registration of the recipient.",
   "keyStatutoryThresholds": {
     "contractThresholdExcludingGstInr": 250000,
-    "cgstTdsRatePercent": 1.0,
-    "sgstTdsRatePercent": 1.0,
-    "igstTdsRatePercent": 2.0,
-    "totalCompositeGstTdsRatePercent": 2.0,
+    "cgstTdsRatePercent": 1,
+    "sgstTdsRatePercent": 1,
+    "igstTdsRatePercent": 2,
+    "totalCompositeGstTdsRatePercent": 2,
     "depositDeadline": "10th day of the following month in Form GSTR-7",
     "tdsCertificateForm": "Form GSTR-7A generated on common portal within 5 days of crediting amount to Government"
   },
@@ -31,13 +31,13 @@
       "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
       "instrument": "Notification No. 50/2018-Central Tax",
       "subject": "Notifying entities and authorities liable to deduct TDS under Section 51 of CGST Act",
-      "officialUrl": "https://taxinformation.cbic.gov.in/"
+      "officialUrl": "https://www.gstcouncil.gov.in/node/4057"
     },
     {
       "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
       "instrument": "Standard Operating Procedure (SOP) on TDS under GST (Dated 28.09.2018)",
       "subject": "Operational guidelines and threshold calculation for GST TDS deductors",
-      "officialUrl": "https://taxinformation.cbic.gov.in/"
+      "officialUrl": "https://cbic-gst.gov.in/pdf/SOP-TDS-AS-ON-18-February-2019.pdf"
     }
   ],
   "requiredDocumentChecklist": [

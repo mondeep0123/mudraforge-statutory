@@ -8,7 +8,7 @@ valid_from: 2024-10-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
 subject: Statutory reduction of TDS deduction rate on commission or brokerage from 5% to 2%
-official_url: https://incometaxindia.gov.in
+official_url: https://www.incometaxindia.gov.in/pages/acts/finance-acts.aspx
 ---
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  

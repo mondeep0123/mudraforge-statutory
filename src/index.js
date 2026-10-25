@@ -25,6 +25,7 @@ export const STATUTORY_CLIENT_VERSION = '2.8.0';
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-239641de2bef05917673f693f9ba4d14bd5e137d64554fba5db87e426bc13e14', // v2.8.0 Deep Semantic Citation Merkle Root (24 Sections across 5 Domains)
     'sha256-6953ce79b63bb2a5809dc928178b4631f08448aa2dcde107dde10f84890bf5cb', // v2.7.0 Edge Sync Bundle Root (24 Sections across 5 Domains)
     'sha256-ce88c2255df1c30c15bfe184c8117336ebc302c2ac5ef25e96a6957402ae11ae', // v2.6.0 Verified Citation Merkle Root (24 Sections across 5 Domains - 100% Complete AP)
     'sha256-3f25fc3941d29de5b8befc0ddb24d1bb2632067f00b200680cf784961616424c', // v2.5.0 Verified Citation Merkle Root (18 Sections across 5 Domains)

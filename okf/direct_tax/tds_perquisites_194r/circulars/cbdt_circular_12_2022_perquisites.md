@@ -7,7 +7,7 @@ statutory_section: 194R
 valid_from: 2022-07-01
 valid_to: OPEN_ENDED
 temporal_status: ACTIVE
-official_url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
+official_url: https://www.incometaxindia.gov.in/w/circular-no.-12/2022-guidelines-for-removal-of-difficulties-under-sub-section-2-of-section-194r-of-the-income-tax-act-1961
 ---
 
 # CBDT Circular No. 12 of 2022 — Guidelines under Section 194R
