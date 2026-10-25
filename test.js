@@ -1184,7 +1184,7 @@ async function run() {
         if (req.url === '/api/v1/statutory/bundle.json') {
             res.writeHead(200, { 'Content-Type': 'application/json', 'ETag': `"${domainRootHash}"` });
             return res.end(JSON.stringify({
-                okfVersion: '2.7.0',
+                okfVersion: '2.8.0',
                 publishedAt: '2026-10-24T19:45:00.000Z',
                 rootHash: domainRootHash,
                 totalSections: 1,

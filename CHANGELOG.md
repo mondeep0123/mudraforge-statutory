@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.8.0] - 2026-10-25
+
+### Added
+- **Cryptographic Substrate Verifier (`verify`)**:
+  - Implemented `verifyLocalSubstrate()` in core library and exposed via `npx @mudraforge/statutory verify [path]`.
+  - Cryptographically verifies local file-level SHA-256 hashes against `manifest.json` (Integrity) and validates root Merkle digests against immutable release roots / Ed25519 signatures (Authenticity).
+  - Enforces mandatory statutory baseline policy checks (`194Q`, `194J`, `17(5)`, `MSMED-15-16`, `393`).
+- **Diagnostic Environment Doctor (`doctor`)**:
+  - Implemented `runStatutoryDoctor()` in core library and exposed via `npx @mudraforge/statutory doctor [--offline]`.
+  - Diagnoses Node.js runtime (`>= v18`), OS platform, environment variables, local OKF filesystem health, and optional Cloudflare Anycast edge round-trip latency.
+  - Fully supports air-gapped / isolated VPC environments via `--offline` / `-o` without failing local health guarantees.
+- **Global Machine-Readable Output (`--json`)**:
+  - Added `--json` / `-j` flag support across all CLI commands (`verify`, `doctor`, `lookup`, `list`, `browse`, `decode-id`, `check-update`).
+  - Emits clean, parseable JSON directly to `stdout` (suppressing banners, spinners, and update prompts) for CI/CD automation and `jq` scripting.
+- **MudraForge Custom Exit Code Contract**:
+  - Established standardized exit codes: `0` (Success), `1` (Usage/Syntax error), `2` (Integrity/Security failure), `3` (Statutory policy violation).
+- **Documentation & Release Alignment**:
+  - Unified package, manifest, and publication versions at `v2.8.0`.
+  - Extracted formal audit ledger into `docs/PROVENANCE.md` and streamlined main `README.md` for fast developer onboarding.
+
+---
+
 ## [2.7.0] - 2026-10-25
 
 ### Added

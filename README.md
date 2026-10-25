@@ -44,25 +44,7 @@ console.log(statute.statute.title); // MSMED statutory payment timelines & compo
 * **Dual-Act Temporal Boundary**: Explicitly models both the *Income-tax Act, 1961* and the *Income-tax Act, 2025* (effective 1 April 2026), evaluating date-bound transitional savings rules automatically.
 * **Separation of Concerns**: This open-source commons provides declarative statutory truth; downstream transactional execution, payment authorization, and bank disbursements belong to the governed execution layer (Adesha).
 
----
-
-## Published Release & Provenance Ledger
-
-| Item | Value |
-|---|---|
-| **Package Release** | **`v2.7.0`** (Public Beta) |
-| **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2) + MudraForge Statutory Schema Extension** |
-| **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Baseline: October 2026** |
-| **Corpus Quality Card** | 100% Citation Resolution (15/15 URLs) in [`docs/CORPUS_QUALITY.md`](./docs/CORPUS_QUALITY.md) |
-| **Architecture Decision Records** | 6 Normative ADRs documented in [`docs/ARCHITECTURE_DECISIONS.md`](./docs/ARCHITECTURE_DECISIONS.md) |
-| **Vendor Conformance Suite** | 12/12 Passing Fixture Tests in [`conformance/`](./conformance/) |
-| **End-to-End Execution Trace** | Audited 7-stage AP lifecycle in [`examples/`](./examples/) (`npm run example:trace`) |
-| **Enterprise Assurance Preview** | Formal TLA+ & mutation defenses in [`docs/ADESHA_ASSURANCE_OVERVIEW.md`](./docs/ADESHA_ASSURANCE_OVERVIEW.md) |
-| **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](./okf/manifest.json) (reproducible byte-level non-tampering proof) |
-| **Temporal Framework** | Dual-Act Bridge: *Income-tax Act, 1961* & *Income-tax Act, 2025* |
-| **Verification Gate** | 100% Pass across cumulative thresholds, legislative sunsets, and excess math |
-
-> **Note on Cryptographic Scope**: The SHA-256 root hash in `okf/manifest.json` provides mathematical verification of **byte-level integrity** (ensuring local files have not been corrupted, altered, or partially written). A hash certifies that bytes match the published release; it does not by itself constitute legal or statutory authority. Epistemic authority is established strictly via the primary gazette citations, CBDT/CBIC executive circulars, and independent ground-truth tests.
+> For cryptographic root digests, normative specifications, and formal assurance artifacts, see [docs/PROVENANCE.md](./docs/PROVENANCE.md).
 
 ---
 
