@@ -29,7 +29,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: MudraForge Statutory v2.4.0
+          name: MudraForge Statutory ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
           files: |
             *.tgz
             checksums.sha256
