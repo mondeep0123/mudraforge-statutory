@@ -15,32 +15,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: 22.x
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Verify Substrate & Conformance
-        run: |
-          node scripts/generate_manifest.js --check
-          node test.js
+      - name: Run Prepublish Supply-Chain Gate
+        run: node scripts/prepublish_gate.js
 
       - name: Package Distribution Tarball
         run: |
           npm pack
           sha256sum *.tgz > checksums.sha256
 
-      - name: Publish to NPM
+      - name: Publish to NPM with Sigstore Provenance
         if: env.NODE_AUTH_TOKEN != ''
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef299c7d8760 # v2.0.8
         with:
           name: MudraForge Statutory ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}

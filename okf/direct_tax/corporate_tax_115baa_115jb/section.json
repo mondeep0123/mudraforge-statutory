@@ -1,0 +1,72 @@
+{
+  "sectionId": "ITA1961_SEC115BAA_115JB",
+  "sectionCode": "115BAA-115JB",
+  "aliases": [
+    "115BAA",
+    "115JB",
+    "115JAA",
+    "sec115baa",
+    "sec115jb",
+    "corporate tax",
+    "corporate_tax",
+    "mat",
+    "minimum alternate tax",
+    "concessional corporate tax"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Sections 115BAA, 115JB and 115JAA",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Chapter XI (Corporate Taxation & Special Regimes)",
+  "title": "Tax on income of certain domestic companies (Section 115BAA) and Minimum Alternate Tax (Section 115JB)",
+  "effectivePeriod": {
+    "validFrom": "2019-04-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Annual corporate assessment year determination",
+    "sunsetNotes": "Introduced by Taxation Laws (Amendment) Act, 2019 w.e.f. AY 2020-21. Continues under Income-tax Act, 1961 and transitions to Income-tax Act, 2025."
+  },
+  "plainTextSummary": "Section 115BAA affords domestic corporate assessees an irrevocable option to be taxed at a concessional base rate of 22% plus a flat 10% surcharge and 4% cess (effective 25.168%), subject to foregoing specified exemptions, incentives, and deductions (including Section 10AA, 32(1)(iia), 32AD, 33AB, 35(1)(ii), 35(2AA), 35CCC, 35CCD, and Chapter VI-A deductions other than 80JJAA or 80M). Under Section 115JB(5A), companies opting for Section 115BAA are completely exempt from Minimum Alternate Tax (MAT). However, any accumulated brought-forward MAT credit under Section 115JAA cannot be set off and will lapse. Under the Old Corporate Tax Regime, domestic companies with turnover up to INR 400 Crore in the preceding financial year are taxed at 25% base rate (30% for turnover > 400 Crore), with progressive surcharge (7% for income between 1 Crore and 10 Crore; 12% for income exceeding 10 Crore) and 4% cess. MAT under Section 115JB applies at 15% on adjusted book profits (plus applicable surcharge and cess). Where normal tax exceeds MAT, Section 115JAA allows setting off prior MAT credit up to the difference between normal tax and MAT.",
+  "keyStatutoryThresholds": {
+    "concessionalBaseTaxRate115BAA": 0.22,
+    "concessionalSurchargeRate115BAA": 0.10,
+    "concessionalCessRate115BAA": 0.04,
+    "effectiveTaxRate115BAA": 0.25168,
+    "normalCorporateBaseTaxRateTurnoverUnder400Cr": 0.25,
+    "normalCorporateBaseTaxRateTurnoverOver400Cr": 0.30,
+    "normalSurchargeRate1CrTo10Cr": 0.07,
+    "normalSurchargeRateAbove10Cr": 0.12,
+    "matBaseRateSec115JB": 0.15,
+    "matApplicableUnder115BAA": false,
+    "matCreditForfeitedUnder115BAA": true,
+    "mandatoryElectionForm": "Form 10-IC filed online before the due date specified under Section 139(1)"
+  },
+  "officialCitations": [
+    {
+      "authority": "Income Tax Department, Ministry of Finance",
+      "instrument": "Section 115BAA & Section 115JB, Income-tax Act, 1961",
+      "subject": "Tax on income of certain domestic companies and Minimum Alternate Tax",
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 29/2019 (Dated 2 October 2019)",
+      "subject": "Clarifications on the provisions of the Taxation Laws (Amendment) Ordinance, 2019 regarding corporate tax rates",
+      "officialUrl": "https://www.incometaxindia.gov.in/communications/circular/circular_29_2019.pdf"
+    },
+    {
+      "authority": "Income Tax Department, Ministry of Finance",
+      "instrument": "Income-tax Rules, 1962 Rule 21AE and Form 10-IC",
+      "subject": "Form 10-IC Application for exercise of option under sub-section (5) of section 115BAA",
+      "officialUrl": "https://www.incometaxindia.gov.in/forms/income-tax-rules/form10-ic.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Audited Financial Statements (Balance Sheet and Profit & Loss Account) under Schedule III of Companies Act, 2013",
+    "Tax Audit Report in Form 3CA/3CD with detailed Annexure for Depreciation under Section 32 and disallowances",
+    "Section 115JB Book Profit Reconciliation Schedule certified by a Chartered Accountant",
+    "Section 115JAA MAT Credit Utilization and Carry-Forward Statement",
+    "Form 10-IC digital filing confirmation and acknowledgement receipt filed prior to Section 139(1) due date",
+    "Board Resolution approving the strategic corporate tax regime election"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.9.0"
+}

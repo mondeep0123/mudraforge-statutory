@@ -1,0 +1,66 @@
+{
+  "sectionId": "ITA1961_SEC79",
+  "sectionCode": "ITA-SEC-79",
+  "aliases": [
+    "79",
+    "sec79",
+    "loss carry forward",
+    "change in shareholding",
+    "51 percent voting power",
+    "unabsorbed depreciation",
+    "startup loss continuity",
+    "eligible startup 80-IAC",
+    "section 79(2)",
+    "virmani industries"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Section 79 read with Section 32(2) and Section 72",
+  "successorStatute": "Income-tax Act, 2025 (Chapter on Set-off and Carry Forward of Losses)",
+  "successorSection": "Provisions on Loss Set-Off on Shareholding Continuity",
+  "title": "Carry Forward and Set Off of Accumulated Losses on Change in Shareholding",
+  "effectivePeriod": {
+    "validFrom": "1962-04-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Annual shareholding ledger continuity verification at financial year-end (31st March)",
+    "sunsetNotes": "Permanent anti-abuse provision under Chapter VI of Income-tax Act, 1961."
+  },
+  "plainTextSummary": "Section 79 of the Income-tax Act, 1961 provides that in the case of a company not being a company in which the public are substantially interested (closely-held company), no accumulated business loss incurred in any previous year shall be carried forward and set off against the income of the current previous year, unless on the last day of the current previous year, shares carrying not less than 51% of the voting power are beneficially held by persons who also beneficially held shares carrying not less than 51% of the voting power on the last day of the year in which the loss was incurred. Crucially, Section 79 restricts only accumulated business losses under Section 72; it does NOT restrict unabsorbed depreciation under Section 32(2), which is treated as current year depreciation under the landmark Supreme Court ruling in CIT v. Virmani Industries (1995) 216 ITR 607 (SC) and may be carried forward indefinitely. In addition, sub-section (2) provides statutory carve-outs: (1) Eligible DPIIT startups under Section 80-IAC are exempt from the 51% threshold provided all original shareholders continue to hold any shares; (2) Change in shareholding pursuant to an approved IBC Resolution Plan under Section 31 of the Insolvency and Bankruptcy Code, 2016; and (3) Strategic disinvestment of public sector companies.",
+  "keyStatutoryThresholds": {
+    "minimumVotingPowerContinuityPercent": 51.0,
+    "unabsorbedDepreciationRestrictedBySec79": false,
+    "eligibleStartupCarveOutDpiit": true,
+    "ibcResolutionPlanCarveOut": true,
+    "lossCarryForwardMaxYears": 8,
+    "unabsorbedDepreciationCarryForwardYears": "INDEFINITE"
+  },
+  "officialCitations": [
+    {
+      "authority": "Supreme Court of India",
+      "instrument": "CIT v. Virmani Industries Pvt. Ltd. (1995) 216 ITR 607 (SC)",
+      "subject": "Judicial doctrine establishing that Section 79 does not apply to unabsorbed depreciation under Section 32(2)",
+      "officialUrl": "https://indiankanoon.org/doc/110599/"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "CBDT Circular No. 09/2020 (Dated 19 February 2020)",
+      "subject": "Clarification on carry forward and set off of accumulated losses in case of eligible startups under Section 79",
+      "officialUrl": "https://www.incometaxindia.gov.in/communications/circular/circular_no_9_2020.pdf"
+    },
+    {
+      "authority": "Income Tax Department",
+      "instrument": "Income-tax Act, 1961 Chapter VI (Aggregation of Income and Set-off or Carry Forward of Loss)",
+      "subject": "Statutory codified rules for set off and carry forward of accumulated business loss and depreciation",
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Certified register of members / cap table as on 31st March of the year of loss and 31st March of current assessment year",
+    "Beneficial ownership declarations under Section 89 and Section 90 of Companies Act, 2013",
+    "DPIIT Certificate of Recognition and Form-1 approval under Section 80-IAC (for startup carve-out)",
+    "NCLT Resolution Plan approval order under Section 31 of IBC, 2016 (for insolvency restructuring carve-out)",
+    "Computation of unabsorbed depreciation under Section 32(2) segregated from accumulated business loss under Section 72",
+    "Schedule CFL (Carry Forward of Losses) reconciliation from annual ITR-6 filing"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.9.0"
+}

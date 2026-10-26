@@ -148,12 +148,12 @@ function run() {
     }
 
     const updatedManifest = {
-        okfVersion: '2.6.0',
+        okfVersion: '2.9.0',
         publishedAt: new Date().toISOString(),
         rootHash,
         totalSections: sections.length,
         totalFiles: allFiles.length,
-        changelog: 'Expanded statutory commons with foundational AP provisions: Section 194C (Contractors), Section 194I (Rent), and Section 194H (Commission & Brokerage).',
+        changelog: 'Expanded statutory commons with 5 Corporate Finance Domains: Corporate Tax MAT vs 115BAA, Place of Supply & Zero-Rated Export LUT, Transfer Pricing ALP & Rule 10CA, Section 79 Loss Continuity, and Ind AS 21 & 109 FX Revaluation.',
         domains,
         sections,
         files: fileHashes

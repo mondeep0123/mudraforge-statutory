@@ -1,0 +1,63 @@
+{
+  "sectionId": "INDAS_21_109_FX_REVALUATION",
+  "sectionCode": "INDAS-21-109-FX",
+  "aliases": [
+    "Ind AS 21",
+    "Ind AS 109",
+    "FX revaluation",
+    "foreign exchange",
+    "monetary items",
+    "closing spot rate",
+    "cash flow hedge",
+    "OCI hedge reserve",
+    "unrealized fx gain loss"
+  ],
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013",
+  "statutorySection": "Ind AS 21 read with Ind AS 109 and Schedule III to Companies Act, 2013",
+  "successorStatute": "Companies Act, 2013 (Indian Accounting Standards)",
+  "successorSection": "Ind AS 21 & Ind AS 109",
+  "title": "Foreign Exchange Monetary Asset/Liability Revaluation and Cash Flow Hedge Accounting",
+  "effectivePeriod": {
+    "validFrom": "2016-04-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Quarterly and annual financial closing spot rate revaluation at balance sheet dates",
+    "sunsetNotes": "Mandatory accounting standard under Companies (Indian Accounting Standards) Rules, 2015."
+  },
+  "plainTextSummary": "Under Ind AS 21 (The Effects of Changes in Foreign Exchange Rates), at the end of each reporting period, foreign currency monetary items (such as trade receivables, trade payables, foreign currency loans, and bank deposits) must be translated into the functional currency using the closing spot exchange rate. Exchange differences arising on the translation of monetary items at rates different from those at which they were translated on initial recognition during the period or in previous financial statements must be recognized in profit or loss (P&L) in the period in which they arise. Non-monetary items measured in terms of historical cost in a foreign currency are not retranslated. Under Ind AS 109 (Financial Instruments), where an entity enters into a designated and qualifying cash flow hedging relationship (e.g. forward foreign exchange contracts hedging highly probable future sales), the effective portion of the gain or loss on the hedging instrument is recognized directly in Other Comprehensive Income (OCI) and accumulated in the Cash Flow Hedge Reserve within equity. The ineffective portion is recognized immediately in profit or loss.",
+  "keyStatutoryThresholds": {
+    "monetaryItemsRetranslationRate": "Closing spot rate at reporting date",
+    "nonMonetaryItemsHistoricalCostRetranslation": false,
+    "standardMonetaryGainLossRoute": "PROFIT_OR_LOSS",
+    "effectiveCashFlowHedgeGainLossRoute": "OTHER_COMPREHENSIVE_INCOME_OCI",
+    "ineffectiveHedgeGainLossRoute": "PROFIT_OR_LOSS"
+  },
+  "officialCitations": [
+    {
+      "authority": "Ministry of Corporate Affairs (MCA)",
+      "instrument": "Companies (Indian Accounting Standards) Rules, 2015 (G.S.R. 111(E))",
+      "subject": "Notification of Ind AS 21 (The Effects of Changes in Foreign Exchange Rates) and Ind AS 109 (Financial Instruments)",
+      "officialUrl": "https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html"
+    },
+    {
+      "authority": "Institute of Chartered Accountants of India (ICAI)",
+      "instrument": "ICAI Guidance and Educational Material on Ind AS 21",
+      "subject": "Educational Material on Indian Accounting Standard (Ind AS) 21 The Effects of Changes in Foreign Exchange Rates",
+      "officialUrl": "https://www.icai.org/post.html?post_id=12126"
+    },
+    {
+      "authority": "Reserve Bank of India (RBI)",
+      "instrument": "RBI Master Direction - Financial Statements - Presentation and Disclosures (2021)",
+      "subject": "Regulatory guidelines on foreign exchange transactions and financial disclosures",
+      "officialUrl": "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12141"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Published FBIL (Financial Benchmarks India Pvt Ltd) or RBI reference closing spot exchange rates on balance sheet date",
+    "Foreign currency monetary items sub-ledger schedule (trade receivables, payables, borrowings)",
+    "Hedge designation documentation and formal hedge effectiveness testing under Ind AS 109",
+    "Statement of Other Comprehensive Income (OCI) segregating Cash Flow Hedge Reserve movements",
+    "Tax reconciliation statement reconciling accounting FX gain/loss with Income Computation and Disclosure Standard VI (ICDS VI)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.9.0"
+}

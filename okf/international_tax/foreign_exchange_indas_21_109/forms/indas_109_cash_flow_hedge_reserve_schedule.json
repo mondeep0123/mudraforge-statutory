@@ -1,0 +1,45 @@
+{
+  "formCode": "INDAS_109_CASH_FLOW_HEDGE_RESERVE_SCHEDULE",
+  "title": "Ind AS 21 & Ind AS 109 Foreign Currency Revaluation and Hedge Accounting Schedule",
+  "statutoryBasis": "Ind AS 21 and Ind AS 109 under Companies (Indian Accounting Standards) Rules, 2015",
+  "schema": {
+    "reportingEntity": {
+      "type": "object",
+      "required": true,
+      "properties": {
+        "companyName": { "type": "string", "required": true },
+        "cin": { "type": "string", "pattern": "^[LU][0-9]{5}[A-Z]{2}[0-9]{4}[A-Z]{3}[0-9]{6}$", "required": true },
+        "functionalCurrency": { "type": "string", "default": "INR", "required": true },
+        "reportingDate": { "type": "string", "format": "date", "required": true }
+      }
+    },
+    "monetaryItemRevaluation": {
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "object",
+        "properties": {
+          "itemDescription": { "type": "string", "required": true },
+          "itemType": { "type": "string", "enum": ["TRADE_RECEIVABLE", "TRADE_PAYABLE", "BANK_BALANCE", "BORROWING"], "required": true },
+          "foreignCurrency": { "type": "string", "pattern": "^[A-Z]{3}$", "required": true },
+          "foreignAmount": { "type": "number", "required": true },
+          "bookRateInr": { "type": "number", "required": true },
+          "closingSpotRateInr": { "type": "number", "required": true },
+          "unrealizedGainLossInr": { "type": "number", "required": true },
+          "accountingRoute": { "type": "string", "enum": ["PROFIT_OR_LOSS", "OTHER_COMPREHENSIVE_INCOME_OCI"], "required": true }
+        }
+      }
+    },
+    "derivativeHedgeReserve": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "isDesignatedCashFlowHedge": { "type": "boolean", "required": true },
+        "hedgeRatioPercent": { "type": "number", "minimum": 0, "maximum": 100, "required": true },
+        "effectiveGainLossOciInr": { "type": "number", "required": true },
+        "ineffectiveGainLossPandLInr": { "type": "number", "required": true },
+        "closingHedgeReserveBalanceInr": { "type": "number", "required": true }
+      }
+    }
+  }
+}

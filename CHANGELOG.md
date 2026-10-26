@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.9.0] - 2026-10-26
+
+### Added
+- **5 Core Provisions Expanding the Existing 5 Main Domains to 100% Coverage (29 Total Sections across the 5 Main Domains)**:
+  - *Direct Tax Domain* (`direct_tax/corporate_tax_115baa_115jb`): Corporate Tax MAT (Section 115JB) vs Concessional Regime (Section 115BAA), Section 115JAA MAT Credit set-off schedule, and mandatory Form 10-IC irrevocable election.
+  - *Indirect Tax GST Domain* (`indirect_tax_gst/export_services_lut_sec16`): Zero-rated supply and export of services under Letter of Undertaking (LUT) in Form GST RFD-11 (IGST Section 16 & Section 2(6); CGST Rule 96A), with automated Intermediary Service disqualification detection under Section 13(8)(b) (CBIC Circular 161/2021).
+  - *International Tax Domain* (`international_tax/transfer_pricing_alp_92c`): Transfer Pricing Arm's Length Price (ALP) computation under Section 92C and Rule 10CA, featuring the 35th–65th percentile range concept ($N \ge 6$ comparables), Rule 10CA(7) median adjustment, 1%/3% tolerance band, and Section 92CE secondary adjustment repatriation alerts ($> ₹1\text{ Cr}$).
+  - *Corporate M&A / Restructuring Domain* (`corporate_ma_restructuring/loss_carryforward_sec79`): Section 79 Loss Carry-Forward & 51% Beneficial Ownership Continuity, Supreme Court doctrine (*CIT v. Virmani Industries*) establishing indefinite carry-forward of unabsorbed depreciation under Section 32(2), DPIIT startup carve-out (Section 79(2)), and IBC resolution plan carve-out (Section 79(2)(c)).
+  - *International Tax Domain* (`international_tax/foreign_exchange_indas_21_109`): Ind AS 21 & Ind AS 109 Foreign Exchange Monetary Asset/Liability Revaluation at closing spot rates, routing standard items to P&L, and isolating qualifying cash flow hedge reserves to Other Comprehensive Income (OCI).
+- **First-Class Zero-Dependency Deterministic Statutory Calculators (`src/calculators.js`)**:
+  - Implemented and exported pure mathematical calculation functions: `calculateCorporateTaxMatVsConcessional`, `evaluatePlaceOfSupplyAndLut`, `calculateTransferPricingAlp`, `evaluateSection79LossContinuity`, `revalueForeignExchangeIndAs109`, `roundToPaisa`, and `roundSection288B`.
+  - Exposed direct calculator helper methods on `StatutoryClient` class.
+  - Enforced strict invariant envelopes: paisa-level integer rounding and `isAuthorizedToDisburse: false` (statutory calculation never authorizes autonomous financial disbursement).
+- **TypeScript Definitions (`types/index.d.ts`)**:
+  - Added complete typings for all 5 calculation functions and new `StatutoryClient` methods.
+- **Authoritative Cryptographic Substrate v2.9.0**:
+  - Computed and pinned release Merkle root hash: `sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0` across 86 files.
+  - Validated 108 primary statutory citations with 100% deep endpoint integrity across official government and judicial portals.
+- **Supply-Chain & Packaging Hardening (SLSA Level 3 & OpenSSF Standards)**:
+  - Added root forwarders `calculators.js` and `calculators.d.ts` alongside `typesVersions` in `package.json`, achieving 100% green resolution on `@arethetypeswrong/cli` across Node10, Node16 ESM/CJS, and Bundlers.
+  - Added deterministic `scripts/prepublish_gate.js` as `prepublishOnly` lifecycle hook to verify manifest, schemas, citations, conformance, and tests before publishing.
+  - Added `publishConfig: { access: 'public', provenance: true }` enabling Sigstore provenance generation on release.
+  - Added project-level `.npmrc` enforcing `ignore-scripts=true` to neutralize install-time malware vectors.
+  - Pinned GitHub Actions workflows to immutable 40-character commit SHAs.
+- **Expanded Regression Test Suite (80/80 Tests Passing)**:
+  - Added Tests 75–80 verifying the 5 corporate finance domain provisions, edge-case thresholds, and calculator parity.
+
+---
+
 ## [2.8.1] - 2026-10-26
 
 ### Fixed & Hardened

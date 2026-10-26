@@ -1,0 +1,72 @@
+{
+  "sectionId": "ITA1961_SEC92C_RULE10CA",
+  "sectionCode": "ITA-SEC-92C-RULE-10CA",
+  "aliases": [
+    "92C",
+    "Rule 10CA",
+    "transfer pricing",
+    "ALP",
+    "arm's length price",
+    "arms length price",
+    "range concept",
+    "35th percentile",
+    "65th percentile",
+    "tolerance band",
+    "secondary adjustment",
+    "section 92ce"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Section 92C read with Rule 10CA and Section 92CE",
+  "successorStatute": "Income-tax Act, 2025 (Chapter on International Tax & Transfer Pricing)",
+  "successorSection": "Transfer Pricing Provisions",
+  "title": "Computation of Arm's Length Price (ALP), Range Concept and Secondary Adjustments",
+  "effectivePeriod": {
+    "validFrom": "2014-04-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Annual transfer pricing study documentation and Form 3CEB certification",
+    "sunsetNotes": "Permanent transfer pricing regime under Chapter X of Income-tax Act, 1961."
+  },
+  "plainTextSummary": "Under Section 92C of the Income-tax Act, 1961, the arm's length price (ALP) in relation to an international transaction or specified domestic transaction must be calculated using the Most Appropriate Method (MAM): Comparable Uncontrolled Price (CUP), Resale Price Method (RPM), Cost Plus Method (CPM), Profit Split Method (PSM), Transactional Net Margin Method (TNMM), or any other method prescribed under Rule 10AB. Under Rule 10CA (introduced by CBDT Notification No. 86/2015), where the dataset of comparable uncontrolled prices contains 6 or more entries, the 'range concept' applies: an arm's length range is constructed from the 35th percentile to the 65th percentile of the sorted dataset. If the transfer price falls within this 35th–65th percentile range, the transaction value is deemed to be at arm's length. If the transaction price falls outside the range, the arm's length price is determined as the 50th percentile (median) of the dataset, and an upward primary transfer pricing adjustment is made. If the dataset has fewer than 6 comparables, the arithmetic mean applies, with a statutory tolerance band (1% for wholesale traders, 3% for all other businesses). Under Section 92CE, where a primary adjustment exceeds ₹1 Crore (₹10,000,000) and is accepted by the assessee or determined in assessment, the excess money must be repatriated to India within 90 days, failing which secondary adjustment interest applies or an additional tax of 18% (plus 12% surcharge and 4% cess, total 20.9664%) is chargeable under Section 92CE(2A).",
+  "keyStatutoryThresholds": {
+    "rangeConceptMinimumComparables": 6,
+    "rangeLowerPercentile": 35,
+    "rangeUpperPercentile": 65,
+    "medianPercentile": 50,
+    "toleranceBandWholesaleTradingPercent": 1.0,
+    "toleranceBandStandardPercent": 3.0,
+    "secondaryAdjustmentSection92CeThresholdInr": 10000000,
+    "repatriationWindowDays": 90,
+    "secondaryAdjustmentTaxRatePercent": 20.9664
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "CBDT Notification No. 86/2015 / S.O. 2860(E) (Dated 19 October 2015)",
+      "subject": "Income-tax (16th Amendment) Rules, 2015 introducing Rule 10CA range concept and multi-year data",
+      "officialUrl": "https://www.incometaxindia.gov.in/communications/notification/notification_86_2015.pdf"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "CBDT Notification No. 46/2023 (Tolerance band under third proviso to Section 92C(2))",
+      "subject": "Notification of tolerance variation band of 1% for wholesale traders and 3% for other enterprises",
+      "officialUrl": "https://www.incometaxindia.gov.in/communications/notification/notification_46_2023.pdf"
+    },
+    {
+      "authority": "Income Tax Department",
+      "instrument": "Form 3CEB & Rule 10E Compliance Instructions",
+      "subject": "Report from an accountant to be furnished under Section 92E relating to international transactions",
+      "officialUrl": "https://www.incometax.gov.in/iec/foportal/help/statutory-forms/form-3ceb"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Form 3CEB Chartered Accountant certification under Section 92E filed before due date",
+    "Transfer Pricing Local File documentation containing functional, assets, and risk (FAR) analysis",
+    "Master File documentation in Form 3CEAA (where consolidated group turnover and transaction thresholds are met)",
+    "Country-by-Country Report (CbCR) in Form 3CEAD for international groups with consolidated revenue exceeding ₹6,400 Crore",
+    "Comparable benchmark search process logs with inclusion and rejection matrices",
+    "Inter-company agreement / Master Services Agreement (MSA) with Associated Enterprise (AE)",
+    "Proof of repatriation within 90 days where primary adjustment exceeds ₹1 Crore under Section 92CE"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.9.0"
+}

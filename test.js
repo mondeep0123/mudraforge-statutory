@@ -30,6 +30,13 @@ import {
     runStatutoryDoctor,
     crosswalkStatute,
     getStatutoryDiff,
+    roundToPaisa,
+    roundSection288B,
+    calculateCorporateTaxMatVsConcessional,
+    evaluatePlaceOfSupplyAndLut,
+    calculateTransferPricingAlp,
+    evaluateSection79LossContinuity,
+    revalueForeignExchangeIndAs109,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
 } from './src/index.js';
@@ -138,6 +145,15 @@ async function run() {
     console.log(`[PASS] enterpriseClient.lookup(194Q): status=${entRes.status}, tier=${entRes.tier}, source=${entRes.source}`);
 
     const freeClient = new StatutoryClient();
+    if (freeClient.preferIpv4 !== false) {
+        throw new Error('Default StatutoryClient preferIpv4 must be false');
+    }
+    const ipv4Client = new StatutoryClient({ preferIpv4: true });
+    if (ipv4Client.preferIpv4 !== true) {
+        throw new Error('StatutoryClient with preferIpv4: true must set preferIpv4 to true');
+    }
+    console.log('[PASS] StatutoryClient preferIpv4 defaulting and opt-in verified.');
+
     try {
         await freeClient.calculate({ section: '194Q', invoiceAmount: 8000000 });
         throw new Error('FAILED: calculate() should have thrown without API key');
@@ -1350,17 +1366,38 @@ async function run() {
     }
     console.log('[PASS] Section 194R Verified: 10% TDS, ₹20k Ceiling & Circular 12/2022 Valuation.');
 
-    // 51. Direct Tax — Section 206AB (Higher Rates for Non-Filers)
-    console.log('\n── Test 51: Direct Tax — Section 206AB (Higher Rates for Non-Filers) ──');
-    const res206AB = await lookupStatute('206AB');
-    if (res206AB.status !== 'SUCCESS' || res206AB.temporalStatus !== 'ACTIVE') {
-        throw new Error('lookupStatute(206AB) failed to resolve Section 206AB');
+    // 51. Direct Tax — Section 206AB (Higher Rates for Non-Filers & Finance Act 2025 Sunset)
+    console.log('\n── Test 51: Direct Tax — Section 206AB (Higher Rates for Non-Filers & Finance Act 2025 Sunset) ──');
+    // Pre-sunset historical verification (prior to 1 April 2025)
+    const res206AB_hist = await lookupStatute('206AB', { asOfDate: '2024-12-01' });
+    if (res206AB_hist.status !== 'SUCCESS' || res206AB_hist.temporalStatus !== 'ACTIVE') {
+        throw new Error(`lookupStatute(206AB, 2024-12-01) expected ACTIVE, got ${res206AB_hist.temporalStatus}`);
     }
-    const abThresholds = res206AB.statute.keyStatutoryThresholds;
+    const abThresholds = res206AB_hist.statute.keyStatutoryThresholds;
     if (abThresholds.priorYearAggregateTdsTcsThresholdInr !== 50000) {
         throw new Error('Section 206AB ₹50k threshold mismatch');
     }
-    console.log('[PASS] Section 206AB Verified: Specified Person Non-Filer Higher Rate (2x or 5%).');
+    const isHistActive = await isStatuteActive('206AB', '2024-12-01');
+    if (isHistActive !== true) {
+        throw new Error('isStatuteActive(206AB, 2024-12-01) expected true');
+    }
+
+    // Post-sunset verification (on or after 1 April 2025)
+    const res206AB_sunset = await lookupStatute('206AB', { asOfDate: '2025-06-01' });
+    if (res206AB_sunset.temporalStatus !== 'SUNSET_SUPERSEDED') {
+        throw new Error(`lookupStatute(206AB, 2025-06-01) expected SUNSET_SUPERSEDED, got ${res206AB_sunset.temporalStatus}`);
+    }
+    const isPostActive = await isStatuteActive('206AB', '2025-06-01');
+    if (isPostActive !== false) {
+        throw new Error('isStatuteActive(206AB, 2025-06-01) expected false');
+    }
+
+    // Crosswalk verification
+    const cw206AB = crosswalkStatute('206AB', { creditDate: '2025-05-20' });
+    if (cw206AB.temporalStatus !== 'SUNSET_OMITTED') {
+        throw new Error(`crosswalkStatute(206AB, 2025-05-20) expected SUNSET_OMITTED, got ${cw206AB.temporalStatus}`);
+    }
+    console.log('[PASS] Section 206AB Verified: Historical 2x/5% rate active pre-1 April 2025; SUNSET_OMITTED post-1 April 2025.');
 
     // 52. Indirect Tax (GST) — Section 51 (TDS under GST)
     console.log('\n── Test 52: Indirect Tax (GST) — Section 51 (TDS under GST) ──');
@@ -1425,7 +1462,7 @@ async function run() {
     if (!verifyReport.baselineCheck.valid) {
         throw new Error(`Baseline check failed: missing ${verifyReport.baselineCheck.missingBaseline.join(', ')}`);
     }
-    console.log(`[PASS] verifyLocalSubstrate: Clean local OKF validated (71 files, ${verifyReport.authenticity.method}, exitCode 0).`);
+    console.log(`[PASS] verifyLocalSubstrate: Clean local OKF validated (${verifyReport.integrity.totalFilesChecked} files, ${verifyReport.authenticity.method}, exitCode 0).`);
 
     // 57. Cryptographic Substrate Verification — File Tampering Detection (Exit Code 2)
     console.log('\n── Test 57: Integrity Failure Detection on Tampered File (Exit Code 2) ──');
@@ -1559,7 +1596,7 @@ async function run() {
         cwd: path.resolve('.')
     });
     const parsedList = JSON.parse(cliListOutput);
-    if (!Array.isArray(parsedList.sections) || parsedList.total !== 24) {
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 29) {
         throw new Error('CLI list --json failed');
     }
 
@@ -1747,8 +1784,173 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient crosswalk() and diff() programmatic methods verified with complete parity.');
 
+    // 75. Corporate Tax MAT (Section 115JB) vs Concessional Regime (Section 115BAA)
+    console.log('\n── Test 75: Corporate Tax MAT (Section 115JB) vs Concessional Regime (Section 115BAA) ──');
+    const corpTax1 = calculateCorporateTaxMatVsConcessional({
+        financialYear: '2025-26',
+        turnoverPrecedingFyInr: 3000000000, // ₹300 Cr (<= ₹400 Cr -> 25% base rate)
+        netProfitBeforeTaxInr: 100000000,   // ₹10 Cr
+        normalTaxAdditionsInr: 10000000,    // ₹1 Cr
+        normalTaxDeductionsInr: 5000000,    // ₹50 Lakh -> taxable income ₹10.5 Cr (> 10 Cr -> 12% surcharge)
+        accumulatedMatCreditInr: 15000000   // ₹1.5 Cr
+    });
+    if (corpTax1.status !== 'SUCCESS' || corpTax1.isAuthorizedToDisburse !== false) {
+        throw new Error('Corporate tax calculation failed invariant check');
+    }
+    if (corpTax1.normalTaxRegime.baseTaxRate !== 0.25 || corpTax1.normalTaxRegime.surchargeRate !== 0.12) {
+        throw new Error(`Unexpected normal tax rates: ${corpTax1.normalTaxRegime.baseTaxRate}, ${corpTax1.normalTaxRegime.surchargeRate}`);
+    }
+    if (corpTax1.concessionalRegimeSec115BAA.effectiveRate !== 25.168 || corpTax1.concessionalRegimeSec115BAA.matApplicable !== false) {
+        throw new Error('Section 115BAA concessional rates or MAT exemption incorrect');
+    }
+    if (corpTax1.concessionalRegimeSec115BAA.forfeitedMatCreditInr !== 15000000) {
+        throw new Error('Section 115BAA should forfeit accumulated MAT credit');
+    }
+    console.log(`[PASS] Corporate Tax Engine Verified: Normal Tax ₹${corpTax1.normalTaxRegime.grossNormalTaxInr.toLocaleString('en-IN')}, MAT ₹${corpTax1.minimumAlternateTaxSec115JB.grossMatTaxInr.toLocaleString('en-IN')}, Concessional 115BAA ₹${corpTax1.concessionalRegimeSec115BAA.totalTaxInr.toLocaleString('en-IN')}.`);
+
+    // 76. Indirect Tax (GST) — Place of Supply & Zero-Rated Export under LUT (IGST Sections 10, 12, 16)
+    console.log('\n── Test 76: Indirect Tax (GST) — Place of Supply & Zero-Rated Export under LUT ──');
+    // Case A: Qualified export under LUT
+    const gstExportLut = evaluatePlaceOfSupplyAndLut({
+        transactionType: 'EXPORT_SERVICES',
+        supplierStateCode: '27',
+        recipientCountryCode: 'US',
+        invoiceAmountInr: 1000000,
+        isSupplierInIndia: true,
+        isRecipientOutsideIndia: true,
+        isPlaceOfSupplyOutsideIndia: true,
+        isConvertibleForexReceivedOrRbiInr: true,
+        isDistinctPersonEstablishment: false,
+        isIntermediaryService: false,
+        hasValidLut: true,
+        lutArn: 'AD2703250012345'
+    });
+    if (gstExportLut.statutoryDetermination !== 'ZERO_RATED_EXPORT_UNDER_LUT' || gstExportLut.igstPayableInr !== 0 || !gstExportLut.itcRefundEligible) {
+        throw new Error('Export under LUT failed statutory zero-rating check');
+    }
+    // Case B: Intermediary service disqualification u/s 13(8)(b)
+    const gstIntermediary = evaluatePlaceOfSupplyAndLut({
+        transactionType: 'EXPORT_SERVICES',
+        supplierStateCode: '27',
+        recipientCountryCode: 'US',
+        invoiceAmountInr: 1000000,
+        isSupplierInIndia: true,
+        isRecipientOutsideIndia: true,
+        isIntermediaryService: true, // Disqualifying factor u/s 13(8)(b)
+        hasValidLut: true
+    });
+    if (gstIntermediary.statutoryDetermination !== 'DISQUALIFIED_FROM_ZERO_RATING' || gstIntermediary.igstPayableInr !== 180000) {
+        throw new Error('Intermediary service should be disqualified from zero-rating u/s 13(8)(b)');
+    }
+    // Case C: Domestic B2B Intra-State vs Inter-State
+    const gstIntra = evaluatePlaceOfSupplyAndLut({
+        transactionType: 'DOMESTIC_SERVICES',
+        supplierStateCode: '27',
+        recipientStateCode: '27',
+        invoiceAmountInr: 100000,
+        gstRate: 0.18
+    });
+    if (gstIntra.statutoryDetermination !== 'INTRA_STATE_SUPPLY' || gstIntra.taxBreakdown.cgstAmountInr !== 9000 || gstIntra.taxBreakdown.sgstAmountInr !== 9000) {
+        throw new Error('Intra-state CGST/SGST split incorrect');
+    }
+    console.log('[PASS] Place of Supply & LUT Engine Verified: Zero-Rated LUT (0% IGST), Intermediary Disqualification (18% IGST), and Intra-State (9%+9% CGST/SGST).');
+
+    // 77. International Tax — Transfer Pricing ALP & Rule 10CA Range Concept (Section 92C)
+    console.log('\n── Test 77: International Tax — Transfer Pricing ALP & Rule 10CA Range Concept ──');
+    // Case A: >= 6 comparables, compliant within 35th-65th percentile
+    const tpCompliant = calculateTransferPricingAlp({
+        internationalTransactionAmountInr: 100000000,
+        testedPartyOperatingMarginPercent: 16.0,
+        comparablesData: [12.0, 14.0, 15.0, 16.0, 18.0, 20.0, 22.0]
+    });
+    if (tpCompliant.statutoryDetermination !== 'ARM_LENGTH_COMPLIANT' || tpCompliant.primaryAdjustmentInr !== 0) {
+        throw new Error('Transfer pricing range compliant check failed');
+    }
+    // Case B: Margin below range -> median adjustment and Section 92CE alert
+    const tpAdjustment = calculateTransferPricingAlp({
+        internationalTransactionAmountInr: 200000000, // ₹20 Cr
+        testedPartyOperatingMarginPercent: 10.0,
+        comparablesData: [12.0, 14.0, 15.0, 16.0, 18.0, 20.0, 22.0] // Median = 16.0%, shortfall = 6.0% -> adjustment ₹1.2 Cr (> ₹1 Cr)
+    });
+    if (tpAdjustment.statutoryDetermination !== 'PRIMARY_ADJUSTMENT_REQUIRED' || tpAdjustment.primaryAdjustmentInr !== 12000000) {
+        throw new Error(`Expected primary adjustment ₹1.2 Cr, got ₹${tpAdjustment.primaryAdjustmentInr}`);
+    }
+    if (!tpAdjustment.secondaryAdjustmentAlert.applicable || tpAdjustment.secondaryAdjustmentAlert.repatriationPeriodDays !== 90) {
+        throw new Error('Section 92CE secondary adjustment alert (> ₹1 Cr) missing or incorrect');
+    }
+    console.log(`[PASS] Transfer Pricing ALP Engine Verified: 35th–65th Range Concept, Median Rule 10CA(7) Adjustment (₹${tpAdjustment.primaryAdjustmentInr.toLocaleString('en-IN')}) and Section 92CE 90-Day Repatriation Alert.`);
+
+    // 78. Corporate Restructuring — Section 79 Loss Carry-Forward & Shareholding Continuity
+    console.log('\n── Test 78: Corporate Restructuring — Section 79 Loss Carry-Forward & Continuity ──');
+    // Case A: 60% continuity -> allowed
+    const sec79Allowed = evaluateSection79LossContinuity({
+        accumulatedBroughtForwardLossInr: 50000000,
+        unabsorbedDepreciationInr: 20000000,
+        votingPowerHeldByOriginalShareholdersPercent: 60.0
+    });
+    if (sec79Allowed.statutoryDetermination !== 'LOSS_CARRYFORWARD_ALLOWED' || sec79Allowed.lossSchedule.allowableLossSetOffInr !== 50000000) {
+        throw new Error('Section 79 60% continuity should permit loss set-off');
+    }
+    // Case B: 30% continuity in normal company -> loss lapsed, but unabsorbed depreciation protected (Virmani Industries)
+    const sec79Lapsed = evaluateSection79LossContinuity({
+        accumulatedBroughtForwardLossInr: 50000000,
+        unabsorbedDepreciationInr: 20000000,
+        votingPowerHeldByOriginalShareholdersPercent: 30.0
+    });
+    if (sec79Lapsed.statutoryDetermination !== 'LOSS_CARRYFORWARD_DENIED' || sec79Lapsed.lossSchedule.allowableLossSetOffInr !== 0) {
+        throw new Error('Section 79 30% continuity should deny business loss set-off');
+    }
+    if (sec79Lapsed.lossSchedule.unabsorbedDepreciationInr !== 20000000) {
+        throw new Error('Unabsorbed depreciation under Section 32(2) must be preserved despite Section 79 loss lapse');
+    }
+    // Case C: Startup carve-out under Section 79(2)
+    const sec79Startup = evaluateSection79LossContinuity({
+        isDpiitRecognizedStartup: true,
+        accumulatedBroughtForwardLossInr: 50000000,
+        unabsorbedDepreciationInr: 20000000,
+        shareholdingInLossYear: [{ pan: 'AAAAA1111A', percentage: 60 }, { pan: 'BBBBB2222B', percentage: 40 }],
+        shareholdingInSetOffYear: [{ pan: 'AAAAA1111A', percentage: 20 }, { pan: 'BBBBB2222B', percentage: 10 }, { pan: 'CCCCC3333C', percentage: 70 }] // original total = 30% (< 51%), but all original continue
+    });
+    if (sec79Startup.statutoryDetermination !== 'LOSS_CARRYFORWARD_ALLOWED' || sec79Startup.lossSchedule.allowableLossSetOffInr !== 50000000) {
+        throw new Error('DPIIT startup carve-out u/s 79(2) failed to preserve losses');
+    }
+    console.log('[PASS] Section 79 Engine Verified: 51% Continuity, Virmani Doctrine (Unabsorbed Depreciation Protected), and Startup Section 79(2) Carve-Out.');
+
+    // 79. International Tax & Treasury — Ind AS 21 & Ind AS 109 Foreign Exchange Revaluation
+    console.log('\n── Test 79: International Tax & Treasury — Ind AS 21 & Ind AS 109 FX Revaluation ──');
+    const fxReport = revalueForeignExchangeIndAs109({
+        asOfDate: '2026-03-31',
+        items: [
+            { description: 'USD Trade Receivables', itemType: 'MONETARY_ASSET', foreignCurrency: 'USD', foreignAmount: 100000, bookingRate: 82.0, closingRate: 85.0 }, // +₹300,000 gain (P&L)
+            { description: 'USD Trade Payables', itemType: 'MONETARY_LIABILITY', foreignCurrency: 'USD', foreignAmount: 50000, bookingRate: 80.0, closingRate: 85.0 },     // -₹250,000 loss (P&L)
+            { description: 'Designated Cash Flow Hedge Forward', itemType: 'MONETARY_ASSET', foreignCurrency: 'USD', foreignAmount: 100000, bookingRate: 82.0, closingRate: 85.0, isDesignatedCashFlowHedge: true }, // +₹300,000 gain (OCI)
+            { description: 'Machinery Historical Cost', itemType: 'NON_MONETARY', foreignCurrency: 'USD', foreignAmount: 20000, bookingRate: 75.0, closingRate: 85.0 } // 0 (Historical cost per Ind AS 21.23)
+        ]
+    });
+    if (fxReport.status !== 'SUCCESS' || fxReport.isAuthorizedToDisburse !== false) {
+        throw new Error('FX revaluation invariant failure');
+    }
+    if (fxReport.summary.netPnlImpactInr !== 50000 || fxReport.summary.netOciImpactInr !== 300000) {
+        throw new Error(`FX revaluation summary mismatch: P&L=${fxReport.summary.netPnlImpactInr}, OCI=${fxReport.summary.netOciImpactInr}`);
+    }
+    console.log(`[PASS] Ind AS 21 & 109 Engine Verified: Net P&L FX Impact ₹${fxReport.summary.netPnlImpactInr.toLocaleString('en-IN')}, Net OCI Hedge Impact ₹${fxReport.summary.netOciImpactInr.toLocaleString('en-IN')}, Non-monetary historical cost preserved.`);
+
+    // 80. StatutoryClient Programmatic Parity for All 5 Corporate Finance Calculators
+    console.log('\n── Test 80: StatutoryClient Programmatic Parity for All 5 Corporate Finance Calculators ──');
+    const clientCalc = new StatutoryClient();
+    const cCorp = clientCalc.calculateCorporateTaxMatVsConcessional({ netProfitBeforeTaxInr: 10000000 });
+    const cPos = clientCalc.evaluatePlaceOfSupplyAndLut({ transactionType: 'EXPORT_SERVICES', recipientCountryCode: 'US', hasValidLut: true, isConvertibleForexReceivedOrRbiInr: true });
+    const cTp = clientCalc.calculateTransferPricingAlp({ isAssociatedEnterprise: false });
+    const cSec79 = clientCalc.evaluateSection79LossContinuity({ votingPowerHeldByOriginalShareholdersPercent: 70 });
+    const cFx = clientCalc.revalueForeignExchangeIndAs109({ items: [] });
+
+    if (cCorp.status !== 'SUCCESS' || cPos.status !== 'SUCCESS' || cTp.status !== 'SUCCESS' || cSec79.status !== 'SUCCESS' || cFx.status !== 'SUCCESS') {
+        throw new Error('StatutoryClient calculator methods failed parity execution');
+    }
+    console.log('[PASS] StatutoryClient corporate finance calculator methods verified with 100% parity.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 74 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 80 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

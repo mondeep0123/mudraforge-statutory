@@ -12,19 +12,31 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
+import dns from 'node:dns';
 import { fileURLToPath } from 'node:url';
+import {
+    roundToPaisa,
+    roundSection288B,
+    calculateCorporateTaxMatVsConcessional,
+    evaluatePlaceOfSupplyAndLut,
+    calculateTransferPricingAlp,
+    evaluateSection79LossContinuity,
+    revalueForeignExchangeIndAs109
+} from './calculators.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const DEFAULT_LOCAL_OKF_DIR = path.resolve(__dirname, '..', 'okf');
 export const DEFAULT_BASE_URL = 'https://api.mudraforge.in';
-export const STATUTORY_CLIENT_VERSION = '2.8.1';
+export const STATUTORY_CLIENT_VERSION = '2.9.0';
 
 /**
  * Pinned official release Merkle root digests.
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0', // v2.9.0 Corporate Finance 5 Domains Merkle Root (29 Sections across 5 Domains)
+    'sha256-3fb34bdcd34eec794b1f8e6abb2c0e0e87664746ec2f50ad2599c34bf57565b3', // v2.8.1 Finance Act, 2025 Section 206AB Sunset Root (24 Sections across 5 Domains)
     'sha256-239641de2bef05917673f693f9ba4d14bd5e137d64554fba5db87e426bc13e14', // v2.8.0 Deep Semantic Citation Merkle Root (24 Sections across 5 Domains)
     'sha256-6953ce79b63bb2a5809dc928178b4631f08448aa2dcde107dde10f84890bf5cb', // v2.7.0 Edge Sync Bundle Root (24 Sections across 5 Domains)
     'sha256-ce88c2255df1c30c15bfe184c8117336ebc302c2ac5ef25e96a6957402ae11ae', // v2.6.0 Verified Citation Merkle Root (24 Sections across 5 Domains - 100% Complete AP)
@@ -1514,17 +1526,24 @@ export class StatutoryClient {
     /**
      * @param {Object} [options]
      * @param {string} [options.apiKey] Enterprise API key (obtain from hello@mudraforge.in)
-     * @param {'PUBLIC_COMMONS_FREE' | 'ENTERPRISE_PAID'} [options.tier] Client subscription tier
+     * @param {'PUBLIC_COMMONS_FREE' | 'ENTERPRISE_PAID'} [options.tier] Client-side telemetry tier hint. Note: Edge server authorizes and throttles strictly based on the Bearer token, ignoring client tier claims.
      * @param {string} [options.baseUrl] Custom edge base URL
      * @param {string} [options.okfDir] Path to local OKF directory
      * @param {boolean} [options.offlineFirst=true] Query local filesystem before hitting edge
+     * @param {boolean} [options.preferIpv4=false] Opt-in preference for IPv4 DNS resolution (calls node:dns.setDefaultResultOrder('ipv4first')). Note: In Node.js this operates at process scope to resolve Windows IPv6 Anycast timeouts.
      */
     constructor(options = {}) {
-        this.apiKey = options.apiKey || process.env?.MUDRA_STATUTORY_API_KEY || null;
+        this.apiKey = options.apiKey || (typeof process !== 'undefined' ? process.env?.MUDRA_STATUTORY_API_KEY : null) || null;
         this.tier = options.tier || (this.apiKey ? 'ENTERPRISE_PAID' : 'PUBLIC_COMMONS_FREE');
-        this.baseUrl = options.baseUrl || process.env?.MUDRA_STATUTORY_BASE_URL || DEFAULT_BASE_URL;
+        this.baseUrl = options.baseUrl || (typeof process !== 'undefined' ? process.env?.MUDRA_STATUTORY_BASE_URL : null) || DEFAULT_BASE_URL;
         this.okfDir = options.okfDir || DEFAULT_LOCAL_OKF_DIR;
         this.offlineFirst = options.offlineFirst !== false;
+        this.preferIpv4 = options.preferIpv4 === true || (typeof process !== 'undefined' && process.env?.MUDRA_STATUTORY_PREFER_IPV4 === '1');
+        if (this.preferIpv4 && typeof dns?.setDefaultResultOrder === 'function') {
+            try {
+                dns.setDefaultResultOrder('ipv4first');
+            } catch (_) {}
+        }
     }
 
     /**
@@ -1594,18 +1613,38 @@ export class StatutoryClient {
         assertSecureEndpoint(this.baseUrl);
 
         const url = new URL('/api/v1/statutory/calculate', this.baseUrl);
-        const res = await fetch(url.toString(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${this.apiKey}`,
-                'X-Mudra-Tier': this.tier,
-                'User-Agent': `@mudraforge/statutory/${STATUTORY_CLIENT_VERSION} (${this.tier})`
-            },
-            body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(options.timeoutMs || 20000)
-        });
+        let res;
+        try {
+            res = await fetch(url.toString(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'X-Mudra-Tier': this.tier,
+                    'User-Agent': `@mudraforge/statutory/${STATUTORY_CLIENT_VERSION} (${this.tier})`
+                },
+                body: JSON.stringify(payload),
+                signal: AbortSignal.timeout(options.timeoutMs || 20000)
+            });
+        } catch (fetchErr) {
+            const isTimeout = fetchErr.name === 'TimeoutError' || 
+                              fetchErr.code === 'UND_ERR_CONNECT_TIMEOUT' || 
+                              fetchErr.code === 'ETIMEDOUT' ||
+                              fetchErr.message?.includes('timeout') || 
+                              fetchErr.cause?.code === 'UND_ERR_CONNECT_TIMEOUT';
+            if (isTimeout) {
+                const timeoutErr = new Error(
+                    `[@mudraforge/statutory] Connection timeout reaching ${this.baseUrl}.\n` +
+                    `Diagnostic advice: On Windows environments, broken or unrouted IPv6 Anycast routing can cause connection timeouts to Cloudflare edge IPs.\n` +
+                    `To resolve, enable IPv4-first resolution on the client by passing { preferIpv4: true } to StatutoryClient or setting environment variable MUDRA_STATUTORY_PREFER_IPV4=1.`
+                );
+                timeoutErr.code = 'CONNECTION_TIMEOUT';
+                timeoutErr.cause = fetchErr;
+                throw timeoutErr;
+            }
+            throw fetchErr;
+        }
 
         if (!res.ok) {
             const isJson = (res.headers.get('content-type') || '').toLowerCase().includes('application/json');
@@ -1675,6 +1714,41 @@ export class StatutoryClient {
      */
     async doctor(options = {}) {
         return await runStatutoryDoctor(options);
+    }
+
+    /**
+     * Evaluate Corporate Tax: Normal MAT (Section 115JB) vs Concessional Regime (Section 115BAA).
+     */
+    calculateCorporateTaxMatVsConcessional(payload) {
+        return calculateCorporateTaxMatVsConcessional(payload);
+    }
+
+    /**
+     * Evaluate Place of Supply (POS) & Zero-Rated Export of Services under LUT (IGST Sections 10, 12, 13, 16).
+     */
+    evaluatePlaceOfSupplyAndLut(payload) {
+        return evaluatePlaceOfSupplyAndLut(payload);
+    }
+
+    /**
+     * Compute Transfer Pricing Arm's Length Price (ALP) under Section 92C & Rule 10CA.
+     */
+    calculateTransferPricingAlp(payload) {
+        return calculateTransferPricingAlp(payload);
+    }
+
+    /**
+     * Evaluate Section 79 Loss Carry-Forward & Shareholding Continuity with unabsorbed depreciation protection.
+     */
+    evaluateSection79LossContinuity(payload) {
+        return evaluateSection79LossContinuity(payload);
+    }
+
+    /**
+     * Revalue foreign exchange monetary items at closing spot rates under Ind AS 21 and Ind AS 109.
+     */
+    revalueForeignExchangeIndAs109(payload) {
+        return revalueForeignExchangeIndAs109(payload);
     }
 }
 
@@ -2122,8 +2196,9 @@ export const STATUTORY_CROSSWALK_CATALOG = [
         aliases: ['195', 'sec195', 'section 195', '393(2)', 'foreign remittance tds', 'non resident tds']
     },
     {
-        id: 'CROSSWALK_206AB_397_3',
+        id: 'CROSSWALK_206AB_SUNSET',
         domain: 'direct_tax',
+        isOmittedSunset: true,
         predecessor: {
             act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
             sectionCode: '206AB',
@@ -2136,24 +2211,24 @@ export const STATUTORY_CROSSWALK_CATALOG = [
             returnForm: 'Form 26Q'
         },
         successor: {
-            act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
-            sectionCode: '397(3)',
-            statutorySection: 'Section 397(3)',
-            title: 'Higher withholding rates for non-filers of income-tax returns',
-            effectiveDate: '2026-04-01',
-            threshold: 'Aggregate TDS/TCS >= ₹50,000 in preceding FY and return not filed within due date',
-            standardRate: 'Higher of: 2x specified rate, 2x rates in force, or 5.0%',
-            penaltyRate: 'Higher rate applies automatically',
-            challan: 'Challan under Income-tax Act, 2025',
-            returnForm: 'Quarterly Statement of Tax Withholding (2025 Act Rules)'
+            act: 'Finance Act, 2025 (Statutory Sunset & Omission)',
+            sectionCode: '206AB [OMITTED]',
+            statutorySection: 'Section 206AB Omitted',
+            title: 'Formally omitted by Finance Act, 2025 effective 1 April 2025 (No higher rate for non-filers)',
+            effectiveDate: '2025-04-01',
+            threshold: 'N/A (Provision repealed; compliance check utility discontinued)',
+            standardRate: '0.0%',
+            penaltyRate: '0.0%',
+            challan: 'N/A',
+            returnForm: 'N/A'
         },
-        transitionCutoffDate: '2026-04-01',
+        transitionCutoffDate: '2025-04-01',
         savingsAuthority: {
-            statute: 'Income-tax Act, 2025 Section 536 (Repeals and Savings)',
-            subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
-            legalPrinciple: 'Pre-April 1, 2026 non-filer verifications governed by Section 206AB compliance portal.'
+            statute: 'Finance Act, 2025 Section 206AB Sunset Clause',
+            subsidiary: 'General Clauses Act, 1897 Section 6',
+            legalPrinciple: 'Deductions on or before 31 March 2025 remain assessable under Section 206AB. Deductions on or after 1 April 2025 attract ZERO non-filer penalty rate; standard statutory rates apply. Higher rates under Section 206AA for invalid/inoperative PAN remain independent and fully active at 20%.'
         },
-        aliases: ['206ab', 'sec206ab', 'section 206ab', '397(3)', 'non filer higher tds']
+        aliases: ['206ab', 'sec206ab', 'section 206ab', 'non filer higher tds', '206ab sunset', 'non filer sunset']
     },
     {
         id: 'CROSSWALK_206C_1H_SUNSET',
@@ -2367,17 +2442,25 @@ export function crosswalkStatute(sectionCode, options = {}) {
     let isOmitted = Boolean(entry.isOmittedSunset);
 
     if (entry.isOmittedSunset) {
-        // e.g. 206C(1H)
+        // e.g. 206C(1H), 206AB
         if (triggerDate < cutoff) {
             governingAct = entry.predecessor.act;
             applicableSection = entry.predecessor.statutorySection;
             temporalStatus = 'GOVERNED_BY_1961_ACT';
-            legalAnalysis = `Trigger event crystallized on ${triggerDate} (prior to 1 April 2025 sunset). Governed by ${entry.predecessor.statutorySection} of the ${entry.predecessor.act}. Seller was obligated to collect 0.1% TCS on receipts exceeding ₹50 Lakhs unless buyer was liable and deducted TDS u/s 194Q.`;
+            if (entry.predecessor.sectionCode === '206AB') {
+                legalAnalysis = `Trigger event crystallized on ${triggerDate} (prior to 1 April 2025 sunset). Governed by Section 206AB of the Income-tax Act, 1961. Higher withholding rate (twice applicable rate or 5%) applied to non-filer specified persons.`;
+            } else {
+                legalAnalysis = `Trigger event crystallized on ${triggerDate} (prior to 1 April 2025 sunset). Governed by ${entry.predecessor.statutorySection} of the ${entry.predecessor.act}. Seller was obligated to collect 0.1% TCS on receipts exceeding ₹50 Lakhs unless buyer was liable and deducted TDS u/s 194Q.`;
+            }
         } else {
             governingAct = entry.successor.act;
             applicableSection = entry.successor.statutorySection;
             temporalStatus = 'SUNSET_OMITTED';
-            legalAnalysis = `Section 206C(1H) was formally omitted by the Finance Act, 2025 w.e.f. 1 April 2025 to eliminate double-compliance overlap. No seller TCS liability attaches to transactions on or after 1 April 2025. Tax withholding on sale of goods is governed exclusively by buyer TDS under Section 194Q / Section 393.`;
+            if (entry.predecessor.sectionCode === '206AB') {
+                legalAnalysis = `Section 206AB was formally omitted by the Finance Act, 2025 w.e.f. 1 April 2025. No non-filer punitive TDS rate applies on or after 1 April 2025; standard statutory TDS rates apply. Higher rates under Section 206AA for missing/inoperative PAN remain independent and fully active at 20%.`;
+            } else {
+                legalAnalysis = `Section 206C(1H) was formally omitted by the Finance Act, 2025 w.e.f. 1 April 2025 to eliminate double-compliance overlap. No seller TCS liability attaches to transactions on or after 1 April 2025. Tax withholding on sale of goods is governed exclusively by buyer TDS under Section 194Q / Section 393.`;
+            }
         }
     } else {
         // Standard transition to 2025 Act
@@ -2488,6 +2571,21 @@ export const STATUTORY_AMENDMENTS_CHANGELOG = [
         changeSummary: 'Reduced the non-filing lookback threshold under Section 206AB from 2 years to 1 year preceding the relevant financial year.',
         statutoryImpact: 'Payers must verify non-filer status using the Compliance Check functionality on the Income Tax Portal.',
         aliases: ['206ab', 'non filer']
+    },
+    {
+        id: 'DIFF-2025-04-01-206AB',
+        sectionCode: '206AB',
+        domain: 'direct_tax',
+        title: 'Statutory Sunset & Omission of Section 206AB Higher Non-Filer TDS',
+        effectiveDate: '2025-04-01',
+        amendmentType: 'STATUTORY_OMISSION',
+        statute: 'Finance Act, 2025',
+        legalAuthority: 'Finance Act, 2025 (Section 206AB Sunset Clause)',
+        previousValue: 'Higher TDS rate (higher of 2x specified rate, 2x rates in force, or 5%) for non-filers',
+        amendedValue: 'OMITTED (Section 206AB repealed; standard TDS rates apply without non-filer penalty)',
+        changeSummary: 'Finance Act, 2025 formally omitted Section 206AB and Section 206CCA effective 1 April 2025 to relieve deductors from non-filer compliance checks.',
+        statutoryImpact: 'Tax deductors are no longer required to run portal compliance checks for specified persons; standard statutory rates apply. Higher rates under Section 206AA for invalid/inoperative PAN remain active.',
+        aliases: ['206ab', 'non filer sunset', '206ab omitted']
     },
     {
         id: 'DIFF-2022-07-01-194R',
@@ -2645,5 +2743,17 @@ export function getStatutoryDiff(options = {}) {
         amendments: matched
     };
 }
+
+// ── Deterministic Zero-Dependency Statutory Calculators Export ──────────────
+export {
+    roundToPaisa,
+    roundSection288B,
+    calculateCorporateTaxMatVsConcessional,
+    evaluatePlaceOfSupplyAndLut,
+    calculateTransferPricingAlp,
+    evaluateSection79LossContinuity,
+    revalueForeignExchangeIndAs109
+};
+
 
 

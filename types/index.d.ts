@@ -193,6 +193,11 @@ export declare class StatutoryClient {
     diff(options?: StatutoryDiffOptions): StatutoryDiffResult;
     verify(targetDir?: string): any;
     doctor(options?: any): Promise<any>;
+    calculateCorporateTaxMatVsConcessional(payload?: any): any;
+    evaluatePlaceOfSupplyAndLut(payload?: any): any;
+    calculateTransferPricingAlp(payload?: any): any;
+    evaluateSection79LossContinuity(payload?: any): any;
+    revalueForeignExchangeIndAs109(payload?: any): any;
 }
 
 export interface CrosswalkOptions {
@@ -314,4 +319,13 @@ export declare const INDIAN_STATE_CODES: Record<string, string>;
 export declare const PAN_ENTITY_TYPES: Record<string, { code: string; name: string; isIndividualOrHuf: boolean; standard194cRatePercent: number }>;
 export declare function isValidGstinChecksum(gstin: string): boolean;
 export declare function decodeTaxIdentifier(rawId: string): TaxIdentifierResult;
+
+export declare function roundToPaisa(amount: number | string): number;
+export declare function roundSection288B(amount: number | string): number;
+export declare function calculateCorporateTaxMatVsConcessional(payload?: any): any;
+export declare function evaluatePlaceOfSupplyAndLut(payload?: any): any;
+export declare function calculateTransferPricingAlp(payload?: any): any;
+export declare function evaluateSection79LossContinuity(payload?: any): any;
+export declare function revalueForeignExchangeIndAs109(payload?: any): any;
+
 

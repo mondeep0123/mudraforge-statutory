@@ -1,10 +1,34 @@
 {
   "name": "@mudraforge/statutory",
-  "version": "2.8.1",
+  "version": "2.9.0",
   "description": "Open Knowledge Format (OKF) client & AI Agent Skill for Indian and cross-border statutory tax provisions. Zero dependencies.",
   "type": "module",
   "main": "src/index.js",
   "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./calculators": {
+      "types": "./types/index.d.ts",
+      "import": "./src/calculators.js",
+      "default": "./src/calculators.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "calculators": [
+        "./types/index.d.ts"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "sideEffects": false,
   "bin": {
     "mudraforge-statutory": "bin/cli.js"
   },
@@ -13,6 +37,8 @@
     "types",
     "bin",
     "okf",
+    "calculators.js",
+    "calculators.d.ts",
     "docs",
     "SKILL.md",
     "README.md",
@@ -24,7 +50,11 @@
     "examples",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
+    "prepublishOnly": "node scripts/prepublish_gate.js",
     "test": "node test.js",
     "validate": "node scripts/validate_okf.js",
     "citations": "node scripts/verify_citation_links.js",

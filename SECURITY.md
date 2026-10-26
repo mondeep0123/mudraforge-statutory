@@ -12,8 +12,8 @@ Only the current major release series receives active updates and statutory amen
 
 | Version | Supported | Statutory Epistemic Baseline |
 |---|---|---|
-| `2.4.x` | Yes | Finance Act, 2025 & CBDT/CBIC Circulars up to October 2026 |
-| `< 2.4.0` | No | Legacy unversioned flat schemas |
+| `2.9.x` | Yes | Finance Act, 2025 & CBDT/CBIC Circulars up to October 2026 |
+| `< 2.9.0` | No | Legacy unversioned flat schemas |
 
 ---
 

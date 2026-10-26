@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.4.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-25T19:16:47.828Z
+> **Generated Timestamp**: 2026-10-26T10:12:25.536Z
 
 ---
 
@@ -11,11 +11,11 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 61 resolvable gazette URLs | 61 total citations declared | **100.0%** | VERIFIED |
-| **Temporal Validity Bounds** | 24 sections with explicit dates | 24 total bundled sections | **100.0%** | VERIFIED |
-| **Dual-Act 2025 Transition Bridges** | 8 direct tax provisions mapped | 9 direct tax provisions | **88.9%** | VERIFIED |
-| **Attached Administrative Circulars** | 25 official circulars | 6 sections across 4 domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 22 schemas/templates | 6 sections across 4 domains | **100% Attached** | VERIFIED |
+| **Primary Source Citations** | 76 resolvable gazette URLs | 76 total citations declared | **100.0%** | VERIFIED |
+| **Temporal Validity Bounds** | 29 sections with explicit dates | 29 total bundled sections | **100.0%** | VERIFIED |
+| **Dual-Act 2025 Transition Bridges** | 9 direct tax provisions mapped | 10 direct tax provisions | **90.0%** | VERIFIED |
+| **Attached Administrative Circulars** | 30 official circulars | 6 sections across 4 domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 27 schemas/templates | 6 sections across 4 domains | **100% Attached** | VERIFIED |
 | **Cryptographic Merkle Verification** | 20 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
@@ -48,8 +48,10 @@
 
 | Section Code | Statutory Provision | Governing Statute | Temporal Window | Status | Citations | Circulars | Forms | 2025 Act Successor |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **ITA-SEC-79** | Carry Forward and Set Off of Accumulated Losses on Change in Shareholding | Income-tax Act, 1961 (Act No. 43 of 1961) | `1962-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Income-tax Act, 2025 (Chapter on Set-off and Carry Forward of Losses) (Provisions on Loss Set-Off on Shareholding Continuity) |
 | **50B** | Special provision for computation of capital gains in case of slump sale | Income-tax Act, 1961 (Act No. 43 of 1961) | `2000-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 2 | 2 | Income-tax Act, 2025 (Section 78 (Capital gains on slump sale of undertakings)) |
-| **206AB** | Special provision for deduction of tax at source for non-filers of income-tax return | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `OPEN_ENDED` | `ACTIVE` | 1 | 1 | 0 | Income-tax Act, 2025 (Section 397(3)) |
+| **115BAA-115JB** | Tax on income of certain domestic companies (Section 115BAA) and Minimum Alternate Tax (Section 115JB) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2019-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Income-tax Act, 2025 (Chapter XI (Corporate Taxation & Special Regimes)) |
+| **206AB** | Special provision for deduction of tax at source for non-filers of income-tax return (Omitted effective 1 April 2025) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2025-03-31` | `SUNSET_SUPERSEDED` | 1 | 1 | 0 | Finance Act, 2025 (Statutory Omission) (Section 206AB Omitted) |
 | **206C(1H)** | Collection of tax at source by seller on receipt of consideration for sale of goods (Omitted effective 1 April 2025) | Income-tax Act, 1961 | `2020-10-01` to `2025-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 0 | Finance Act, 2025 (Statutory Sunset) (Section 206C(1H) Omitted) |
 | **194H** | Deduction of tax at source on commission or brokerage | Income-tax Act, 1961 (Act No. 43 of 1961) | `2001-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 4, Item (i)) |
 | **194C** | Deduction of tax at source on payments to contractors and sub-contractors | Income-tax Act, 1961 (Act No. 43 of 1961) | `1972-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 3, Item (i)) |
@@ -62,12 +64,15 @@
 | **8** | Tax liability on composite and mixed supplies and classification of bundled goods and services contracts | Central Goods and Services Tax Act, 2017 | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | N/A |
 | **10** | Composition levy and ineligible tax invoice restrictions | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |
 | **34** | Credit and debit notes statutory adjustments and return filing deadlines | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |
+| **IGST-SEC-16-LUT** | Zero rated supply and export of services under Letter of Undertaking (LUT) | Integrated Goods and Services Tax Act, 2017 (Act No. 13 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Integrated Goods and Services Tax Act, 2017 (In Force) (Section 16) |
 | **RULE-48(4)** | Mandatory electronic invoicing (E-Invoicing), IRN generation, and invoice validity | Central Goods and Services Tax Rules, 2017 | `2020-10-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |
 | **51** | Tax deduction at source under Goods and Services Tax | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2018-10-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |
 | **16(2)** | Eligibility and conditions for taking input tax credit and mandatory 180-day payment rule | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 4 | 1 | 1 | CGST Act, 2017 (In force) (Section 16(2), (3), (4), (5), (6)) |
 | **9(3)** | Reverse Charge Mechanism (RCM) mandatory tax liability on recipient, self-invoicing, payment voucher issuance, and electronic cash discharge | Central Goods and Services Tax Act, 2017 read with Notification No. 13/2017-Central Tax (Rate) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | N/A |
 | **195** | Deduction of tax at source on foreign cross-border payments to non-residents, DTAA treaty benefits, documentation, Form 15CA/15CB, and cloud software exemption | Income-tax Act, 1961 read with Double Taxation Avoidance Agreements (DTAA) under Section 90 | `1962-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 2 | 1 | Income-tax Act, 2025 Section 393(2) (Section 393(2) of Income-tax Act, 2025) |
+| **INDAS-21-109-FX** | Foreign Exchange Monetary Asset/Liability Revaluation and Cash Flow Hedge Accounting | Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013 | `2016-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Companies Act, 2013 (Indian Accounting Standards) (Ind AS 21 & Ind AS 109) |
 | **IRC-901-904** | Foreign Tax Credit authorization, separate basket limitation, and partnership pass-through reporting (Form 1116 / Schedule K-3) | Internal Revenue Code of 1986 (Title 26, U.S. Code) | `2021-01-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 0 | 2 | Title 26, U.S. Code (Continuous) (26 U.S.C. §§ 901, 904(d), 904(j), 469) |
+| **ITA-SEC-92C-RULE-10CA** | Computation of Arm's Length Price (ALP), Range Concept and Secondary Adjustments | Income-tax Act, 1961 (Act No. 43 of 1961) | `2014-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Income-tax Act, 2025 (Chapter on International Tax & Transfer Pricing) (Transfer Pricing Provisions) |
 | **MSMED-15-16** | Statutory payment timelines to Micro & Small Enterprises, compound penal interest, and income tax deduction disallowance | Micro, Small and Medium Enterprises Development Act, 2006 read with Income-tax Act, 1961 Section 43B(h) | `2006-10-02` to `OPEN_ENDED` | `ACTIVE` | 4 | 1 | 2 | Income-tax Act, 2025 Section 37(2)(g) (Section 37(2)(g) of Income-tax Act, 2025) |
 | **MSMED-SEC-7** | Composite criteria for classification of Micro, Small and Medium Enterprises, investment calculations, and statutory exclusion of export turnover | Micro, Small and Medium Enterprises Development Act, 2006 read with Ministry of MSME Notification S.O. 2119(E) | `2020-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 1 | N/A |
 | **MCA-MSME-1** | Mandatory half-yearly reporting of outstanding dues exceeding 45 days to Micro & Small Enterprises (Form MSME-1) | Companies Act, 2013 read with Specified Companies (Furnishing of information about payment to micro and small enterprise suppliers) Order, 2019 | `2019-01-22` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 1 | N/A |

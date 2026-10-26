@@ -1,0 +1,66 @@
+{
+  "sectionId": "IGST2017_SEC16_LUT",
+  "sectionCode": "IGST-SEC-16-LUT",
+  "aliases": [
+    "IGST-16",
+    "sec16",
+    "lut",
+    "export lut",
+    "zero rated export",
+    "zero_rated",
+    "export of services",
+    "place of supply export",
+    "section 2(6) export"
+  ],
+  "governingStatute": "Integrated Goods and Services Tax Act, 2017 (Act No. 13 of 2017)",
+  "statutorySection": "Section 16 read with Section 2(6) and Section 13",
+  "successorStatute": "Integrated Goods and Services Tax Act, 2017 (In Force)",
+  "successorSection": "Section 16",
+  "title": "Zero rated supply and export of services under Letter of Undertaking (LUT)",
+  "effectivePeriod": {
+    "validFrom": "2017-07-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "LUT ARN renewed annually before 31st March for the upcoming financial year",
+    "sunsetNotes": "Permanent zero-rating provision under IGST Act, 2017."
+  },
+  "plainTextSummary": "Under Section 16(1) of the IGST Act, zero-rated supply includes export of goods or services, or supplies to a Special Economic Zone (SEZ) developer or unit. Section 16(3) read with Rule 96A of the CGST Rules permits a registered person to export goods or services without payment of integrated tax (IGST) after furnishing a Letter of Undertaking (LUT in Form GST RFD-11). To qualify as an export of services under Section 2(6), five cumulative conditions must be satisfied: (1) supplier of service is located in India, (2) recipient of service is located outside India, (3) place of supply of service is outside India (determined under Section 13), (4) payment has been received in convertible foreign exchange or in Indian rupees wherever permitted by the Reserve Bank of India, and (5) supplier and recipient are not merely establishments of distinct persons. If any condition fails—such as intermediary services under Section 13(8)(b) where the place of supply is deemed to be the location of the supplier in India—zero-rating is denied and standard IGST applies. Exporters under LUT are entitled to claim a refund of unutilized Input Tax Credit (ITC) under Section 54(3).",
+  "keyStatutoryThresholds": {
+    "zeroRatedIgstTaxRateUnderLut": 0.0,
+    "cumulativeExportConditionsCount": 5,
+    "lutRenewalRequirement": "Annual renewal on GST portal in Form GST RFD-11 for each financial year",
+    "forexRealizationWindowMonths": 12,
+    "itcRefundEntitlement": "Full refund of accumulated unutilized ITC under Section 54(3) of CGST Act",
+    "intermediaryServiceDisqualification": "Intermediary services u/s 13(8)(b) have place of supply in India, disqualifying them from zero-rated export",
+    "gstrReportingTable": "GSTR-1 Table 6A (Export invoices without payment of tax)"
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Section 16 & Section 2(6), Integrated Goods and Services Tax Act, 2017",
+      "subject": "Zero rated supply and definition of export of services",
+      "officialUrl": "https://taxinformation.cbic.gov.in/view-pdf/1003051/ENG/Circulars"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Circular No. 161/17/2021-GST (Dated 20 September 2021)",
+      "subject": "Clarification relating to export of services and scope of intermediary services under Section 13(8)(b)",
+      "officialUrl": "https://taxinformation.cbic.gov.in/view-pdf/1003051/ENG/Circulars"
+    },
+    {
+      "authority": "Goods and Services Tax Network (GSTN)",
+      "instrument": "Form GST RFD-11 & Rule 96A of CGST Rules, 2017",
+      "subject": "Furnishing of Letter of Undertaking for export of goods or services without payment of integrated tax",
+      "officialUrl": "https://www.gst.gov.in/help/returns"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Active Letter of Undertaking (LUT) acknowledgement receipt (ARN) for the financial year",
+    "Export Invoices clearly endorsing 'SUPPLY MEANT FOR EXPORT UNDER LUT WITHOUT PAYMENT OF INTEGRATED TAX'",
+    "Foreign Inward Remittance Certificate (FIRC) or Electronic Bank Realisation Certificate (e-BRC)",
+    "Service Level Agreement (SLA) or Master Services Agreement with foreign client proving non-intermediary status",
+    "GSTR-1 Table 6A and GSTR-3B monthly filing reconciliation",
+    "Form GST RFD-01 refund application with electronic statement of invoices and inward remittances"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.9.0"
+}

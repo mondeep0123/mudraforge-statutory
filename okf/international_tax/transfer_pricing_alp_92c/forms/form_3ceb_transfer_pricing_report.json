@@ -1,0 +1,67 @@
+{
+  "formCode": "FORM_3CEB",
+  "title": "Accountant's Report under Section 92E relating to International Transactions and Specified Domestic Transactions",
+  "statutoryBasis": "Section 92E of Income-tax Act, 1961 read with Rule 10E",
+  "schema": {
+    "assesseeDetails": {
+      "type": "object",
+      "required": true,
+      "properties": {
+        "pan": { "type": "string", "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$", "required": true },
+        "legalName": { "type": "string", "required": true },
+        "assessmentYear": { "type": "string", "pattern": "^20[0-9]{2}-20[0-9]{2}$", "required": true },
+        "residentialStatus": { "type": "string", "enum": ["RESIDENT", "NON_RESIDENT"], "required": true }
+      }
+    },
+    "associatedEnterpriseParticulars": {
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "object",
+        "properties": {
+          "aeName": { "type": "string", "required": true },
+          "countryCode": { "type": "string", "pattern": "^[A-Z]{2}$", "required": true },
+          "relationshipType": {
+            "type": "string",
+            "enum": ["HOLDING", "SUBSIDIARY", "FELLOW_SUBSIDIARY", "DIRECT_CONTROL", "MANAGEMENT_CONTROL"],
+            "required": true
+          }
+        }
+      }
+    },
+    "internationalTransactionSummary": {
+      "type": "object",
+      "required": true,
+      "properties": {
+        "natureOfTransaction": {
+          "type": "string",
+          "enum": ["PROVISION_OF_SERVICES", "PURCHASE_OF_GOODS", "SALE_OF_GOODS", "ROYALTY_OR_FEES_FOR_TECHNICAL_SERVICES", "LOAN_OR_FINANCING", "COST_CONTRIBUTION"],
+          "required": true
+        },
+        "transactionValueInr": { "type": "number", "required": true },
+        "mostAppropriateMethod": {
+          "type": "string",
+          "enum": ["CUP", "RPM", "CPM", "PSM", "TNMM", "OTHER_PRESCRIBED_METHOD"],
+          "required": true
+        },
+        "comparablesCount": { "type": "integer", "minimum": 1, "required": true },
+        "isRangeConceptApplicable": { "type": "boolean", "required": true },
+        "armLengthPriceLowerBoundInr": { "type": "number", "required": false },
+        "armLengthPriceUpperBoundInr": { "type": "number", "required": false },
+        "medianPriceInr": { "type": "number", "required": true },
+        "primaryAdjustmentInr": { "type": "number", "default": 0, "required": true },
+        "isSecondaryAdjustmentApplicable": { "type": "boolean", "default": false, "required": true }
+      }
+    },
+    "charteredAccountantCertification": {
+      "type": "object",
+      "required": true,
+      "properties": {
+        "caName": { "type": "string", "required": true },
+        "membershipNumber": { "type": "string", "pattern": "^[0-9]{5,6}$", "required": true },
+        "firmRegistrationNumber": { "type": "string", "required": false },
+        "udin": { "type": "string", "pattern": "^[0-9]{2}[0-9A-Z]{16}$", "required": true }
+      }
+    }
+  }
+}

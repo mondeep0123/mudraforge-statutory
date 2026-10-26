@@ -12,15 +12,16 @@
   ],
   "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
   "statutorySection": "Section 206AB",
-  "successorStatute": "Income-tax Act, 2025",
-  "successorSection": "Section 397(3)",
-  "title": "Special provision for deduction of tax at source for non-filers of income-tax return",
+  "successorStatute": "Finance Act, 2025 (Statutory Omission)",
+  "successorSection": "Section 206AB Omitted",
+  "title": "Special provision for deduction of tax at source for non-filers of income-tax return (Omitted effective 1 April 2025)",
   "effectivePeriod": {
     "validFrom": "2021-07-01",
-    "validTo": "OPEN_ENDED",
-    "annualReset": "Every assessment year based on preceding FY return filing deadline"
+    "validTo": "2025-03-31",
+    "annualReset": "Annual",
+    "sunsetNotes": "CRITICAL SUNSET: Section 206AB (and Section 206CCA) is formally omitted by the Finance Act, 2025 with effect from 1 April 2025. Post-sunset, tax deductors are relieved from performing portal compliance checks for specified persons, and standard statutory TDS rates apply without non-filer punitive multipliers. Higher rates under Section 206AA (for failure to furnish PAN or inoperative PAN due to non-linkage with Aadhaar) continue independently at 20% (or 5% cap for goods u/s 194Q)."
   },
-  "plainTextSummary": "Where tax is required to be deducted at source on any sum paid or payable to a specified person (a person who has not filed their ITR for the preceding financial year and has aggregate TDS/TCS of ₹50,000 or more in said year), the tax shall be deducted at the higher of: (i) twice the rate specified in the relevant Act, (ii) twice the rate in force, or (iii) 5%. If Section 206AA (no-PAN) also applies, tax is deducted at the higher of 206AA or 206AB rates. Does NOT apply to non-residents without a PE in India, or to Sections 192, 192A, 194B, 194BA, 194BB, 194-IA, 194-IB, 194M, 194N.",
+  "plainTextSummary": "Where tax was required to be deducted at source prior to 1 April 2025 on any sum paid or payable to a specified person (a person who had not filed their ITR for the preceding financial year and had aggregate TDS/TCS of ₹50,000 or more in said year), tax was deducted at the higher of: (i) twice the rate specified in the relevant Act, (ii) twice the rate in force, or (iii) 5%. Effective 1 April 2025, Section 206AB was formally omitted by the Finance Act, 2025. For deductions on or after 1 April 2025, Section 206AB is obsolete and standard TDS rates apply. Higher rates under Section 206AA for invalid/missing PAN remain fully active.",
   "keyStatutoryThresholds": {
     "priorYearAggregateTdsTcsThresholdInr": 50000,
     "penaltyMultiplier": "Twice the applicable rate or 5%, whichever is higher",
