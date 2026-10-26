@@ -39,6 +39,7 @@ import {
     revalueForeignExchangeIndAs109,
     getStatutoryOutcomes,
     explainStatutoryDisposition,
+    enrichWithOutcomeExplanation,
     ignorePackageUpdate,
     STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
@@ -2029,8 +2030,31 @@ async function run() {
     }
     console.log(`[PASS] Package update notification ignore mechanism verified programmatically and via CLI.`);
 
+    // 88. Automatic Outcome Explanation Enrichment on Indeterminate & Verbose Payloads
+    console.log('\n── Test 88: Automatic Outcome Explanation Enrichment on Indeterminate & Verbose Payloads ──');
+    const rawIndeterminatePayload = {
+        status: 'SUCCESS',
+        statutoryDetermination: 'INDETERMINATE',
+        indeterminacyReason: 'BUYER_TURNOVER_UNVERIFIED',
+        missingFacts: ['buyerTurnoverCr', 'buyerTurnoverPrecedingFy']
+    };
+    const enriched = enrichWithOutcomeExplanation(rawIndeterminatePayload);
+    if (!enriched.explanation || !enriched.remedy || !enriched.missingFactsExplanation?.buyerTurnoverCr) {
+        throw new Error('enrichWithOutcomeExplanation failed to attach explanation and remedy to INDETERMINATE payload');
+    }
+    const rawDisputePayload = {
+        statutoryDetermination: 'INDETERMINATE_DISPUTE_UNRESOLVED',
+        indeterminacyReason: 'UNRESOLVED_WRITTEN_OBJECTION',
+        missingFacts: ['objectionRemovalDate']
+    };
+    const enrichedDispute = enrichWithOutcomeExplanation(rawDisputePayload);
+    if (!enrichedDispute.remedy?.includes('objection') || !enrichedDispute.missingFactsExplanation?.objectionRemovalDate) {
+        throw new Error('enrichWithOutcomeExplanation failed for commercial dispute objection');
+    }
+    console.log(`[PASS] enrichWithOutcomeExplanation correctly attached remediation, explanation, and missingFactsExplanation.`);
+
     console.log('\n===========================================================================');
-    console.log('ALL 87 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 88 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

@@ -373,6 +373,11 @@ export declare function explainStatutoryDisposition(
     options?: any
 ): any;
 
+export declare function enrichWithOutcomeExplanation<T extends Record<string, any>>(
+    result: T,
+    options?: { verbose?: boolean; explain?: boolean }
+): T;
+
 export declare function ignorePackageUpdate(
     versionToIgnore: string
 ): { status: 'SUCCESS' | 'ERROR'; ignoredVersion: string; error?: string };

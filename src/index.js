@@ -23,7 +23,12 @@ import {
     evaluateSection79LossContinuity,
     revalueForeignExchangeIndAs109
 } from './calculators.js';
-import { getStatutoryOutcomes, explainStatutoryDisposition, STATUTORY_OUTCOMES_DICTIONARY } from './outcomes.js';
+import { 
+    getStatutoryOutcomes, 
+    explainStatutoryDisposition, 
+    STATUTORY_OUTCOMES_DICTIONARY,
+    enrichWithOutcomeExplanation
+} from './outcomes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1695,7 +1700,8 @@ export class StatutoryClient {
             throw err;
         }
 
-        return await safeJsonParse(res, 'StatutoryClient.calculate');
+        const parsedResult = await safeJsonParse(res, 'StatutoryClient.calculate');
+        return enrichWithOutcomeExplanation(parsedResult, { ...options, verbose: options.verbose || payload.verbose });
     }
 
     /**
@@ -2815,7 +2821,8 @@ export {
     revalueForeignExchangeIndAs109,
     getStatutoryOutcomes,
     explainStatutoryDisposition,
-    STATUTORY_OUTCOMES_DICTIONARY
+    STATUTORY_OUTCOMES_DICTIONARY,
+    enrichWithOutcomeExplanation
 };
 
 

@@ -13,6 +13,7 @@ const STATUTORY_CLIENT_VERSION = '2.9.0';
 export const STATUTORY_OUTCOMES_DICTIONARY = [
     {
         code: 'DETERMINED_APPLICABLE',
+        aliases: ['APPLICABLE', 'STATUTORY_WITHHOLDING_APPLICABLE', 'APPLICABLE_STANDARD_RATE'],
         category: 'STATUTORY_WITHHOLDING',
         title: 'Statutory Obligation Established',
         description: 'Statutory deduction or tax withholding obligation is actively established on the transaction.',
@@ -25,6 +26,7 @@ export const STATUTORY_OUTCOMES_DICTIONARY = [
     },
     {
         code: 'DETERMINED_THRESHOLD_NOT_MET',
+        aliases: ['EXEMPT', 'BELOW_THRESHOLD', 'EXEMPT_THRESHOLD_NOT_MET', 'THRESHOLD_NOT_CROSSED'],
         category: 'STATUTORY_SAFE_HARBOR',
         title: 'Statutory Spend Below Monetary Threshold',
         description: 'Transaction falls below the legal monetary threshold; no tax withholding is legally required.',
@@ -37,6 +39,7 @@ export const STATUTORY_OUTCOMES_DICTIONARY = [
     },
     {
         code: 'INDETERMINATE_BUYER_TURNOVER_UNVERIFIED',
+        aliases: ['BUYER_TURNOVER_UNVERIFIED', 'TURNOVER_UNVERIFIED', 'EXEMPT_BELOW_BUYER_TURNOVER_THRESHOLD'],
         category: 'EVIDENTIARY_AMBIGUITY',
         title: 'Buyer Turnover Precondition Unverified',
         description: 'Preceding financial year buyer turnover is unverified; statutory applicability cannot be determined.',
@@ -64,6 +67,7 @@ export const STATUTORY_OUTCOMES_DICTIONARY = [
     },
     {
         code: 'INDETERMINATE_PENDING_TRANSACTION_DATE',
+        aliases: ['TRANSACTION_DATE_REQUIRED_FOR_REGIME_DETERMINATION', 'PENDING_TRANSACTION_DATE', 'MISSING_TRANSACTION_DATE', 'REGIME_DETERMINATION_PENDING'],
         category: 'TEMPORAL_AMBIGUITY',
         title: 'Transaction Timestamp Required for Regime Resolution',
         description: 'Transaction date, credit date, and payment date are missing; statutory governing Act cannot be determined.',
@@ -97,6 +101,7 @@ export const STATUTORY_OUTCOMES_DICTIONARY = [
     },
     {
         code: 'SUNSET_OMITTED',
+        aliases: ['OMITTED', 'SUNSET', 'REPEALED', 'STATUTE_SUNSET_REPEALED'],
         category: 'LEGISLATIVE_SUNSET',
         title: 'Statute Omitted / Repealed by Finance Act',
         description: 'Statutory provision has been omitted or repealed by Parliament; tax deduction or collection under this section is prohibited.',
@@ -109,6 +114,7 @@ export const STATUTORY_OUTCOMES_DICTIONARY = [
     },
     {
         code: 'PENALTY_RATE_MANDATED',
+        aliases: ['PENALTY_RATE', 'INOPERATIVE_PAN_PENALTY', 'PAN_PENALTY_FLOOR', 'SECTION_206AA_PENALTY'],
         category: 'STATUTORY_PENALTY_RATE',
         title: 'Mandatory Non-Furnishing Penalty Rate',
         description: 'Higher penalty rate mandatory due to non-furnishing or invalid/inoperative PAN under Section 206AA.',
@@ -129,6 +135,7 @@ export const STATUTORY_OUTCOMES_DICTIONARY = [
     },
     {
         code: 'DISQUALIFIED_FROM_ZERO_RATING',
+        aliases: ['DISQUALIFIED_ZERO_RATING', 'ZERO_RATING_FAILED', 'EXPORT_ZERO_RATING_DISQUALIFIED'],
         category: 'INDIRECT_TAX_DISQUALIFICATION',
         title: 'Export Zero-Rating Disqualified',
         description: 'Supply disqualified from 0% zero-rated export treatment under Letter of Undertaking (LUT).',
@@ -149,6 +156,7 @@ export const STATUTORY_OUTCOMES_DICTIONARY = [
     },
     {
         code: 'REQUIRES_HUMAN_REVIEW',
+        aliases: ['HUMAN_REVIEW_REQUIRED', 'COMPOSITE_AMBIGUITY_REVIEW', 'MANUAL_APPROVAL_REQUIRED'],
         category: 'COMPOSITE_AMBIGUITY',
         title: 'Composite Contract Evidentiary Ambiguity',
         description: 'Contractual ambiguity or composite scope of work prevents autonomous deterministic classification.',
@@ -161,6 +169,7 @@ export const STATUTORY_OUTCOMES_DICTIONARY = [
     },
     {
         code: 'MISSING_EVIDENCE_HOLD',
+        aliases: ['CERTIFICATE_MISSING', 'EVIDENCE_HOLD', 'MISSING_STATUTORY_FILING'],
         category: 'DOCUMENTARY_PRECONDITION',
         title: 'Statutory Exemption Certificate Missing',
         description: 'Statutory prerequisite filing or exemption certificate not on file; automated claim blocked fail-closed.',
@@ -187,7 +196,52 @@ export const STATUTORY_OUTCOMES_DICTIONARY = [
         governingAuthority: 'Income-tax Act, 1961 Section 195 & Section 197'
     },
     {
+        code: 'INDETERMINATE_DISPUTE_UNRESOLVED',
+        aliases: ['UNRESOLVED_WRITTEN_OBJECTION', 'DISPUTE_CLOCK_PAUSED', 'WRITTEN_OBJECTION_FILED'],
+        category: 'COMMERCIAL_DISPUTE_AMBIGUITY',
+        title: 'Written Commercial Dispute Objection Pending',
+        description: 'Statutory 15-day or 45-day payment clock is paused due to formal written objection filed within 15 days under MSMED Act Section 2(h)(ii).',
+        triggerCondition: 'Buyer filed formal written defect notice or commercial objection within 15 days of invoice receipt.',
+        recommendedAction: 'Halt statutory interest clock; resolve vendor dispute or obtain defect rectification confirmation.',
+        remedy: 'Resolve buyer objection or deliver defect removal notice. Once formal objection is removed or settled, supply objectionRemovalDate to resume statutory clock.',
+        missingFacts: ['objectionRemovalDate'],
+        missingFactsExplanation: {
+            objectionRemovalDate: {
+                type: 'string (ISO 8601 YYYY-MM-DD)',
+                description: 'Date when the supplier rectifies the defect or buyer formally withdraws written objection.',
+                example: '2025-05-10',
+                source: 'Dispute Settlement Agreement / Defect Rectification Note'
+            }
+        },
+        consequenceIfUnresolved: 'Delay in resolving dispute risks retroactive compounding penal interest at 3x RBI rate if objection is ultimately dismissed or deemed invalid.',
+        applicableProvisions: ['MSMED-15-16', 'MCA-MSME-1'],
+        governingAuthority: 'Micro, Small and Medium Enterprises Development Act, 2006 Section 2(h)(ii)'
+    },
+    {
+        code: 'INDETERMINATE_RECIPIENT_COUNTRY_REQUIRED',
+        aliases: ['MISSING_RECIPIENT_COUNTRY_FOR_DTAA', 'MISSING_COUNTRY', 'DTAA_COUNTRY_REQUIRED'],
+        category: 'CROSS_BORDER_TREATY_AMBIGUITY',
+        title: 'Recipient Tax Jurisdiction Country Required for DTAA',
+        description: 'Cross-border remittance withholding cannot determine DTAA treaty relief without recipient tax residency country.',
+        triggerCondition: 'Section 195 remittance payment without recipient country ISO code.',
+        recommendedAction: 'Hold remittance authorization; obtain payee tax residency jurisdiction.',
+        remedy: 'Provide ISO 3166-1 alpha-2 country code for the non-resident recipient (e.g. US, SG, DE, GB) and verify Tax Residency Certificate (TRC).',
+        missingFacts: ['country'],
+        missingFactsExplanation: {
+            country: {
+                type: 'string (ISO 3166-1 2-letter)',
+                description: 'Tax residency country of the foreign payee.',
+                example: 'US',
+                source: 'Tax Residency Certificate (TRC) Form 10F'
+            }
+        },
+        consequenceIfUnresolved: 'Without country verification, statutory withholding must default to higher domestic rate (typically 20% or 40% plus applicable surcharge).',
+        applicableProvisions: ['195'],
+        governingAuthority: 'Income-tax Act, 1961 Section 195 read with Section 90'
+    },
+    {
         code: 'MSME_DELAYED_PAYMENT_INTEREST_DUE',
+        aliases: ['MSMED_INTEREST_DUE', 'PENAL_INTEREST_DUE', 'SECTION_16_INTEREST'],
         category: 'COMMERCIAL_STATUTORY_PENALTY',
         title: 'MSME Statutory Delayed Payment Interest Accrued',
         description: 'Payment settlement exceeds statutory 15-day or 45-day window under Section 15 of MSMED Act, 2006; mandatory interest attached.',
@@ -331,12 +385,17 @@ export function explainStatutoryDisposition(codeOrQuery, options = {}) {
         };
     }
 
-    // Search by exact code
-    let directMatch = STATUTORY_OUTCOMES_DICTIONARY.find(item => item.code === query);
+    // Search by exact code or registered alias
+    let directMatch = STATUTORY_OUTCOMES_DICTIONARY.find(item => 
+        item.code === query || 
+        (item.aliases && item.aliases.some(a => a.toUpperCase() === query))
+    );
+
     if (!directMatch) {
-        // Search by partial code or missingFact match
+        // Search by partial code, alias substring, or missingFact match
         directMatch = STATUTORY_OUTCOMES_DICTIONARY.find(item => 
             item.code.includes(query) || 
+            (item.aliases && item.aliases.some(a => a.toUpperCase().includes(query) || query.includes(a.toUpperCase()))) ||
             (item.missingFacts && item.missingFacts.some(f => f.toUpperCase() === query))
         );
     }
@@ -369,4 +428,53 @@ export function explainStatutoryDisposition(codeOrQuery, options = {}) {
         matches: fuzzyMatches,
         availableCodes: STATUTORY_OUTCOMES_DICTIONARY.map(i => i.code)
     };
+}
+
+/**
+ * Automatically enriches a calculation result with canonical explanations, remediation steps,
+ * and missing fact schemas when the result is INDETERMINATE or when verbose is requested.
+ *
+ * @param {Object} result Calculation response or outcome object
+ * @param {Object} [options]
+ * @param {boolean} [options.verbose=false] Force rich explanatory fields on all dispositions
+ * @param {boolean} [options.explain=false] Alias for verbose
+ * @returns {Object} Enriched result object
+ */
+export function enrichWithOutcomeExplanation(result, options = {}) {
+    if (!result || typeof result !== 'object') return result;
+
+    const determination = result.statutoryDetermination || result.status || null;
+    const isIndeterminate = determination && (
+        determination === 'INDETERMINATE' ||
+        determination.startsWith('INDETERMINATE_') ||
+        determination === 'DISPUTE_CLOCK_PAUSED'
+    );
+    const hasReason = Boolean(result.indeterminacyReason);
+    const isVerbose = options.verbose === true || options.explain === true;
+
+    if (isIndeterminate || hasReason || isVerbose) {
+        const lookupKey = result.indeterminacyReason || determination;
+        if (lookupKey) {
+            try {
+                const expl = explainStatutoryDisposition(lookupKey);
+                if (expl && expl.matches && expl.matches.length > 0) {
+                    const match = expl.matches[0];
+                    if (!result.explanation) {
+                        result.explanation = match.description || result.regimeNotice || result.contingentNotice || null;
+                    }
+                    if (!result.remedy && match.remedy) {
+                        result.remedy = match.remedy;
+                    }
+                    if (!result.consequenceIfUnresolved && match.consequenceIfUnresolved) {
+                        result.consequenceIfUnresolved = match.consequenceIfUnresolved;
+                    }
+                    if (!result.missingFactsExplanation && match.missingFactsExplanation) {
+                        result.missingFactsExplanation = match.missingFactsExplanation;
+                    }
+                }
+            } catch (_) {}
+        }
+    }
+
+    return result;
 }

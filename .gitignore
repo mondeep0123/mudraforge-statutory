@@ -7,3 +7,5 @@ Thumbs.db
 .env
 .dev.vars
 *.tgz
+.agents/
+
