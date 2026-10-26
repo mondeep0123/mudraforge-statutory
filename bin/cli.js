@@ -22,6 +22,9 @@ import {
     runStatutoryDoctor,
     crosswalkStatute,
     getStatutoryDiff,
+    getStatutoryOutcomes,
+    explainStatutoryDisposition,
+    ignorePackageUpdate,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
@@ -33,7 +36,14 @@ const __dirname = path.dirname(__filename);
 const rawArgs = process.argv.slice(2);
 const isJsonMode = rawArgs.includes('--json') || rawArgs.includes('-j');
 const isOfflineMode = rawArgs.includes('--offline') || rawArgs.includes('-o');
-const args = rawArgs.filter(a => a !== '--json' && a !== '-j' && a !== '--offline' && a !== '-o');
+const isVerboseMode = rawArgs.includes('--verbose') || rawArgs.includes('-v');
+const isNoUpdateCheck = rawArgs.includes('--no-update-check') || rawArgs.includes('--ignore-update');
+const args = rawArgs.filter(a => 
+    a !== '--json' && a !== '-j' && 
+    a !== '--offline' && a !== '-o' && 
+    a !== '--verbose' && a !== '-v' &&
+    a !== '--no-update-check' && a !== '--ignore-update'
+);
 const command = args[0] ? args[0].toLowerCase() : 'help';
 
 function getNamedArg(nameList, argList) {
@@ -89,6 +99,26 @@ async function main() {
             break;
         }
 
+        case 'outcomes':
+        case 'dispositions':
+        case 'states': {
+            const section = (args[1] && !args[1].startsWith('-')) ? args[1] : getNamedArg(['--provision', '-p', '--section', '-s'], rawArgs);
+            await handleOutcomes(section, { offline: isOfflineMode, verbose: isVerboseMode });
+            break;
+        }
+
+        case 'explain':
+        case 'why':
+        case 'remedy': {
+            const query = (args[1] && !args[1].startsWith('-')) ? args[1] : getNamedArg(['--code', '-c', '--query', '-q'], rawArgs);
+            if (!query) {
+                console.error('[ERROR] Please specify a disposition code or status to explain, e.g. npx @mudraforge/statutory explain BUYER_TURNOVER_UNVERIFIED');
+                process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+            }
+            await handleExplain(query);
+            break;
+        }
+
         case 'init-skill':
         case 'install-skill':
             await handleInitSkill(args[1]);
@@ -96,9 +126,11 @@ async function main() {
 
         case 'check-update':
         case 'status':
-        case 'version':
-            await handleCheckUpdate();
+        case 'version': {
+            const shouldIgnore = rawArgs.includes('--ignore') || args[1] === '--ignore' || args[1] === 'ignore';
+            await handleCheckUpdate({ ignore: shouldIgnore });
             break;
+        }
 
         case 'sync':
         case 'pull':
@@ -149,13 +181,14 @@ async function main() {
     }
 
     // Non-intrusive background npm package update notice
-    if (!isJsonMode && !['check-update', 'status', 'version', 'verify', 'audit', 'check', 'crosswalk', 'bridge', 'transition', 'diff', 'changelog', 'amendments'].includes(command)) {
+    if (!isJsonMode && !isNoUpdateCheck && command !== 'check-update' && command !== 'status' && command !== 'version') {
         try {
             const updateInfo = await checkForPackageUpdate();
             if (updateInfo && updateInfo.updateAvailable) {
                 console.log('───────────────────────────────────────────────────────────────────────────');
                 console.log(`[NOTICE] A new version of @mudraforge/statutory is available: ${updateInfo.currentVersion} -> ${updateInfo.latestVersion}`);
                 console.log(`Run: npm install @mudraforge/statutory@latest or npx @mudraforge/statutory@latest`);
+                console.log(`To dismiss: npx @mudraforge/statutory check-update --ignore`);
                 console.log('───────────────────────────────────────────────────────────────────────────\n');
             }
         } catch (_) {}
@@ -384,14 +417,182 @@ async function handleDiff(options) {
     }
 }
 
-async function handleCheckUpdate() {
+async function handleOutcomes(provision, options = {}) {
+    try {
+        const result = await getStatutoryOutcomes(provision, options);
+        if (isJsonMode) {
+            console.log(JSON.stringify(result, null, 2));
+            process.exit(0);
+        }
+
+        console.log('\n===========================================================================');
+        console.log('MUDRAFORGE STATUTORY OUTCOMES & SEMANTIC DISPOSITION DICTIONARY');
+        console.log('===========================================================================');
+        console.log(`Source:              ${result.source} ${result.offlineFallback ? '(Offline Fallback)' : ''}`);
+        console.log(`Version:             v${result.version}`);
+        console.log(`Provision Filter:    ${result.provision || 'ALL (Global Catalog)'}`);
+        console.log(`Total Outcomes:      ${result.totalOutcomes}`);
+        console.log('===========================================================================');
+
+        if (result.outcomes.length === 0) {
+            console.log(`\nNo specific outcome codes mapped for provision "${result.provision}".`);
+            console.log('Showing all global disposition outcomes: run npx @mudraforge/statutory outcomes\n');
+        } else {
+            result.outcomes.forEach((o, idx) => {
+                console.log(`\n── Outcome #${idx + 1}: [${o.code}] ──`);
+                console.log(`Title:               ${o.title}`);
+                console.log(`Category:            ${o.category}`);
+                console.log(`Description:         ${o.description}`);
+                console.log(`Trigger Condition:   ${o.triggerCondition}`);
+                console.log(`Recommended Action:  ${o.recommendedAction}`);
+                if (options.verbose && o.remedy) {
+                    console.log(`Resolution Steps:    ${o.remedy}`);
+                }
+                if (o.missingFacts && o.missingFacts.length > 0) {
+                    console.log(`Missing Facts to Cure: ${o.missingFacts.join(', ')}`);
+                    if (options.verbose && o.missingFactsExplanation) {
+                        for (const [key, detail] of Object.entries(o.missingFactsExplanation)) {
+                            console.log(`  ↳ ${key} (${detail.type}): ${detail.description} (Source: ${detail.source})`);
+                        }
+                    }
+                }
+                if (options.verbose && o.consequenceIfUnresolved) {
+                    console.log(`Consequence on Hold: ${o.consequenceIfUnresolved}`);
+                }
+                if (o.applicableProvisions && o.applicableProvisions.length > 0) {
+                    console.log(`Applies to Sections: ${o.applicableProvisions.join(', ')}`);
+                }
+                console.log(`Governing Law:       ${o.governingAuthority}`);
+            });
+        }
+
+        console.log('\n───────────────────────────────────────────────────────────────────────────');
+        console.log(`[PASS] Statutory outcomes dictionary retrieved successfully (${result.totalOutcomes} outcome(s)) (Exit 0).\n`);
+        process.exit(0);
+    } catch (err) {
+        if (isJsonMode) {
+            console.log(JSON.stringify({ status: 'ERROR', exitCode: STATUTORY_EXIT_CODES.USAGE_ERROR, error: err.message }, null, 2));
+        } else {
+            console.error(`[ERROR] Statutory outcomes lookup failure: ${err.message}`);
+        }
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+}
+
+async function handleExplain(query) {
+    try {
+        const result = explainStatutoryDisposition(query);
+        if (isJsonMode) {
+            console.log(JSON.stringify(result, null, 2));
+            process.exit(0);
+        }
+
+        console.log('\n===========================================================================');
+        console.log(`MUDRAFORGE STATUTORY EXPLANATION: [${result.query}]`);
+        console.log('===========================================================================');
+
+        if (result.status === 'NOT_FOUND') {
+            console.log(`\nNo statutory disposition or indeterminate code found matching "${result.query}".`);
+            if (result.availableCodes && result.availableCodes.length > 0) {
+                console.log('\nAvailable disposition codes to inspect:');
+                result.availableCodes.forEach(c => console.log(`  • ${c}`));
+            }
+            console.log('\nTip: Run "npx @mudraforge/statutory explain INDETERMINATE" to view all hold states.\n');
+            process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+        }
+
+        if (result.summary) {
+            console.log(`Summary:             ${result.summary}`);
+            console.log(`Matched Dispositions: ${result.totalMatches}\n`);
+        }
+
+        result.matches.forEach((o, idx) => {
+            if (result.matches.length > 1) {
+                console.log(`\n── [${idx + 1}/${result.matches.length}] Disposition: [${o.code}] ──`);
+            } else {
+                console.log(`Code:                [${o.code}]`);
+            }
+            console.log(`Title:               ${o.title}`);
+            console.log(`Category:            ${o.category}`);
+            console.log(`Governing Law:       ${o.governingAuthority}`);
+            console.log('\n── What Happened:');
+            console.log(`  ${o.description}`);
+            console.log('\n── Statutory Trigger:');
+            console.log(`  ${o.triggerCondition}`);
+            console.log('\n── How to Resolve in Your Application:');
+            console.log(`  ${o.remedy || o.recommendedAction}`);
+
+            if (o.missingFacts && o.missingFacts.length > 0) {
+                console.log('\n── Missing Evidence / Parameters to Supply:');
+                o.missingFacts.forEach(f => {
+                    const meta = o.missingFactsExplanation ? o.missingFactsExplanation[f] : null;
+                    if (meta) {
+                        console.log(`  • ${f} (${meta.type}): ${meta.description}`);
+                        console.log(`    Source: ${meta.source} | Example: ${JSON.stringify(meta.example)}`);
+                    } else {
+                        console.log(`  • ${f}`);
+                    }
+                });
+            }
+
+            if (o.consequenceIfUnresolved) {
+                console.log('\n── Consequence If Unresolved:');
+                console.log(`  ${o.consequenceIfUnresolved}`);
+            }
+
+            if (o.applicableProvisions && o.applicableProvisions.length > 0) {
+                console.log(`\nApplies to Sections: ${o.applicableProvisions.join(', ')}`);
+            }
+        });
+
+        console.log('\n───────────────────────────────────────────────────────────────────────────');
+        console.log(`[PASS] Statutory explanation completed successfully (Exit 0).\n`);
+        process.exit(0);
+    } catch (err) {
+        if (isJsonMode) {
+            console.log(JSON.stringify({ status: 'ERROR', exitCode: STATUTORY_EXIT_CODES.USAGE_ERROR, error: err.message }, null, 2));
+        } else {
+            console.error(`[ERROR] Statutory explain failure: ${err.message}`);
+        }
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+}
+
+async function handleCheckUpdate(options = {}) {
     try {
         let pkgUpdate = null;
         try {
-            pkgUpdate = await checkForPackageUpdate({ cacheTtlMs: 0 });
+            pkgUpdate = await checkForPackageUpdate({ cacheTtlMs: 0, force: Boolean(options.ignore) });
         } catch (_) {}
 
-        const status = await checkUpdates();
+        if (options.ignore) {
+            const versionToIgnore = pkgUpdate?.latestVersion || STATUTORY_CLIENT_VERSION;
+            ignorePackageUpdate(versionToIgnore);
+            if (isJsonMode) {
+                console.log(JSON.stringify({ status: 'SUCCESS', ignoredVersion: versionToIgnore }, null, 2));
+                process.exit(0);
+            }
+            console.log('\n===========================================================================');
+            console.log(`[OK] Update notifications will be ignored for version ${versionToIgnore}.`);
+            console.log('You will not see update notices until a newer version is published.');
+            console.log('===========================================================================\n');
+            process.exit(0);
+        }
+
+        let status = null;
+        try {
+            status = await checkUpdates();
+        } catch (netErr) {
+            if (isJsonMode) {
+                console.log(JSON.stringify({ status: 'OFFLINE_FALLBACK', packageUpdate: pkgUpdate, error: netErr.message }, null, 2));
+                process.exit(0);
+            }
+            console.log('───────────────────────────────────────────────────────────────────────────');
+            console.log(`Local OKF Version:   ${STATUTORY_CLIENT_VERSION}`);
+            console.log(`Edge Synchronization: UNAVAILABLE (offline or remote network unreachable)`);
+            console.log('───────────────────────────────────────────────────────────────────────────\n');
+            process.exit(0);
+        }
 
         if (isJsonMode) {
             console.log(JSON.stringify({
@@ -710,10 +911,12 @@ Commands:
   verify [path]             Cryptographically verify OKF substrate authenticity & file integrity
   crosswalk <section>       Dual-act 1961 <-> 2025 bridge (earlier of credit vs payment)
   diff                      Semantic regulatory changelog (--section, --since, --domain)
+  outcomes [provision]      Inspect API dispositions, statutory states, trigger conditions & actions
+  explain <code/status>     In-depth explanation, legal rationale & remediation steps for a disposition
   browse                    Interactively browse local OKF statutory filesystem
   lookup <section> [date]   Look up section details & temporal status (e.g. 194Q 2025-06-01)
   decode-id <pan_or_gstin>  Offline ISO Mod-36 checksum, state name, and PAN entity decoding
-  check-update              Check if newer OKF versions or legal changes exist on Cloudflare edge
+  check-update [--ignore]   Check edge updates; pass --ignore to snooze notices for current version
   sync [path]               Download/sync latest versioned OKF bundle to disk (default: package okf/ or custom dir)
   list                      List all indexed statutory sections
   init-skill [path]         Install SKILL.md into your agent workspace (defaults to .agents/skills/)
@@ -725,6 +928,10 @@ Options:
   --since <YYYY-MM-DD>      Filter amendments taking effect on or after date (used in diff)
   --section, -s <section>   Filter amendments by section code (used in diff)
   --domain <domain>         Filter amendments by statutory domain (used in diff)
+  --verbose, -v             Display full remediation steps, parameter schemas, and consequences in outcomes
+  --no-update-check         Bypass automated background npm package update checks
+  --json, -j                Emit clean, machine-parseable JSON to stdout (suppresses banners)
+  --offline, -o             Bypass outbound network checks (air-gapped / offline environment mode)
   --json, -j                Emit clean, machine-parseable JSON to stdout (suppresses banners)
   --offline, -o             Bypass outbound network checks (air-gapped / offline environment mode)
 

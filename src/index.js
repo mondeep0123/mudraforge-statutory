@@ -23,6 +23,7 @@ import {
     evaluateSection79LossContinuity,
     revalueForeignExchangeIndAs109
 } from './calculators.js';
+import { getStatutoryOutcomes, explainStatutoryDisposition, STATUTORY_OUTCOMES_DICTIONARY } from './outcomes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -886,7 +887,11 @@ export async function checkUpdates(options = {}) {
  * @returns {Promise<{ updateAvailable: boolean, currentVersion: string, latestVersion: string } | null>}
  */
 export async function checkForPackageUpdate(options = {}) {
-    if (!options.force && (process.env.NO_UPDATE_NOTIFIER === '1' || (process.env.CI === 'true' && !options.registryUrl))) {
+    if (!options.force && (
+        process.env.NO_UPDATE_NOTIFIER === '1' || 
+        process.env.MUDRA_NO_UPDATE_NOTIFIER === '1' || 
+        (process.env.CI === 'true' && !options.registryUrl)
+    )) {
         return null;
     }
 
@@ -922,7 +927,9 @@ export async function checkForPackageUpdate(options = {}) {
                     latestVersion = json.version;
                     if (cacheTtlMs > 0) {
                         try {
+                            const prev = fs.existsSync(cacheFile) ? JSON.parse(fs.readFileSync(cacheFile, 'utf8')) : {};
                             fs.writeFileSync(cacheFile, JSON.stringify({
+                                ...prev,
                                 lastChecked: Date.now(),
                                 latestVersion
                             }), 'utf8');
@@ -939,11 +946,42 @@ export async function checkForPackageUpdate(options = {}) {
     if (!latestVersion) return null;
 
     const cmp = compareSemver(latestVersion, currentVersion);
+    const isIgnored = Boolean(cached?.ignoredVersion && cached.ignoredVersion === latestVersion);
+
     return {
-        updateAvailable: cmp > 0,
+        updateAvailable: cmp > 0 && (!isIgnored || Boolean(options.force)),
+        isIgnored,
         currentVersion,
         latestVersion
     };
+}
+
+/**
+ * Configure the CLI to ignore update notifications for a specific version.
+ * @param {string} versionToIgnore Package version to suppress notifications for
+ * @returns {{ status: 'SUCCESS' | 'ERROR', ignoredVersion: string, error?: string }}
+ */
+export function ignorePackageUpdate(versionToIgnore) {
+    if (!versionToIgnore || typeof versionToIgnore !== 'string') {
+        throw new Error('[@mudraforge/statutory] A valid version string is required to ignore update notifications.');
+    }
+    const cacheFile = path.join(os.tmpdir(), '.mudraforge_statutory_npm_update.json');
+    let current = {};
+    try {
+        if (fs.existsSync(cacheFile)) {
+            current = JSON.parse(fs.readFileSync(cacheFile, 'utf8')) || {};
+        }
+    } catch (_) {}
+
+    current.ignoredVersion = versionToIgnore.trim();
+    current.ignoredAt = Date.now();
+
+    try {
+        fs.writeFileSync(cacheFile, JSON.stringify(current, null, 2), 'utf8');
+        return { status: 'SUCCESS', ignoredVersion: versionToIgnore.trim() };
+    } catch (err) {
+        return { status: 'ERROR', ignoredVersion: versionToIgnore.trim(), error: err.message };
+    }
 }
 
 /**
@@ -1750,6 +1788,27 @@ export class StatutoryClient {
      */
     revalueForeignExchangeIndAs109(payload) {
         return revalueForeignExchangeIndAs109(payload);
+    }
+
+    /**
+     * Retrieve statutory outcomes and disposition codes.
+     * @param {string} [provision] Optional section code or provision alias
+     * @param {Object} [options]
+     */
+    async getOutcomes(provision = null, options = {}) {
+        return await getStatutoryOutcomes(provision, {
+            ...options,
+            baseUrl: this.baseUrl
+        });
+    }
+
+    /**
+     * Retrieve in-depth explanation and remediation steps for a disposition code.
+     * @param {string} codeOrQuery Disposition code (e.g. 'BUYER_TURNOVER_UNVERIFIED', 'INDETERMINATE')
+     * @param {Object} [options]
+     */
+    explain(codeOrQuery, options = {}) {
+        return explainStatutoryDisposition(codeOrQuery, options);
     }
 }
 
@@ -2753,7 +2812,10 @@ export {
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
-    revalueForeignExchangeIndAs109
+    revalueForeignExchangeIndAs109,
+    getStatutoryOutcomes,
+    explainStatutoryDisposition,
+    STATUTORY_OUTCOMES_DICTIONARY
 };
 
 

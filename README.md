@@ -439,9 +439,26 @@ npx @mudraforge/statutory diff --section 194H
 npx @mudraforge/statutory diff --since 2025-01-01
 npx @mudraforge/statutory diff --domain indirect_tax_gst
 
+# Inspect statutory outcomes, semantic disposition codes, and missing facts
+npx @mudraforge/statutory outcomes
+npx @mudraforge/statutory outcomes 194Q
+npx @mudraforge/statutory outcomes 194Q --verbose
+npx @mudraforge/statutory outcomes MSMED-15-16
+
+# In-depth explanation of indeterminate states, missing facts & remediation steps
+npx @mudraforge/statutory explain INDETERMINATE
+npx @mudraforge/statutory explain BUYER_TURNOVER_UNVERIFIED
+npx @mudraforge/statutory explain MISSING_EVIDENCE_HOLD
+
+# Check package updates or snooze notifications for current version
+npx @mudraforge/statutory check-update
+npx @mudraforge/statutory check-update --ignore
+
 # Output machine-parseable JSON for CI/CD or jq integration
 npx @mudraforge/statutory crosswalk 194Q --credit 2026-03-25 --payment 2026-04-10 --json
 npx @mudraforge/statutory diff --section 194H --json
+npx @mudraforge/statutory outcomes 194Q --json
+npx @mudraforge/statutory explain BUYER_TURNOVER_UNVERIFIED --json
 npx @mudraforge/statutory verify --json
 npx @mudraforge/statutory doctor --json --offline
 

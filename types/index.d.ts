@@ -198,6 +198,8 @@ export declare class StatutoryClient {
     calculateTransferPricingAlp(payload?: any): any;
     evaluateSection79LossContinuity(payload?: any): any;
     revalueForeignExchangeIndAs109(payload?: any): any;
+    getOutcomes(provision?: string, options?: StatutoryOutcomesOptions): Promise<StatutoryOutcomesResult>;
+    explain(codeOrQuery: string, options?: any): any;
 }
 
 export interface CrosswalkOptions {
@@ -327,5 +329,52 @@ export declare function evaluatePlaceOfSupplyAndLut(payload?: any): any;
 export declare function calculateTransferPricingAlp(payload?: any): any;
 export declare function evaluateSection79LossContinuity(payload?: any): any;
 export declare function revalueForeignExchangeIndAs109(payload?: any): any;
+
+export interface StatutoryOutcome {
+    code: string;
+    category: string;
+    title: string;
+    description: string;
+    triggerCondition: string;
+    recommendedAction: string;
+    remedy?: string;
+    consequenceIfUnresolved?: string;
+    missingFacts?: string[];
+    missingFactsExplanation?: Record<string, { type: string; description: string; example: any; source: string }>;
+    applicableProvisions?: string[];
+    governingAuthority: string;
+}
+
+export interface StatutoryOutcomesOptions {
+    offline?: boolean;
+    verbose?: boolean;
+    baseUrl?: string;
+    timeoutMs?: number;
+}
+
+export interface StatutoryOutcomesResult {
+    status: 'SUCCESS' | 'ERROR';
+    source: 'LIVE_EDGE' | 'LOCAL_OKF_SUBSTRATE';
+    provision: string | null;
+    totalOutcomes: number;
+    outcomes: StatutoryOutcome[];
+    version: string;
+    offlineFallback?: boolean;
+}
+
+export declare const STATUTORY_OUTCOMES_DICTIONARY: StatutoryOutcome[];
+export declare function getStatutoryOutcomes(
+    provision?: string,
+    options?: StatutoryOutcomesOptions
+): Promise<StatutoryOutcomesResult>;
+
+export declare function explainStatutoryDisposition(
+    codeOrQuery: string,
+    options?: any
+): any;
+
+export declare function ignorePackageUpdate(
+    versionToIgnore: string
+): { status: 'SUCCESS' | 'ERROR'; ignoredVersion: string; error?: string };
 
 

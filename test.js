@@ -37,6 +37,10 @@ import {
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
     revalueForeignExchangeIndAs109,
+    getStatutoryOutcomes,
+    explainStatutoryDisposition,
+    ignorePackageUpdate,
+    STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
 } from './src/index.js';
@@ -1949,8 +1953,84 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient corporate finance calculator methods verified with 100% parity.');
 
+    // 81. Programmatic Statutory Outcomes & Disposition Dictionary
+    console.log('\n── Test 81: Programmatic Statutory Outcomes & Disposition Dictionary ──');
+    const allOutcomes = await getStatutoryOutcomes(null, { offline: true });
+    if (allOutcomes.status !== 'SUCCESS' || allOutcomes.totalOutcomes < 10) {
+        throw new Error(`Expected at least 10 outcomes in global catalog, got ${allOutcomes.totalOutcomes}`);
+    }
+    const qOutcomes = await getStatutoryOutcomes('194Q', { offline: true });
+    if (qOutcomes.status !== 'SUCCESS' || qOutcomes.totalOutcomes < 5) {
+        throw new Error(`Expected at least 5 outcomes for 194Q, got ${qOutcomes.totalOutcomes}`);
+    }
+    const hasIndeterminateBuyer = qOutcomes.outcomes.some(o => o.code === 'INDETERMINATE_BUYER_TURNOVER_UNVERIFIED');
+    if (!hasIndeterminateBuyer) {
+        throw new Error('Missing INDETERMINATE_BUYER_TURNOVER_UNVERIFIED outcome in 194Q outcomes');
+    }
+    console.log(`[PASS] Programmatic getStatutoryOutcomes verified: ${allOutcomes.totalOutcomes} global outcomes, ${qOutcomes.totalOutcomes} mapped for Section 194Q.`);
+
+    // 82. StatutoryClient Programmatic Parity for Outcomes
+    console.log('\n── Test 82: StatutoryClient Programmatic Parity for Outcomes ──');
+    const clientOutcomes = await clientCalc.getOutcomes('MSMED-15-16', { offline: true });
+    if (clientOutcomes.status !== 'SUCCESS' || !clientOutcomes.outcomes.some(o => o.code === 'MSME_DELAYED_PAYMENT_INTEREST_DUE')) {
+        throw new Error('StatutoryClient.getOutcomes failed for MSMED-15-16');
+    }
+    console.log(`[PASS] StatutoryClient.getOutcomes parity verified: MSME delayed payment interest outcome retrieved.`);
+
+    // 83. CLI Integration — node bin/cli.js outcomes 194Q --json
+    console.log('\n── Test 83: CLI Integration — node bin/cli.js outcomes 194Q --json ──');
+    const cliOutcomesRaw = execFileSync('node', ['bin/cli.js', 'outcomes', '194Q', '--json'], { encoding: 'utf8' });
+    const cliOutcomes = JSON.parse(cliOutcomesRaw);
+    if (cliOutcomes.status !== 'SUCCESS' || cliOutcomes.provision !== '194Q' || cliOutcomes.totalOutcomes < 5) {
+        throw new Error('CLI outcomes --json failed to return valid JSON with 194Q outcomes');
+    }
+    console.log(`[PASS] CLI outcomes --json executed cleanly with exitCode 0 and valid machine-readable payload.`);
+
+    // 84. Programmatic Disposition Explanation & Remediation Lookups
+    console.log('\n── Test 84: Programmatic Disposition Explanation & Remediation Lookups ──');
+    const expDirect = explainStatutoryDisposition('BUYER_TURNOVER_UNVERIFIED');
+    if (expDirect.status !== 'SUCCESS' || !expDirect.remedy || !expDirect.missingFactsExplanation?.buyerTurnoverCr) {
+        throw new Error('explainStatutoryDisposition failed to return remedy for BUYER_TURNOVER_UNVERIFIED');
+    }
+    const expIndeterminate = explainStatutoryDisposition('INDETERMINATE');
+    if (expIndeterminate.status !== 'SUCCESS' || expIndeterminate.totalMatches < 4) {
+        throw new Error('explainStatutoryDisposition failed to return all indeterminate states');
+    }
+    console.log(`[PASS] Programmatic explainStatutoryDisposition verified: single code remedy and broad group matches.`);
+
+    // 85. CLI Integration — node bin/cli.js explain BUYER_TURNOVER_UNVERIFIED --json
+    console.log('\n── Test 85: CLI Integration — node bin/cli.js explain BUYER_TURNOVER_UNVERIFIED --json ──');
+    const cliExpRaw = execFileSync('node', ['bin/cli.js', 'explain', 'BUYER_TURNOVER_UNVERIFIED', '--json'], { encoding: 'utf8' });
+    const cliExp = JSON.parse(cliExpRaw);
+    if (cliExp.status !== 'SUCCESS' || !cliExp.remedy || cliExp.matchType !== 'EXACT_OR_KEY_MATCH') {
+        throw new Error('CLI explain --json failed to return valid JSON with remedy');
+    }
+    console.log(`[PASS] CLI explain --json executed cleanly with exitCode 0 and valid remedy.`);
+
+    // 86. CLI Integration — node bin/cli.js outcomes 194Q --verbose --json
+    console.log('\n── Test 86: CLI Integration — node bin/cli.js outcomes 194Q --verbose --json ──');
+    const cliVerboseRaw = execFileSync('node', ['bin/cli.js', 'outcomes', '194Q', '--verbose', '--json'], { encoding: 'utf8' });
+    const cliVerbose = JSON.parse(cliVerboseRaw);
+    if (cliVerbose.status !== 'SUCCESS' || !cliVerbose.outcomes[0].remedy) {
+        throw new Error('CLI outcomes --verbose --json failed to include remedy in outcomes');
+    }
+    console.log(`[PASS] CLI outcomes --verbose --json executed cleanly with detailed remediation fields.`);
+
+    // 87. Package Update Snoozing / Ignore Mechanism
+    console.log('\n── Test 87: Package Update Snoozing / Ignore Mechanism ──');
+    const ignoreRes = ignorePackageUpdate('99.99.99');
+    if (ignoreRes.status !== 'SUCCESS' || ignoreRes.ignoredVersion !== '99.99.99') {
+        throw new Error('ignorePackageUpdate failed to record ignored version');
+    }
+    const cliIgnoreRaw = execFileSync('node', ['bin/cli.js', 'check-update', '--ignore', '--json'], { encoding: 'utf8' });
+    const cliIgnore = JSON.parse(cliIgnoreRaw);
+    if (cliIgnore.status !== 'SUCCESS') {
+        throw new Error('CLI check-update --ignore --json failed');
+    }
+    console.log(`[PASS] Package update notification ignore mechanism verified programmatically and via CLI.`);
+
     console.log('\n===========================================================================');
-    console.log('ALL 80 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 87 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 
