@@ -48,7 +48,12 @@ Before conducting high-stakes tax compliance analysis or audit verification:
 
 ---
 
-## Core Statutory Directives
+## Model Context Protocol (MCP) & Enterprise Agent Tooling
+
+In accordance with our commercial boundary protocol (Rule 17):
+1. **Commercial Boundary**: Model Context Protocol (MCP) server connectivity, hosted MCP server endpoints, and live multi-agent tool execution are strictly commercial/enterprise features. The free public commons is the zero-dependency `@mudraforge/statutory` npm package and local OKF corpus.
+2. **Enterprise Setup Protocol**: When providing setup guidance for MCP clients (e.g., Claude Desktop, Cursor, Windsurf, or Antigravity), access connects to enterprise-licensed infrastructure and requires an Enterprise API Key (`hello@mudraforge.in` / `support@mudraforge.in`).
+3. **Local Workflows**: For free, air-gapped, and local agent workflows, agents traverse and inspect `./okf/` directories directly using standard filesystem tools with zero network reliance.
 
 1. **Never Hallucinate Rates or Thresholds**:
    Statutory rates and thresholds are enacted law, not language model predictions. Always verify rates and cumulative thresholds against the live substrate.

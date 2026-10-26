@@ -1574,9 +1574,10 @@ export class StatutoryClient {
     async calculate(payload = {}, options = {}) {
         if (!this.apiKey) {
             const err = new Error(
-                '[@mudraforge/statutory] Deterministic calculation engines (Section 194Q excess math, ' +
-                'MSMED 3x RBI compounding interest, Section 194J FTS vs Professional) require an Enterprise API key.\n' +
-                'Direct contact is required: email hello@mudraforge.in or support@mudraforge.in to request access.'
+                '[@mudraforge/statutory] The hosted cloud calculation endpoint (\'/api/v1/statutory/calculate\') requires an Enterprise API key.\n' +
+                'To calculate deterministically offline without an API key or remote server, import pure calculation functions directly:\n' +
+                '  import { calculateCorporateTaxMatVsConcessional, evaluatePlaceOfSupplyAndLut, calculateTransferPricingAlp, evaluateSection79LossContinuity, revalueForeignExchangeIndAs109 } from \'@mudraforge/statutory\';\n' +
+                'For hosted cloud edge calculation access or custom enterprise models, contact hello@mudraforge.in or support@mudraforge.in.'
             );
             err.code = 'API_KEY_REQUIRED';
             err.contact = 'hello@mudraforge.in';

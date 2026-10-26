@@ -11,27 +11,49 @@
 
 ---
 
-## 30-Second Quick Start
+## 30-Second Quick Start (100% Offline, Zero Dependencies)
 
 ```bash
 npm install @mudraforge/statutory
 ```
 
 ```javascript
-import { MudraStatutoryClient } from '@mudraforge/statutory';
-const client = new MudraStatutoryClient({ apiKey: process.env.MUDRA_API_KEY });
+import { 
+  lookupStatute, 
+  calculateCorporateTaxMatVsConcessional, 
+  evaluatePlaceOfSupplyAndLut,
+  isStatuteActive 
+} from '@mudraforge/statutory';
 
-// 1. Compute Section 194Q TDS (excess over ₹50L with dual-act temporal routing):
-const tds = await client.calculate({ invoiceAmount: 8000000, priorFyPurchases: 4000000 });
-console.log(tds.taxAmount); // 7000 (0.1% on ₹70L excess)
+// 1. Instant offline statutory lookup (sub-1ms, zero network calls, zero API keys)
+const section = await lookupStatute('194Q');
+console.log(section.statute.title);
+// => "Deduction of tax at source on payment of a certain sum for purchase of goods"
 
-// 2. Compute MSMED 3x RBI compounding interest (monthly rests):
-const interest = await client.calculate({ section: 'MSMED', invoiceAmount: 1000000, dueDate: '2025-01-01', paymentDate: '2025-04-01' });
-console.log(interest.penalInterestAmount); // 41601.37 (20.25% p.a. compound)
+// 2. Deterministic Corporate Tax: MAT (Sec 115JB) vs Concessional (Sec 115BAA)
+const tax = calculateCorporateTaxMatVsConcessional({
+  turnoverPrecedingFyInr: 300000000, // ₹30 Cr turnover
+  netProfitBeforeTaxInr: 100000000,  // ₹10 Cr NPBT
+  normalTaxAdditionsInr: 10000000,   // ₹1 Cr additions
+  normalTaxDeductionsInr: 2000000    // ₹20 Lakhs deductions
+});
+console.log(tax.comparisonSummary.recommendedRegime); // "SECTION_115BAA"
+console.log(tax.comparisonSummary.netCashSavingsInr); // 3764800 (Net savings ₹37.64L)
 
-// 3. Look up statutory rule by phrase or section code:
-const statute = await client.lookup('delayed payment');
-console.log(statute.statute.title); // MSMED statutory payment timelines & compound interest
+// 3. Place of Supply & Zero-Rated Export of Services under LUT (IGST Sec 16)
+const exportEvaluation = evaluatePlaceOfSupplyAndLut({
+  supplierStateCode: '27',                     // Maharashtra
+  recipientCountryCode: 'US',                  // United States
+  hasValidLut: true,                           // Letter of Undertaking in Form GST RFD-11
+  isConvertibleForexReceivedOrRbiInr: true,    // Sec 2(6)(iv) FIRC/e-BRC
+  invoiceAmountInr: 500000                     // ₹5,00,000 export invoice
+});
+console.log(exportEvaluation.statutoryDetermination); // "ZERO_RATED_EXPORT_UNDER_LUT"
+console.log(exportEvaluation.igstPayableInr);         // 0 (0% IGST)
+
+// 4. Temporal Legislative Sunset Check
+const isActive = await isStatuteActive('206C(1H)', '2025-06-01');
+console.log(isActive); // false (Omitted w.e.f. 1 April 2025 by Finance Act, 2025)
 ```
 
 ---
@@ -90,45 +112,15 @@ console.log(statute.statute.title); // MSMED statutory payment timelines & compo
 
 ---
 
-## The Payment Instruction Boundary & End-to-End AP Architecture
+## Separation of Statutory Knowledge from Autonomous Execution
 
-> **The Dangerous Moment in Finance AI**:  
-> *The dangerous moment in finance AI isn't when the model is wrong. It's when its output becomes a payment instruction.*
-> 
-> In marketing, an AI hallucination is a typo. In accounts payable, an unhandled bank timeout can trigger a retry that double-pays a vendor.
-> 
-> Hardening the financial runtime for **Adesha, MudraForge's organizational AI**, our principle is simple:  
-> **Reasoning can be probabilistic, but financial execution needs deterministic boundaries.**
+A fundamental design invariant of MudraForge is: **Knowing what the law says is not the same as having authority to disburse corporate funds.**
 
-### The Four Pillars of Autonomous Finance Execution
+- **The Open-Source Commons (`@mudraforge/statutory`)**: Provides declarative statutory truth, temporal boundaries, and pure deterministic calculators. All functions enforce `isAuthorizedToDisburse: false`. Calculation never authorizes autonomous money movement.
+- **The Governed Execution Platform (Adesha)**: Manages consequential real-world operations—single-use payment authorization leases, dual-custody mobile authorization, banking rail integration, and balanced ERP general ledger writebacks.
 
-1. **Retrieval is Not Verification**: Finding a document or matching keywords is not legal verification. Real accounting requires validating evidence against connected systems of record (including live Zoho Books / SAP ERP readback) and authenticated tenant statutory vaults.
-2. **Safe Tools Do Not Guarantee Safe Workflows**: An AI agent can call individually safe API tools and still coordinate an unauthorized or illegal transaction. Generative models coordinate investigations; deterministic code calculates statutory taxes and enforces ledger invariants (*Rule 11: Agreement with the Engine ≠ Agreement with the Law*).
-3. **Preventing Silent Financial Drift**: Deterministic code computes numbers. RFC 8785 JSON Canonicalization Scheme (JCS) and SHA-256 bind calculation results to a verifiable fingerprint. The hash does not compute—it detects changes between calculation, human authorization, and execution. If the result no longer matches the fingerprint, the workflow halts.
-4. **Testing Payment Boundaries Against Failure**: Single-use CAS leases prevent duplicate payments under concurrent races. Formal TLA+ modeling with the TLC Model Checker explored all 361 reachable states in our configured distributed model with 0 invariant violations and caught 4 injected defects. Edge execution runs on Cloudflare Workers V8 isolates with zero-discrepancy double-entry ledger writebacks.
-
-### Seven-Stage End-to-End AP Governance Lifecycle
-
-```
-Stage 1: Invoice Ingestion (IRP QR / PDF)
-    ↓
-Stage 2: OKF Rule Resolution (Sub-1ms Local Offline Lookup)
-    ↓
-Stage 3: Deterministic Statutory Computation (Excess Math & GST Unbundling)
-    ↓
-Stage 4: Cryptographic Payment Authorization Lease (Single-Use Atomic CAS Gate)
-    ↓
-Stage 5: Human-in-the-Loop Authority Harness (CFO Biometric Passkey / Mobile)
-    ↓
-Stage 6: Bank Rail Settlement (Host-to-Host Corporate RTGS)
-    ↓
-Stage 7: General Ledger Balanced Double-Entry Writeback (ERP Equilibrium: ₹0.00 Discrepancy)
-```
-
-Run this audited 7-stage AP simulation directly in your local terminal:
-```bash
-npm run example:trace
-```
+> For complete enterprise architecture specifications, TLC model checking proofs, and the 7-stage AP governance lifecycle, see [docs/ENTERPRISE_GOVERNANCE.md](./docs/ENTERPRISE_GOVERNANCE.md).  
+> To run a local simulation of the modeled 7-stage AP trace: `npm run example:trace`.
 
 ---
 
@@ -463,65 +455,27 @@ Calling pipelines and CI/CD audit steps can inspect `$?` directly:
 
 ---
 
-## Enterprise Tier (Paid Cloud Execution & Analysis Mode)
+## Commercial & Enterprise Platform Ecosystem
 
-To access the **System-1 semantic discovery search**, **Analysis Mode output**, and **Deterministic Calculation Engines**, initialize `StatutoryClient` with an Enterprise API key:
+`@mudraforge/statutory` is the open-source, zero-dependency statutory ground-truth substrate of the MudraForge ecosystem. For organizations requiring consequential financial execution, hosted agent tools, or managed infrastructure:
 
-```javascript
-import { StatutoryClient } from '@mudraforge/statutory';
+### 1. Governed Execution Platform (MudraForge Adesha)
+While `@mudraforge/statutory` calculates what the law requires, **Adesha** governs real-world financial execution:
+- **Single-Use Payment Authorization Leases**: Atomic Compare-and-Swap (CAS) leases cryptographically bound to invoice hash, vendor legal entity, and authorized net wire amount.
+- **Human-in-the-Loop Authority Harness**: Maker-checker workflows requiring CFO biometric passkey approval.
+- **Host-to-Host Banking Rail Integration**: Dispatches payouts via corporate banking gateways with signed webhook verification and clearinghouse reversal interception.
+- **ERP General Ledger Writebacks**: Automatically posts balanced double-entry vouchers to Zoho Books, SAP S/4HANA, or NetSuite upon settlement confirmation.
+- *Detailed Architecture*: See [docs/ENTERPRISE_GOVERNANCE.md](./docs/ENTERPRISE_GOVERNANCE.md).
 
-const client = new StatutoryClient({
-    tier: 'ENTERPRISE_PAID',
-    apiKey: process.env.MUDRA_STATUTORY_API_KEY // Available via hello@mudraforge.in
-});
+### 2. Hosted Model Context Protocol (MCP) Infrastructure
+In accordance with our commercial boundary protocol:
+- **Enterprise-Tier Tooling**: Hosted Model Context Protocol (MCP) server endpoints and live multi-agent tool connectivity are strictly commercial/enterprise features.
+- **Enterprise Setup**: Connecting MCP clients (Claude Desktop, Cursor, Windsurf, or Antigravity) connects to enterprise-licensed infrastructure and requires an Enterprise API Key.
+- Contact: `hello@mudraforge.in` / `support@mudraforge.in`.
 
-// Execute calculation via Cloudflare Edge Engine (not stored in local package)
-const result = await client.calculate({
-    section: '194Q',
-    invoiceAmount: 8000000,       // ₹80 Lakhs
-    priorFyPurchases: 4000000,    // ₹40 Lakhs already purchased this FY
-    hasPan: true
-});
-
-console.log(result.taxableBase); // ₹70,00,000 (Calculates strictly on excess over ₹50L)
-console.log(result.taxAmount);   // ₹7,000 (0.1% TDS on taxable base)
-```
-
-### Enterprise Edge API Endpoints & Rate Limits
-
-| Endpoint | Method | Auth Required | Rate Limit (Per Client / IP) | Response |
-|---|---|---|---|---|
-| `/api/v1/statutory/sections` | `GET` | No | 180 req/min | JSON array of indexed OKF sections |
-| `/api/v1/statutory/lookup` | `GET` | No | 180 req/min | Parametric section details & temporal validity |
-| `/api/v1/statutory/laws/:code` | `GET` | No | 180 req/min | Direct path statutory section lookup |
-| `/api/v1/statutory/manifest.json` | `GET` | No | 180 req/min | Latest OKF release manifest & rootHash |
-| `/api/v1/statutory/bundle.json` | `GET` | No | 180 req/min | Full versioned statutory bundle (ETag 304 supported) |
-| `/api/v1/statutory/calculate` | `POST` | **Yes** (Bearer) | 45 req/min | Deterministic statutory deduction result |
-
-### Error Semantics & Response Codes
-
-All error responses from `@mudraforge/statutory` and the hosted edge API return structured JSON:
-
-```json
-{
-  "status": "ERROR",
-  "error": "API_KEY_REQUIRED",
-  "message": "Deterministic calculation engines require an Enterprise API key.",
-  "contact": "hello@mudraforge.in"
-}
-```
-
-| HTTP Status | Error Code | Description / Remedy |
-|---|---|---|
-| `400 Bad Request` | `INVALID_AMOUNT` | Numerical value is negative, NaN, or exceeds `Number.MAX_SAFE_INTEGER`. |
-| `400 Bad Request` | `INVALID_DATE_FORMAT` | Date string does not match ISO 8601 `YYYY-MM-DD` format. |
-| `400 Bad Request` | `QUERY_TOO_LONG` | Section search query exceeds 64-character security ceiling. |
-| `401 / 403 Forbidden` | `API_KEY_REQUIRED` / `INVALID_API_KEY` | Missing or invalid Enterprise API key. Contact `hello@mudraforge.in`. |
-| `404 Not Found` | `SECTION_NOT_FOUND` | Queried section does not exist in the indexed statutory corpus. |
-| `405 Method Not Allowed` | `METHOD_NOT_ALLOWED` | Non-GET request sent to read-only commons endpoints. |
-| `413 Payload Too Large` | `PAYLOAD_TOO_LARGE` | JSON request body on `/calculate` exceeds 64KB security threshold. |
-| `415 Unsupported Media` | `UNSUPPORTED_MEDIA_TYPE` | Non-JSON payload sent to calculation engine. Set `Content-Type: application/json`. |
-| `429 Too Many Requests` | `RATE_LIMIT_EXCEEDED` | Rate limit threshold breached. Check `Retry-After` header before retrying. |
+### 3. Hosted Edge API & Continuous Synchronization
+- **Hosted Edge Calculation (`/api/v1/statutory/calculate`)**: Optional cloud-hosted calculation service on Cloudflare Anycast edge for organizations integrating via REST rather than the Node.js package.
+- **Continuous Regulatory Sync**: SLA-backed automated updates tracking Gazette of India notifications, CBDT circulars, and Finance Act amendments.
 
 ---
 
