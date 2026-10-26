@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.10.0] - 2026-10-27
+
+### Added
+- **Canonical Statutory Outcomes & Semantic Disposition Dictionary (`src/outcomes.js`)**:
+  - Cataloged 12 canonical statutory outcomes and non-numerical dispositions (`DETERMINED_APPLICABLE`, `DETERMINED_THRESHOLD_NOT_MET`, `INDETERMINATE_BUYER_TURNOVER_UNVERIFIED`, `INDETERMINATE_PENDING_TRANSACTION_DATE`, `SUNSET_OMITTED`, `PENALTY_RATE_MANDATED`, `DISQUALIFIED_FROM_ZERO_RATING`, `REQUIRES_HUMAN_REVIEW`, `MISSING_EVIDENCE_HOLD`, `INDETERMINATE_DISPUTE_UNRESOLVED`, `INDETERMINATE_RECIPIENT_COUNTRY_REQUIRED`, `MSME_DELAYED_PAYMENT_INTEREST_DUE`).
+  - Added programmatic functions `getStatutoryOutcomes(provision, options)` with offline-first resolution and edge synchronization.
+  - Added programmatic explanation function `explainStatutoryDisposition(codeOrQuery, options)` supporting exact matches, registered aliases, broad category groups (`INDETERMINATE`), and fuzzy keyword search.
+  - Added automatic outcome explanation enrichment helper `enrichWithOutcomeExplanation(result, options)` injecting plain-English descriptions, actionable remedies, statutory consequences, and structured missing-fact schemas.
+- **Interactive CLI Explain & Outcomes Engine (`bin/cli.js`)**:
+  - `mudra-statutory outcomes [provision]`: Lists available dispositions, trigger preconditions, and recommended actions, with `--verbose` (`-v`) for deep remediation guidance and `--json` for automation.
+  - `mudra-statutory explain <code_or_status>`: Explains any disposition or indeterminacy reason (aliases: `explain`, `why`, `remedy`).
+- **CLI Update Snoozing & Notification Governance**:
+  - Automated non-intrusive update check banner on human interactive CLI execution.
+  - Added `mudra-statutory check-update --ignore` to persistently snooze notices for the current release.
+  - Added `--no-update-check` global flag and `MUDRA_NO_UPDATE_NOTIFIER=1` environment variable.
+- **Extended Test Suite (88/88 Test Suites Passing)**:
+  - Added Tests 81–88 verifying outcomes retrieval, explanation lookup, CLI integration, update snoozing, and automatic explanation enrichment.
+
+---
+
 ## [2.9.0] - 2026-10-26
 
 ### Added

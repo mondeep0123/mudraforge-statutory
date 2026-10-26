@@ -8,7 +8,7 @@
  * @license MIT
  */
 
-const STATUTORY_CLIENT_VERSION = '2.9.0';
+import { STATUTORY_CLIENT_VERSION } from './constants.js';
 
 export const STATUTORY_OUTCOMES_DICTIONARY = [
     {
@@ -459,7 +459,10 @@ export function enrichWithOutcomeExplanation(result, options = {}) {
                 const expl = explainStatutoryDisposition(lookupKey);
                 if (expl && expl.matches && expl.matches.length > 0) {
                     const match = expl.matches[0];
-                    if (!result.explanation) {
+                    const shouldAttachExplanation = options.attachExplanationProperty !== false && 
+                        options.explain !== false && 
+                        options.includeExplanation !== false;
+                    if (shouldAttachExplanation && !result.explanation) {
                         result.explanation = match.description || result.regimeNotice || result.contingentNotice || null;
                     }
                     if (!result.remedy && match.remedy) {

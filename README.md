@@ -511,7 +511,7 @@ In accordance with our commercial boundary protocol:
 The repository enforces fail-closed automated verification for schemas, temporal rules, and cryptographic digests:
 
 ```bash
-# 1. Run full 36-suite multi-domain regression test
+# 1. Run full 88-suite multi-domain regression test
 npm test
 
 # 2. Validate all OKF schemas, circular YAML frontmatter, and return forms

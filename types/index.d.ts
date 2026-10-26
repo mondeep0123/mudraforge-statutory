@@ -142,6 +142,7 @@ export interface SyncResult {
 }
 
 export declare const DEFAULT_BASE_URL: string;
+export declare const STATUTORY_CLIENT_VERSION: string;
 export declare const DEFAULT_LOCAL_OKF_DIR: string;
 
 export declare function getLocalManifest(okfDir?: string): any;

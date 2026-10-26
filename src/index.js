@@ -30,11 +30,20 @@ import {
     enrichWithOutcomeExplanation
 } from './outcomes.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-export const DEFAULT_LOCAL_OKF_DIR = path.resolve(__dirname, '..', 'okf');
-export const DEFAULT_BASE_URL = 'https://api.mudraforge.in';
-export const STATUTORY_CLIENT_VERSION = '2.9.0';
+import { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL } from './constants.js';
+
+let defaultOkfDir = null;
+try {
+    if (typeof import.meta?.url === 'string' && import.meta.url.startsWith('file:')) {
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        defaultOkfDir = path.resolve(__dirname, '..', 'okf');
+    }
+} catch (_) {
+    defaultOkfDir = null;
+}
+export const DEFAULT_LOCAL_OKF_DIR = defaultOkfDir;
+export { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL };
 
 /**
  * Pinned official release Merkle root digests.

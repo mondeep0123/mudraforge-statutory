@@ -1,9 +1,9 @@
 # MudraForge Statutory Knowledge Quality Card
 
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
-> **Target Package**: `@mudraforge/statutory` v2.9.0  
+> **Target Package**: `@mudraforge/statutory` v2.10.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-26T14:54:44.550Z
+> **Generated Timestamp**: 2026-10-26T21:04:24.978Z
 
 ---
 
