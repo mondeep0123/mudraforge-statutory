@@ -252,7 +252,7 @@ To ensure absolute clarity for developers, finance leaders, prospective pilot cu
 
 | Subsystem / Capability | Operational Classification | Availability / Access | Current Verification Evidence |
 | :--- | :--- | :--- | :--- |
-| **Bundled OKF Statutory Corpus (11 Provisions)** | **Public Package** | Shipped in repository & release candidates (`okf/`) | 40/40 test suites passing; deterministic SHA-256 Merkle root |
+| **Bundled OKF Statutory Corpus (29 Provisions across 5 Domains)** | **Public Package** | Shipped in repository & release candidates (`okf/`) | 80/80 test suites passing; deterministic SHA-256 Merkle root |
 | **Zero-Network CLI (`mudraforge-statutory`)** | **Public Package** | Immediate via `npx @mudraforge/statutory` | `bin/cli.js` verified across Windows and Linux |
 | **Vendor-Neutral Conformance Suite** | **Public Package** | Immediate via `conformance/` (`npm run conformance`) | 12/12 fixture tests passing |
 | **Local Query SDK (`src/index.js`)** | **Public Package** | Immediate via `import { lookupStatute }` | Zero runtime dependencies; offline temporal state evaluation |
@@ -276,10 +276,10 @@ To ensure clarity for developers, CAs, and prospective enterprise clients, the o
 | :--- | :--- | :--- | :--- |
 | **Pricing & License** | **100% Free** (MIT Code / CC BY 4.0 Data) | **Best-Effort Free Beta** (Transitions to Metered) | **Commercial Enterprise SaaS** |
 | **Execution Location** | 100% Local Filesystem (0 Network Calls) | Cloudflare Edge (Global 300+ PoPs, typical 20–80ms Anycast latency) | Private Enterprise VPC / On-Premise Worker |
-| **Statutory Knowledge** | Bundled Starter Seed (11 Verified Sections) | 11 Active Provisions (Roadmap Catalog in expansion) | Full Sovereign Catalog + Custom Private Enterprise Contracts |
+| **Statutory Knowledge** | Bundled Starter Seed (29 Verified Sections across 5 Domains) | 29 Active Provisions (Roadmap Catalog in expansion) | Full Sovereign Catalog + Custom Private Enterprise Contracts |
 | **Lookup Engine** | Exact code, alias & folder path resolution | System-1 Semantic Intent & Rule Discovery | Multi-tenant RAG & Context Assembler |
 | **Temporal Status** | Offline deterministic evaluation (`computeTemporalStatus`) | Live temporal state machine resolution | In-flight temporal locks across transaction lifecycle |
-| **Deterministic Calculators**| *Not included* (declarative schemas only) | Hosted calculation endpoint (`POST /calculate`) | Full arithmetic engine with ₹50L excess & 3x RBI interest |
+| **Deterministic Calculators**| **Included** (7 Zero-dependency pure mathematical calculators exported in `src/calculators.js`) | Hosted calculation endpoint (`POST /calculate`) | Full arithmetic engine with ₹50L excess & 3x RBI interest |
 | **Payment Authorization** | *Not included* | *Not included* | **Single-Use Cryptographic Payment Leases (TLA+ verified)** |
 | **Banking Execution** | *Not included* | *Not included* | **Host-to-Host Bank Rails (RazorpayX / ICICI / HDFC)** |
 | **ERP Writebacks** | *Not included* | *Not included* | **Balanced double-entry journal writebacks (SAP / Zoho)** |
@@ -302,7 +302,7 @@ The MudraForge Statutory project publishes an open, locally usable statutory kno
 
 ## Structured OKF Domain Hierarchy (Zero-Token Discovery)
 
-Rules are organized into **four foundational regulatory domains**, complete with official circulars, statutory notifications, and compliance form schemas:
+Rules are organized into **five foundational regulatory domains**, complete with official circulars, statutory notifications, and compliance form schemas:
 
 ```
 okf/

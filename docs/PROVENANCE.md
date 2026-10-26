@@ -8,17 +8,17 @@ This document records the cryptographic provenance, normative specifications, an
 
 | Item | Value |
 |---|---|
-| **Package Release** | **`v2.8.1`** (Stable Patch Release) |
+| **Package Release** | **`v2.9.0`** (Production Release) |
 | **Knowledge Specification** | **Google Open Knowledge Format (OKF v0.2) + MudraForge Statutory Schema Extension** |
 | **Regulatory Snapshot** | **CBDT / CBIC / MCA / MSME Baseline: October 2026** |
-| **Corpus Quality Card** | 100% Citation Resolution (15/15 URLs) in [`docs/CORPUS_QUALITY.md`](./CORPUS_QUALITY.md) |
+| **Corpus Quality Card** | 100% Primary Citation Resolution (76/76 URLs verified; 108 citations across 29 provisions) in [`docs/CORPUS_QUALITY.md`](./CORPUS_QUALITY.md) |
 | **Architecture Decision Records** | 6 Normative ADRs documented in [`docs/ARCHITECTURE_DECISIONS.md`](./ARCHITECTURE_DECISIONS.md) |
 | **Vendor Conformance Suite** | 12/12 Passing Fixture Tests in [`conformance/`](../conformance/) |
 | **End-to-End Execution Trace** | Audited 7-stage AP lifecycle in [`examples/`](../examples/) (`npm run example:trace`) |
 | **Enterprise Assurance Preview** | Formal TLA+ & mutation defenses in [`docs/ADESHA_ASSURANCE_OVERVIEW.md`](./ADESHA_ASSURANCE_OVERVIEW.md) |
-| **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](../okf/manifest.json) (reproducible byte-level non-tampering proof) |
+| **Integrity Root** | SHA-256 root manifest in [`okf/manifest.json`](../okf/manifest.json) (`sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0` across 86 files) |
 | **Temporal Framework** | Dual-Act Bridge: *Income-tax Act, 1961* & *Income-tax Act, 2025* |
-| **Verification Gate** | 100% Pass across cumulative thresholds, legislative sunsets, and excess math |
+| **Verification Gate** | 100% Pass across all 80 test suites (cumulative thresholds, legislative sunsets, and excess math) |
 
 ---
 

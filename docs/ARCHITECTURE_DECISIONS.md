@@ -69,7 +69,7 @@ We establish three independent, non-interchangeable versioning dimensions:
 | :--- | :--- | :--- | :--- |
 | **`okfVersion`** | Knowledge Schema Structure | Incremented only when the JSON schema or metadata fields change (e.g., adding a required field). | `0.2.0` |
 | **`corpusRelease`** | Legal Corpus Snapshot | Incremented when statutory provisions, rates, or circulars are updated or added. | `2026.04.1` |
-| **`version`** (SemVer) | NPM Client SDK & CLI | Standard Semantic Versioning for the JavaScript library, CLI commands, and test runners. | `2.4.0` |
+| **`version`** (SemVer) | NPM Client SDK & CLI | Standard Semantic Versioning for the JavaScript library, CLI commands, and test runners. | `2.9.0` |
 
 ---
 
@@ -82,7 +82,7 @@ To maintain institutional credibility, public documentation must never blur the 
 
 | Subsystem / Capability | Architectural Layer | Operational Status | Availability / Access | Verification Evidence |
 | :--- | :--- | :--- | :--- | :--- |
-| **Bundled OKF Statutory Corpus (11 Provisions)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Local repo & release candidate) | 40/40 test suites passing; SHA-256 Merkle root verified |
+| **Bundled OKF Statutory Corpus (29 Provisions across 5 Domains)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Local repo & release candidate) | 80/80 test suites passing; SHA-256 Merkle root verified |
 | **Zero-Network CLI (`mudraforge-statutory`)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Global / NPX) | `bin/cli.js` verified across Windows & Linux |
 | **Vendor-Neutral Conformance Suite** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (`conformance/`) | 12/12 fixture tests passing |
 | **Local Query SDK (`src/index.js`)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Node.js v18+) | Zero-dependency offline lookup and temporal checks |

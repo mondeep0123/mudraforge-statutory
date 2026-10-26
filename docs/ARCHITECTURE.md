@@ -1,7 +1,7 @@
 # MudraForge Statutory Architecture
 ## Grounding Financial AI in Deterministic Law & Open Knowledge
 
-> **MudraForge Statutory Bundle**: `v2.4.0`  
+> **MudraForge Statutory Bundle**: `v2.9.0`  
 > **Knowledge Specification**: Google Open Knowledge Format (OKF) specification (upstream v0.2)  
 > **License**: MIT (Public Knowledge Commons)  
 > **Status**: Public Beta  
@@ -592,10 +592,10 @@ Data traveling between tiers is encapsulated within a deterministic verification
 
 ```json
 {
-  "protocolVersion": "okf/2.4.0",
+  "protocolVersion": "okf/2.9.0",
   "domain": "direct_tax",
   "sectionCode": "194Q",
-  "manifestDigest": "sha256-d9612074241f7c2cc1d05fa5eee254996f21db56ad1ab71ac36a084ffd4169e1",
+  "manifestDigest": "sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0",
   "effectiveTemporalStatus": "ACTIVE",
   "canonicalParameters": {
     "standardRatePercent": 0.1,
@@ -614,9 +614,9 @@ Data traveling between tiers is encapsulated within a deterministic verification
 ### 9.3 Edge Consistency & Eventual Consistency Resolution (Cloudflare KV)
 
 Cloudflare Workers KV provides global low-latency reads via eventual consistency across edge nodes. To prevent release skew during regulatory updates:
-1. *Immutable Version Tagging*: All statutory releases are written under unique semver namespaces (`statutory:releases:v2.4.0:...`).
-2. *Atomic Manifest Flip*: The global pointer `statutory:active_release` is updated only after all 25+ files across all domains are fully confirmed across edge replicas.
-3. *Cache-Control Invalidation*: Manifest responses carry strict validation headers (`ETag: "v2.4.0"`, `stale-while-revalidate=600`).
+1. *Immutable Version Tagging*: All statutory releases are written under unique semver namespaces (`statutory:releases:v2.9.0:...`).
+2. *Atomic Manifest Flip*: The global pointer `statutory:active_release` is updated only after all 86 files across all domains are fully confirmed across edge replicas.
+3. *Cache-Control Invalidation*: Manifest responses carry strict validation headers (`ETag: "v2.9.0"`, `stale-while-revalidate=600`).
 4. *Local Fallback*: If Tier 2 returns HTTP 5xx or fails DNS resolution, Tier 1 and Tier 3 automatically fall back to the bundled local filesystem snapshot without failing the active business transaction.
 
 ### 9.4 Architectural Boundaries: The Autonomous Coprocessor vs. Stateless Subsystems
@@ -733,10 +733,10 @@ To prevent version skew across regions, the edge runtime employs an **Immutable 
 1. **Immutable Artifact Keys**: Every section schema, circular, and form is stored under an immutable, version-tagged key:
    ```
    statutory:releases:<semver>:<domain>:<section_code>
-   # Example: statutory:releases:v2.4.0:direct_tax:194Q
+   # Example: statutory:releases:v2.9.0:direct_tax:194Q
    ```
    Once written to KV, the bytes for a specific semver key are permanently immutable.
-2. **Atomic Manifest Pointers**: Releases are indexed by a versioned root manifest (`statutory:manifests:v2.4.0`). The active pointer is switched only after all constituent keys are fully populated.
+2. **Atomic Manifest Pointers**: Releases are indexed by a versioned root manifest (`statutory:manifests:v2.9.0`). The active pointer is switched only after all constituent keys are fully populated.
 3. **Cache Invalidation & ETag Gates**: The manifest endpoint serves HTTP `ETag` validators with short edge TTLs (`Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600`). This ensures edge caches converge globally within minutes while allowing clients to detect release changes via deterministic SHA-256 root hash comparisons.
 - **Commercial Boundary**: Only the automated, continuously maintained edge update stream, neural discovery search, and deep deterministic calculator engines require an Enterprise API subscription post-beta.
 

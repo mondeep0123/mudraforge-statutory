@@ -38,10 +38,12 @@ function run() {
         .map(d => d.name)
         .sort();
 
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf8'));
+
     let md = `# Statutory Knowledge Catalog
 
 > **Institutional Reference Index**  
-> Package: \`@mudraforge/statutory\` | Version: \`2.4.0\` | Standard: \`OKF v0.2\`  
+> Package: \`@mudraforge/statutory\` | Version: \`${pkg.version}\` | Standard: \`OKF v0.2\`  
 > Epistemic Baseline: Union Budget 2025-26, Finance Act, 2025, and official executive gazettes.
 
 This catalog is deterministically generated from the machine-readable Open Knowledge Format (\`section.json\`, executive circulars, and return schemas) bundled within this repository.

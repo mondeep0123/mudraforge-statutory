@@ -2,7 +2,7 @@
 ## Public Package Seed vs. Full Sovereign Operating Engine
 
 > **Document Version**: `1.0.0`  
-> **Package**: `@mudraforge/statutory` (v2.4.0)  
+> **Package**: `@mudraforge/statutory` (v2.9.0)  
 > **Enterprise Sovereign Engine**: MudraForge Adesha Sovereign Runtime  
 > **Specification**: Google Open Knowledge Format (OKF v0.2)  
 
