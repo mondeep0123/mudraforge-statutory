@@ -151,6 +151,8 @@ In accordance with OpenSSF (Open Source Security Foundation) npm best practices:
 
 The full Adesha Autonomous Governance Runtime is delivered as a managed enterprise deployment integrated with your corporate ERP (Zoho Books, SAP S/4HANA, NetSuite) and banking partners.
 
+To evaluate Adesha in read-only shadow mode against historical accounts payable records, review the [Supervised Shadow Pilot Evaluation Guide](./PILOT_EVALUATION_GUIDE.md).
+
 For enterprise architecture discussions, pilot deployments, or API keys:
 - **Email**: [hello@mudraforge.in](mailto:hello@mudraforge.in) or [support@mudraforge.in](mailto:support@mudraforge.in)
 - **Direct Founder Contact**: Mondeep Engti at [mondeepe@gmail.com](mailto:mondeepe@gmail.com)

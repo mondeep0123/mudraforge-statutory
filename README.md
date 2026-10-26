@@ -1,17 +1,19 @@
-# @mudraforge/statutory
+# MudraForge Adesha — Statutory Knowledge & Governance Substrate (`@mudraforge/statutory`)
 
-> **Open Knowledge Format (OKF) — Structured Indian & Cross-Border Statutory Knowledge Substrate**  
-> *Zero runtime dependencies. Fully offline-capable local filesystem. Public reference commons for software engineers, tax practitioners, and autonomous AI agents.*
+> **The Open Trust Anchor for Autonomous Finance AI**  
+> *MudraForge Adesha is an autonomous organizational AI for commercial finance and accounts payable. Its statutory knowledge and deterministic calculation layer is open-sourced here as `@mudraforge/statutory` so engineering teams, Chief Financial Officers, and tax practitioners can independently inspect, verify, and trust the legal and computational foundation it runs on.*
 
 [![npm version](https://img.shields.io/npm/v/@mudraforge/statutory.svg)](https://www.npmjs.com/package/@mudraforge/statutory)
 [![CI](https://github.com/mondeep0123/mudraforge-statutory/actions/workflows/ci.yml/badge.svg)](https://github.com/mondeep0123/mudraforge-statutory/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Edge Network](https://img.shields.io/badge/Edge-Cloudflare%20Global%20Anycast-orange.svg)](https://api.mudraforge.in/api/v1/statutory/docs)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-0%20(Pure%20Node.js)-success.svg)](https://nodejs.org)
 [![Specification: OKF 0.2](https://img.shields.io/badge/Specification-Google%20OKF%20v0.2-green.svg)](https://cloud.google.com/blog)
 
 ---
 
 ## 30-Second Quick Start (100% Offline, Zero Dependencies)
+
+Install and run locally in any Node.js 18+, Bun, or Deno environment with **zero network requests and zero API keys required**:
 
 ```bash
 npm install @mudraforge/statutory
@@ -58,15 +60,22 @@ console.log(isActive); // false (Omitted w.e.f. 1 April 2025 by Finance Act, 202
 
 ---
 
-## Overview
+## Overview: Why We Open-Source Adesha's Statutory Substrate
 
-`@mudraforge/statutory` is an offline, zero-dependency statutory knowledge substrate for Indian and cross-border financial compliance (Direct Tax, GST, MSME, Corporate M&A, International Tax). It grounds withholding rates, cumulative thresholds, and filing timelines in primary legislation and circulars rather than ungrounded LLM text generation.
+In enterprise finance, no CFO, audit committee, or enterprise risk officer will permit an autonomous AI agent to propose payment instructions or touch the corporate general ledger if its tax withholding and regulatory logic is an opaque, black-box prompt. Large language models hallucinate tax rates, invert statutory obligations, and defend computational errors (*Rule 11: Agreement with the Engine ≠ Agreement with the Law*).
 
-* **Deterministic Knowledge**: Provides structured, offline rule definitions (`okf/**/section.json`) and ISO Mod-36 identifier decoding without outbound network calls.
-* **Dual-Act Temporal Boundary**: Explicitly models both the *Income-tax Act, 1961* and the *Income-tax Act, 2025* (effective 1 April 2026), evaluating date-bound transitional savings rules automatically.
-* **Separation of Concerns**: This open-source commons provides declarative statutory truth; downstream transactional execution, payment authorization, and bank disbursements belong to the governed execution layer (Adesha).
+**MudraForge Adesha** resolves this through deliberate architectural separation:
 
-> For cryptographic root digests, normative specifications, and formal assurance artifacts, see [docs/PROVENANCE.md](./docs/PROVENANCE.md).
+1. **The Open Trust Anchor (This Package — `@mudraforge/statutory`)**: The deterministic statutory substrate. It structures 29 primary laws across 5 regulatory domains under Google's Open Knowledge Format (OKF v0.2), provides 7 pure mathematical calculators, and verifies legal ground truth with cryptographic Merkle integrity—100% offline with zero dependencies. Anyone can inspect, test, fork, or embed this layer freely in their own financial applications.
+2. **The Governed Execution Platform (Adesha Enterprise Runtime)**: When an organization deploys Adesha, it receives the complete autonomous finance AI system: multimodal invoice interpretation, 3-way PO matching, deterministic statutory validation, single-use cryptographic payment leases, CFO biometric approval, host-to-host bank rail settlement, and balanced double-entry ERP general ledger writebacks (Zoho Books, SAP S/4HANA, NetSuite).
+
+> **The Core Thesis of Autonomous Finance**:  
+> *Reasoning can be probabilistic, but financial execution needs deterministic boundaries.*  
+> Knowing what the law says is not the same as having authority to disburse funds. This package guarantees statutory truth; Adesha governs consequential execution.
+
+> For cryptographic root digests, normative specifications, and formal assurance artifacts, see [docs/PROVENANCE.md](./docs/PROVENANCE.md).  
+> For the enterprise execution platform architecture, see [docs/ENTERPRISE_GOVERNANCE.md](./docs/ENTERPRISE_GOVERNANCE.md).  
+> To test Adesha against your historical accounting records in read-only shadow mode, see [docs/PILOT_EVALUATION_GUIDE.md](./docs/PILOT_EVALUATION_GUIDE.md).
 
 ---
 
@@ -82,7 +91,7 @@ console.log(isActive); // false (Omitted w.e.f. 1 April 2025 by Finance Act, 202
   - [2. Finance Software & Accounts-Payable Workflows](#2-finance-software--accounts-payable-workflows)
   - [3. Developer Tooling & Audit Verification](#3-developer-tooling--audit-verification)
 - [Product Capability Status & Operational Boundaries](#product-capability-status--operational-boundaries)
-- [Proposed Pilot Evaluation Guide (docs/PILOT_EVALUATION_GUIDE.md)](./docs/PILOT_EVALUATION_GUIDE.md)
+- [Supervised Shadow Pilot Evaluation Guide (docs/PILOT_EVALUATION_GUIDE.md)](./docs/PILOT_EVALUATION_GUIDE.md)
 - [Legal Domains Currently Covered](#legal-domains-currently-covered)
 - [Structured OKF Directory Hierarchy](#structured-okf-domain-hierarchy-zero-token-discovery)
 - [Canonical Edge Synchronization](#canonical-edge-synchronization-full-statutory-universe)
@@ -251,12 +260,13 @@ To ensure absolute clarity for developers, finance leaders, prospective pilot cu
 | **Synthetic AP Execution Trace (`examples/`)** | **Public Package (Modeled Demo)** | Immediate via `npm run example:trace` | Synthetic invoice trace demonstrating 7-stage lifecycle with modeled fixtures |
 | **Cloudflare Anycast Edge Sync** | **Public Edge Service** | Free Beta via `api.mudraforge.in` | Global edge sync (`npx @mudraforge/statutory sync`) with ETag 304 caching |
 | **Interactive API Documentation** | **Public Edge Service** | Free Beta via `/api/v1/statutory/docs` | OpenAPI 3.1 schema and interactive documentation rendered on Anycast edge |
-| **Deterministic Tax Calculators** | **Enterprise Internal** | Metered Enterprise API (Selective) | Deterministic arithmetic engine verified under private test harness |
+| **Deterministic Calculators (7 Pure Functions)** | **Public Package** | Immediate via `@mudraforge/statutory/calculators` | Corporate tax MAT vs concessional, GST POS/LUT, TP ALP, Section 79, Ind AS 109, Section 288B |
+| **Hosted AP Engine & Cumulative Spend Tracking** | **Enterprise Edge / Internal** | Metered Enterprise API (Selective) | Hosted Section 194Q cumulative spend & Section 16 MSMED interest engine |
 | **Dual-Custody Mobile Approval Harness** | **Enterprise Internal / Pilot** | Enterprise Pilot Proposal | Mobile passkey approval prototype & TLA+ state machine (`specs/`) |
 | **ERP Two-Way Connectors (SAP/Tally/Zoho)** | **Enterprise Internal / Pilot** | Custom Enterprise Pilot Integration | Shadow-mode test connectors; no turnkey plug-ins shipped |
 | **Bank Rail API Adapters (ICICI/HDFC/RazorpayX)** | **Enterprise Internal / Pilot** | Custom Enterprise Pilot Integration | Modeled sandbox adapters requiring corporate bank partner onboarding |
 
-> **Operational Distinction**: Items classified as **Public Package** and **Public Edge Service** represent working, independently inspectable software. Items classified as **Enterprise Internal / Pilot** represent developing or internal capabilities of the commercial Adesha runtime. Execution traces in `examples/` use synthetic test data; they do not represent active commercial bank or live customer ERP deployments. Organizations interested in testing MudraForge against real accounting data should review the [Proposed Pilot Evaluation Guide](./docs/PILOT_EVALUATION_GUIDE.md).
+> **Operational Distinction**: Items classified as **Public Package** and **Public Edge Service** represent working, independently inspectable software. Items classified as **Enterprise Internal / Pilot** represent developing or internal capabilities of the commercial Adesha runtime. Execution traces in `examples/` use synthetic test data; they do not represent active commercial bank or live customer ERP deployments. Organizations interested in testing MudraForge against real accounting data should review the [Supervised Shadow Pilot Evaluation Guide](./docs/PILOT_EVALUATION_GUIDE.md).
 
 ---
 
@@ -275,7 +285,7 @@ To ensure clarity for developers, CAs, and prospective enterprise clients, the o
 | **Payment Authorization** | *Not included* | *Not included* | **Single-Use Cryptographic Payment Leases (TLA+ verified)** |
 | **Banking Execution** | *Not included* | *Not included* | **Host-to-Host Bank Rails (RazorpayX / ICICI / HDFC)** |
 | **ERP Writebacks** | *Not included* | *Not included* | **Balanced double-entry journal writebacks (SAP / Zoho)** |
-| **How to Access** | `npm install @mudraforge/statutory` | `npx @mudraforge/statutory sync` | Review [Pilot Guide](./docs/PILOT_EVALUATION_GUIDE.md) / Contact `hello@mudraforge.in` |
+| **How to Access** | `npm install @mudraforge/statutory` | `npx @mudraforge/statutory sync` | Review [Supervised Shadow Pilot Guide](./docs/PILOT_EVALUATION_GUIDE.md) / Contact `hello@mudraforge.in` |
 
 > **Operational Distinction**: This open-source repository provides the **declarative knowledge foundation**. It does not perform live banking transfers, hold funds, or mutate corporate ERP databases. Those consequential actions are strictly isolated within the **MudraForge Adesha Enterprise Governance Engine** (see [`docs/ENTERPRISE_GOVERNANCE.md`](./docs/ENTERPRISE_GOVERNANCE.md)).
 

@@ -89,7 +89,8 @@ To maintain institutional credibility, public documentation must never blur the 
 | **Synthetic AP Execution Trace (`examples/`)** | Layer 1: Public Package | `PUBLIC_DEMO_SYNTHETIC` | Immediate (`npm run example:trace`) | Modeled 7-stage lifecycle with synthetic test fixtures |
 | **Cloudflare Anycast Edge Sync** | Layer 2: Public Edge Service | `PUBLIC_EDGE_SYNC` | Free Beta (`api.mudraforge.in`) | Cloudflare Edge Worker manifest & bundle endpoints |
 | **Interactive API Documentation** | Layer 2: Public Edge Service | `PUBLIC_EDGE_SYNC` | Free Beta (`/api/v1/statutory/docs`) | OpenAPI 3.1 schema rendered live on Anycast edge |
-| **Deterministic Tax Calculators** | Layer 3: Enterprise Internal | `PILOT_STAGE_INTERNAL` | Metered Enterprise API (Selective) | Deterministic arithmetic engine under test harness |
+| **Deterministic Calculators (7 Pure Functions)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (`@mudraforge/statutory/calculators`) | Corporate tax MAT vs concessional, GST POS/LUT, TP ALP, Section 79, Ind AS 109, Section 288B |
+| **Hosted AP Engine & Cumulative Spend Tracking** | Layer 3: Enterprise Internal | `PILOT_STAGE_INTERNAL` | Metered Enterprise API (Selective) | Hosted cumulative Section 194Q thresholding & Section 16 MSMED interest |
 | **Dual-Custody Mobile Approval Harness** | Layer 4: Adesha Runtime | `INTERNAL_PROTOTYPE` | Enterprise License / Pilot Proposal | Mobile passkey approval prototype & TLA+ state machine |
 | **ERP Two-Way Connectors (SAP/Tally/Zoho)** | Layer 4: Adesha Runtime | `INTERNAL_DEVELOPMENT` | Custom Enterprise Pilot | Shadow-mode test connectors; no turnkey plug-ins shipped |
 | **Bank Rail API Adapters (ICICI/HDFC/RazorpayX)**| Layer 4: Adesha Runtime | `INTERNAL_DEVELOPMENT` | Custom Enterprise Pilot | Sandbox banking adapters requiring corporate partner onboarding |
