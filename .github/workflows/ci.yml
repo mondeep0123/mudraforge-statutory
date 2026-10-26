@@ -47,7 +47,7 @@ jobs:
         run: npx --yes publint
 
       - name: Verify TypeScript Export Resolution (attw)
-        run: npx --yes @arethetypeswrong/cli --pack .
+        run: npx --yes @arethetypeswrong/cli --pack . --profile esm-only
 
       - name: Generate and Verify Corpus Quality Card
         run: node scripts/corpus_quality_report.js

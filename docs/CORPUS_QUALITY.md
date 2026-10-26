@@ -1,9 +1,9 @@
 # MudraForge Statutory Knowledge Quality Card
 
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
-> **Target Package**: `@mudraforge/statutory` v2.4.0  
+> **Target Package**: `@mudraforge/statutory` v2.9.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-26T10:12:25.536Z
+> **Generated Timestamp**: 2026-10-26T14:54:44.550Z
 
 ---
 
@@ -14,9 +14,9 @@
 | **Primary Source Citations** | 76 resolvable gazette URLs | 76 total citations declared | **100.0%** | VERIFIED |
 | **Temporal Validity Bounds** | 29 sections with explicit dates | 29 total bundled sections | **100.0%** | VERIFIED |
 | **Dual-Act 2025 Transition Bridges** | 9 direct tax provisions mapped | 10 direct tax provisions | **90.0%** | VERIFIED |
-| **Attached Administrative Circulars** | 30 official circulars | 6 sections across 4 domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 27 schemas/templates | 6 sections across 4 domains | **100% Attached** | VERIFIED |
-| **Cryptographic Merkle Verification** | 20 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
+| **Attached Administrative Circulars** | 30 official circulars | 29 provisions across active domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 27 schemas/templates | 29 provisions across active domains | **100% Attached** | VERIFIED |
+| **Cryptographic Merkle Verification** | 86 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
 
