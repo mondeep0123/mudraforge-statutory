@@ -323,6 +323,9 @@ export declare const PAN_ENTITY_TYPES: Record<string, { code: string; name: stri
 export declare function isValidGstinChecksum(gstin: string): boolean;
 export declare function decodeTaxIdentifier(rawId: string): TaxIdentifierResult;
 
+export declare const CURRENT_RELEASE_MERKLE_ROOT: string;
+export declare const MERKLE_ROOT_OKF_V2: string;
+
 export declare function roundToPaisa(amount: number | string): number;
 export declare function roundSection288B(amount: number | string): number;
 export declare function calculateCorporateTaxMatVsConcessional(payload?: any): any;
@@ -330,6 +333,23 @@ export declare function evaluatePlaceOfSupplyAndLut(payload?: any): any;
 export declare function calculateTransferPricingAlp(payload?: any): any;
 export declare function evaluateSection79LossContinuity(payload?: any): any;
 export declare function revalueForeignExchangeIndAs109(payload?: any): any;
+export declare function evaluateSection194Q(payload: any): any;
+export declare function evaluateSection194C(payload: any): any;
+export declare function evaluateSection194H(payload: any): any;
+export declare function evaluateSection194I(payload: any): any;
+export declare function evaluateSection194J(payload: any): any;
+export declare function evaluateSection206C1H(payload: any): any;
+export declare function evaluateSection43bH(payload: any): any;
+export declare function calculateMsmeCompoundInterest(payload: any): any;
+export declare function calculateAdvanceTaxAndInterest(payload: any): any;
+export declare function calculateGstItcApportionmentRule42_43(payload: any): any;
+export declare function evaluateCrossBorderRemittance(payload: any): any;
+export declare function getRbiBankRateForDate(dateString?: string): number;
+export declare const DEFAULT_RBI_BANK_RATE: number;
+export declare const MSMED_RATE_MULTIPLIER: number;
+export declare const RBI_BANK_RATE_SCHEDULE: Array<{ effectiveFrom: string; effectiveTo: string | null; rate: number; notificationRef: string }>;
+export declare const AUTHORITATIVE_STATUTORY_RATES: Record<string, any>;
+export declare const VALID_194J_CATEGORIES: string[];
 
 export interface StatutoryOutcome {
     code: string;

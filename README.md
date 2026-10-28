@@ -28,6 +28,7 @@ import {
 } from '@mudraforge/statutory';
 
 // 1. Instant offline statutory lookup (sub-1ms, zero network calls, zero API keys)
+// Note: lookupStatute() is async and returns the full temporal envelope: { status, temporalStatus, statute, source }
 const section = await lookupStatute('194Q');
 console.log(section.statute.title);
 // => "Deduction of tax at source on payment of a certain sum for purchase of goods"
@@ -81,25 +82,34 @@ In enterprise finance, no CFO, audit committee, or enterprise risk officer will 
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Quick Start (Free Tier)](#quick-start-free-tier)
-  - [1. Installation via npm](#1-installation-via-npm)
-  - [2. Initialize AI Agent Skill](#2-initialize-ai-agent-skill)
-  - [3. Direct Programmatic Traversal](#3-direct-programmatic-traversal-zero-dependencies-offline-first)
+- [30-Second Quick Start (100% Offline, Zero Dependencies)](#30-second-quick-start-100-offline-zero-dependencies)
+- [Overview: Why We Open-Source Adesha's Statutory Substrate](#overview-why-we-open-source-adeshas-statutory-substrate)
 - [Supported Application Patterns](#supported-application-patterns)
   - [1. AI Agents & LLM Tooling](#1-ai-agents--llm-tooling)
   - [2. Finance Software & Accounts-Payable Workflows](#2-finance-software--accounts-payable-workflows)
   - [3. Developer Tooling & Audit Verification](#3-developer-tooling--audit-verification)
-- [Product Capability Status & Operational Boundaries](#product-capability-status--operational-boundaries)
-- [Supervised Shadow Pilot Evaluation Guide (docs/PILOT_EVALUATION_GUIDE.md)](./docs/PILOT_EVALUATION_GUIDE.md)
-- [Legal Domains Currently Covered](#legal-domains-currently-covered)
-- [Structured OKF Directory Hierarchy](#structured-okf-domain-hierarchy-zero-token-discovery)
-- [Canonical Edge Synchronization](#canonical-edge-synchronization-full-statutory-universe)
-- [Enterprise Tier (Paid Cloud Execution)](#enterprise-tier-paid-cloud-execution--analysis-mode)
-  - [Edge API Endpoints & Rate Limits](#enterprise-edge-api-endpoints--rate-limits)
-  - [Error Semantics & Response Codes](#error-semantics--response-codes)
+- [Separation of Statutory Knowledge from Autonomous Execution](#separation-of-statutory-knowledge-from-autonomous-execution)
+- [Statutory Authority & Epistemic Boundary](#statutory-authority--epistemic-boundary)
+- [Project Identity, Audience & Non-Goals](#project-identity-audience--non-goals)
+- [Published Inventory Metrics](#published-inventory-metrics)
+- [Rationale: Authoritative Knowledge Substrate vs. Probabilistic Web RAG](#rationale-authoritative-knowledge-substrate-vs-probabilistic-web-rag)
+- [Architectural Principle: Separation of Law & Deterministic Computation](#architectural-principle-separation-of-law--deterministic-computation)
 - [System Origin & Validation Baseline](#system-origin--validation-baseline)
-- [The Payment Instruction Boundary & End-to-End AP Architecture](#the-payment-instruction-boundary--end-to-end-ap-architecture)
+- [Legal Domains Currently Covered](#legal-domains-currently-covered)
+- [Product Capability Status & Operational Boundaries](#product-capability-status--operational-boundaries)
+- [Architectural Boundaries: Open Substrate vs. Hosted Edge vs. Adesha Platform](#architectural-boundaries-open-substrate-vs-hosted-edge-vs-adesha-platform)
+- [Free OKF Sync and Maintenance Policy](#free-okf-sync-and-maintenance-policy)
+- [Structured OKF Domain Hierarchy (Zero-Token Discovery)](#structured-okf-domain-hierarchy-zero-token-discovery)
+- [Canonical Edge Synchronization (Full Statutory Universe)](#canonical-edge-synchronization-full-statutory-universe)
+- [Agent Skills, CLI Tooling & CI/CD Verification](#agent-skills-cli-tooling--cicd-verification)
+  - [1. Initialize AI Agent Skill](#1-initialize-ai-agent-skill)
+  - [2. Direct Synchronous Local Read (lookupLocalStatute)](#2-direct-synchronous-local-read-lookuplocalstatute)
+  - [3. CLI Verification, Auditing & Pipeline Integration](#3-cli-verification-auditing--pipeline-integration)
+- [Commercial & Enterprise Platform Ecosystem](#commercial--enterprise-platform-ecosystem)
+- [Developer Tooling & Verification Gates](#developer-tooling--verification-gates)
+- [A Note from the Maintainer](#a-note-from-the-maintainer)
+- [Institutional Documentation & Architecture](#institutional-documentation--architecture)
+- [License](#license)
 
 ---
 
@@ -169,8 +179,8 @@ The repository currently publishes a verified inventory across five regulatory d
 - **29 Indexed Core Provisions**: Section 194Q, Section 194J, Section 194C, Section 194I, Section 194H, Section 206C(1H) sunset, Section 393 (Act 2025 crosswalk), Section 115BAA & 115JB (Corporate Tax MAT vs Concessional Regime), CGST Section 16(2) (ITC conditions & 180-day rule), CGST Section 17(5) (blocked credits), IGST Section 16 & Section 2(6) (Zero-Rated Export under LUT), MSMED Act Sections 15 & 16, US IRC §§ 901 & 904, Section 92C & Rule 10CA (Transfer Pricing ALP), Section 79 & Section 32(2) (Loss Carry-Forward & Virmani Doctrine), Section 50B (Slump Sale & Successor Liability), and Ind AS 21 & Ind AS 109 (Foreign Exchange Revaluation).
 - **30 Official Executive Circulars & Memoranda**: CBDT Circular 13/2021, CBDT Circular 23/2017, CBDT Circular 03/2020, CBDT Circular 29/2019, CBDT Circular 09/2020, CBDT Notification 86/2015, Finance Act 2024 Rate Cut Memo, Finance Act 2025 Sunset Memorandum, CBIC Circular 170/02/2022-GST, CBIC Circular 172/04/2022-GST, CBIC Circular 161/17/2021-GST, Ministry of MSME OM 1/4(1)/2021-P&G/Policy, MCA Ind AS 21 Rules, CBDT Notification 68/2021 (Rule 11UAE FMV), CBIC Notification 12/2017 Entry 2.
 - **27 Compliance Form Schemas & Verification Checklists**: Form 26Q quarterly TDS return, Form 16A certificate, Form 10-IC concessional tax election, Form GST RFD-11 LUT declaration, Form 3CEB transfer pricing report, Section 79 continuity schedule, Ind AS 109 hedge reserve schedule, Transporter declaration, GSTR-3B Table 4 reversal/reclaim reconciliation, GSTR-2B Table 4(B) ineligible ITC reconciliation, UDYAM portal registration verification, Companies Act Schedule III corporate balance sheet notes, Form 67 (Rule 128), US IRS Schedule K-3, Form 3CEA CA slump sale report schema, Section 281 & Section 313 M&A tax due diligence checklist, and Vendor PAN / Section 206AB declarations.
-- **7 Zero-Dependency Deterministic Calculators**: Pure, mathematical computation engines for Corporate Tax MAT vs 115BAA, Place of Supply & LUT Export, Transfer Pricing ALP & Rule 10CA Range Concept, Section 79 Loss Carry-Forward & Unabsorbed Depreciation, and Ind AS 21 & 109 Foreign Exchange Revaluation.
-- **100% Corpus Verification Suite**: Validated with 80/80 test suites passing, 108 primary citations with deep semantic integrity, and cryptographically pinned Merkle root.
+- **7 Zero-Dependency Deterministic Calculators**: Pure, mathematical computation engines for: (1) Corporate Tax MAT vs 115BAA (`calculateCorporateTaxMatVsConcessional`), (2) Place of Supply & LUT Export (`evaluatePlaceOfSupplyAndLut`), (3) Transfer Pricing ALP & Rule 10CA (`calculateTransferPricingArmLength`), (4) Section 79 Loss Carry-Forward & Virmani Doctrine (`evaluateSection79LossContinuity`), (5) Ind AS 21 & 109 Forex Revaluation (`calculateForexRevaluationIndAs`), (6) Section 16 MSMED Compound Interest (`calculateMsmeCompoundInterest`), and (7) Section 288B Tax Rounding (`roundTaxSection288B`) — accompanied by 27 core TDS/TCS statutory withholding calculators in `@mudraforge/statutory/calculators`.
+- **100% Corpus Verification Suite**: Validated with 88/88 test suites passing, 108 primary citations with deep semantic integrity, and cryptographically pinned Merkle root.
 
 ---
 
@@ -211,7 +221,7 @@ It is currently released as a **Public Beta**. The bundled schemas and temporal 
 ## Legal Domains Currently Covered
 
 > **Full 11-Domain Roadmap & Lifecycle Matrix**:  
-> For the complete architectural matrix comparing the 4 starter domains against the full 11-domain sovereign roadmap (including Indian Accounting Standards [Ind AS], MCA Corporate Governance, and SEBI LODR), see [`docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md`](./docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md).
+> For the complete architectural matrix comparing the 5 starter domains against the full 11-domain sovereign roadmap (including Indian Accounting Standards [Ind AS], MCA Corporate Governance, and SEBI LODR), see [`docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md`](./docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md).
 
 The OKF substrate currently indexes and enforces ground truth across five major regulatory domains:
 
@@ -253,14 +263,14 @@ To ensure absolute clarity for developers, finance leaders, prospective pilot cu
 
 | Subsystem / Capability | Operational Classification | Availability / Access | Current Verification Evidence |
 | :--- | :--- | :--- | :--- |
-| **Bundled OKF Statutory Corpus (29 Provisions across 5 Domains)** | **Public Package** | Shipped in repository & release candidates (`okf/`) | 80/80 test suites passing; deterministic SHA-256 Merkle root |
+| **Bundled OKF Statutory Corpus (29 Provisions across 5 Domains)** | **Public Package** | Shipped in repository & release candidates (`okf/`) | 88/88 test suites passing; deterministic SHA-256 Merkle root |
 | **Zero-Network CLI (`mudraforge-statutory`)** | **Public Package** | Immediate via `npx @mudraforge/statutory` | `bin/cli.js` verified across Windows and Linux |
 | **Vendor-Neutral Conformance Suite** | **Public Package** | Immediate via `conformance/` (`npm run conformance`) | 12/12 fixture tests passing |
 | **Local Query SDK (`src/index.js`)** | **Public Package** | Immediate via `import { lookupStatute }` | Zero runtime dependencies; offline temporal state evaluation |
 | **Synthetic AP Execution Trace (`examples/`)** | **Public Package (Modeled Demo)** | Immediate via `npm run example:trace` | Synthetic invoice trace demonstrating 7-stage lifecycle with modeled fixtures |
 | **Cloudflare Anycast Edge Sync** | **Public Edge Service** | Free Beta via `api.mudraforge.in` | Global edge sync (`npx @mudraforge/statutory sync`) with ETag 304 caching |
 | **Interactive API Documentation** | **Public Edge Service** | Free Beta via `/api/v1/statutory/docs` | OpenAPI 3.1 schema and interactive documentation rendered on Anycast edge |
-| **Deterministic Calculators (7 Pure Functions)** | **Public Package** | Immediate via `@mudraforge/statutory/calculators` | Corporate tax MAT vs concessional, GST POS/LUT, TP ALP, Section 79, Ind AS 109, Section 288B |
+| **Deterministic Calculators (7 Pure Functions)** | **Public Package** | Immediate via `@mudraforge/statutory/calculators` | Corporate tax MAT vs 115BAA, GST POS/LUT, TP ALP, Section 79, Ind AS 109, Section 16 MSMED, Section 288B (plus 27 TDS/TCS calculators) |
 | **Hosted AP Engine & Cumulative Spend Tracking** | **Enterprise Edge / Internal** | Metered Enterprise API (Selective) | Hosted Section 194Q cumulative spend & Section 16 MSMED interest engine |
 | **Dual-Custody Mobile Approval Harness** | **Enterprise Internal / Pilot** | Enterprise Pilot Proposal | Mobile passkey approval prototype & TLA+ state machine (`specs/`) |
 | **ERP Two-Way Connectors (SAP/Tally/Zoho)** | **Enterprise Internal / Pilot** | Custom Enterprise Pilot Integration | Shadow-mode test connectors; no turnkey plug-ins shipped |
@@ -281,7 +291,7 @@ To ensure clarity for developers, CAs, and prospective enterprise clients, the o
 | **Statutory Knowledge** | Bundled Starter Seed (29 Verified Sections across 5 Domains) | 29 Active Provisions (Roadmap Catalog in expansion) | Full Sovereign Catalog + Custom Private Enterprise Contracts |
 | **Lookup Engine** | Exact code, alias & folder path resolution | System-1 Semantic Intent & Rule Discovery | Multi-tenant RAG & Context Assembler |
 | **Temporal Status** | Offline deterministic evaluation (`computeTemporalStatus`) | Live temporal state machine resolution | In-flight temporal locks across transaction lifecycle |
-| **Deterministic Calculators**| **Included** (7 Zero-dependency pure mathematical calculators exported in `src/calculators.js`) | Hosted calculation endpoint (`POST /calculate`) | Full arithmetic engine with ₹50L excess & 3x RBI interest |
+| **Deterministic Calculators**| **Included** (7 Zero-dependency pure mathematical calculators exported in `src/calculators.js` via `@mudraforge/statutory/calculators`) | Hosted calculation endpoint (`POST /calculate`) | Full arithmetic engine with ₹50L excess & 3x RBI interest |
 | **Payment Authorization** | *Not included* | *Not included* | **Single-Use Cryptographic Payment Leases (TLA+ verified)** |
 | **Banking Execution** | *Not included* | *Not included* | **Host-to-Host Bank Rails (RazorpayX / ICICI / HDFC)** |
 | **ERP Writebacks** | *Not included* | *Not included* | **Balanced double-entry journal writebacks (SAP / Zoho)** |
@@ -371,7 +381,7 @@ Because the folder hierarchy separates legal domains and provisions cleanly, an 
 
 ## Canonical Edge Synchronization (Full Statutory Universe)
 
-The package bundles an initial curated baseline snapshot across all four domains. **To pull the complete, continually expanding statutory catalog from the Cloudflare Anycast edge API into your local workspace:**
+The package bundles an initial curated baseline snapshot across all five domains. **To pull the complete, continually expanding statutory catalog from the Cloudflare Anycast edge API into your local workspace:**
 
 ```bash
 # Step 1: Check if newer statutes, circulars, or gazette amendments exist on the edge
@@ -386,35 +396,28 @@ npx @mudraforge/statutory browse
 
 ---
 
-## Quick Start (Free Tier)
+## Agent Skills, CLI Tooling & CI/CD Verification
 
-### 1. Installation via npm
-```bash
-npm install @mudraforge/statutory
-```
-
-### 2. Initialize AI Agent Skill
-Installs `SKILL.md` into your workspace's `.agents/skills/` directory:
+### 1. Initialize AI Agent Skill
+Installs `SKILL.md` into your workspace's `.agents/skills/` directory for Claude Code, Cursor, Antigravity, or Copilot:
 ```bash
 npx @mudraforge/statutory init-skill
 ```
 
-### 3. Direct Programmatic Traversal (Zero Dependencies, Offline-First)
+### 2. Direct Synchronous Local Read (lookupLocalStatute)
 ```javascript
-import { lookupLocalStatute, isStatuteActive } from '@mudraforge/statutory';
+import { lookupLocalStatute } from '@mudraforge/statutory';
 
-// 1. Look up Section 194Q from local disk (0 network calls, direct filesystem read)
+// Direct synchronous read from local disk (zero network calls, zero async overhead)
+// Note: lookupLocalStatute() returns the unwrapped statute object directly.
+// (Use async lookupStatute() when you need the complete temporal envelope: { status, temporalStatus, statute, source })
 const statute = lookupLocalStatute('194Q');
 console.log(statute.title);
 console.log(statute.keyStatutoryThresholds.taxableBaseScope);
 // => "Tax is deductible strictly on the excess over ₹50 Lakhs, NOT on the aggregate gross turnover."
-
-// 2. Check temporal status (detecting legislative sunsets)
-const isActive2024 = await isStatuteActive('206C(1H)', '2024-05-01'); // true
-const isActive2025 = await isStatuteActive('206C(1H)', '2025-06-01'); // false (omitted by Finance Act, 2025)
 ```
 
-### 4. CLI Verification, Auditing & Pipeline Integration
+### 3. CLI Verification, Auditing & Pipeline Integration
 
 The CLI provides cryptographic provenance checking, offline integrity verification, and machine-readable JSON output for CI/CD audit pipelines:
 
@@ -551,7 +554,7 @@ If you are working on autonomous financial systems or want to discuss the roadma
 All deep-dive architectural specifications, governance boundaries, quality reports, and catalogs are organized in the [`docs/`](./docs/) directory:
 
 - **[Statutory Knowledge Catalog](./docs/CATALOG.md)**: Full table of all indexed provisions, key thresholds, and return schemas.
-- **[Domain Breadth & Depth Comparison](./docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md)**: 4-domain starter commons vs. 11-domain edge roadmap.
+- **[Domain Breadth & Depth Comparison](./docs/DOMAIN_BREADTH_AND_DEPTH_COMPARISON.md)**: 5-domain starter commons vs. 11-domain edge roadmap.
 - **[Architecture Decisions (ADRs)](./docs/ARCHITECTURE_DECISIONS.md)**: Formal architecture decision records (ADR-0001 through ADR-0006).
 - **[Architecture Specification](./docs/ARCHITECTURE.md)**: Master specification of the Adesha Sovereign Runtime & Statutory Engine.
 - **[Corpus Quality Card](./docs/CORPUS_QUALITY.md)**: Machine-verified citation health, temporal bounds, and dual-act coverage.

@@ -12,7 +12,7 @@
 Developers, AI agents, and enterprise ERP integrations need access to Indian statutory provisions (such as Section 194Q, 194J, 206C(1H), MSMED 15/16, and GST 17(5)). Relying solely on a hosted remote API introduces network latency, availability risks, single-point-of-failure vulnerabilities, and developer friction (requiring API keys for basic lookups).
 
 ### Decision
-We bundle an offline starter package of 6 canonical provisions across 4 domains directly within the NPM package filesystem (`okf/`), validated by an immutable SHA-256 Merkle root digest. 
+We bundle an offline package of 29 canonical provisions across 5 domains directly within the NPM package filesystem (`okf/`), validated by an immutable SHA-256 Merkle root digest. 
 - Lookups in default or `mode: 'local'` execute entirely against local disk with zero network requests.
 - Hosted Cloudflare Anycast edge synchronization is provided on a best-effort basis during beta to discover real-time gazette updates and expanded unbundled provisions.
 - If edge sync is unreachable, callers automatically degrade to the verified local snapshot with an explicit `advisory` signal.
@@ -69,7 +69,7 @@ We establish three independent, non-interchangeable versioning dimensions:
 | :--- | :--- | :--- | :--- |
 | **`okfVersion`** | Knowledge Schema Structure | Incremented only when the JSON schema or metadata fields change (e.g., adding a required field). | `0.2.0` |
 | **`corpusRelease`** | Legal Corpus Snapshot | Incremented when statutory provisions, rates, or circulars are updated or added. | `2026.04.1` |
-| **`version`** (SemVer) | NPM Client SDK & CLI | Standard Semantic Versioning for the JavaScript library, CLI commands, and test runners. | `2.9.0` |
+| **`version`** (SemVer) | NPM Client SDK & CLI | Standard Semantic Versioning for the JavaScript library, CLI commands, and test runners. | `2.10.0` |
 
 ---
 
@@ -82,7 +82,7 @@ To maintain institutional credibility, public documentation must never blur the 
 
 | Subsystem / Capability | Architectural Layer | Operational Status | Availability / Access | Verification Evidence |
 | :--- | :--- | :--- | :--- | :--- |
-| **Bundled OKF Statutory Corpus (29 Provisions across 5 Domains)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Local repo & release candidate) | 80/80 test suites passing; SHA-256 Merkle root verified |
+| **Bundled OKF Statutory Corpus (29 Provisions across 5 Domains)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Local repo & release candidate) | 88/88 test suites passing; SHA-256 Merkle root verified |
 | **Zero-Network CLI (`mudraforge-statutory`)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Global / NPX) | `bin/cli.js` verified across Windows & Linux |
 | **Vendor-Neutral Conformance Suite** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (`conformance/`) | 12/12 fixture tests passing |
 | **Local Query SDK (`src/index.js`)** | Layer 1: Public Package | `PUBLIC_BUNDLED` | Immediate (Node.js v18+) | Zero-dependency offline lookup and temporal checks |

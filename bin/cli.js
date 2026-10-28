@@ -932,8 +932,6 @@ Options:
   --no-update-check         Bypass automated background npm package update checks
   --json, -j                Emit clean, machine-parseable JSON to stdout (suppresses banners)
   --offline, -o             Bypass outbound network checks (air-gapped / offline environment mode)
-  --json, -j                Emit clean, machine-parseable JSON to stdout (suppresses banners)
-  --offline, -o             Bypass outbound network checks (air-gapped / offline environment mode)
 
 Exit Code Conventions:
   0                         Success / Verification passed

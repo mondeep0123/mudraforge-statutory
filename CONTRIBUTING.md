@@ -123,6 +123,7 @@ Place your files in the appropriate domain folder under `./okf/`:
 - `indirect_tax_gst/`
 - `msme_commercial/`
 - `international_tax/`
+- `corporate_ma_restructuring/`
 
 ### Step 4: Run the Schema Linter & Validator
 We provide an automated validator that verifies all fields, dates, URLs, and frontmatter:

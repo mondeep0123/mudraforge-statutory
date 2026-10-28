@@ -108,7 +108,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 
     md += `\n---\n\n## Coverage, Freshness & Verification Registry
 
-The table below records the provenance baseline, verification standard, and explicit operational boundaries for each bundled provision.
+The table below records the provenance baseline, verification standard, and operational boundaries for core bundled provisions. For the complete provision-by-provision quality registry covering all 29 provisions across all 5 domains, see [**CORPUS_QUALITY.md**](./CORPUS_QUALITY.md).
 
 | Section Code | Subject Domain | Jurisdiction | Epistemic Baseline | Bundled Status | Verification Standard | Known Coverage Limitations |
 |---|---|---|---|---|---|---|
@@ -129,15 +129,16 @@ The table below records the provenance baseline, verification standard, and expl
 
         for (const sec of domainSections[domain]) {
             const relSecPath = `okf/${domain}/${sec.folderName}/section.json`;
+            const anchorId = sec.sectionCode.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-            md += `#### Section ${sec.sectionCode}: ${sec.title}\n\n`;
+            md += `<a id="${anchorId}"></a>\n\n#### Section ${sec.sectionCode}: ${sec.title}\n\n`;
             md += `- **Governing Statute**: ${sec.governingStatute}\n`;
             md += `- **Successor Provision**: ${sec.successorStatute} &mdash; ${sec.successorSection}\n`;
             md += `- **Temporal Validity**: \`${sec.effectivePeriod.validFrom}\` to \`${sec.effectivePeriod.validTo}\`\n`;
             if (sec.effectivePeriod.sunsetNotes) {
                 md += `- **Legislative Sunset / Transition**: ${sec.effectivePeriod.sunsetNotes}\n`;
             }
-            md += `- **Machine-Readable Source**: [\`${relSecPath}\`](./${relSecPath})\n\n`;
+            md += `- **Machine-Readable Source**: [\`${relSecPath}\`](../${relSecPath})\n\n`;
 
             md += `**Statutory Summary**:\n> ${sec.plainTextSummary}\n\n`;
 
@@ -157,7 +158,7 @@ The table below records the provenance baseline, verification standard, and expl
                 md += `**Executive Circulars Bundled**:\n`;
                 for (const circ of sec.circulars) {
                     const cPath = `okf/${domain}/${sec.folderName}/circulars/${circ}`;
-                    md += `- [\`${circ}\`](./${cPath})\n`;
+                    md += `- [\`${circ}\`](../${cPath})\n`;
                 }
                 md += `\n`;
             }
@@ -166,7 +167,7 @@ The table below records the provenance baseline, verification standard, and expl
                 md += `**Compliance Return Schemas & Templates**:\n`;
                 for (const form of sec.forms) {
                     const fPath = `okf/${domain}/${sec.folderName}/forms/${form}`;
-                    md += `- [\`${form}\`](./${fPath})\n`;
+                    md += `- [\`${form}\`](../${fPath})\n`;
                 }
                 md += `\n`;
             }

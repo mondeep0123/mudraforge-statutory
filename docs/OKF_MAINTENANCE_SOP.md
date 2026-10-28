@@ -106,7 +106,7 @@ Rather than making unprovable claims of "zero hallucination", the MudraForge pro
 
 | Artifact | Primary Consumer | Content Mandate | Operational Role |
 |---|---|---|---|
-| [`section.json`](file:///d:/work/packages/statutory/okf/direct_tax/tds_goods_194q/section.json) | **Deterministic Engine Runtime** | Typed numbers, effective dates, boolean applicability conditions, and threshold formulas. | Machine execution on CPU. Prevents mathematical drift, rate confusion, and arithmetic errors. |
+| [`section.json`](../okf/direct_tax/tds_goods_194q/section.json) | **Deterministic Engine Runtime** | Typed numbers, effective dates, boolean applicability conditions, and threshold formulas. | Machine execution on CPU. Prevents mathematical drift, rate confusion, and arithmetic errors. |
 | `circulars/*.md` | **LLM Agents & Human Auditors** | Semantic legal context, executive interpretations, judicial precedents, and YAML frontmatter. | Cross-domain reasoning, statutory crosswalks, exception argumentation, and human auditability. |
 | `forms/*` | **Compliance & Reporting Systems** | Machine-evaluable JSON schemas and Markdown return checklists. | Return preparation, ERP writeback payloads, and statutory disclosure schedules. |
 
@@ -141,7 +141,7 @@ In `section.json`, the legal instrument itself must be fully described so that s
 ```
 
 ### 4.3 Domain Whitelist Enforcement
-All citation URLs must belong to the regulatory domain whitelist defined in [`scripts/verify_citation_links.js`](file:///d:/work/packages/statutory/scripts/verify_citation_links.js). Citations to commercial blogs, paywalled content aggregators, or unvetted third-party websites are prohibited.
+All citation URLs must belong to the regulatory domain whitelist defined in [`scripts/verify_citation_links.js`](../scripts/verify_citation_links.js). Citations to commercial blogs, paywalled content aggregators, or unvetted third-party websites are prohibited.
 
 ### 4.4 Protocol Security & TLS Trust
 - **100% HTTPS Enforcement**: Insecure `http://` links are rejected by the linter.
@@ -213,13 +213,13 @@ npm run manifest:check
 Record the resulting root hash in release notes.
 
 ### Step 8: Client Pinning & Trust Anchor Verification
-1. Add the updated root digest to `PINNED_RELEASE_ROOTS` in [`src/index.js`](file:///d:/work/packages/statutory/src/index.js).
+1. Add the updated root digest to `PINNED_RELEASE_ROOTS` in [`src/index.js`](../src/index.js).
 2. For remote edge synchronization, verify Ed25519 digital signature validation against the MudraForge Root Authority.
 
 ### Step 9: Dual Regression Testing
 Execute both package unit tests and the core engine verification suite:
 ```powershell
-# 1. Package Regression Suite (49 tests)
+# 1. Package Regression Suite (88 test suites)
 npm run test
 
 # 2. Engine Unified Test Runner (68 suites)
@@ -228,7 +228,7 @@ npm --prefix ../../mudraforge-sarvam test
 # 3. Adesha Benchmark Runner (6 scenarios)
 node ../../mudraforge-sarvam/tests/benchmarks/adesha_benchmark_challenge_01_runner.js
 ```
-*Pass Criteria*: 100% passing across all 123 test suites and benchmark scenarios with 0 regressions.
+*Pass Criteria*: 100% passing across all 156 test suites and benchmark scenarios with 0 regressions.
 
 ### Step 10: SemVer Release & Distribution
 1. Bump package version in `package.json` and synchronize `STATUTORY_CLIENT_VERSION` in `src/index.js`.
@@ -259,10 +259,10 @@ Claims of test passage and release integrity are substantiated by the following 
 
 | Verification Layer | Active Release Evidence | Location / Verification Command |
 |---|---|---|
-| **Cryptographic Root** | `sha256-3f25fc3941d29de5b8befc0ddb24d1bb2632067f00b200680cf784961616424c` | `npm run manifest:check` across all 59 files |
-| **Citation Network Liveness** | 70/70 passing citations across 13 regulatory domains (0 failures) | `node scripts/verify_citation_links.js --live` |
-| **Statutory Schema Conformance** | 18/18 sections, 19 circulars, 22 forms passing OKF v0.2 linter | `npm run validate` |
-| **Package Regression** | 49/49 test suites passing with 100% reproducible precision | `npm run test` in `packages/statutory` |
+| **Cryptographic Root** | `sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0` | `npm run manifest:check` across all 86 files |
+| **Citation Network Liveness** | 76/76 passing citations across 5 regulatory domains (0 failures) | `node scripts/verify_citation_links.js --live` |
+| **Statutory Schema Conformance** | 29/29 sections, 30 circulars, 27 forms passing OKF v0.2 linter | `npm run validate` |
+| **Package Regression** | 88/88 test suites passing with 100% reproducible precision | `npm run test` in `packages/statutory` |
 | **Engine Invariant Regression** | 68/68 test suites passing across governance runtime and TLA+ oracles | `npm test` in `mudraforge-sarvam` |
 | **Adesha Benchmark Challenge 01** | 6/6 scenarios scored (Base 100/100, Variants A-E verified) | `node mudraforge-sarvam/tests/benchmarks/adesha_benchmark_challenge_01_runner.js` |
 | **Live NPM Consumer** | Installed and verified live from registry in clean consumer | `node scratch/fresh_public_npm_consumer/test_live_npm_benchmark.js` |
@@ -273,14 +273,14 @@ Claims of test passage and release integrity are substantiated by the following 
 
 Before closing any maintenance task or cutting a new release, verify that each item is completed:
 
-- [ ] All 18 statutory provisions contain complete and valid `section.json` contracts.
+- [ ] All 29 statutory provisions contain complete and valid `section.json` contracts.
 - [ ] Every citation URL uses `https://` and resolves to an approved regulatory domain.
 - [ ] `npm run citations` reports 0 defects and 0 unauthorized domains.
 - [ ] `npm run validate` passes with 0 schema errors.
 - [ ] `npm run conformance` passes 12/12 fixture tests.
-- [ ] `npm run manifest:check` verifies all 59 files against SHA-256 digests.
+- [ ] `npm run manifest:check` verifies all 86 files against SHA-256 digests.
 - [ ] `PINNED_RELEASE_ROOTS` in `src/index.js` includes the active manifest root hash.
 - [ ] Two-pass precision lookup correctly resolves single-digit sections (`8`, `9(3)`).
-- [ ] All 49 package tests and 68 engine regression suites pass with 0 failures.
+- [ ] All 88 package tests and 68 engine regression suites pass with 0 failures.
 - [ ] Stale reference scan returns zero matches for deprecated names or legacy domains.
 - [ ] Version number in `package.json` exactly matches `STATUTORY_CLIENT_VERSION`.

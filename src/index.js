@@ -21,7 +21,26 @@ import {
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
-    revalueForeignExchangeIndAs109
+    revalueForeignExchangeIndAs109,
+    evaluateSection194Q,
+    evaluateSection194C,
+    evaluateSection194H,
+    evaluateSection194I,
+    evaluateSection194J,
+    evaluateSection206C1H,
+    evaluateSection43bH,
+    calculateMsmeCompoundInterest,
+    calculateAdvanceTaxAndInterest,
+    calculateGstItcApportionmentRule42_43,
+    evaluateCrossBorderRemittance,
+    generateMsme1AndScheduleThreeAging,
+    evaluateLowerDeductionCertificateValidity,
+    getRbiBankRateForDate,
+    DEFAULT_RBI_BANK_RATE,
+    MSMED_RATE_MULTIPLIER,
+    RBI_BANK_RATE_SCHEDULE,
+    AUTHORITATIVE_STATUTORY_RATES,
+    VALID_194J_CATEGORIES
 } from './calculators.js';
 import { 
     getStatutoryOutcomes, 
@@ -44,6 +63,12 @@ try {
 }
 export const DEFAULT_LOCAL_OKF_DIR = defaultOkfDir;
 export { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL };
+
+/**
+ * Current verified Merkle root digest for the active OKF v0.2 corpus.
+ */
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0';
+export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 
 /**
  * Pinned official release Merkle root digests.
@@ -1806,6 +1831,62 @@ export class StatutoryClient {
     }
 
     /**
+     * Section 194Q: Deduction of tax at source on purchase of goods exceeding ₹50 Lakh.
+     */
+    evaluateSection194Q(payload) {
+        return evaluateSection194Q(payload);
+    }
+
+    /**
+     * Section 194C: Withholding on contractor and sub-contractor payments.
+     */
+    evaluateSection194C(payload) {
+        return evaluateSection194C(payload);
+    }
+
+    /**
+     * Section 194H: Withholding on commission and brokerage payments.
+     */
+    evaluateSection194H(payload) {
+        return evaluateSection194H(payload);
+    }
+
+    /**
+     * Section 194I: Withholding on rent (land/building vs plant/machinery).
+     */
+    evaluateSection194I(payload) {
+        return evaluateSection194I(payload);
+    }
+
+    /**
+     * Section 194J: Withholding on professional and technical services (FTS).
+     */
+    evaluateSection194J(payload) {
+        return evaluateSection194J(payload);
+    }
+
+    /**
+     * MSMED Act Section 16: Compound interest with monthly rests at 3x RBI Bank Rate.
+     */
+    calculateMsmeCompoundInterest(payload) {
+        return calculateMsmeCompoundInterest(payload);
+    }
+
+    /**
+     * Section 43B(h): Year-end tax disallowance on overdue MSME invoices.
+     */
+    evaluateSection43bH(payload) {
+        return evaluateSection43bH(payload);
+    }
+
+    /**
+     * Section 195: Cross-border foreign remittance tax withholding.
+     */
+    evaluateCrossBorderRemittance(payload) {
+        return evaluateCrossBorderRemittance(payload);
+    }
+
+    /**
      * Retrieve statutory outcomes and disposition codes.
      * @param {string} [provision] Optional section code or provision alias
      * @param {Object} [options]
@@ -2828,6 +2909,25 @@ export {
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
     revalueForeignExchangeIndAs109,
+    evaluateSection194Q,
+    evaluateSection194C,
+    evaluateSection194H,
+    evaluateSection194I,
+    evaluateSection194J,
+    evaluateSection206C1H,
+    evaluateSection43bH,
+    calculateMsmeCompoundInterest,
+    calculateAdvanceTaxAndInterest,
+    calculateGstItcApportionmentRule42_43,
+    evaluateCrossBorderRemittance,
+    generateMsme1AndScheduleThreeAging,
+    evaluateLowerDeductionCertificateValidity,
+    getRbiBankRateForDate,
+    DEFAULT_RBI_BANK_RATE,
+    MSMED_RATE_MULTIPLIER,
+    RBI_BANK_RATE_SCHEDULE,
+    AUTHORITATIVE_STATUTORY_RATES,
+    VALID_194J_CATEGORIES,
     getStatutoryOutcomes,
     explainStatutoryDisposition,
     STATUTORY_OUTCOMES_DICTIONARY,

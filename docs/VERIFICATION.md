@@ -1,8 +1,8 @@
 # @mudraforge/statutory: Verification & Conformance Report
 
-> **Audited Package**: `@mudraforge/statutory` v2.9.0 (Public Open Knowledge Commons)  
+> **Audited Package**: `@mudraforge/statutory` v2.10.0 (Public Open Knowledge Commons)  
 > **Target Runtime**: Node.js v20+, Bun, Deno, Cloudflare Workers  
-> **Public Test Status**: 80 Multi-Domain Regression & Verification Suites Passing (100% Reproducible)  
+> **Public Test Status**: 88 Multi-Domain Regression & Verification Suites Passing (100% Reproducible)  
 > **Cryptographic Scope**: SHA-256 Merkle root digest over 86 bundled knowledge files (0 mismatches)  
 
 ---
@@ -27,7 +27,7 @@ This report documents:
 Any developer, Chartered Accountant, or auditor can reproduce the verification checks for this open-source package locally with **zero external network access**:
 
 ```bash
-# 1. Run the multi-domain regression suite (11 test suites covering all provisions & failure modes)
+# 1. Run the multi-domain regression suite (88 test suites covering all provisions & failure modes)
 npm test
 
 # 2. Run the fail-closed OKF schema & circular frontmatter validator
@@ -90,17 +90,17 @@ The conformance runner (`conformance/test_conformance.js`) tests parser behavior
 
 ## 6. Reproducible Release Tarball Verification
 
-Every published release tarball can be independently verified against Git tag `v2.9.0`:
+Every published release tarball can be independently verified against Git tag `v2.10.0`:
 
 ```bash
 # 1. Pack the distribution tarball
 npm pack
 
 # 2. Compute the SHA-256 checksum of the tarball (PowerShell)
-Get-FileHash mudraforge-statutory-2.9.0.tgz -Algorithm SHA256
+Get-FileHash mudraforge-statutory-2.10.0.tgz -Algorithm SHA256
 
 # Or in Linux / macOS:
-# sha256sum mudraforge-statutory-2.9.0.tgz
+# sha256sum mudraforge-statutory-2.10.0.tgz
 ```
 
 The resulting package contains exactly 124 audited files (zero extraneous build artifacts, zero internal development scripts).

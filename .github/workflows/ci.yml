@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'feat/**', 'fix/**' ]
   pull_request:
     branches: [ main ]
 
@@ -54,6 +54,9 @@ jobs:
 
       - name: Verify End-to-End AP Execution Trace
         run: node examples/simulate_end_to_end_trace.js
+
+      - name: Verify Documentation Links and Anchors
+        run: node scripts/verify_doc_links.js
 
       - name: Run Multi-Domain Regression Test Suite
         run: node test.js

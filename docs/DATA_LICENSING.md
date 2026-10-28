@@ -11,7 +11,7 @@ This document clearly distinguishes between:
 
 ## 1. Software Code & Tooling (MIT License)
 
-All executable code, client libraries, CLI binaries, test suites, and validation scripts in this repository are licensed under the **[MIT License](./LICENSE)**:
+All executable code, client libraries, CLI binaries, test suites, and validation scripts in this repository are licensed under the **[MIT License](../LICENSE)**:
 
 - `src/` (Client runtime, resolver, temporal state evaluator)
 - `bin/` (Command-line interface)

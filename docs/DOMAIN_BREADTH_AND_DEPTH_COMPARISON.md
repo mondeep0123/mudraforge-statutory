@@ -1,8 +1,8 @@
 # MudraForge Statutory Substrate: Breadth & Depth Analysis
 ## Public Package Seed vs. Full Sovereign Operating Engine
 
-> **Document Version**: `1.0.0`  
-> **Package**: `@mudraforge/statutory` (v2.9.0)  
+> **Document Version**: `2.0.0`  
+> **Package**: `@mudraforge/statutory` (v2.10.0)  
 > **Enterprise Sovereign Engine**: MudraForge Adesha Sovereign Runtime  
 > **Specification**: Google Open Knowledge Format (OKF v0.2)  
 
@@ -12,7 +12,7 @@
 
 This document provides the authoritative architectural matrix comparing the **Breadth** (regulatory domains covered) and **Depth** (granularity, operative provisos, evidence attestation, and mathematical enforcement) between:
 
-1. **The Public Package (`@mudraforge/statutory`)**: The lightweight, zero-dependency, offline-capable starter seed published for public AI agents and developer workflows.
+1. **The Public Package (`@mudraforge/statutory`)**: The lightweight, zero-dependency, offline-capable package of 29 verified provisions across 5 foundational domains published for public AI agents and developer workflows.
 2. **The Full Sovereign Engine (Adesha Runtime)**: The private enterprise financial operating substrate governing live Accounts Payable (AP), Treasury, and General Ledger writebacks on the MudraForge Cloudflare Global Anycast Edge.
 
 ---
@@ -23,15 +23,15 @@ This matrix delineates what is **natively bundled in the base package** (zero ne
 
 | # | Regulatory Domain | Base Package (Offline Clone / No Sync) | Edge Synced (`npx ... sync`) | Future Cloud Expansion (Internal Sovereign Engine) | Availability & Status in Package |
 | :-: | :--- | :--- | :--- | :--- | :---: |
-| **1** | **Direct Tax (TDS / TCS)** | Included: 3 core sections (194Q, 194J, 206C(1H) sunset) + 2 CBDT circulars + Form 26Q/16A schemas | Expanded withholding suite (194C contractors, 194I rent, 194H commission, Act 2025 Table 8 crosswalk) | Section 197 TRACES certificate quota vault, advance challan netting, automated double-entry JVs | **Bundled in Base**<br>*(Expanded via Sync)* |
-| **2** | **MSME & Working Capital** | Included: Sections 15 & 16 (15/45-day clock, 3x RBI interest, Sec 43B(h), Trader Exclusion OM, Schedule III disclosure) | Live quarterly RBI repo rate tables & MSEFC state facilitation rules | Multi-interval monthly compounding calculator (`calculateMultiIntervalMsmeInterest`), Sec 23 Form 3CD addback | **Bundled in Base**<br>*(Expanded via Sync)* |
-| **3** | **Indirect Tax (GST & ITC)** | Included: CGST Section 17(5) blocked credit negative list + Circular 172 employer obligations + GSTR-2B Table 4(B) | Section 16(2) 4-way matching rules & 180-day reversal calculation guidelines | Real-time Rule 48(4) IRN hash verification, Rule 89(5) Inverted Duty Structure (IDS) refund engine | **Bundled in Base**<br>*(Expanded via Sync)* |
-| **4** | **Financial Reporting (Ind AS)** | Not bundled in base | Baseline Ind AS 115 & 116 accounting summaries | **Full Indian Accounting Standards (Ind AS) Suite**: Ind AS 115 (5-step, variable constraint), Ind AS 116 (ROU/lease liability), Ind AS 103 (PPA/goodwill/NCI), Ind AS 109 (3-stage ECL), Ind AS 12 (DTA/DTL) | **Planned: Ind AS Expansion Pack** |
-| **5** | **Corporate Governance (MCA)** | Not bundled in base | Companies Act Section 188 threshold guidance | **Full Companies Act 2013 Suite**: Section 188 (RPT audit committee & voting ban), Section 180 (borrowing limits), Section 185/186 (inter-corporate loans), Section 68 (25% buybacks) | **Planned: MCA Expansion Pack** |
-| **6** | **Capital Markets (SEBI LODR)** | Not bundled in base | Regulation 30 materiality guidelines | **SEBI LODR Suite**: Regulation 30 Materiality Triad calculator (2% turnover / 2% net worth / 50% PAT), 24-hr stock exchange disclosure timer, Regulation 23 listed RPTs | **Planned: SEBI Expansion Pack** |
-| **7** | **Cross-Border & FEMA** | Included: IRC 901/904 FTC pass-through baskets + Indian Form 67 & US IRS Schedule K-3 | Foreign vendor DTAA treaty checklists (TRC, No-PE, electronic Form 10F) | Supreme Court *Engineering Analysis* SaaS royalty defense, Form 15CA/CB vs Form 145/146 automated dual-act router | **Bundled in Base**<br>*(Expanded via Sync)* |
-| **8** | **M&A Restructuring & Succession** | Included: Section 50B slump sale net worth computation + Rule 11UAE FMV + Notif 12/2017 0% GST + Form 3CEA schema | Section 281 AO clearance NOC & Section 313 successor liability checklist | Section 50B organic undertaking test, Section 281 AO clearance NOC, Section 313 successor liability, CGST 85, Notification 12/2017 0% GST going concern | **Bundled in Base**<br>*(Expanded via Sync)* |
-| **9** | **Strategic Corporate Tax Planning** | Not bundled in base | Section 115BAA overview | **Strategic Tax Playbook**: Section 115BAA vs MAT credit cliff, Section 80JJAA 30% employment deduction, Section 79 loss continuity, Section 68/115BBE cash credit defense | **Planned: Strategic Tax Pack** |
+| **1** | **Direct Tax (TDS / TCS / Corporate)** | Included: 10 core provisions (194Q, 194J, 194C, 194H, 194I, 194R, 206AB, 206C(1H), 115BAA-115JB, Act 2025 Sec 393) + circulars & Form 26Q/16A/10IC | Real-time CBDT circular updates & threshold changes | Section 197 TRACES certificate quota vault, advance challan netting, automated double-entry JVs | **Bundled in Base**<br>*(Active)* |
+| **2** | **MSME & Working Capital** | Included: 4 provisions (Sections 15 & 16, MSMED-7 criteria, MCA Form MSME-1, Sec 22 Schedule III disclosures) | Live quarterly RBI repo rate tables & MSEFC state facilitation rules | Multi-interval monthly compounding calculator (`calculateMultiIntervalMsmeInterest`), Sec 23 Form 3CD addback | **Bundled in Base**<br>*(Active)* |
+| **3** | **Indirect Tax (GST & ITC)** | Included: 9 provisions (CGST 17(5) blocked credit, 8 composite/mixed, 9(3) RCM, 10 composition, 16(2) 180-day rule, 34 credit/debit notes, 51 TDS, IGST 16 LUT, Rule 48(4) IRN) | Real-time GSTR-2B reconciliation updates & notifications | Real-time Rule 48(4) IRN hash verification, Rule 89(5) Inverted Duty Structure (IDS) refund engine | **Bundled in Base**<br>*(Active)* |
+| **4** | **International Tax & FX** | Included: 4 provisions (Section 195 cross-border TDS, Ind AS 21/109 FX revaluation, IRC 901/904 FTC, Transfer Pricing 92C / Rule 10CA) | Foreign vendor DTAA treaty checklists (TRC, No-PE, electronic Form 10F) | Supreme Court *Engineering Analysis* SaaS royalty defense, Form 15CA/CB automated dual-act router | **Bundled in Base**<br>*(Active)* |
+| **5** | **Corporate M&A & Restructuring** | Included: 2 provisions (Section 50B slump sale net worth computation, Section 79 loss carry-forward & continuity) | Section 281 AO clearance NOC & Section 313 successor liability checklist | Section 50B organic undertaking test, Section 281 AO clearance NOC, Section 313 successor liability, CGST 85 going concern | **Bundled in Base**<br>*(Active)* |
+| **6** | **Corporate Governance (MCA)** | Not bundled in base | Companies Act Section 188 threshold guidance | **Full Companies Act 2013 Suite**: Section 188 (RPT audit committee & voting ban), Section 180 (borrowing limits), Section 185/186 (inter-corporate loans), Section 68 (25% buybacks) | **Planned: MCA Expansion Pack** |
+| **7** | **Capital Markets (SEBI LODR)** | Not bundled in base | Regulation 30 materiality guidelines | **SEBI LODR Suite**: Regulation 30 Materiality Triad calculator (2% turnover / 2% net worth / 50% PAT), 24-hr stock exchange disclosure timer, Regulation 23 listed RPTs | **Planned: SEBI Expansion Pack** |
+| **8** | **Financial Reporting (Advanced Ind AS)**| Core Ind AS 21/109 FX revaluation bundled | Baseline Ind AS 115 & 116 accounting summaries | **Full Indian Accounting Standards Suite**: Ind AS 115 (5-step, variable constraint), Ind AS 116 (ROU/lease liability), Ind AS 103 (PPA/goodwill/NCI), Ind AS 12 (DTA/DTL) | **Planned: Ind AS Expansion Pack** |
+| **9** | **Strategic Corporate Tax Planning** | Section 115BAA & Section 79 bundled | Extended tax planning guidance | **Strategic Tax Playbook**: Section 115BAA vs MAT credit cliff, Section 80JJAA 30% employment deduction, Section 68/115BBE cash credit defense | **Planned: Strategic Tax Pack** |
 | **10**| **Customs & Foreign Trade Policy** | Not bundled in base | Customs valuation basics | **Customs & Trade Suite**: Section 65 MOOWR duty deferral, EPCG, Advance Authorization, Section 74 fraud penalties, IGST Section 13(8)(b) intermediary traps | **Planned: Customs Pack** |
 | **11**| **Finance Operations & SOPs** | Not bundled in base | Standard 3-way match guidelines | **Enterprise Treasury Controls**: P2P 3-way match, O2C, 13-week cash forecasting, penny drop validation, maker-checker segregation of duties | **Planned: Finance Ops Pack** |
 
@@ -55,14 +55,14 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 ### Detailed Depth Breakdown by Domain
 
-### 1. Direct Tax & Corporate Withholding (TDS / TCS)
+### 1. Direct Tax & Corporate Withholding (TDS / TCS / Corporate Regimes)
 * **Public Starter Seed**:
-  - Reaches **Level 3**.
-  - **Provisions**: Section 194Q, 194J, 206C(1H) sunset.
-  - **Thresholds**: ₹50 Lakh annual purchase limit, ₹10 Crore prior turnover.
-  - **Rates**: 0.1% base rate, 2% FTS rate, 10% professional rate, 5% Section 206AA non-PAN penalty cap.
-  - **Circulars**: CBDT Circular 13/2021 (threshold calculation, advance netting), CBDT Circular 23/2017 (GST unbundling).
-  - **Forms**: Form 26Q quarterly TDS return schema, Form 16A certificate schema, Vendor PAN / 206AB declaration template.
+  - Reaches **Level 3** (with Level 5 Deterministic Calculators for MAT vs 115BAA and 288B tax rounding).
+  - **Provisions**: 10 direct tax sections (194Q, 194J, 194C, 194H, 194I, 194R, 206AB, 206C(1H), 115BAA-115JB, and Income-tax Act, 2025 Section 393).
+  - **Thresholds**: ₹50 Lakh annual purchase limit, ₹10 Crore prior turnover, ₹30k/₹1L contractor aggregate, ₹2.4L rent threshold.
+  - **Rates**: 0.1% goods TDS, 2% FTS rate, 10% professional rate, 1%/2% contractor rate, 2% commission rate (Finance Act 2024), 22% 115BAA corporate rate, 15% MAT rate, 5% Section 206AA non-PAN cap.
+  - **Circulars**: CBDT Circular 13/2021, Circular 23/2017, Circular 03/2020, Circular 29/2019, Finance Act 2024/2025 transition memos.
+  - **Forms**: Form 26Q quarterly TDS return schema, Form 16A certificate schema, Form 10IC corporate tax election, Vendor PAN / 206AB declaration template.
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Full Statutory Spectrum**: Table 8 of Income-tax Act, 2025 (Section 392 Rent, 393 Goods, 394 Contractors, 395 Professional/FTS, 397 Non-PAN).
@@ -72,14 +72,14 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 ---
 
-### 2. MSME & Working Capital (Delayed Payments & Section 43B(h))
+### 2. MSME & Working Capital (Delayed Payments, Section 43B(h) & Reporting)
 * **Public Starter Seed**:
-  - Reaches **Level 3**.
-  - **Provisions**: MSMED Act, 2006 Sections 15 & 16; Income-tax Act Section 43B(h).
+  - Reaches **Level 3** (with Level 5 Deterministic Calculator for Section 16 MSME compound penal interest at 3x RBI Bank Rate).
+  - **Provisions**: MSMED Act, 2006 Sections 15 & 16; MSMED Section 7 criteria; MCA Form MSME-1; MSMED Section 22 corporate balance sheet disclosures; Income-tax Act Section 43B(h).
   - **Timelines**: Strict 15-day (without contract) or maximum 45-day (with written contract) payment clocks.
-  - **Rates**: Mandatory compound penal interest at 3x RBI Bank Rate.
-  - **Circulars**: Ministry of MSME OM 1/4(1)/2021-P&G/Policy (strictly excluding retail and wholesale traders under NIC 45, 46, 47 from delayed payment protections).
-  - **Forms**: UDYAM registration verification schema, Companies Act Schedule III corporate balance sheet disclosure notes.
+  - **Rates**: Mandatory compound penal interest at 3x RBI Bank Rate notified by Reserve Bank of India.
+  - **Circulars**: Ministry of MSME OM 1/4(1)/2021-P&G/Policy (trader exclusion from delayed payment), Notification S.O. 2119(E) (composite investment & turnover criteria).
+  - **Forms**: UDYAM registration verification schema, Udyam composite calculation worksheet, MCA Form MSME-1 half-yearly return schema, Schedule III trade payables aging disclosure table.
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Multi-Interval Compound Interest Calculator** (`calculateMultiIntervalMsmeInterest`): Accurately tracks shifting RBI Bank Rates across multi-quarter delinquencies, compounding on monthly rests.
@@ -88,13 +88,12 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 ---
 
-### 3. Indirect Tax (GST & Input Tax Credit)
+### 3. Indirect Tax (GST, Invoicing & Input Tax Credit)
 * **Public Starter Seed**:
-  - Reaches **Level 3**.
-  - **Provisions**: CGST Act, 2017 Section 17(5) negative list for blocked input tax credit.
-  - **Scope**: Motor vehicles, food & beverages, outdoor catering, club memberships, personal consumption.
-  - **Circulars**: CBIC Circular 172/04/2022-GST (carving out the statutory employer obligation exception).
-  - **Forms**: GSTR-2B vs. GSTR-3B Table 4(B) ineligible ITC reporting schema.
+  - Reaches **Level 3** (with Level 5 Deterministic Calculator for Place of Supply & Zero-Rated LUT exports).
+  - **Provisions**: 9 GST provisions: CGST Section 17(5) blocked credit, Section 8 composite/mixed supplies, Section 9(3) RCM, Section 10 composition, Section 16(2) 180-day payment rule, Section 34 credit/debit notes, Section 51 TDS, IGST Section 16 LUT export, CGST Rule 48(4) mandatory e-invoicing.
+  - **Circulars**: CBIC Circular 172/04/2022-GST (employer obligation exception), Notification 13/2017-CT(R) (RCM services), Notification 14/2020-CT (Rule 48(4) IRN threshold).
+  - **Forms**: GSTR-2B Table 4(B) ineligible ITC schema, GSTR-3B Table 4 ITC reversal schema, RCM self-invoice voucher, LUT Form GST RFND-11 export declaration.
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
   - **Section 16(2) 4-Condition Invariant Gate**: Concurrently verifies tax invoice possession, physical GRN receipt, GSTR-2B reflection, and supplier tax remittance.
@@ -104,9 +103,11 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 
 ---
 
-### 4. Financial Reporting & Indian Accounting Standards (Ind AS)
+### 4. International Tax, FX Revaluation & Transfer Pricing
 * **Public Starter Seed**:
-  - [Not seeded in starter package]
+  - Reaches **Level 3** (with Level 5 Deterministic Calculators for Transfer Pricing ALP Rule 10CA and Ind AS 21/109 FX revaluation).
+  - **Provisions**: Section 195 cross-border payments, Ind AS 21 & 109 foreign exchange revaluation & hedge reserves, Transfer Pricing Section 92C & Rule 10CA range concept, US IRC §§ 901 & 904 Foreign Tax Credit.
+  - **Forms**: Form 15CA/15CB checklist, Form 3CEB transfer pricing report schema, Form 67 foreign tax credit statement, Ind AS 109 hedge reserve schedule, IRS Schedule K-3.
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5** (Full Corporate Financial Reporting & Ind AS Framework).
   - **Ind AS 115 (Revenue from Contracts with Customers)**:
@@ -117,6 +118,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
   - **Ind AS 116 (Leases)**:
     - Right-of-Use (ROU) asset and Lease Liability discounting at incremental borrowing rate.
     - Low-value asset ($<\$5,000$) and short-term ($<12\text{ months}$) exemption handling.
+    - Lease modification vs. reassessment state transitions.
   - **Ind AS 103 (Business Combinations)**:
     - Acquisition method and Purchase Price Allocation (PPA).
     - Goodwill vs. Capital Reserve computation; Non-Controlling Interest (NCI) fair value measurement.
