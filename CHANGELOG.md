@@ -37,6 +37,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - *Critical MSME Section 16/23 Interaction*: Integrated MSME penal interest withholding under Section 194A alongside mandatory expenditure disallowance and tax add-back under Section 23 of the MSMED Act, 2006.
   - *Indirect Tax GST Domain* (`indirect_tax_gst/itc_reversal_rule37_37a`): Section 16(2) second proviso read with substituted Rule 37 (Notification No. 19/2022-CT) for 180-day vendor non-payment proportional ITC reversal in GSTR-3B Table 4(B)(2) with 18% annual interest under Section 50(1), explicit RCM & Schedule I exemptions, and Section 16(4)-unconstrained re-availment on payment.
   - *Rule 37A Supplier Non-Filing Reversal*: Notification No. 26/2022-CT November 30 post-FY cutoff verification for supplier GSTR-3B non-filing, 18% delayed interest, and interest-free re-availment upon filing.
+- **Business Perquisites & Benefits (Section 194R & CBDT Circulars 12/2022 & 18/2022)**:
+  - *Direct Tax Domain* (`direct_tax/tds_perquisites_194r`): Section 194R withholding on business perquisites and dealer incentives exceeding ₹20,000 aggregate in a financial year at 10% standard rate.
+  - *Exclusion of Commercial Discounts*: Explicit exclusions for cash discounts, commercial rebates, and bona fide dealer training conferences per CBDT Circular No. 12/2022.
+  - *In-Kind Section 194R(1) Proviso Verification*: Payer must verify advance tax (ITNS 281 challan) prior to releasing benefits in kind; unverified release flags an immediate 30% expenditure disallowance under Section 40(a)(ia).
+  - *Pure Deterministic Calculator*: `evaluateSection194R(params)` in `src/calculators.js`.
+- **Individual/HUF High-Value Rent (Section 194-IB & Form 26QC)**:
+  - *Direct Tax Domain* (`direct_tax/tds_rent_individual_194ib`): Monthly rent exceeding ₹50,000 paid by non-audit individuals/HUFs.
+  - *Finance (No. 2) Act, 2024 Rate Cut*: Rationalized from 5.0% to 2.0% effective 1 October 2024.
+  - *Section 194-IB(4) Statutory Ceiling*: Section 206AA 20% penalty deduction is strictly capped at the rent payable for the last month of the tenancy.
+  - *Pure Deterministic Calculator*: `evaluateSection194IB(params)` in `src/calculators.js`.
+- **Individual/HUF High-Value Contracts & Professional Fees (Section 194M & Form 26QD)**:
+  - *Direct Tax Domain* (`direct_tax/tds_individual_contract_194m`): Payments exceeding ₹50 Lakhs aggregate in a financial year.
+  - *Finance (No. 2) Act, 2024 Rate Cut*: Rationalized from 5.0% to 2.0% effective 1 October 2024.
+  - *Pure Deterministic Calculator*: `evaluateSection194M(params)` in `src/calculators.js`.
+- **Commercial Tier Boundary Specification**:
+  - Formal declaration of the completed Public Commons baseline tier in `src/calculators.js`. Hosted enterprise calculation endpoints (Form 3CD full audit schedules, dynamic Section 234B/C interest forecasting, Pillar Two BEPS models) designated as Enterprise API services (`hello@mudraforge.in`).
 - **Pure Zero-Dependency Deterministic Calculators (`src/calculators.js`)**:
   - `evaluateSection194A`: Authoritative withholding calculator with earlier of credit or payment temporal resolution, payee threshold categorization, and MSME Section 23 add-back flags.
   - `calculateItcReversalRule37`: Authoritative 180-day aging, proportional unpaid ITC computation, Section 50(1) interest calculation, and GSTR-3B Table 4(B)(2) mapping.
