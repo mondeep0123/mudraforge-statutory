@@ -596,6 +596,10 @@ export interface ReconcileZohoGstr2bOptions {
     toleranceInr?: number;
     asOfDate?: string;
     recipientGstin?: string | null;
+    recipientRegisteredStates?: string[];
+    recipientRegisteredGstins?: string[];
+    eclUtilizationStatus?: 'UTILIZED' | 'UNUTILIZED';
+    goodsInTransitWindowDays?: number;
 }
 
 export interface ReconcileZohoGstr2bParams {
@@ -608,9 +612,14 @@ export type Gstr2bDisposition =
     | 'MATCHED_ELIGIBLE'
     | 'MISMATCH_AMOUNT_VALUE'
     | 'MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5'
+    | 'MATCHED_ROUTABLE_TO_BRANCH_GSTIN'
+    | 'MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST'
     | 'MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH'
+    | 'GSTR2B_INELIGIBLE_FLAGGED_BY_GSTN'
     | 'MISSING_IN_GSTR2B'
-    | 'MISSING_IN_BOOKS';
+    | 'MISSING_IN_GSTR2B_TIMING'
+    | 'MISSING_IN_BOOKS'
+    | 'MISSING_IN_BOOKS_GOODS_IN_TRANSIT';
 
 export interface ReconcileItem {
     disposition: Gstr2bDisposition;
@@ -628,7 +637,11 @@ export interface ReconcileItem {
     varianceTaxInr: number;
     isRule37Overdue: boolean;
     daysElapsedSinceBill: number;
+    rule37Status: string;
+    rule37ReversalTaxInr: number;
     rule37InterestInr: number;
+    isReclaimableUponPayment: boolean;
+    isRcm?: boolean;
     statutoryAction: string;
     auditEvidence: Record<string, any>;
 }
@@ -640,6 +653,9 @@ export interface ReconcileZohoGstr2bSummary {
     amountMismatchCount: number;
     blocked17_5Count: number;
     posMismatchCount: number;
+    routableToBranchCount: number;
+    strandedLocalCount: number;
+    gstr2bPortalIneligibleCount: number;
     missingIn2bCount: number;
     missingInBooksCount: number;
     rule37OverdueCount: number;
@@ -651,10 +667,14 @@ export interface ReconcileZohoGstr2bSummary {
     atRiskUnfiledItcInr: number;
     blocked17_5ItcInr: number;
     posMismatchItcInr: number;
+    routableToBranchItcInr: number;
+    strandedLocalItcInr: number;
+    gstr2bPortalIneligibleItcInr: number;
     mismatchedItcInr: number;
     missingInBooksTaxInr: number;
     rule37ReversalAmountInr: number;
     rule37InterestExposureInr: number;
+    eclUtilizationStatus: 'UTILIZED' | 'UNUTILIZED';
     reconciliationStatus: 'FULLY_RECONCILED' | 'EXCEPTIONS_IDENTIFIED';
     isAuthorizedToDisburse: boolean;
 }

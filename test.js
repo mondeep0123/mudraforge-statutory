@@ -4109,8 +4109,324 @@ async function run() {
         if (fs.existsSync(tmpReportOutPath)) fs.unlinkSync(tmpReportOutPath);
     }
 
+    // 139. Multi-State POS Triangulation (Branch Routable vs Stranded vs Defective)
+    console.log('\n── Test 139: Multi-State POS Triangulation & Branch Routing ──');
+    const posRecon = reconcileZohoGstr2b({
+        zohoBills: [
+            // Bill 1: Bangalore hotel stay charged KA CGST+SGST
+            {
+                billNumber: 'INV-BLR-HOTEL-01',
+                vendorName: 'Bangalore Business Hotel',
+                vendorGstin: '29AAACH1111H1Z1',
+                taxableAmountInr: 50000,
+                cgstInr: 4500,
+                sgstInr: 4500,
+                igstInr: 0,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-10',
+                category: 'Hotel Accommodation'
+            },
+            // Bill 2: Chennai hotel stay charged TN CGST+SGST (Recipient has no TN GSTIN)
+            {
+                billNumber: 'INV-MAA-HOTEL-02',
+                vendorName: 'Chennai Beach Resort',
+                vendorGstin: '33AAACB2222B1Z2',
+                taxableAmountInr: 30000,
+                cgstInr: 2700,
+                sgstInr: 2700,
+                igstInr: 0,
+                totalTaxInr: 5400,
+                totalAmountInr: 35400,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-12',
+                category: 'Hotel Accommodation'
+            },
+            // Bill 3: Raw materials supplier in Gujarat erroneously charged local tax instead of IGST
+            {
+                billNumber: 'INV-GUJ-RAW-03',
+                vendorName: 'Gujarat Polymers Ltd',
+                vendorGstin: '24AAACG3333G1Z3',
+                taxableAmountInr: 100000,
+                cgstInr: 9000,
+                sgstInr: 9000,
+                igstInr: 0,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-15',
+                category: 'Raw Materials'
+            }
+        ],
+        gstr2b: [
+            {
+                invoiceNumber: 'INV-BLR-HOTEL-01',
+                supplierName: 'Bangalore Business Hotel',
+                supplierGstin: '29AAACH1111H1Z1',
+                taxableAmountInr: 50000,
+                cgstInr: 4500,
+                sgstInr: 4500,
+                igstInr: 0,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000,
+                invoiceDate: '2024-06-10',
+                posStateCode: '29',
+                itcAvailable: true
+            },
+            {
+                invoiceNumber: 'INV-MAA-HOTEL-02',
+                supplierName: 'Chennai Beach Resort',
+                supplierGstin: '33AAACB2222B1Z2',
+                taxableAmountInr: 30000,
+                cgstInr: 2700,
+                sgstInr: 2700,
+                igstInr: 0,
+                totalTaxInr: 5400,
+                totalAmountInr: 35400,
+                invoiceDate: '2024-06-12',
+                posStateCode: '33',
+                itcAvailable: true
+            },
+            {
+                invoiceNumber: 'INV-GUJ-RAW-03',
+                supplierName: 'Gujarat Polymers Ltd',
+                supplierGstin: '24AAACG3333G1Z3',
+                taxableAmountInr: 100000,
+                cgstInr: 9000,
+                sgstInr: 9000,
+                igstInr: 0,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                invoiceDate: '2024-06-15',
+                posStateCode: '24', // Wrongly local in Gujarat
+                itcAvailable: true
+            }
+        ],
+        options: {
+            recipientGstin: '27AABCT8888T1Z9', // Filing for Maharashtra (27)
+            recipientRegisteredStates: ['27', '29'] // Holds registrations in MH and KA (29)
+        }
+    });
+
+    if (posRecon.summary.routableToBranchCount !== 1 || posRecon.summary.routableToBranchItcInr !== 9000) {
+        throw new Error(`Expected 1 routableToBranch item of 9000, got ${posRecon.summary.routableToBranchCount} / ${posRecon.summary.routableToBranchItcInr}`);
+    }
+    if (posRecon.summary.strandedLocalCount !== 1 || posRecon.summary.strandedLocalItcInr !== 5400) {
+        throw new Error(`Expected 1 strandedLocal item of 5400, got ${posRecon.summary.strandedLocalCount} / ${posRecon.summary.strandedLocalItcInr}`);
+    }
+    if (posRecon.summary.posMismatchCount !== 1 || posRecon.summary.posMismatchItcInr !== 18000) {
+        throw new Error(`Expected 1 posMismatch item of 18000, got ${posRecon.summary.posMismatchCount} / ${posRecon.summary.posMismatchItcInr}`);
+    }
+    const routable = posRecon.reconciliationItems.find(i => i.disposition === 'MATCHED_ROUTABLE_TO_BRANCH_GSTIN');
+    if (!routable || !routable.statutoryAction.includes('Route this voucher to branch GSTIN')) {
+        throw new Error(`Routable disposition verification failed: ${JSON.stringify(routable)}`);
+    }
+    const stranded = posRecon.reconciliationItems.find(i => i.disposition === 'MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST');
+    if (!stranded || !stranded.statutoryAction.includes('absorb as operating expense')) {
+        throw new Error(`Stranded local levy verification failed: ${JSON.stringify(stranded)}`);
+    }
+    console.log('[PASS] Multi-State POS Triangulation Verified: Distinct-person branch routing, Section 12(3) stranded levy absorption, and defective invoice detection.');
+
+    // 140. Rule 37 Exceptions, Proportional Netting & Rule 88B(3) ECL Utilization
+    console.log('\n── Test 140: Rule 37 Exceptions, Proportional Netting & Rule 88B(3) ECL ──');
+    const rule37Recon = reconcileZohoGstr2b({
+        zohoBills: [
+            // Bill 1: RCM Supply unpaid > 180 days (Statutorily exempt under Rule 37(1) Proviso 1)
+            {
+                billNumber: 'INV-RCM-01',
+                vendorName: 'GTA Transporter',
+                vendorGstin: '27AABCG1111G1Z1',
+                taxableAmountInr: 100000,
+                totalTaxInr: 5000,
+                totalAmountInr: 105000,
+                balanceInr: 105000,
+                billDate: '2024-01-10',
+                isRcm: true
+            },
+            // Bill 2: Schedule I Deemed Supply unpaid > 180 days (Statutorily exempt under Rule 37(1) Proviso 2)
+            {
+                billNumber: 'INV-SCHED1-02',
+                vendorName: 'Distinct Person Branch',
+                vendorGstin: '27AABCD2222D1Z2',
+                taxableAmountInr: 50000,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000,
+                balanceInr: 59000,
+                billDate: '2024-01-10',
+                isSchedule1DeemedSupply: true
+            },
+            // Bill 3: Regular bill 50% paid (Balance ₹59,000 of ₹1,18,000) unpaid past 180 days (213 days elapsed -> 33 days past 180)
+            {
+                billNumber: 'INV-PARTIAL-03',
+                vendorName: 'Standard Supplier',
+                vendorGstin: '27AABCS3333S1Z3',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                balanceInr: 59000, // 50% unpaid!
+                billDate: '2024-01-10',
+                isRcm: false
+            }
+        ],
+        gstr2b: [
+            { invoiceNumber: 'INV-RCM-01', supplierGstin: '27AABCG1111G1Z1', taxableAmountInr: 100000, totalTaxInr: 5000, isRcm: true, itcAvailable: true },
+            { invoiceNumber: 'INV-SCHED1-02', supplierGstin: '27AABCD2222D1Z2', taxableAmountInr: 50000, totalTaxInr: 9000, itcAvailable: true },
+            { invoiceNumber: 'INV-PARTIAL-03', supplierGstin: '27AABCS3333S1Z3', taxableAmountInr: 100000, totalTaxInr: 18000, itcAvailable: true }
+        ],
+        options: {
+            asOfDate: '2024-08-10',
+            recipientGstin: '27AABCT8888T1Z9',
+            eclUtilizationStatus: 'UNUTILIZED' // Section 50(3) Proviso / Rule 88B(3)
+        }
+    });
+
+    const rcmItem = rule37Recon.reconciliationItems.find(i => i.billNumber === 'INV-RCM-01');
+    if (rcmItem.rule37Status !== 'EXEMPT_RCM_SUPPLY' || rcmItem.isRule37Overdue) {
+        throw new Error(`RCM supply should be exempt from Rule 37: ${JSON.stringify(rcmItem)}`);
+    }
+
+    const sched1Item = rule37Recon.reconciliationItems.find(i => i.billNumber === 'INV-SCHED1-02');
+    if (sched1Item.rule37Status !== 'EXEMPT_SCHEDULE_1_DEEMED_SUPPLY' || sched1Item.isRule37Overdue) {
+        throw new Error(`Schedule 1 supply should be exempt from Rule 37: ${JSON.stringify(sched1Item)}`);
+    }
+
+    const partialItem = rule37Recon.reconciliationItems.find(i => i.billNumber === 'INV-PARTIAL-03');
+    if (!partialItem.isRule37Overdue || partialItem.rule37ReversalTaxInr !== 9000) {
+        throw new Error(`Expected 50% proportional reversal of 9000, got ${partialItem.rule37ReversalTaxInr}`);
+    }
+    // ECL was UNUTILIZED, so interest must be exactly 0 under Rule 88B(3)!
+    if (partialItem.rule37InterestInr !== 0) {
+        throw new Error(`Expected zero interest under Rule 88B(3) unutilized ECL, got ${partialItem.rule37InterestInr}`);
+    }
+    if (!partialItem.isReclaimableUponPayment) {
+        throw new Error(`Expected isReclaimableUponPayment to be true`);
+    }
+    console.log('[PASS] Rule 37 Exceptions & ECL Utilization Verified: RCM & Sched 1 exemptions, 50% proportional reversal, Rule 88B(3) 0% unutilized interest, and re-availment rights.');
+
+    // 141. GSTR-2B GSTN Ineligible Flag & Missing In Books Goods-In-Transit
+    console.log('\n── Test 141: GSTR-2B GSTN Ineligible Flag & Goods-In-Transit ──');
+    const portalRecon = reconcileZohoGstr2b({
+        zohoBills: [
+            // Bill matched with 2B, but 2B has itcavl: "N" due to Sec 16(4) time bar
+            {
+                billNumber: 'INV-TIMEBAR-01',
+                vendorName: 'Late Filing Vendor',
+                vendorGstin: '27AABCL1111L1Z1',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2023-05-10'
+            }
+        ],
+        gstr2b: [
+            {
+                invoiceNumber: 'INV-TIMEBAR-01',
+                supplierName: 'Late Filing Vendor',
+                supplierGstin: '27AABCL1111L1Z1',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                invoiceDate: '2023-05-10',
+                itcAvailable: false,
+                itcRevReason: 'TIME_BARRED_SEC_16_4'
+            },
+            // Reported in 2B dated 5 days ago (within 15-day goods-in-transit window)
+            {
+                invoiceNumber: 'INV-TRANSIT-02',
+                supplierName: 'Fast Transit Logistics',
+                supplierGstin: '27AABCF2222F1Z2',
+                taxableAmountInr: 60000,
+                totalTaxInr: 10800,
+                totalAmountInr: 70800,
+                invoiceDate: '2024-06-15', // 5 days before asOfDate 2024-06-20
+                itcAvailable: true
+            },
+            // Reported in 2B dated 60 days ago (unrecorded AP liability)
+            {
+                invoiceNumber: 'INV-UNREC-03',
+                supplierName: 'Forgotten Supplier',
+                supplierGstin: '27AABCF3333F1Z3',
+                taxableAmountInr: 40000,
+                totalTaxInr: 7200,
+                totalAmountInr: 47200,
+                invoiceDate: '2024-04-20', // 61 days before asOfDate 2024-06-20
+                itcAvailable: true
+            }
+        ],
+        options: {
+            asOfDate: '2024-06-20',
+            recipientGstin: '27AABCT8888T1Z9',
+            goodsInTransitWindowDays: 15
+        }
+    });
+
+    if (portalRecon.summary.gstr2bPortalIneligibleCount !== 1) {
+        throw new Error(`Expected 1 portal ineligible record, got ${portalRecon.summary.gstr2bPortalIneligibleCount}`);
+    }
+    const timebarItem = portalRecon.reconciliationItems.find(i => i.disposition === 'GSTR2B_INELIGIBLE_FLAGGED_BY_GSTN');
+    if (!timebarItem || !timebarItem.statutoryAction.includes('TIME_BARRED_SEC_16_4')) {
+        throw new Error(`Portal ineligible verification failed: ${JSON.stringify(timebarItem)}`);
+    }
+
+    const transitItem = portalRecon.reconciliationItems.find(i => i.disposition === 'MISSING_IN_BOOKS_GOODS_IN_TRANSIT');
+    if (!transitItem || !transitItem.statutorySection.includes('16(2)(b)')) {
+        throw new Error(`Goods in transit verification failed: ${JSON.stringify(transitItem)}`);
+    }
+
+    const unrecItem = portalRecon.reconciliationItems.find(i => i.disposition === 'MISSING_IN_BOOKS');
+    if (!unrecItem || unrecItem.itcStatus !== 'UNRECORDED_PURCHASE_IN_BOOKS') {
+        throw new Error(`Unrecorded AP liability verification failed: ${JSON.stringify(unrecItem)}`);
+    }
+    console.log('[PASS] GSTR-2B Ineligibility & Goods-In-Transit Verified: GSTN portal flag capture, Section 16(2)(b) goods receipt window, and unrecorded AP identification.');
+
+    // 142. Zoho Books Vendor Credits Netting
+    console.log('\n── Test 142: Zoho Books Vendor Credits Netting ──');
+    const zohoWithCredits = {
+        bills: [
+            {
+                bill_number: 'BILL-1001',
+                date: '2024-06-01',
+                vendor_name: 'Apex Metals',
+                gst_no: '27AAPCM1111M1Z1',
+                sub_total: '1,00,000.00',
+                cgst_amount: '9,000.00',
+                sgst_amount: '9,000.00',
+                total: '1,18,000.00',
+                balance: '0.00',
+                status: 'paid'
+            }
+        ],
+        vendor_credits: [
+            {
+                vendor_credit_number: 'CN-1001',
+                date: '2024-06-10',
+                vendor_name: 'Apex Metals',
+                gst_no: '27AAPCM1111M1Z1',
+                sub_total: '20,000.00',
+                cgst_amount: '1,800.00',
+                sgst_amount: '1,800.00',
+                total: '23,600.00',
+                status: 'open'
+            }
+        ]
+    };
+    const parsedWithCredits = parseZohoBillsJson(zohoWithCredits);
+    if (parsedWithCredits.length !== 2) {
+        throw new Error(`Expected 2 records (1 bill + 1 credit), got ${parsedWithCredits.length}`);
+    }
+    if (parsedWithCredits[1].docType !== 'VENDOR_CREDIT' || parsedWithCredits[1].taxableAmountInr !== -20000 || parsedWithCredits[1].totalTaxInr !== -3600) {
+        throw new Error(`Vendor credit parsing failed (expected negative amounts): ${JSON.stringify(parsedWithCredits[1])}`);
+    }
+    console.log('[PASS] Zoho Books Vendor Credits Netting Verified: Native parsing of vendor_credits array with negative tax netting.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 138 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 142 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

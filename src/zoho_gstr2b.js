@@ -17,16 +17,23 @@
  *    - Invoices matching GSTR-2B but falling under blocked statutory categories
  *      (e.g., motor vehicles, food & beverages, personal consumption) are
  *      segregated into MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5.
- * 3. Place of Supply (POS) & Jurisdiction:
- *    - If supplier charged CGST/SGST with POS differing from recipient's
- *      registered state, credit is unavailabile under Section 16(2)(c).
- * 4. CGST Act Section 16(2) Second Proviso read with Rule 37:
+ * 3. Place of Supply (POS) & Distinct Person Jurisdiction (IGST Act Sec 7, 8, 10, 12):
+ *    - Triangulates Supplier Location, Place of Supply, and Recipient Registration.
+ *    - Distinguishes between:
+ *      a) Legitimate local supplies routable to another branch GSTIN (Sec 25(4)),
+ *      b) Stranded local CGST/SGST levies where recipient has no distinct person registration,
+ *      c) Erroneous levies where supplier charged local tax instead of IGST.
+ * 4. CGST Act Section 16(2) Second Proviso read with Rule 37 & Rule 88B(3):
  *    - If recipient fails to pay the supplier within 180 days from the invoice
- *      date, an amount equal to the ITC availed must be reversed in Form GSTR-3B
- *      with 18% statutory interest per Section 50(1).
+ *      date, an amount equal to the ITC availed in proportion to the unpaid amount
+ *      must be reversed in Form GSTR-3B Table 4(B)(2).
+ *    - Reverse Charge (RCM) and Schedule I deemed supplies are statutorily exempt.
+ *    - Section 50(1) 18% delayed interest is computed only if credit was utilized
+ *      in terms of Section 50(3) Proviso read with Rule 88B(3).
+ *    - Reversals can be re-availed upon subsequent payment without Section 16(4) time bar.
  * 5. Reverse Charge Mechanism (RCM):
  *    - Invoices marked rchrg: "Y" under Section 9(3)/9(4) require recipient
- *      to discharge liability in cash before claiming ITC in same period.
+ *      to discharge liability in cash before claiming ITC in Table 4(A)(3).
  * 6. Dual-Mode Normalization:
  *    - Alphanumeric canonical keys resolve slash/hyphen variances (e.g. INV/24/01 == INV-24-01).
  *    - Integer paise precision prevents IEEE-754 summation drift.
@@ -86,7 +93,7 @@ export function normalizeGstin(raw) {
  * - Bill Number / Bill # / Invoice Number
  * - Vendor Name / Vendor
  * - GST Identification Number (GSTIN) / GSTIN
- * - Status (paid, unpaid, overdue, partially_paid)
+ * - Status (paid, unpaid, overdue, partially_paid, open)
  * - Due Date
  * - Taxable Amount / SubTotal
  * - Total / Bill Amount
@@ -118,6 +125,7 @@ export function parseZohoBillsCsv(csvText) {
         dueDate: findColIndex(headers, ['due_date', 'payment_due_date']),
         vendorName: findColIndex(headers, ['vendor_name', 'vendor', 'supplier_name', 'party_name']),
         gstin: findColIndex(headers, ['gst_identification_number__gstin_', 'gstin', 'vendor_gstin', 'party_gstin']),
+        pos: findColIndex(headers, ['place_of_supply', 'destination_state', 'pos_state', 'pos']),
         status: findColIndex(headers, ['status', 'bill_status']),
         taxableAmount: findColIndex(headers, ['taxable_amount', 'subtotal', 'item_total', 'basic_amount']),
         totalAmount: findColIndex(headers, ['total', 'bill_amount', 'amount', 'gross_amount']),
@@ -125,7 +133,8 @@ export function parseZohoBillsCsv(csvText) {
         cgst: findColIndex(headers, ['cgst', 'cgst_amount']),
         sgst: findColIndex(headers, ['sgst', 'sgst_amount']),
         igst: findColIndex(headers, ['igst', 'igst_amount']),
-        category: findColIndex(headers, ['account_name', 'item_category', 'category', 'expense_account'])
+        category: findColIndex(headers, ['account_name', 'item_category', 'category', 'expense_account']),
+        isRcm: findColIndex(headers, ['is_reverse_charge_applied', 'reverse_charge', 'is_rcm', 'rcm'])
     };
 
     if (colIndex.billNo === -1 || (colIndex.totalAmount === -1 && colIndex.taxableAmount === -1)) {
@@ -151,6 +160,7 @@ export function parseZohoBillsCsv(csvText) {
 
         const status = colIndex.status !== -1 ? (row[colIndex.status] || 'unpaid').trim().toLowerCase() : 'unpaid';
         const category = colIndex.category !== -1 ? (row[colIndex.category] || '').trim() : '';
+        const rawPos = colIndex.pos !== -1 ? (row[colIndex.pos] || '').trim() : '';
 
         const rawTaxable = colIndex.taxableAmount !== -1 ? row[colIndex.taxableAmount] : '0';
         const rawTotal = colIndex.totalAmount !== -1 ? row[colIndex.totalAmount] : rawTaxable;
@@ -159,6 +169,8 @@ export function parseZohoBillsCsv(csvText) {
         const rawCgst = colIndex.cgst !== -1 ? row[colIndex.cgst] : '0';
         const rawSgst = colIndex.sgst !== -1 ? row[colIndex.sgst] : '0';
         const rawIgst = colIndex.igst !== -1 ? row[colIndex.igst] : '0';
+
+        const isRcm = colIndex.isRcm !== -1 ? /true|yes|y|1/i.test(row[colIndex.isRcm] || '') : false;
 
         const totalAmount = cleanNumericAmount(rawTotal);
         const taxableAmount = colIndex.taxableAmount !== -1 ? cleanNumericAmount(rawTaxable) : totalAmount;
@@ -176,6 +188,7 @@ export function parseZohoBillsCsv(csvText) {
 
         bills.push({
             source: 'ZOHO_BOOKS',
+            docType: 'BILL',
             rowNumber: i + 1,
             billNumber,
             exactKey,
@@ -186,9 +199,12 @@ export function parseZohoBillsCsv(csvText) {
             vendorGstin: normalizedGstinObj.gstin,
             vendorPan: normalizedGstinObj.pan,
             isGstinValid: normalizedGstinObj.isValid,
+            posStateCode: rawPos ? rawPos.slice(0, 2) : (normalizedGstinObj.stateCode || null),
             status,
             category,
             isBlocked17_5,
+            isRcm,
+            isSchedule1DeemedSupply: /distinct|related|deemed|schedule\s*1/i.test(category),
             taxableAmountInr: roundToPaisa(taxableAmount),
             cgstInr: roundToPaisa(cgst),
             sgstInr: roundToPaisa(sgst),
@@ -196,7 +212,7 @@ export function parseZohoBillsCsv(csvText) {
             totalTaxInr: totalTax,
             totalAmountInr: roundToPaisa(totalAmount),
             balanceInr: roundToPaisa(balance),
-            isFullyPaid: balance <= 0
+            isFullyPaid: balance <= 0 || status === 'paid'
         });
     }
 
@@ -204,7 +220,8 @@ export function parseZohoBillsCsv(csvText) {
 }
 
 /**
- * Parses Zoho Books API JSON response into normalized bill records.
+ * Parses Zoho Books API JSON response into normalized bill and vendor credit records.
+ * Supports bills array, vendor_credits array, line items, and pagination context.
  *
  * @param {Object|string} jsonData - Raw Zoho Books API response object or JSON string
  * @returns {Array<Object>}
@@ -212,8 +229,13 @@ export function parseZohoBillsCsv(csvText) {
 export function parseZohoBillsJson(jsonData) {
     const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
     const rawBills = Array.isArray(data) ? data : (Array.isArray(data.bills) ? data.bills : []);
+    const rawCredits = Array.isArray(data.vendor_credits) ? data.vendor_credits : [];
 
-    return rawBills.map((b, idx) => {
+    const records = [];
+
+    // 1. Process Bills
+    for (let idx = 0; idx < rawBills.length; idx++) {
+        const b = rawBills[idx];
         const billNumber = (b.bill_number || b.invoice_number || `ZOHO-BILL-${idx + 1}`).trim();
         const { exactKey, alphaNumericKey } = normalizeInvoiceNumber(billNumber);
         const rawGstin = (b.gst_no || b.gstin || b.vendor_gstin || '').trim().toUpperCase();
@@ -228,11 +250,26 @@ export function parseZohoBillsJson(jsonData) {
         const igst = cleanNumericAmount(b.igst_amount || 0);
         const totalTax = roundToPaisa(cgst + sgst + igst);
 
-        const category = String(b.category_name || b.account_name || '').trim();
-        const isBlocked17_5 = Boolean(b.is_blocked_17_5) || /motor|vehicle|food|beverage|catering|club|fitness|personal|gift/i.test(category);
+        let category = String(b.category_name || b.account_name || '').trim();
+        let isBlocked17_5 = Boolean(b.is_blocked_17_5) || /motor|vehicle|food|beverage|catering|club|fitness|personal|gift/i.test(category);
 
-        return {
+        // Inspect line items if present
+        if (Array.isArray(b.line_items) && b.line_items.length > 0) {
+            for (const item of b.line_items) {
+                const itemCat = String(item.account_name || item.name || item.description || '');
+                if (/motor|vehicle|food|beverage|catering|club|fitness|personal|gift/i.test(itemCat)) {
+                    isBlocked17_5 = true;
+                    if (!category) category = itemCat;
+                }
+            }
+        }
+
+        const isRcm = Boolean(b.is_reverse_charge_applied || b.reverse_charge_vat_registered || b.is_rcm);
+        const rawPos = String(b.place_of_supply || b.destination_state || '').trim();
+
+        records.push({
             source: 'ZOHO_BOOKS_API',
+            docType: 'BILL',
             rowNumber: idx + 1,
             billId: b.bill_id || null,
             billNumber,
@@ -244,9 +281,12 @@ export function parseZohoBillsJson(jsonData) {
             vendorGstin: normalizedGstinObj.gstin,
             vendorPan: normalizedGstinObj.pan,
             isGstinValid: normalizedGstinObj.isValid,
+            posStateCode: rawPos ? rawPos.slice(0, 2) : (normalizedGstinObj.stateCode || null),
             status: String(b.status || 'unpaid').toLowerCase(),
             category,
             isBlocked17_5,
+            isRcm,
+            isSchedule1DeemedSupply: /distinct|related|deemed|schedule\s*1/i.test(category),
             taxableAmountInr: roundToPaisa(taxableAmount),
             cgstInr: roundToPaisa(cgst),
             sgstInr: roundToPaisa(sgst),
@@ -254,9 +294,56 @@ export function parseZohoBillsJson(jsonData) {
             totalTaxInr: totalTax,
             totalAmountInr: roundToPaisa(totalAmount),
             balanceInr: roundToPaisa(balance),
-            isFullyPaid: balance <= 0
-        };
-    });
+            isFullyPaid: balance <= 0 || b.status === 'paid'
+        });
+    }
+
+    // 2. Process Vendor Credits (Credit Notes)
+    for (let cIdx = 0; cIdx < rawCredits.length; cIdx++) {
+        const c = rawCredits[cIdx];
+        const creditNumber = (c.vendor_credit_number || c.credit_note_number || `ZOHO-CREDIT-${cIdx + 1}`).trim();
+        const { exactKey, alphaNumericKey } = normalizeInvoiceNumber(creditNumber);
+        const rawGstin = (c.gst_no || c.gstin || c.vendor_gstin || '').trim().toUpperCase();
+        const normalizedGstinObj = normalizeGstin(rawGstin);
+
+        const rawTaxable = cleanNumericAmount(c.sub_total || c.taxable_amount || c.total || 0);
+        const rawTotal = cleanNumericAmount(c.total || rawTaxable);
+        const rawCgst = cleanNumericAmount(c.cgst_amount || 0);
+        const rawSgst = cleanNumericAmount(c.sgst_amount || 0);
+        const rawIgst = cleanNumericAmount(c.igst_amount || 0);
+
+        records.push({
+            source: 'ZOHO_BOOKS_API',
+            docType: 'VENDOR_CREDIT',
+            rowNumber: rawBills.length + cIdx + 1,
+            billId: c.vendor_credit_id || null,
+            billNumber: creditNumber,
+            exactKey,
+            alphaNumericKey,
+            billDate: normalizeIsoDate(c.date),
+            dueDate: null,
+            vendorName: (c.vendor_name || 'Unknown Vendor').trim(),
+            vendorGstin: normalizedGstinObj.gstin,
+            vendorPan: normalizedGstinObj.pan,
+            isGstinValid: normalizedGstinObj.isValid,
+            posStateCode: normalizedGstinObj.stateCode || null,
+            status: String(c.status || 'open').toLowerCase(),
+            category: 'Vendor Credit / Purchase Return',
+            isBlocked17_5: false,
+            isRcm: false,
+            isSchedule1DeemedSupply: false,
+            taxableAmountInr: roundToPaisa(-Math.abs(rawTaxable)),
+            cgstInr: roundToPaisa(-Math.abs(rawCgst)),
+            sgstInr: roundToPaisa(-Math.abs(rawSgst)),
+            igstInr: roundToPaisa(-Math.abs(rawIgst)),
+            totalTaxInr: roundToPaisa(-Math.abs(rawCgst + rawSgst + rawIgst)),
+            totalAmountInr: roundToPaisa(-Math.abs(rawTotal)),
+            balanceInr: 0,
+            isFullyPaid: true
+        });
+    }
+
+    return records;
 }
 
 /**
@@ -356,6 +443,7 @@ export function parseGstr2bJson(gstr2bData) {
             const posStateCode = String(nt.pos || '').trim();
             const isRcm = String(nt.rchrg || 'N').trim().toUpperCase() === 'Y';
             const itcAvailable = String(nt.itcavl || 'Y').trim().toUpperCase() === 'Y';
+            const itcRevReason = String(nt.rsn || '').trim();
 
             let taxableSum = 0;
             let igstSum = 0;
@@ -389,6 +477,7 @@ export function parseGstr2bJson(gstr2bData) {
                 posStateCode,
                 isRcm,
                 itcAvailable,
+                itcRevReason: itcRevReason || null,
                 taxableAmountInr: roundToPaisa(taxableSum),
                 igstInr: roundToPaisa(igstSum),
                 cgstInr: roundToPaisa(cgstSum),
@@ -407,15 +496,20 @@ export function parseGstr2bJson(gstr2bData) {
  * Comprehensive Accounts Payable Reconciliation Engine:
  * Reconciles Zoho Books Bills with Form GSTR-2B.
  *
- * Categorizes every transaction into 6 epistemically transparent statutory dispositions:
+ * Categorizes transactions with statutory precision:
  * 1. MATCHED_ELIGIBLE: Perfect match in books and 2B, ITC marked eligible. Safe to claim.
  * 2. MISMATCH_AMOUNT_VALUE: Present in both, but taxable or tax variance exceeds tolerance.
  * 3. MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5: Present in both, but blocked under CGST Section 17(5).
- * 4. MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH: Present in both, but wrong GST type/state POS.
- * 5. MISSING_IN_GSTR2B: Bill in Books but unfiled by vendor. Provisional ITC restricted u/s 16(2)(aa).
- * 6. MISSING_IN_BOOKS: Reported by vendor in 2B but absent in Books. Unrecorded AP liability / alert.
+ * 4. MATCHED_ROUTABLE_TO_BRANCH_GSTIN: Legitimate local levy in another state where recipient has a distinct person registration.
+ * 5. MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST: Mandatory local levy in supplier's state (e.g. hotel) where recipient has no registration.
+ * 6. MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH: Erroneous tax levy (supplier charged local tax instead of IGST).
+ * 7. GSTR2B_INELIGIBLE_FLAGGED_BY_GSTN: Invoice in 2B but GST portal flagged itcavl: "N".
+ * 8. MISSING_IN_GSTR2B: Bill in Books but unfiled by vendor. Provisional ITC restricted u/s 16(2)(aa).
+ * 9. MISSING_IN_GSTR2B_TIMING: Bill in Books within recent tax period window (potential IFF / QRMP timing difference).
+ * 10. MISSING_IN_BOOKS: Reported by vendor in 2B but absent in Books. Unrecorded AP liability.
+ * 11. MISSING_IN_BOOKS_GOODS_IN_TRANSIT: In 2B within goods-in-transit window pending receipt under Section 16(2)(b).
  *
- * Also executes Rule 37 180-day aging audit on unpaid bills to flag mandatory reversals.
+ * Evaluates Rule 37 180-day aging, proportional reversals, Rule 88B(3) ECL utilization, and re-availment rights.
  *
  * @param {Object} params
  * @param {Array<Object>|string} params.zohoBills - Array of parsed Zoho bills or raw CSV text
@@ -423,14 +517,22 @@ export function parseGstr2bJson(gstr2bData) {
  * @param {Object} [params.options]
  * @param {number} [params.options.toleranceInr=1.00] - Rounding tolerance threshold (default ₹1.00)
  * @param {string} [params.options.asOfDate] - Audit date for Rule 37 aging (default today ISO)
- * @param {string} [params.options.recipientGstin] - Expected recipient GSTIN
+ * @param {string} [params.options.recipientGstin] - Current filing recipient GSTIN
+ * @param {Array<string>} [params.options.recipientRegisteredStates] - Array of state codes where recipient has distinct registrations
+ * @param {Array<string>} [params.options.recipientRegisteredGstins] - Array of recipient pan-India GSTINs
+ * @param {'UTILIZED'|'UNUTILIZED'} [params.options.eclUtilizationStatus='UTILIZED'] - Electronic Credit Ledger utilization status for Sec 50(3) interest
+ * @param {number} [params.options.goodsInTransitWindowDays=15] - Threshold days to classify missing books bill as goods in transit
  * @returns {Object} Full reconciliation payload with metrics and audit trail
  */
 export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
     const {
         toleranceInr = 1.00,
         asOfDate = new Date().toISOString().slice(0, 10),
-        recipientGstin = null
+        recipientGstin = null,
+        recipientRegisteredStates = [],
+        recipientRegisteredGstins = [],
+        eclUtilizationStatus = 'UTILIZED',
+        goodsInTransitWindowDays = 15
     } = options;
 
     const tolerancePaise = toIntegerPaise(toleranceInr, 'toleranceInr');
@@ -439,7 +541,23 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
     const parsedBills = typeof zohoBills === 'string' ? parseZohoBillsCsv(zohoBills) : (Array.isArray(zohoBills) ? zohoBills : []);
     const parsed2b = typeof gstr2b === 'string' ? parseGstr2bJson(gstr2b) : (Array.isArray(gstr2b) ? gstr2b : []);
 
-    const recipientStateCode = recipientGstin ? recipientGstin.slice(0, 2) : null;
+    const recipientFilingState = recipientGstin ? recipientGstin.slice(0, 2) : null;
+
+    // Assemble comprehensive recipient state portfolio (distinct persons under Section 25(4))
+    const recipientStateSet = new Set();
+    if (recipientFilingState) {
+        recipientStateSet.add(recipientFilingState);
+    }
+    for (const g of recipientRegisteredGstins) {
+        if (typeof g === 'string' && g.length >= 2) {
+            recipientStateSet.add(g.slice(0, 2));
+        }
+    }
+    for (const s of recipientRegisteredStates) {
+        if (typeof s === 'string' && s.length >= 2) {
+            recipientStateSet.add(s.slice(0, 2));
+        }
+    }
 
     // Index GSTR-2B by composite key: supplierGstin + "|" + exactKey (with alphaNumericKey secondary lookup)
     const gstr2bExactMap = new Map();
@@ -475,6 +593,15 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
     let posMismatchCount = 0;
     let posMismatchItcPaise = 0;
 
+    let routableToBranchCount = 0;
+    let routableToBranchItcPaise = 0;
+
+    let strandedLocalCount = 0;
+    let strandedLocalItcPaise = 0;
+
+    let gstr2bPortalIneligibleCount = 0;
+    let gstr2bPortalIneligibleItcPaise = 0;
+
     let missingIn2bCount = 0;
     let atRiskUnfiledItcPaise = 0;
 
@@ -493,40 +620,69 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         totalBooksTaxablePaise += booksTaxablePaise;
         totalBooksTaxPaise += booksTaxPaise;
 
-        // Rule 37 180-Day Aging Evaluation
+        // Rule 37 180-Day Aging & Section 50(1) Evaluation
         let isRule37Overdue = false;
         let daysElapsedSinceBill = 0;
+        let rule37Status = 'COMPLIANT_OR_NOT_APPLICABLE';
+        let rule37ReversalTaxInr = 0;
         let rule37InterestInr = 0;
+        let isReclaimableUponPayment = false;
 
-        if (bill.billDate && !bill.isFullyPaid) {
-            daysElapsedSinceBill = calculateDaysElapsed(bill.billDate, asOfDate);
-            if (daysElapsedSinceBill > 180) {
-                isRule37Overdue = true;
-                rule37OverdueCount++;
-                const unpaidRatio = bill.totalAmountInr > 0 ? (bill.balanceInr / bill.totalAmountInr) : 1;
-                const overdueTaxPaise = Math.round(booksTaxPaise * unpaidRatio);
-                rule37ReversalAmountPaise += overdueTaxPaise;
-
-                // Section 50(1) 18% per annum calculated on exact elapsed days past 180 days
-                const overdueDaysPast180 = daysElapsedSinceBill - 180;
-                const annualInterestRate = 0.18;
-                const interestPaise = Math.round(overdueTaxPaise * (annualInterestRate / 365) * overdueDaysPast180);
-                rule37InterestExposurePaise += interestPaise;
-                rule37InterestInr = fromIntegerPaise(interestPaise);
-            }
-        }
+        const isFullyPaid = bill.isFullyPaid || bill.balanceInr <= 0;
 
         // Try exact match, fallback to alphanumeric
         let matchEntry = gstr2bExactMap.get(exactComposite) || gstr2bAlphaMap.get(alphaComposite) || null;
+        const isRcm = bill.isRcm || (matchEntry && matchEntry.record.isRcm);
+
+        if (bill.billDate) {
+            daysElapsedSinceBill = calculateDaysElapsed(bill.billDate, asOfDate);
+
+            if (isRcm) {
+                rule37Status = 'EXEMPT_RCM_SUPPLY'; // Proviso 1 to Rule 37(1)
+            } else if (bill.isSchedule1DeemedSupply) {
+                rule37Status = 'EXEMPT_SCHEDULE_1_DEEMED_SUPPLY'; // Proviso 2 to Rule 37(1)
+            } else if (isFullyPaid) {
+                rule37Status = 'COMPLIANT_FULLY_PAID';
+            } else if (daysElapsedSinceBill <= 180) {
+                rule37Status = 'WITHIN_180_DAYS_WINDOW';
+            } else {
+                // Bill exceeds 180 days unpaid!
+                isRule37Overdue = true;
+                rule37OverdueCount++;
+                rule37Status = 'OVERDUE_REVERSAL_REQUIRED';
+                isReclaimableUponPayment = true;
+
+                // Second Proviso to Section 16(2): Proportional to unpaid balance
+                const unpaidRatio = bill.totalAmountInr > 0 ? (bill.balanceInr / bill.totalAmountInr) : 1;
+                const overdueTaxPaise = Math.round(booksTaxPaise * Math.min(1, Math.max(0, unpaidRatio)));
+                rule37ReversalAmountPaise += overdueTaxPaise;
+                rule37ReversalTaxInr = fromIntegerPaise(overdueTaxPaise);
+
+                // Section 50(1) interest evaluated against ECL utilization
+                const overdueDaysPast180 = daysElapsedSinceBill - 180;
+                if (eclUtilizationStatus === 'UNUTILIZED') {
+                    rule37InterestInr = 0;
+                } else {
+                    const annualInterestRate = 0.18;
+                    const interestPaise = Math.round(overdueTaxPaise * (annualInterestRate / 365) * overdueDaysPast180);
+                    rule37InterestExposurePaise += interestPaise;
+                    rule37InterestInr = fromIntegerPaise(interestPaise);
+                }
+            }
+        }
 
         if (!matchEntry) {
-            // Disposition 5: MISSING_IN_GSTR2B
+            // Disposition: MISSING_IN_GSTR2B
             missingIn2bCount++;
             atRiskUnfiledItcPaise += booksTaxPaise;
 
+            const isTimingDifference = daysElapsedSinceBill <= 30;
+            const disposition = isTimingDifference ? 'MISSING_IN_GSTR2B_TIMING' : 'MISSING_IN_GSTR2B';
+            const itcStatus = isTimingDifference ? 'PROVISIONAL_PENDING_NEXT_GSTR2B' : 'PROVISIONAL_AT_RISK_RESTRICTED';
+
             items.push({
-                disposition: 'MISSING_IN_GSTR2B',
-                itcStatus: 'PROVISIONAL_AT_RISK_RESTRICTED',
+                disposition,
+                itcStatus,
                 statutorySection: 'CGST Act Section 16(2)(aa) read with Rule 36(4)',
                 vendorName: bill.vendorName,
                 vendorGstin: bill.vendorGstin,
@@ -540,19 +696,24 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 varianceTaxInr: bill.totalTaxInr,
                 isRule37Overdue,
                 daysElapsedSinceBill,
+                rule37Status,
+                rule37ReversalTaxInr,
                 rule37InterestInr,
-                statutoryAction: 'Withhold ITC claim in GSTR-3B Table 4(A)(5). Notify vendor to file Form GSTR-1 by 11th of month.',
+                isReclaimableUponPayment,
+                statutoryAction: isTimingDifference
+                    ? 'Invoice dated within recent tax cycle. May appear in subsequent Form GSTR-2B or vendor IFF filing. Withhold claim until populated.'
+                    : 'Invoice unfiled by vendor. Provisional ITC restricted under Section 16(2)(aa) & Rule 36(4). Withhold claim in GSTR-3B Table 4(A)(5). Issue vendor notice.',
                 auditEvidence: {
                     inBooks: true,
                     inGstr2b: false,
                     matchType: 'UNMATCHED',
-                    posValid: null
+                    isTimingDifference
                 }
             });
             continue;
         }
 
-        // Mark 2B record as consumed
+        // Mark 2B record as matched
         matched2bSet.add(matchEntry.index);
         const record2b = matchEntry.record;
 
@@ -562,15 +723,64 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         const diffTaxablePaise = Math.abs(booksTaxablePaise - gstr2bTaxablePaise);
         const diffTaxPaise = Math.abs(booksTaxPaise - gstr2bTaxPaise);
 
-        // Check POS jurisdiction
-        const isPosMismatched = Boolean(
-            recipientStateCode && record2b.posStateCode &&
-            recipientStateCode !== record2b.posStateCode &&
-            (record2b.cgstInr > 0 || record2b.sgstInr > 0)
-        );
+        // Place of Supply (POS) Triangulation Matrix
+        const supplierStateCode = record2b.supplierGstin ? record2b.supplierGstin.slice(0, 2) : (bill.vendorGstin ? bill.vendorGstin.slice(0, 2) : null);
+        const posStateCode = record2b.posStateCode || bill.posStateCode || supplierStateCode;
+        const hasLocalTax = (record2b.cgstInr > 0 || record2b.sgstInr > 0 || bill.cgstInr > 0 || bill.sgstInr > 0);
+        const isSupplierLocal = supplierStateCode && posStateCode && supplierStateCode === posStateCode;
 
-        if (bill.isBlocked17_5) {
-            // Disposition 3: MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5
+        let posClassification = 'POS_COMPLIANT';
+        if (recipientFilingState && posStateCode && recipientFilingState !== posStateCode) {
+            if (hasLocalTax && isSupplierLocal) {
+                // Legitimate intra-state supply in supplier's state
+                if (recipientStateSet.has(posStateCode)) {
+                    posClassification = 'POS_ROUTABLE_TO_BRANCH_GSTIN';
+                } else {
+                    const isStatutoryLocalPOS = /hotel|lodge|stay|accommodation|catering|restaurant|real estate|immovable|event/i.test(bill.category || '');
+                    posClassification = isStatutoryLocalPOS ? 'POS_STRANDED_LOCAL_CGST_SGST' : 'POS_ERRONEOUS_LEVY';
+                }
+            } else if (hasLocalTax && !isSupplierLocal) {
+                posClassification = 'POS_ERRONEOUS_LEVY';
+            } else if (!hasLocalTax) {
+                // Interstate IGST but POS points to different state
+                posClassification = recipientStateSet.has(posStateCode) ? 'POS_ROUTABLE_TO_BRANCH_GSTIN' : 'POS_ERRONEOUS_LEVY';
+            }
+        }
+
+        if (record2b.itcAvailable === false) {
+            // Disposition: GSTR2B_INELIGIBLE_FLAGGED_BY_GSTN
+            gstr2bPortalIneligibleCount++;
+            gstr2bPortalIneligibleItcPaise += booksTaxPaise;
+
+            items.push({
+                disposition: 'GSTR2B_INELIGIBLE_FLAGGED_BY_GSTN',
+                itcStatus: 'INELIGIBLE_PORTAL_FLAGGED',
+                statutorySection: 'CGST Act Section 16(4) / 16(2) (GSTN Ineligibility Flag)',
+                vendorName: bill.vendorName,
+                vendorGstin: bill.vendorGstin,
+                billNumber: bill.billNumber,
+                billDate: bill.billDate,
+                booksTaxableInr: bill.taxableAmountInr,
+                booksTaxInr: bill.totalTaxInr,
+                gstr2bTaxableInr: record2b.taxableAmountInr,
+                gstr2bTaxInr: record2b.totalTaxInr,
+                varianceTaxableInr: fromIntegerPaise(diffTaxablePaise),
+                varianceTaxInr: fromIntegerPaise(diffTaxPaise),
+                isRule37Overdue,
+                daysElapsedSinceBill,
+                rule37Status,
+                rule37ReversalTaxInr,
+                rule37InterestInr,
+                isReclaimableUponPayment,
+                statutoryAction: `Form GSTR-2B has flagged this credit as ineligible: ${record2b.itcRevReason || 'Section 16(4) time-barred or supplier/recipient restriction'}. Do not avail in GSTR-3B Table 4(A)(5).`,
+                auditEvidence: {
+                    inBooks: true,
+                    inGstr2b: true,
+                    itcRevReason: record2b.itcRevReason
+                }
+            });
+        } else if (bill.isBlocked17_5) {
+            // Disposition: MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5
             blocked17_5Count++;
             blocked17_5ItcPaise += booksTaxPaise;
 
@@ -590,7 +800,10 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 varianceTaxInr: fromIntegerPaise(diffTaxPaise),
                 isRule37Overdue,
                 daysElapsedSinceBill,
+                rule37Status,
+                rule37ReversalTaxInr,
                 rule37InterestInr,
+                isReclaimableUponPayment,
                 statutoryAction: 'Report in GSTR-3B Table 4(B)(1) as Ineligible ITC. Do not credit to electronic ledger.',
                 auditEvidence: {
                     inBooks: true,
@@ -599,15 +812,15 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     blockedCategory: bill.category || 'Section 17(5) Item'
                 }
             });
-        } else if (isPosMismatched) {
-            // Disposition 4: MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH
-            posMismatchCount++;
-            posMismatchItcPaise += booksTaxPaise;
+        } else if (posClassification === 'POS_ROUTABLE_TO_BRANCH_GSTIN') {
+            // Disposition: MATCHED_ROUTABLE_TO_BRANCH_GSTIN
+            routableToBranchCount++;
+            routableToBranchItcPaise += booksTaxPaise;
 
             items.push({
-                disposition: 'MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH',
-                itcStatus: 'INELIGIBLE_JURISDICTION_MISMATCH',
-                statutorySection: 'CGST Act Section 16(2)(c) read with IGST Act Section 12 (Place of Supply)',
+                disposition: 'MATCHED_ROUTABLE_TO_BRANCH_GSTIN',
+                itcStatus: 'ROUTABLE_TO_ANOTHER_BRANCH_GSTIN',
+                statutorySection: 'CGST Act Section 25(4) read with IGST Act Section 12 (Distinct Persons)',
                 vendorName: bill.vendorName,
                 vendorGstin: bill.vendorGstin,
                 billNumber: bill.billNumber,
@@ -620,17 +833,87 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 varianceTaxInr: fromIntegerPaise(diffTaxPaise),
                 isRule37Overdue,
                 daysElapsedSinceBill,
+                rule37Status,
+                rule37ReversalTaxInr,
                 rule37InterestInr,
-                statutoryAction: `Supplier charged local CGST/SGST of State ${record2b.posStateCode} instead of IGST to State ${recipientStateCode}. Request vendor credit note and corrected IGST invoice.`,
+                isReclaimableUponPayment,
+                statutoryAction: `Intra-state supply in State ${posStateCode}. Taxpayer holds valid registration in State ${posStateCode}. Route this voucher to branch GSTIN for claim in that state's GSTR-3B.`,
                 auditEvidence: {
                     inBooks: true,
                     inGstr2b: true,
-                    posStateCode: record2b.posStateCode,
-                    recipientStateCode
+                    posStateCode,
+                    recipientFilingState,
+                    recipientRegisteredStates: Array.from(recipientStateSet)
+                }
+            });
+        } else if (posClassification === 'POS_STRANDED_LOCAL_CGST_SGST') {
+            // Disposition: MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST
+            strandedLocalCount++;
+            strandedLocalItcPaise += booksTaxPaise;
+
+            items.push({
+                disposition: 'MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST',
+                itcStatus: 'INELIGIBLE_STRANDED_LOCAL_LEVY',
+                statutorySection: 'IGST Act Section 12(3)/12(4) & CGST Act Section 16(2)(c)',
+                vendorName: bill.vendorName,
+                vendorGstin: bill.vendorGstin,
+                billNumber: bill.billNumber,
+                billDate: bill.billDate,
+                booksTaxableInr: bill.taxableAmountInr,
+                booksTaxInr: bill.totalTaxInr,
+                gstr2bTaxableInr: record2b.taxableAmountInr,
+                gstr2bTaxInr: record2b.totalTaxInr,
+                varianceTaxableInr: fromIntegerPaise(diffTaxablePaise),
+                varianceTaxInr: fromIntegerPaise(diffTaxPaise),
+                isRule37Overdue,
+                daysElapsedSinceBill,
+                rule37Status,
+                rule37ReversalTaxInr,
+                rule37InterestInr,
+                isReclaimableUponPayment,
+                statutoryAction: `Mandatory intra-state supply in supplier state under Section 12(3)/12(4) (e.g. hotel/catering). Recipient lacks registration in State ${posStateCode}. Credit is stranded; absorb as operating expense.`,
+                auditEvidence: {
+                    inBooks: true,
+                    inGstr2b: true,
+                    posStateCode,
+                    recipientFilingState
+                }
+            });
+        } else if (posClassification === 'POS_ERRONEOUS_LEVY') {
+            // Disposition: MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH
+            posMismatchCount++;
+            posMismatchItcPaise += booksTaxPaise;
+
+            items.push({
+                disposition: 'MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH',
+                itcStatus: 'INELIGIBLE_DEFECTIVE_INVOICE_POS_ERROR',
+                statutorySection: 'CGST Act Section 16(2)(c) read with IGST Act Section 10(1)(a) & Section 12',
+                vendorName: bill.vendorName,
+                vendorGstin: bill.vendorGstin,
+                billNumber: bill.billNumber,
+                billDate: bill.billDate,
+                booksTaxableInr: bill.taxableAmountInr,
+                booksTaxInr: bill.totalTaxInr,
+                gstr2bTaxableInr: record2b.taxableAmountInr,
+                gstr2bTaxInr: record2b.totalTaxInr,
+                varianceTaxableInr: fromIntegerPaise(diffTaxablePaise),
+                varianceTaxInr: fromIntegerPaise(diffTaxPaise),
+                isRule37Overdue,
+                daysElapsedSinceBill,
+                rule37Status,
+                rule37ReversalTaxInr,
+                rule37InterestInr,
+                isReclaimableUponPayment,
+                statutoryAction: `Supplier erroneously charged local CGST/SGST of State ${posStateCode} instead of IGST to State ${recipientFilingState}. Demand vendor credit note and corrected IGST invoice.`,
+                auditEvidence: {
+                    inBooks: true,
+                    inGstr2b: true,
+                    posStateCode,
+                    recipientFilingState
                 }
             });
         } else if (diffTaxablePaise > tolerancePaise || diffTaxPaise > tolerancePaise) {
-            // Disposition 2: MISMATCH_AMOUNT_VALUE
+            // Disposition: MISMATCH_AMOUNT_VALUE
             amountMismatchCount++;
             mismatchedItcPaise += booksTaxPaise;
 
@@ -650,8 +933,11 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 varianceTaxInr: fromIntegerPaise(booksTaxPaise - gstr2bTaxPaise),
                 isRule37Overdue,
                 daysElapsedSinceBill,
+                rule37Status,
+                rule37ReversalTaxInr,
                 rule37InterestInr,
-                statutoryAction: 'Taxable or tax amount exceeds ₹1 tolerance. Claim only the lower GSTR-2B amount; seek vendor credit note or amendment.',
+                isReclaimableUponPayment,
+                statutoryAction: `Taxable or tax amount exceeds ₹${toleranceInr} tolerance. Restrict claim to lower GSTR-2B amount; seek vendor credit note or amendment.`,
                 auditEvidence: {
                     inBooks: true,
                     inGstr2b: true,
@@ -660,13 +946,13 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 }
             });
         } else {
-            // Disposition 1: MATCHED_ELIGIBLE
+            // Disposition: MATCHED_ELIGIBLE
             matchedEligibleCount++;
             eligibleItcPaise += booksTaxPaise;
 
             items.push({
                 disposition: 'MATCHED_ELIGIBLE',
-                itcStatus: 'ELIGIBLE_CREDIT_TABLE_4A5',
+                itcStatus: isRcm ? 'ELIGIBLE_RCM_TABLE_4A3' : 'ELIGIBLE_CREDIT_TABLE_4A5',
                 statutorySection: 'CGST Act Section 16(2) read with Section 16(1)',
                 vendorName: bill.vendorName,
                 vendorGstin: bill.vendorGstin,
@@ -680,15 +966,22 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 varianceTaxInr: 0,
                 isRule37Overdue,
                 daysElapsedSinceBill,
+                rule37Status,
+                rule37ReversalTaxInr,
                 rule37InterestInr,
+                isReclaimableUponPayment,
+                isRcm,
                 statutoryAction: isRule37Overdue
-                    ? `Eligible in GSTR-2B but >180 days unpaid (Rule 37). Must reverse ₹${bill.totalTaxInr} in Table 4(B)(2) + 18% interest ₹${rule37InterestInr}.`
-                    : '100% matched and compliant. Avail full credit in GSTR-3B Table 4(A)(5).',
+                    ? `Eligible in GSTR-2B but >180 days unpaid (Rule 37). Must reverse ₹${rule37ReversalTaxInr} in Table 4(B)(2) + 18% interest ₹${rule37InterestInr}. Re-avail upon payment.`
+                    : (isRcm
+                        ? '100% matched RCM supply. Pay liability in cash in Table 3.1(d); avail credit in GSTR-3B Table 4(A)(3).'
+                        : '100% matched and compliant. Avail full credit in GSTR-3B Table 4(A)(5).'),
                 auditEvidence: {
                     inBooks: true,
                     inGstr2b: true,
                     matchType: exactComposite === `${gstinKey}|${record2b.exactKey}` ? 'EXACT' : 'ALPHANUMERIC',
-                    varianceExceeded: false
+                    varianceExceeded: false,
+                    isRcm
                 }
             });
         }
@@ -708,10 +1001,18 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
             const taxPaise = toIntegerPaise(record.totalTaxInr);
             missingInBooksTaxPaise += taxPaise;
 
+            const recordDateObj = new Date(record.invoiceDate);
+            const asOfDateObj = new Date(asOfDate);
+            const daysSinceInvoice = isNaN(recordDateObj) ? 999 : Math.floor((asOfDateObj - recordDateObj) / (1000 * 60 * 60 * 24));
+            const isGoodsInTransit = daysSinceInvoice <= goodsInTransitWindowDays;
+
+            const disposition = isGoodsInTransit ? 'MISSING_IN_BOOKS_GOODS_IN_TRANSIT' : 'MISSING_IN_BOOKS';
+            const itcStatus = isGoodsInTransit ? 'GOODS_IN_TRANSIT_PENDING_RECEIPT' : 'UNRECORDED_PURCHASE_IN_BOOKS';
+
             items.push({
-                disposition: 'MISSING_IN_BOOKS',
-                itcStatus: 'UNRECORDED_PURCHASE_IN_BOOKS',
-                statutorySection: 'General Accounting Principles & GST Compliance',
+                disposition,
+                itcStatus,
+                statutorySection: isGoodsInTransit ? 'CGST Act Section 16(2)(b) (Receipt of Goods Condition)' : 'General Accounting Principles & GST Compliance',
                 vendorName: record.supplierName,
                 vendorGstin: record.supplierGstin,
                 billNumber: record.invoiceNumber,
@@ -724,13 +1025,19 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 varianceTaxInr: -record.totalTaxInr,
                 isRule37Overdue: false,
                 daysElapsedSinceBill: 0,
+                rule37Status: 'NOT_IN_BOOKS',
+                rule37ReversalTaxInr: 0,
                 rule37InterestInr: 0,
-                statutoryAction: 'Invoice reported in GSTR-2B by supplier but missing in Zoho Books. Review purchase orders or confirm if goods received.',
+                isReclaimableUponPayment: false,
+                statutoryAction: isGoodsInTransit
+                    ? `Invoice reported in GSTR-2B dated ${record.invoiceDate} (within ${goodsInTransitWindowDays} days). Verify physical receipt of goods per Section 16(2)(b) before recording bill.`
+                    : 'Invoice reported in GSTR-2B by supplier but missing in Zoho Books. Review purchase orders or confirm if goods/services received.',
                 auditEvidence: {
                     inBooks: false,
                     inGstr2b: true,
                     docType: record.docType,
-                    posStateCode: record.posStateCode
+                    posStateCode: record.posStateCode,
+                    isGoodsInTransit
                 }
             });
         }
@@ -743,6 +1050,9 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         amountMismatchCount,
         blocked17_5Count,
         posMismatchCount,
+        routableToBranchCount,
+        strandedLocalCount,
+        gstr2bPortalIneligibleCount,
         missingIn2bCount,
         missingInBooksCount,
         rule37OverdueCount,
@@ -756,13 +1066,17 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         atRiskUnfiledItcInr: fromIntegerPaise(atRiskUnfiledItcPaise),
         blocked17_5ItcInr: fromIntegerPaise(blocked17_5ItcPaise),
         posMismatchItcInr: fromIntegerPaise(posMismatchItcPaise),
+        routableToBranchItcInr: fromIntegerPaise(routableToBranchItcPaise),
+        strandedLocalItcInr: fromIntegerPaise(strandedLocalItcPaise),
+        gstr2bPortalIneligibleItcInr: fromIntegerPaise(gstr2bPortalIneligibleItcPaise),
         mismatchedItcInr: fromIntegerPaise(mismatchedItcPaise),
         missingInBooksTaxInr: fromIntegerPaise(missingInBooksTaxPaise),
 
         rule37ReversalAmountInr: fromIntegerPaise(rule37ReversalAmountPaise),
         rule37InterestExposureInr: fromIntegerPaise(rule37InterestExposurePaise),
+        eclUtilizationStatus,
 
-        reconciliationStatus: (missingIn2bCount === 0 && amountMismatchCount === 0 && missingInBooksCount === 0) ? 'FULLY_RECONCILED' : 'EXCEPTIONS_IDENTIFIED',
+        reconciliationStatus: (missingIn2bCount === 0 && amountMismatchCount === 0 && missingInBooksCount === 0 && posMismatchCount === 0 && blocked17_5Count === 0) ? 'FULLY_RECONCILED' : 'EXCEPTIONS_IDENTIFIED',
         isAuthorizedToDisburse: false
     };
 
@@ -802,9 +1116,11 @@ export function generateGstr2bAuditMarkdownReport(reconResult) {
     md += `| **100% Eligible ITC (Table 4(A)(5))** | — | — | **${fmt(s.eligibleItcInr)}** |\n`;
     md += `| **Provisional / At-Risk ITC (Missing in 2B)** | — | — | **${fmt(s.atRiskUnfiledItcInr)}** (Withhold) |\n`;
     md += `| **Blocked Ineligible ITC (Sec 17(5))** | — | — | **${fmt(s.blocked17_5ItcInr)}** (Table 4(B)(1)) |\n`;
-    md += `| **Place of Supply (POS) Mismatch** | — | — | **${fmt(s.posMismatchItcInr)}** (Dispute) |\n`;
-    md += `| **Rule 37 Overdue Reversal (>180 Days)** | — | — | **${fmt(s.rule37ReversalAmountInr)}** |\n`;
-    md += `| **Rule 37 Sec 50(1) Delayed Interest Exposure** | — | — | **${fmt(s.rule37InterestExposureInr)}** |\n\n`;
+    md += `| **Routable to Other Branch GSTINs** | — | — | **${fmt(s.routableToBranchItcInr)}** (Port to Branch) |\n`;
+    md += `| **Stranded Local State Levies** | — | — | **${fmt(s.strandedLocalItcInr)}** (Absorb as Expense) |\n`;
+    md += `| **Place of Supply (POS) Defective Invoices** | — | — | **${fmt(s.posMismatchItcInr)}** (Vendor Credit Note Req) |\n`;
+    md += `| **Rule 37 Overdue Reversal (>180 Days)** | — | — | **${fmt(s.rule37ReversalAmountInr)}** (Table 4(B)(2)) |\n`;
+    md += `| **Rule 37 Sec 50(1) Delayed Interest (${s.eclUtilizationStatus})** | — | — | **${fmt(s.rule37InterestExposureInr)}** |\n\n`;
 
     const exceptions = reconResult.reconciliationItems.filter(i => i.disposition !== 'MATCHED_ELIGIBLE');
 
@@ -883,7 +1199,6 @@ function normalizeIsoDate(raw) {
 function parseGstPortalDate(raw) {
     if (!raw) return null;
     const str = String(raw).trim();
-    // GST portal dates are typically DD-MM-YYYY
     const parts = str.split(/[-/]/);
     if (parts.length === 3) {
         if (parts[0].length === 2 && parts[2].length === 4) {
