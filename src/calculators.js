@@ -52,12 +52,38 @@ export function getRbiBankRateForDate(dateString) {
 export const MSMED_RATE_MULTIPLIER = 3;
 
 /**
+ * Safely normalizes numeric inputs from numbers, strings with currency symbols (₹, $, €, Rs, INR),
+ * thousands separators (commas), and whitespace into valid finite numbers.
+ * Fails closed to 0 if input is not parseable or infinite.
+ * 
+ * @param {any} val - Input number or formatted numeric string
+ * @returns {number} Normalized float
+ */
+export function cleanNumericAmount(val) {
+    if (typeof val === 'number') {
+        return Number.isFinite(val) && !isNaN(val) ? val : 0;
+    }
+    if (val === null || val === undefined || typeof val === 'boolean') {
+        return 0;
+    }
+    if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (!trimmed) return 0;
+        // Strip common currency symbols, commas, and currency labels
+        const cleaned = trimmed.replace(/[₹$€,\s]|(?:INR|Rs\.?)/gi, '');
+        const n = parseFloat(cleaned);
+        return Number.isFinite(n) && !isNaN(n) ? n : 0;
+    }
+    return 0;
+}
+
+/**
  * Standard Paisa Precision Rounding (2 decimal places) using integer math.
  * Eliminates floating point drift (e.g. 0.00000000001).
  * Rejects negative zero (-0 normalized to 0).
  */
 export function roundToPaisa(amount) {
-    const n = Number(amount);
+    const n = cleanNumericAmount(amount);
     if (!Number.isFinite(n) || isNaN(n) || Object.is(n, -0)) return 0;
     return Math.round(n * 100) / 100;
 }
@@ -72,7 +98,7 @@ export function roundToPaisa(amount) {
  * 3. If the last digit is less than 5, reduced to next lower multiple of ₹10.
  */
 export function roundSection288B(amount) {
-    const n = Number(amount);
+    const n = cleanNumericAmount(amount);
     if (!Number.isFinite(n) || isNaN(n) || Object.is(n, -0)) return 0;
     const wholeRupees = Math.round(n);
     return Math.round(wholeRupees / 10) * 10;
@@ -108,8 +134,8 @@ export function calculateMsmeCompoundInterest({
     commenceDayAfter = false, // Legacy flag: when true, adds 1 day to dueDate per Section 16 agreed date rule
     includePaymentDate = false // When false, payment date is the settlement day (interest ceases at start of payment date)
 }) {
-    const p = Number(principal);
-    if (isNaN(p) || p <= 0) {
+    const p = cleanNumericAmount(principal);
+    if (p <= 0) {
         throw new Error("Invalid principal amount for MSME interest calculation.");
     }
 
@@ -1584,11 +1610,11 @@ export function evaluateSection194Q({
     rateEffectiveFrom = null,
     rateEffectiveTo = null
 } = {}) {
-    const rawInvoiceAmount = Number(invoiceAmount) || 0;
-    const gstAmount = Number(gstAmountInr) || 0;
-    const creditNote = Number(creditNoteInr) || 0;
-    const advanceNetted = Number(advanceNettedInr) || 0;
-    const priorAdvanceTds = Number(priorAdvanceTdsDeductedInr) || 0;
+    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
+    const gstAmount = cleanNumericAmount(gstAmountInr);
+    const creditNote = cleanNumericAmount(creditNoteInr);
+    const advanceNetted = cleanNumericAmount(advanceNettedInr);
+    const priorAdvanceTds = cleanNumericAmount(priorAdvanceTdsDeductedInr);
 
     // CBDT Circular No. 13 of 2021 Question 3:
     // Does Section 194Q apply to import of goods from non-residents?
@@ -1647,11 +1673,11 @@ export function evaluateSection194Q({
     // Disambiguate Current FY purchases vs Preceding FY purchases:
     // Section 194Q(1) statutory threshold evaluates cumulative purchases in the CURRENT previous year (current FY).
     // Purchases from the preceding financial year do NOT consume the current financial year threshold.
-    const prior = Math.max(0, Number(
+    const prior = Math.max(0, cleanNumericAmount(
         currentFyPriorPurchasesInr !== undefined
             ? currentFyPriorPurchasesInr
             : (priorPurchasesInCurrentFyInr !== undefined ? priorPurchasesInCurrentFyInr : priorFyPurchases)
-    ) || 0);
+    ));
     const cumulative = prior + amount;
     const THRESHOLD = 5000000; // ₹50 Lakhs
 
@@ -2350,15 +2376,15 @@ export function evaluateSection194C({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInvoiceAmount = Number(invoiceAmount) || 0;
-    const gstAmount = Number(gstAmountInr) || 0;
+    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
+    const gstAmount = cleanNumericAmount(gstAmountInr);
 
     // CBDT Circular No. 23/2017: If GST is separately stated, TDS applies to basic value
     const effectiveContractAmount = isAdvancePayment
         ? rawInvoiceAmount
         : Math.max(0, rawInvoiceAmount - gstAmount);
 
-    const prior = Math.max(0, Number(priorFyPayments) || 0);
+    const prior = Math.max(0, cleanNumericAmount(priorFyPayments));
     const cumulative = prior + effectiveContractAmount;
 
     const SINGLE_THRESHOLD = 30000;
@@ -2693,8 +2719,8 @@ export function evaluateSection194J({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInvoiceAmount = Number(invoiceAmount) || 0;
-    const gstAmount = Number(gstAmountInr) || 0;
+    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
+    const gstAmount = cleanNumericAmount(gstAmountInr);
 
     const normalizedCategory = normalize194JCategory(serviceCategory);
     if (!normalizedCategory) {
@@ -2970,8 +2996,8 @@ export function evaluateSection194I({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInvoiceAmount = Number(invoiceAmount) || 0;
-    const gstAmount = Number(gstAmountInr) || 0;
+    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
+    const gstAmount = cleanNumericAmount(gstAmountInr);
 
     const effectiveRentAmount = isAdvancePayment
         ? rawInvoiceAmount
@@ -3127,8 +3153,8 @@ export function evaluateSection194H({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInvoiceAmount = Number(invoiceAmount) || 0;
-    const gstAmount = Number(gstAmountInr) || 0;
+    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
+    const gstAmount = cleanNumericAmount(gstAmountInr);
 
     const effectiveCommissionAmount = isAdvancePayment
         ? rawInvoiceAmount
@@ -4712,9 +4738,9 @@ export function calculateItcReversalRule37({
     isScheduleISupply = false, // Deemed supplies without consideration under Schedule I are exempt
     annualInterestRatePercent = 18.0
 } = {}) {
-    const totalInvoice = Number(invoiceAmount) || 0;
-    const totalItc = Number(taxAmount) || 0;
-    const totalPaid = Math.max(0, Number(paidAmount) || 0);
+    const totalInvoice = cleanNumericAmount(invoiceAmount);
+    const totalItc = cleanNumericAmount(taxAmount);
+    const totalPaid = Math.max(0, cleanNumericAmount(paidAmount));
     const unpaidAmount = roundToPaisa(Math.max(0, totalInvoice - totalPaid));
 
     if (!invoiceDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(invoiceDate).slice(0, 10))) {

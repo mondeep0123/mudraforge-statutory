@@ -693,9 +693,24 @@ function findColIndex(headers, candidateNames) {
 
 function normalizeIsoDate(raw) {
     if (!raw) return null;
+    // Excel serial date number support (e.g. 45422 -> 2024-05-10)
+    if (typeof raw === 'number' && raw > 20000 && raw < 70000) {
+        const ms = Math.round((raw - 25569) * 86400 * 1000);
+        return new Date(ms).toISOString().slice(0, 10);
+    }
     const str = String(raw).trim();
+    // Excel serial as string e.g. "45422"
+    if (/^\d{5}$/.test(str)) {
+        const num = parseInt(str, 10);
+        if (num > 20000 && num < 70000) {
+            const ms = Math.round((num - 25569) * 86400 * 1000);
+            return new Date(ms).toISOString().slice(0, 10);
+        }
+    }
     // YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    // YYYY/MM/DD
+    if (/^\d{4}\/\d{2}\/\d{2}$/.test(str)) return str.replace(/\//g, '-');
     // DD-MM-YYYY or DD/MM/YYYY
     const dmy = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
     if (dmy) {

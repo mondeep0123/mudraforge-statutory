@@ -342,6 +342,7 @@ export declare const MERKLE_ROOT_OKF_V2: string;
 
 export declare function roundToPaisa(amount: number | string): number;
 export declare function roundSection288B(amount: number | string): number;
+export declare function cleanNumericAmount(val: any): number;
 export declare function calculateCorporateTaxMatVsConcessional(payload?: any): any;
 export declare function evaluatePlaceOfSupplyAndLut(payload?: any): any;
 export declare function calculateTransferPricingAlp(payload?: any): any;

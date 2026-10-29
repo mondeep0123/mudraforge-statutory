@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import {
     roundToPaisa,
     roundSection288B,
+    cleanNumericAmount,
     calculateCorporateTaxMatVsConcessional,
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,
@@ -3073,6 +3074,7 @@ export function getStatutoryDiff(options = {}) {
 export {
     roundToPaisa,
     roundSection288B,
+    cleanNumericAmount,
     calculateCorporateTaxMatVsConcessional,
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,

@@ -32,6 +32,9 @@ import {
     getStatutoryDiff,
     roundToPaisa,
     roundSection288B,
+    cleanNumericAmount,
+    evaluateSection194Q,
+    calculateMsmeCompoundInterest,
     calculateCorporateTaxMatVsConcessional,
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,
@@ -3250,8 +3253,74 @@ async function run() {
     }
     console.log(`[PASS] Stress Benchmark Verified: 1,000 vouchers across 50 PANs reconciled in ${tElapsed.toFixed(2)}ms (${(1000 / (tElapsed / 1000)).toFixed(0)} vouchers/sec).`);
 
+    // 120. Numerical Input Resilience & Currency String Sanitization
+    console.log('\n── Test 120: Numerical Input Resilience & Currency String Sanitization ──');
+    if (cleanNumericAmount('₹ 60,00,000.50') !== 6000000.50) {
+        throw new Error('cleanNumericAmount failed to sanitize INR symbol and Indian comma grouping');
+    }
+    if (cleanNumericAmount('1,50,000') !== 150000) {
+        throw new Error('cleanNumericAmount failed to sanitize standard comma grouping');
+    }
+    if (cleanNumericAmount('Rs. 25,00,000') !== 2500000 || cleanNumericAmount('  $ 10,000.25 ') !== 10000.25) {
+        throw new Error('cleanNumericAmount failed on Rs or Dollar prefixes');
+    }
+    if (cleanNumericAmount(null) !== 0 || cleanNumericAmount(undefined) !== 0 || cleanNumericAmount(NaN) !== 0 || cleanNumericAmount(Infinity) !== 0) {
+        throw new Error('cleanNumericAmount failed to fail-closed on non-finite values');
+    }
+    if (roundToPaisa('₹ 1,50,000.555') !== 150000.56 || roundSection288B('₹ 1,50,004.40') !== 150000 || roundSection288B('₹ 1,50,005.50') !== 150010) {
+        throw new Error('roundToPaisa or roundSection288B failed with formatted currency inputs');
+    }
+
+    // End-to-end calculator resilience with formatted strings:
+    const formatted194qRes = evaluateSection194Q({
+        invoiceAmount: '₹ 60,00,000',
+        priorFyPurchases: '20,00,000',
+        buyerTurnoverCr: '15'
+    });
+    // Total FY purchases = 20L + 60L = 80L. Excess over 50L threshold = 30L. TDS @ 0.1% = 3,000.
+    if (formatted194qRes.invoiceAmount !== 6000000 || formatted194qRes.taxableBase !== 3000000 || formatted194qRes.calculatedTdsInr !== 3000) {
+        throw new Error('evaluateSection194Q failed to process comma-separated strings');
+    }
+
+    const formattedMsmeRes = calculateMsmeCompoundInterest({
+        principal: '₹ 1,50,000',
+        deliveryDate: '2024-05-01',
+        paymentDate: '2024-07-01'
+    });
+    if (formattedMsmeRes.principal !== 150000 || formattedMsmeRes.totalInterest <= 0) {
+        throw new Error('calculateMsmeCompoundInterest failed with formatted principal string');
+    }
+    console.log('[PASS] Numerical Hygiene Verified: Currency symbols, Indian comma groupings, and non-finite inputs cleanly sanitized.');
+
+    // 121. Excel Date Serial & Diverse Date Normalization
+    console.log('\n── Test 121: Excel Date Serial & Diverse Date Normalization ──');
+    const diverseCsv = `Date,Voucher_No,Party_Name,GSTIN,Voucher_Type,Gross_Amount,TDS_Deducted
+45422,EXCEL-01,Tata Steel,27AAACT2727Q1ZW,Purchase,"₹ 25,00,000",0
+2024/05/10,SLASH-02,Tata Steel,27AAACT2727Q1ZW,Purchase,"35,00,000",0
+15-08-2024,INDIAN-03,Tata Steel,27AAACT2727Q1ZW,Purchase,"10,00,000",0`;
+
+    const parsedDiverse = parseTallyDaybookCsv(diverseCsv);
+    if (parsedDiverse.length !== 3) {
+        throw new Error('Failed to parse diverse CSV');
+    }
+    if (parsedDiverse[0].date !== '2024-05-10' || parsedDiverse[0].grossAmount !== 2500000) {
+        throw new Error(`Excel serial date normalization failed: expected 2024-05-10, got ${parsedDiverse[0].date}`);
+    }
+    if (parsedDiverse[1].date !== '2024-05-10' || parsedDiverse[1].grossAmount !== 3500000) {
+        throw new Error(`Slash date normalization failed: expected 2024-05-10, got ${parsedDiverse[1].date}`);
+    }
+    if (parsedDiverse[2].date !== '2024-08-15' || parsedDiverse[2].grossAmount !== 1000000) {
+        throw new Error(`Indian DD-MM-YYYY date normalization failed: expected 2024-08-15, got ${parsedDiverse[2].date}`);
+    }
+    const diverseAudit = reconcile194QDaybook(parsedDiverse, { buyerTurnoverCr: 50 });
+    // Total = 70L -> Excess = 20L -> TDS = 2000
+    if (diverseAudit.auditSummary.totalExcessPurchasesOver50LInr !== 2000000 || diverseAudit.auditSummary.totalTdsShortfallInr !== 2000) {
+        throw new Error('Diverse date format audit reconciliation failed');
+    }
+    console.log('[PASS] Diverse Date Normalization Verified: Excel serials, slash formats, and Indian date conventions normalized.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 119 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 121 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 
