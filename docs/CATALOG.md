@@ -24,10 +24,12 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | `direct_tax` | [**194O**](#194o) | Income-tax Act, 1961 | 2020-10-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_ecommerce_schedule` |
 | `direct_tax` | [**194Q**](#194q) | Income-tax Act, 1961 | 2021-07-01 &rarr; 2026-03-31 | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | `form_26q_quarterly_return` |
 | `direct_tax` | [**393**](#393) | Income-tax Act, 2025 | 2026-04-01 &rarr; In Force | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | N/A |
+| `direct_tax` | [**194M**](#194m) | Income-tax Act, 1961 | 2019-09-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26qd_contractor_statement` |
 | `direct_tax` | [**194A**](#194a) | Income-tax Act, 1961 | 1967-04-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_15g_15h_interest_declaration` |
-| `direct_tax` | [**194R**](#194r) | Income-tax Act, 1961 | 2022-07-01 &rarr; In Force | `Active` | General Provision | N/A |
+| `direct_tax` | [**194R**](#194r) | Income-tax Act, 1961 | 2022-07-01 &rarr; In Force | `Active` | General Provision | `form_26q_perquisites_schedule` |
 | `direct_tax` | [**194-IA**](#194-ia) | Income-tax Act, 1961 | 2013-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26qb_property_tds_challan` |
 | `direct_tax` | [**194I**](#194i) | Income-tax Act, 1961 | 1994-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
+| `direct_tax` | [**194-IB**](#194-ib) | Income-tax Act, 1961 | 2017-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26qc_challan_cum_statement` |
 | `direct_tax` | [**194J**](#194j) | Income-tax Act, 1961 | 1995-07-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_16a_tds_certificate` |
 | `indirect_tax_gst` | [**17(5)**](#17-5-) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_2b_ineligible_reconciliation` |
 | `indirect_tax_gst` | [**8**](#8) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `composite_mixed_supply_assessment_matrix` |
@@ -550,6 +552,43 @@ The table below records the provenance baseline, verification standard, and oper
 
 ---
 
+<a id="194m"></a>
+
+#### Section 194M: Payment of Certain Sums by Certain Individuals or Hindu Undivided Family (Section 194M)
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 5, Item (m)
+- **Temporal Validity**: `2019-09-01` to `2026-03-31`
+- **Legislative Sunset / Transition**: Transitions to Section 393(1) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Machine-Readable Source**: [`okf/direct_tax/tds_individual_contract_194m/section.json`](../okf/direct_tax/tds_individual_contract_194m/section.json)
+
+**Statutory Summary**:
+> Any person, being an individual or a Hindu undivided family (other than those who are required to deduct income-tax as per the provisions of section 194C, section 194H or section 194J), responsible for paying any sum to any resident for carrying out any work (including supply of labour) in pursuance of a contract, by way of commission or brokerage, or by way of fees for professional services during the financial year, shall deduct an amount equal to 2% (reduced from 5% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024) if such sum or aggregate of sums exceeds fifty lakh rupees in a financial year.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "annualAggregateThresholdInr": 5000000,
+  "historicalRatePercent": 5,
+  "amendedRatePercent": 2,
+  "rateAmendmentEffectiveDate": "2024-10-01",
+  "inoperativePanPenaltyRatePercent": 20,
+  "tanRequirement": "No TAN required. Payment is remitted using PAN via Form 26QD within 30 days of the end of the month of deduction."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 18 of 2019 / Notification No. 98/2019](https://www.incometaxindia.gov.in/communications/notification/notification_98_2019.pdf): *Procedure for deduction and deposit of tax under Section 194M via Form 26QD and Form 16D*
+- **Ministry of Finance** — [Finance (No. 2) Act, 2024 Memo](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Rationalization of TDS rates under Section 194M from 5% to 2% effective 1 October 2024*
+
+**Executive Circulars Bundled**:
+- [`finance_act_2024_194m_rate_cut_memo.md`](../okf/direct_tax/tds_individual_contract_194m/circulars/finance_act_2024_194m_rate_cut_memo.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_26qd_contractor_statement.json`](../okf/direct_tax/tds_individual_contract_194m/forms/form_26qd_contractor_statement.json)
+
+---
+
 <a id="194a"></a>
 
 #### Section 194A: Deduction of tax at source on payment of interest other than interest on securities
@@ -618,6 +657,9 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Executive Circulars Bundled**:
 - [`cbdt_circular_12_2022_perquisites.md`](../okf/direct_tax/tds_perquisites_194r/circulars/cbdt_circular_12_2022_perquisites.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_26q_perquisites_schedule.json`](../okf/direct_tax/tds_perquisites_194r/forms/form_26q_perquisites_schedule.json)
 
 ---
 
@@ -704,6 +746,43 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Compliance Return Schemas & Templates**:
 - [`form_26q_quarterly_return.json`](../okf/direct_tax/tds_rent_194i/forms/form_26q_quarterly_return.json)
+
+---
+
+<a id="194-ib"></a>
+
+#### Section 194-IB: Payment of Rent by Certain Individuals or Hindu Undivided Family (Section 194-IB)
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 5, Item (ib)
+- **Temporal Validity**: `2017-06-01` to `2026-03-31`
+- **Legislative Sunset / Transition**: Transitions to Section 393(1) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Machine-Readable Source**: [`okf/direct_tax/tds_rent_individual_194ib/section.json`](../okf/direct_tax/tds_rent_individual_194ib/section.json)
+
+**Statutory Summary**:
+> Any person, being an individual or a Hindu undivided family (other than those referred to in the second proviso to section 194-I), responsible for paying to a resident any income by way of rent exceeding fifty thousand rupees for a month or part of a month during the previous year, shall deduct an amount equal to 2% (reduced from 5% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024) of such income as income-tax thereon. Deduction is made at the time of credit of rent for the last month of previous year or last month of tenancy, or at the time of payment, whichever is earlier. Section 194-IB(4) mandates that deduction under Section 206AA shall not exceed the rent payable for the last month of the tenancy.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "monthlyRentThresholdInr": 50000,
+  "historicalRatePercent": 5,
+  "amendedRatePercent": 2,
+  "rateAmendmentEffectiveDate": "2024-10-01",
+  "inoperativePanPenaltyCeiling": "Under Section 194-IB(4), deduction under Section 206AA (20%) is capped at the rent payable for the last month of the previous year or tenancy.",
+  "tanRequirement": "No TAN required. Filing is executed using PAN via Challan-cum-statement Form 26QC."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Direct Taxes (CBDT)** — [Notification No. 61/2017 / Rule 30(2B)](https://www.incometaxindia.gov.in/communications/notification/notification61_2017.pdf): *Form 26QC challan-cum-statement and Form 16C TDS certificate under Section 194-IB*
+- **Ministry of Finance** — [Finance (No. 2) Act, 2024 Memo](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Reduction of TDS rate under Section 194-IB from 5% to 2% effective 1 October 2024*
+
+**Executive Circulars Bundled**:
+- [`finance_act_2024_rent_rate_cut_memo.md`](../okf/direct_tax/tds_rent_individual_194ib/circulars/finance_act_2024_rent_rate_cut_memo.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_26qc_challan_cum_statement.json`](../okf/direct_tax/tds_rent_individual_194ib/forms/form_26qc_challan_cum_statement.json)
 
 ---
 
