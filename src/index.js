@@ -30,6 +30,7 @@ import {
     evaluateSection194J,
     evaluateSection194A,
     evaluateSection194O,
+    evaluateSection194IA,
     evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
@@ -81,6 +82,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-bd351719a8235c44f2bac87cc347423baa8ac3ecb74c0ee63d1fffa9f33dbebe', // feat/property-194ia (35 Sections across 5 Domains)
     'sha256-fc208ff012bfc3044cfc6edc5fcbf1c0e445e387a8c7d806e271968b511919ce', // feat/mna-sec281 (34 Sections across 5 Domains)
     'sha256-7f2bd99d81a261743773230d2ab3e21717ac9ca02a55c867545f5777b1a7d69f', // feat/statutory-43b-payroll (33 Sections across 5 Domains)
     'sha256-bf547512a57f26eae9a5ebcb9f0ec41c397421366b1b4223ab9e17d282721ca7', // feat/ecommerce-194o (32 Sections across 5 Domains)
@@ -1890,6 +1892,13 @@ export class StatutoryClient {
     }
 
     /**
+     * Section 194-IA: Immovable property transfer TDS (higher of consideration or SDV) & Form 26QB.
+     */
+    evaluateSection194IA(payload) {
+        return evaluateSection194IA(payload);
+    }
+
+    /**
      * Section 43B / Section 36(1)(va): Statutory payables disallowance & Supreme Court Checkmate Doctrine.
      */
     evaluateSection43B(payload) {
@@ -2969,6 +2978,7 @@ export {
     evaluateSection194J,
     evaluateSection194A,
     evaluateSection194O,
+    evaluateSection194IA,
     evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,

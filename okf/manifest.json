@@ -1,9 +1,9 @@
 {
   "okfVersion": "2.9.0",
-  "publishedAt": "2026-10-29T04:56:45.325Z",
-  "rootHash": "sha256-fc208ff012bfc3044cfc6edc5fcbf1c0e445e387a8c7d806e271968b511919ce",
-  "totalSections": 34,
-  "totalFiles": 102,
+  "publishedAt": "2026-10-29T05:05:18.716Z",
+  "rootHash": "sha256-bd351719a8235c44f2bac87cc347423baa8ac3ecb74c0ee63d1fffa9f33dbebe",
+  "totalSections": 35,
+  "totalFiles": 105,
   "changelog": "Expanded statutory commons with 5 Corporate Finance Domains: Corporate Tax MAT vs 115BAA, Place of Supply & Zero-Rated Export LUT, Transfer Pricing ALP & Rule 10CA, Section 79 Loss Continuity, and Ind AS 21 & 109 FX Revaluation.",
   "domains": {
     "corporate_ma_restructuring": [
@@ -23,6 +23,7 @@
       "393",
       "194A",
       "194R",
+      "194-IA",
       "194I",
       "194J"
     ],
@@ -66,6 +67,7 @@
     "393",
     "194A",
     "194R",
+    "194-IA",
     "194I",
     "194J",
     "17(5)",
@@ -131,6 +133,9 @@
     "direct_tax/tds_interest_194a/section.json": "f4bd7c6995d7d2be81bb114d577c51e17c49442b7278aa51331aac60d899556c",
     "direct_tax/tds_perquisites_194r/circulars/cbdt_circular_12_2022_perquisites.md": "a70dc9e21493a00692987bd70006bbdf192865dd43648cc8e613af6c3763ec39",
     "direct_tax/tds_perquisites_194r/section.json": "d1be884d59f62d833da8c7f19fd256cf409e703240d05c383e3e843be9bf6cbb",
+    "direct_tax/tds_property_194ia/circulars/cbdt_notification_67_2022_property_tds.md": "d714fb54b9e396b93f472111cd17f17fb43b01332fb2e26d637335840998e517",
+    "direct_tax/tds_property_194ia/forms/form_26qb_property_tds_challan.json": "e10d89e6f8c2eb659fecb036021105205cb9dab19992735bdd97d76aa1a71d15",
+    "direct_tax/tds_property_194ia/section.json": "12e3bb8e99bfcfac08657a252dad85d8440c9915fed882cbad4fd24e739c587e",
     "direct_tax/tds_rent_194i/circulars/cbdt_circular_23_2017_gst_unbundling.md": "dd99c46ad87c16aa6ade773ab92a920c12fd738a19545aa05855e24c4c6ccc7e",
     "direct_tax/tds_rent_194i/forms/form_26q_quarterly_return.json": "843e9aedc6e63d1d16a472d8a610e8c86c9d3f4958381fbfe6d459050f1e2a39",
     "direct_tax/tds_rent_194i/section.json": "10c376a005fcb1962543da283fa100f67f79ddf5b8677aba58d931018afc2784",

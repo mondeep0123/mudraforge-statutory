@@ -26,6 +26,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | `direct_tax` | [**393**](#393) | Income-tax Act, 2025 | 2026-04-01 &rarr; In Force | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | N/A |
 | `direct_tax` | [**194A**](#194a) | Income-tax Act, 1961 | 1967-04-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_15g_15h_interest_declaration` |
 | `direct_tax` | [**194R**](#194r) | Income-tax Act, 1961 | 2022-07-01 &rarr; In Force | `Active` | General Provision | N/A |
+| `direct_tax` | [**194-IA**](#194-ia) | Income-tax Act, 1961 | 2013-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26qb_property_tds_challan` |
 | `direct_tax` | [**194I**](#194i) | Income-tax Act, 1961 | 1994-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
 | `direct_tax` | [**194J**](#194j) | Income-tax Act, 1961 | 1995-07-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_16a_tds_certificate` |
 | `indirect_tax_gst` | [**17(5)**](#17-5-) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_2b_ineligible_reconciliation` |
@@ -617,6 +618,54 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Executive Circulars Bundled**:
 - [`cbdt_circular_12_2022_perquisites.md`](../okf/direct_tax/tds_perquisites_194r/circulars/cbdt_circular_12_2022_perquisites.md)
+
+---
+
+<a id="194-ia"></a>
+
+#### Section 194-IA: Payment on Transfer of Certain Immovable Property Other than Agricultural Land (Section 194-IA)
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1) Table 4 Item (q)
+- **Temporal Validity**: `2013-06-01` to `2026-03-31`
+- **Legislative Sunset / Transition**: Section 194-IA introduced by Finance Act, 2013 w.e.f. 1-6-2013. Amended by Finance Act, 2019 (expanding consideration to club fees, car parking, maintenance) and Finance Act, 2022 (mandating TDS on higher of consideration or Stamp Duty Value w.e.f. 1-4-2022). Continues under Income-tax Act, 1961 until 31 March 2026, transitioning to Section 393(1) Table 4 Item (q) of Income-tax Act, 2025 w.e.f. 1 April 2026.
+- **Machine-Readable Source**: [`okf/direct_tax/tds_property_194ia/section.json`](../okf/direct_tax/tds_property_194ia/section.json)
+
+**Statutory Summary**:
+> Section 194-IA of the Income-tax Act, 1961 requires any transferee (buyer) responsible for paying to a resident transferor (seller) any sum by way of consideration for the transfer of any immovable property (other than agricultural land) to deduct income tax at source at the rate of 1.0%. Under the Finance Act, 2022 amendment w.e.f. 1 April 2022, tax is deductible on the gross consideration or the Stamp Duty Value (SDV) adopted by the stamp valuation authority, whichever is higher. No deduction is required where both the consideration and the stamp duty value are less than INR 50,00,000. If either the consideration or the stamp duty value reaches or exceeds INR 50,00,000, TDS is applicable on the higher amount. By virtue of the Explanation to Section 194-IA inserted by Finance Act, 2019, 'consideration for transfer of any immovable property' includes all charges of the nature of club membership fee, car parking fee, electricity or water facility fee, maintenance fee, advance fee, or any other charges of similar nature, which are incidental to the transfer of the immovable property. Unlike standard corporate TDS which requires a Tax Deduction Account Number (TAN), deduction under Section 194-IA is PAN-based: the transferee is not required to obtain a TAN and furnishes the challan-cum-statement in Form 26QB online using the buyer's and seller's PANs within 30 days from the end of the month in which deduction was made. The buyer must subsequently issue TDS certificate Form 16B to the seller within 15 days of Form 26QB filing. Where the seller fails to furnish a valid PAN or has an inoperative PAN, the mandatory penalty withholding floor is 20% under Section 206AA. Under the Income-tax Act, 2025 (effective 1 April 2026), Section 194-IA transitions to Section 393(1) Table 4 Item (q).
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "standardDeductionRatePercent": 1,
+  "monetaryCeilingDeMinimisInr": 5000000,
+  "taxableBaseRule": "Higher of contractual consideration or Stamp Duty Value (SDV)",
+  "incidentalChargesIncludedInConsideration": [
+    "CLUB_MEMBERSHIP_FEE",
+    "CAR_PARKING_FEE",
+    "ELECTRICITY_WATER_FACILITY_FEE",
+    "MAINTENANCE_ADVANCE_FEE",
+    "DEVELOPMENT_CHARGES"
+  ],
+  "missingPanPenaltyRatePercent": 20,
+  "tanRequirementExempt": true,
+  "challanCumStatementForm": "Form 26QB",
+  "challanFilingCutoffDays": 30,
+  "tdsCertificateForm": "Form 16B",
+  "agriculturalLandExempt": true
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Income Tax Department, Ministry of Finance** — [Section 194-IA, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Payment on transfer of certain immovable property other than agricultural land*
+- **Central Board of Direct Taxes (CBDT)** — [Notification No. 30/2016 (F.No. 142/29/2015-TPL, Dated 29 April 2016)](https://www.incometaxindia.gov.in/communications/notification/notification302016.pdf): *Rules 30 and 31A for furnishing challan-cum-statement in Form 26QB within 30 days*
+- **Central Board of Direct Taxes (CBDT)** — [Income-tax (Fourth Amendment) Rules, 2022 (Notification No. 67/2022, Dated 21 June 2022)](https://www.incometaxindia.gov.in/communications/notification/notification_67_2022.pdf): *Amendment of Form 26QB to incorporate Stamp Duty Value and incidental property charges under Finance Act 2022*
+
+**Executive Circulars Bundled**:
+- [`cbdt_notification_67_2022_property_tds.md`](../okf/direct_tax/tds_property_194ia/circulars/cbdt_notification_67_2022_property_tds.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_26qb_property_tds_challan.json`](../okf/direct_tax/tds_property_194ia/forms/form_26qb_property_tds_challan.json)
 
 ---
 

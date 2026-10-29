@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.11.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-29T04:57:47.599Z
+> **Generated Timestamp**: 2026-10-29T05:06:39.250Z
 
 ---
 
@@ -11,12 +11,12 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 91 resolvable gazette URLs | 91 total citations declared | **100.0%** | VERIFIED |
-| **Temporal Validity Bounds** | 34 sections with explicit dates | 34 total bundled sections | **100.0%** | VERIFIED |
-| **Dual-Act 2025 Transition Bridges** | 12 direct tax provisions mapped | 13 direct tax provisions | **92.3%** | VERIFIED |
-| **Attached Administrative Circulars** | 35 official circulars | 34 provisions across active domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 33 schemas/templates | 34 provisions across active domains | **100% Attached** | VERIFIED |
-| **Cryptographic Merkle Verification** | 102 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
+| **Primary Source Citations** | 94 resolvable gazette URLs | 94 total citations declared | **100.0%** | VERIFIED |
+| **Temporal Validity Bounds** | 35 sections with explicit dates | 35 total bundled sections | **100.0%** | VERIFIED |
+| **Dual-Act 2025 Transition Bridges** | 13 direct tax provisions mapped | 14 direct tax provisions | **92.9%** | VERIFIED |
+| **Attached Administrative Circulars** | 36 official circulars | 35 provisions across active domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 34 schemas/templates | 35 provisions across active domains | **100% Attached** | VERIFIED |
+| **Cryptographic Merkle Verification** | 105 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
 
@@ -62,6 +62,7 @@
 | **393** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 2025 (Act No. 1 of 2025) | `2026-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 0 | 0 | N/A |
 | **194A** | Deduction of tax at source on payment of interest other than interest on securities | Income-tax Act, 1961 (Act No. 43 of 1961) | `1967-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 4, Item (i)) |
 | **194R** | Deduction of tax at source on benefit or perquisite in respect of business or profession | Income-tax Act, 1961 (Act No. 43 of 1961) | `2022-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | Income-tax Act, 2025 (Section 393(1), Table 8, Item 12) |
+| **194-IA** | Payment on Transfer of Certain Immovable Property Other than Agricultural Land (Section 194-IA) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2013-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1) Table 4 Item (q)) |
 | **194I** | Deduction of tax at source on payment of rent | Income-tax Act, 1961 (Act No. 43 of 1961) | `1994-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (i)) |
 | **194J** | Fees for professional or technical services, royalty, and non-compete fees | Income-tax Act, 1961 | `1995-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 6, Item (iii)) |
 | **17(5)** | Apportionment of credit and blocked input tax credits | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | CGST Act, 2017 (In force) (Section 17(5)(b)(i) & (b)(iii)) |

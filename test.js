@@ -40,6 +40,7 @@ import {
     revalueForeignExchangeIndAs109,
     evaluateSection194A,
     evaluateSection194O,
+    evaluateSection194IA,
     evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
@@ -1607,7 +1608,7 @@ async function run() {
         cwd: path.resolve('.')
     });
     const parsedList = JSON.parse(cliListOutput);
-    if (!Array.isArray(parsedList.sections) || parsedList.total !== 34) {
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 35) {
         throw new Error('CLI list --json failed');
     }
 
@@ -2464,8 +2465,84 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient parity verified for evaluateSection281.');
 
+    // 99. Section 194-IA — TDS on Transfer of Immovable Property
+    console.log('\n── Test 99: Direct Tax — Section 194-IA (TDS on Immovable Property Transfer) ──');
+    // Scenario 1: Agricultural land exemption
+    const agriRes = evaluateSection194IA({
+        isAgriculturalLand: true,
+        contractualConsiderationInr: 8000000
+    });
+    if (agriRes.statutoryDetermination !== 'EXEMPT_AGRICULTURAL_LAND' || agriRes.calculatedTdsInr !== 0) {
+        throw new Error('Section 194-IA agricultural land exemption check failed');
+    }
+
+    // Scenario 2: Non-resident seller redirection to Section 195
+    const nrRes = evaluateSection194IA({
+        isSellerResident: false,
+        contractualConsiderationInr: 15000000
+    });
+    if (nrRes.statutoryDetermination !== 'GOVERNED_BY_SECTION_195') {
+        throw new Error('Section 194-IA non-resident seller redirection check failed');
+    }
+
+    // Scenario 3: Below de minimis threshold (< ₹50 Lakh)
+    const deMinimisPropRes = evaluateSection194IA({
+        contractualConsiderationInr: 4500000,
+        stampDutyValueInr: 4800000
+    });
+    if (deMinimisPropRes.statutoryDetermination !== 'BELOW_DE_MINIMIS_THRESHOLD' || deMinimisPropRes.calculatedTdsInr !== 0) {
+        throw new Error('Section 194-IA de minimis threshold check failed');
+    }
+
+    // Scenario 4: Standard property acquisition with incidental charges & higher SDV rule (Finance Act 2022)
+    const stdPropRes = evaluateSection194IA({
+        contractualConsiderationInr: 7500000,
+        incidentalChargesInr: 500000, // Total contractual = ₹80,00,000
+        stampDutyValueInr: 9000000,   // SDV = ₹90,00,000 (higher adopted)
+        hasPan: true,
+        transactionDate: '2025-08-15'
+    });
+    if (stdPropRes.statutoryDetermination !== 'DETERMINED_APPLICABLE') {
+        throw new Error(`Expected DETERMINED_APPLICABLE, got ${stdPropRes.statutoryDetermination}`);
+    }
+    if (stdPropRes.valuationBasis.taxableBaseInr !== 9000000) {
+        throw new Error(`Expected taxableBaseInr 9000000, got ${stdPropRes.valuationBasis.taxableBaseInr}`);
+    }
+    if (stdPropRes.withholding.calculatedTdsInr !== 90000) {
+        throw new Error(`Expected calculatedTdsInr 90000 (1% of 90L), got ${stdPropRes.withholding.calculatedTdsInr}`);
+    }
+    if (stdPropRes.withholding.netPayableToSellerInr !== 7910000) {
+        throw new Error(`Expected netPayableToSellerInr 7910000 (80L - 90k), got ${stdPropRes.withholding.netPayableToSellerInr}`);
+    }
+    if (stdPropRes.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+    }
+
+    // Scenario 5: Missing / Inoperative PAN penalty rate (Section 206AA 20%)
+    const penaltyPropRes = evaluateSection194IA({
+        contractualConsiderationInr: 6000000,
+        hasPan: false,
+        transactionDate: '2025-08-15'
+    });
+    if (penaltyPropRes.withholding.applicableTdsRatePercent !== 20.0 || penaltyPropRes.withholding.calculatedTdsInr !== 1200000 || !penaltyPropRes.withholding.isPenaltyRate) {
+        throw new Error('Section 194-IA missing PAN 20% penalty rate check failed');
+    }
+    console.log('[PASS] Section 194-IA Engine Verified: Agricultural exclusion, Non-resident Sec 195 routing, De minimis (<₹50L), Higher SDV rule (₹90k TDS on ₹90L SDV), and Section 206AA 20% penalty floor.');
+
+    // 100. StatutoryClient Programmatic Parity for Section 194-IA
+    console.log('\n── Test 100: StatutoryClient Programmatic Parity for Section 194-IA ──');
+    const client194IA = statutoryClientInstance.evaluateSection194IA({
+        contractualConsiderationInr: 10000000,
+        stampDutyValueInr: 12000000,
+        transactionDate: '2025-09-01'
+    });
+    if (client194IA.withholding.calculatedTdsInr !== 120000 || client194IA.valuationBasis.taxableBaseInr !== 12000000) {
+        throw new Error('StatutoryClient.evaluateSection194IA parity check failed');
+    }
+    console.log('[PASS] StatutoryClient parity verified for evaluateSection194IA.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 98 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 100 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

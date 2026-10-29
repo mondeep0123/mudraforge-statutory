@@ -12,7 +12,7 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-fc208ff012bfc3044cfc6edc5fcbf1c0e445e387a8c7d806e271968b511919ce';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-bd351719a8235c44f2bac87cc347423baa8ac3ecb74c0ee63d1fffa9f33dbebe';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 export const STATUTORY_PACKAGE_VERSION = '2.11.0';
 export const OKF_CORPUS_VERSION = '2.11.0';
@@ -3601,6 +3601,176 @@ export function evaluateSection194O({
         },
         statutoryFormula: formulaText,
         isAuthorizedToDisburse: false
+    };
+}
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * SECTION 194-IA: TDS ON TRANSFER OF CERTAIN IMMOVABLE PROPERTY
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Evaluates tax deduction at source on acquisition/transfer of immovable property
+ * (land, commercial office, factory, residential premises other than agricultural land):
+ * - Rate: 1.0% on HIGHER of contractual consideration or Stamp Duty Value (SDV)
+ *   (Finance Act, 2022 amendment w.e.f. 1 April 2022).
+ * - Threshold: INR 50,00,000 (Section 194-IA(2)).
+ *   Applies if either consideration OR SDV >= INR 50,00,000.
+ * - Consideration Scope (Finance Act, 2019 Explanation):
+ *   Includes club membership fees, car parking charges, electricity/water facility charges,
+ *   maintenance advance fees, and all other charges incidental to transfer.
+ * - Missing / Inoperative PAN: 20.0% statutory penalty rate under Section 206AA.
+ * - Exemptions: Agricultural land, non-resident sellers (governed by Section 195).
+ * - Compliance: Form 26QB (30 days from month end), Form 16B (15 days from 26QB).
+ * - Dual-Act 2025: Section 393(1) Table 4 Item (q).
+ */
+export function evaluateSection194IA({
+    contractualConsiderationInr = 0,
+    stampDutyValueInr = null,
+    incidentalChargesInr = 0,
+    isAgriculturalLand = false,
+    isSellerResident = true,
+    hasPan = true,
+    isPanInoperative = false,
+    lowerDeductionRate = null,
+    lowerDeductionCertificate = null,
+    transactionDate = null,
+    creditDate = null,
+    paymentDate = null
+} = {}) {
+    // Exclusion 1: Agricultural Land
+    if (isAgriculturalLand) {
+        const grossAmount = roundToPaisa(Math.max(0, Number(contractualConsiderationInr) || 0) + Math.max(0, Number(incidentalChargesInr) || 0));
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_AGRICULTURAL_LAND',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            netPayableToSellerInr: grossAmount,
+            governingLaw: 'Income-tax Act, 1961 Section 194-IA Explanation (agricultural land excluded)',
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'Section 194-IA specifically excludes agricultural land from tax deduction at source. No withholding applies.'
+        };
+    }
+
+    // Exclusion 2: Non-Resident Seller
+    if (!isSellerResident) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'GOVERNED_BY_SECTION_195',
+            applicableTdsRatePercent: null,
+            taxableBaseInr: null,
+            calculatedTdsInr: null,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 195 (Cross-Border Non-Resident Remittance)',
+            statutoryRationale: 'Section 194-IA applies exclusively to resident transferors. Remittances to non-resident sellers on property transfers are subject to Section 195 withholding on capital gains (with Form 15CA/15CB routing).'
+        };
+    }
+
+    const rawBaseConsideration = Math.max(0, Number(contractualConsiderationInr) || 0);
+    const rawIncidental = Math.max(0, Number(incidentalChargesInr) || 0);
+    const totalContractualConsideration = roundToPaisa(rawBaseConsideration + rawIncidental);
+
+    const effectiveSdv = (stampDutyValueInr !== null && stampDutyValueInr !== undefined && !isNaN(Number(stampDutyValueInr)))
+        ? roundToPaisa(Math.max(0, Number(stampDutyValueInr)))
+        : totalContractualConsideration;
+
+    // Finance Act 2022 Amendment: Higher of consideration or Stamp Duty Value
+    const taxableBaseInr = roundToPaisa(Math.max(totalContractualConsideration, effectiveSdv));
+
+    // Threshold Check: De minimis INR 50 Lakh (Section 194-IA(2))
+    // TDS triggered if EITHER consideration OR SDV >= INR 50,00,000
+    const isThresholdMet = (totalContractualConsideration >= 5000000 || effectiveSdv >= 5000000);
+
+    // Temporal Resolution: Earlier of credit or payment
+    let effectiveDate = transactionDate;
+    let withholdingTrigger = 'TRANSACTION_DATE';
+
+    if (creditDate && paymentDate) {
+        if (creditDate <= paymentDate) {
+            effectiveDate = creditDate;
+            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
+        } else {
+            effectiveDate = paymentDate;
+            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
+        }
+    } else if (creditDate) {
+        effectiveDate = creditDate;
+        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
+    } else if (paymentDate) {
+        effectiveDate = paymentDate;
+        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
+    }
+
+    const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
+    const governingSection = isAct2025
+        ? 'Income-tax Act, 2025 Section 393(1) Table 4 Item (q)'
+        : 'Income-tax Act, 1961 Section 194-IA';
+
+    if (!isThresholdMet) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'BELOW_DE_MINIMIS_THRESHOLD',
+            applicableTdsRatePercent: 0,
+            contractualConsiderationInr: totalContractualConsideration,
+            stampDutyValueInr: effectiveSdv,
+            taxableBaseInr,
+            calculatedTdsInr: 0,
+            netPayableToSellerInr: totalContractualConsideration,
+            effectiveDate,
+            withholdingTrigger,
+            governingLaw: governingSection,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: `Both contractual consideration (INR ${totalContractualConsideration.toLocaleString('en-IN')}) and Stamp Duty Value (INR ${effectiveSdv.toLocaleString('en-IN')}) are below the statutory threshold of INR 50,00,000 under Section 194-IA(2). Zero TDS required.`
+        };
+    }
+
+    // Rate Determination
+    let applicableTdsRatePercent = 1.0;
+    let rateType = 'STANDARD_STATUTORY_RATE';
+    let isPenaltyRate = false;
+
+    if (!hasPan || isPanInoperative) {
+        applicableTdsRatePercent = 20.0;
+        rateType = 'PENALTY_RATE_SECTION_206AA';
+        isPenaltyRate = true;
+    } else if (lowerDeductionRate !== null && !isNaN(Number(lowerDeductionRate)) && Number(lowerDeductionRate) >= 0) {
+        applicableTdsRatePercent = Number(lowerDeductionRate);
+        rateType = 'CONCESSIONAL_CERTIFICATE_SECTION_197';
+    }
+
+    const calculatedTdsInr = roundToPaisa((taxableBaseInr * applicableTdsRatePercent) / 100);
+    const netPayableToSellerInr = roundToPaisa(Math.max(0, totalContractualConsideration - calculatedTdsInr));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'DETERMINED_APPLICABLE',
+        governingLaw: governingSection,
+        effectiveDate,
+        withholdingTrigger,
+        valuationBasis: {
+            contractualConsiderationInr: rawBaseConsideration,
+            incidentalChargesInr: rawIncidental,
+            totalContractualConsiderationInr: totalContractualConsideration,
+            stampDutyValueInr: effectiveSdv,
+            higherValuationAdopted: effectiveSdv > totalContractualConsideration ? 'STAMP_DUTY_VALUE' : 'CONTRACTUAL_CONSIDERATION',
+            taxableBaseInr
+        },
+        withholding: {
+            applicableTdsRatePercent,
+            rateType,
+            isPenaltyRate,
+            calculatedTdsInr,
+            netPayableToSellerInr
+        },
+        complianceRequirements: {
+            challanCumStatementForm: 'Form 26QB (Electronic)',
+            challanFilingCutoff: 'Within 30 days from the end of the month in which deduction was made',
+            tdsCertificateForm: 'Form 16B (TRACES)',
+            certificateIssuanceCutoff: 'Within 15 days from the due date for furnishing Form 26QB',
+            tanRequired: false
+        },
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Section 194-IA Applicable: Taxable base INR ${taxableBaseInr.toLocaleString('en-IN')} (Higher of consideration INR ${totalContractualConsideration.toLocaleString('en-IN')} vs SDV INR ${effectiveSdv.toLocaleString('en-IN')}) taxed at ${applicableTdsRatePercent}% = INR ${calculatedTdsInr.toLocaleString('en-IN')}. Net payable to seller: INR ${netPayableToSellerInr.toLocaleString('en-IN')}. File Form 26QB within 30 days of month-end.`
     };
 }
 
