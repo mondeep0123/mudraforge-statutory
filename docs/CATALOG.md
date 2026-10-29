@@ -33,6 +33,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | `direct_tax` | [**194-IB**](#194-ib) | Income-tax Act, 1961 | 2017-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26qc_challan_cum_statement` |
 | `direct_tax` | [**194J**](#194j) | Income-tax Act, 1961 | 1995-07-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_16a_tds_certificate` |
 | `indirect_tax_gst` | [**17(5)**](#17-5-) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_2b_ineligible_reconciliation` |
+| `indirect_tax_gst` | [**RULE-42-43**](#rule-42-43) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_3b_table_4b1_reversal_schedule` |
 | `indirect_tax_gst` | [**8**](#8) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `composite_mixed_supply_assessment_matrix` |
 | `indirect_tax_gst` | [**10**](#10) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | N/A |
 | `indirect_tax_gst` | [**34**](#34) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | N/A |
@@ -55,7 +56,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 
 ## Coverage, Freshness & Verification Registry
 
-The table below records the provenance baseline, verification standard, and operational boundaries for core bundled provisions. For the complete provision-by-provision quality registry covering all 37 provisions across all 5 domains (snapshot compiled on 2026-10-29; continuously updated as new statutory amendments and circulars take effect), see [**CORPUS_QUALITY.md**](./CORPUS_QUALITY.md).
+The table below records the provenance baseline, verification standard, and operational boundaries for core bundled provisions. For the complete provision-by-provision quality registry covering all 38 provisions across all 5 domains (snapshot compiled on 2026-10-29; continuously updated as new statutory amendments and circulars take effect), see [**CORPUS_QUALITY.md**](./CORPUS_QUALITY.md).
 
 | Section Code | Subject Domain | Jurisdiction | Epistemic Baseline | Bundled Status | Verification Standard | Known Coverage Limitations |
 |---|---|---|---|---|---|---|
@@ -868,6 +869,47 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Compliance Return Schemas & Templates**:
 - [`gstr_2b_ineligible_reconciliation.json`](../okf/indirect_tax_gst/blocked_itc_17_5/forms/gstr_2b_ineligible_reconciliation.json)
+
+---
+
+<a id="rule-42-43"></a>
+
+#### Section RULE-42-43: Apportionment of input tax credit on inputs, input services and capital goods, and reversal of common credit attributable to exempt or non-business supplies
+
+- **Governing Statute**: Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)
+- **Successor Provision**: Central Goods and Services Tax Act, 2017 &mdash; Section 17(1) and Section 17(2) read with Rule 42 and Rule 43 (as amended)
+- **Temporal Validity**: `2017-07-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Rule 42 amended by Notification No. 16/2019-CT (dated 29-03-2019) for residential real estate project reporting; annual true-up deadline amended from 30 September to 30 November by Finance Act, 2022 read with Notification No. 18/2022-CT; mandatory reporting in GSTR-3B Table 4(B)(1) enforced by Circular No. 170/02/2022-GST.
+- **Machine-Readable Source**: [`okf/indirect_tax_gst/common_itc_reversal_rule42_43/section.json`](../okf/indirect_tax_gst/common_itc_reversal_rule42_43/section.json)
+
+**Statutory Summary**:
+> Under Section 17(1) and 17(2) of the CGST Act read with Rules 42 and 43, input tax credit (ITC) must be attributed between business vs non-business purposes, and taxable supplies (including zero-rated exports) vs exempt supplies. Under Rule 42 (Inputs and Input Services), total ITC (T) is segregated by identifying specific ineligible credit: T1 (non-business), T2 (exempt supplies), and T3 (blocked u/s 17(5)). The balance C1 = T - (T1 + T2 + T3) is credited to the electronic ledger. Specific eligible credit T4 (taxable/exports) is deducted to yield Common Credit C2 = C1 - T4. Ineligible common credit is then apportioned monthly: D1 = (E/F) * C2 (exempt turnover ratio) and D2 = 5% of C2 (non-business use), with D1 + D2 reversed in GSTR-3B Table 4(B)(1). Under Rule 42(2), an annual true-up must be performed on or before 30th November following the end of the financial year. If annual reversal exceeds monthly reversals, the shortfall must be paid with 18% interest under Section 50(1) from 1st April of the succeeding financial year. If monthly reversals exceed annual reversal, the excess may be reclaimed as ITC before 30th November. Under Rule 43 (Capital Goods), common capital goods have a statutory deemed useful life of 60 months. Monthly credit is sliced as Tm = Tc / 60, and monthly exempt reversal Te = (E/F) * Tr is added to output tax liability.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "capitalGoodsDeemedUsefulLifeMonths": 60,
+  "nonBusinessCommonCreditReversalRatePercent": 5,
+  "annualTrueUpCutoffDate": "30th November following the end of the financial year (Notification No. 18/2022-CT)",
+  "shortReversalStatutoryInterestRatePercent": 18,
+  "shortReversalInterestCommencement": "1st April of the succeeding financial year till date of payment / reversal",
+  "excessReversalReclaimPermitted": true,
+  "gstr3bReportingTable": "Table 4(B)(1) - As per rules 38, 42 & 43 of CGST Rules and section 17(5) (Permanent / Ineligible Reversal)"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Central Goods and Services Tax Rules, 2017 (Rule 42 and Rule 43)](https://taxinformation.cbic.gov.in/view-pdf/1000412/ENG/Rules): *Statutory rules for determination and reversal of input tax credit in respect of inputs, input services and capital goods*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 170/02/2022-GST (Dated 06 July 2022)](https://taxinformation.cbic.gov.in/view-pdf/1003110/ENG/Circulars): *Mandatory reporting of permanent Rule 38, 42, 43 and Section 17(5) reversals in Table 4(B)(1) of Form GSTR-3B*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 18/2022-Central Tax (Dated 28 September 2022)](https://taxinformation.cbic.gov.in/view-pdf/1009510/ENG/Notifications): *Extension of annual input tax credit reconciliation and true-up cutoff date to 30th November*
+
+**Executive Circulars Bundled**:
+- [`cbic_circular_170_2022_itc_reporting.md`](../okf/indirect_tax_gst/common_itc_reversal_rule42_43/circulars/cbic_circular_170_2022_itc_reporting.md)
+- [`cbic_notification_18_2022_cutoff_amendment.md`](../okf/indirect_tax_gst/common_itc_reversal_rule42_43/circulars/cbic_notification_18_2022_cutoff_amendment.md)
+
+**Compliance Return Schemas & Templates**:
+- [`gstr_3b_table_4b1_reversal_schedule.json`](../okf/indirect_tax_gst/common_itc_reversal_rule42_43/forms/gstr_3b_table_4b1_reversal_schedule.json)
+- [`rule_42_43_annual_reconciliation_worksheet.json`](../okf/indirect_tax_gst/common_itc_reversal_rule42_43/forms/rule_42_43_annual_reconciliation_worksheet.json)
 
 ---
 
