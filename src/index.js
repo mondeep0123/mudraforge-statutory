@@ -21,6 +21,7 @@ import {
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
+    evaluateSection281TaxClearance,
     revalueForeignExchangeIndAs109,
     evaluateSection194Q,
     evaluateSection194C,
@@ -80,6 +81,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-fc208ff012bfc3044cfc6edc5fcbf1c0e445e387a8c7d806e271968b511919ce', // feat/mna-sec281 (34 Sections across 5 Domains)
     'sha256-7f2bd99d81a261743773230d2ab3e21717ac9ca02a55c867545f5777b1a7d69f', // feat/statutory-43b-payroll (33 Sections across 5 Domains)
     'sha256-bf547512a57f26eae9a5ebcb9f0ec41c397421366b1b4223ab9e17d282721ca7', // feat/ecommerce-194o (32 Sections across 5 Domains)
     'sha256-b12fab61f0ddcc8852a7db1b4831151163d1d0ff97112168d8dccf693cfe70a7', // v2.11.0 Complete Accounts Payable (31 Sections across 5 Domains)
@@ -1895,6 +1897,13 @@ export class StatutoryClient {
     }
 
     /**
+     * Section 281: M&A asset transfer tax clearance & voidability evaluation under CBDT Circular 04/2011.
+     */
+    evaluateSection281(payload) {
+        return evaluateSection281TaxClearance(payload);
+    }
+
+    /**
      * Rule 37: 180-day vendor non-payment ITC reversal & Section 50(1) 18% interest.
      */
     calculateItcReversalRule37(payload) {
@@ -2951,6 +2960,7 @@ export {
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
+    evaluateSection281TaxClearance,
     revalueForeignExchangeIndAs109,
     evaluateSection194Q,
     evaluateSection194C,

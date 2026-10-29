@@ -36,6 +36,7 @@ import {
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
+    evaluateSection281TaxClearance,
     revalueForeignExchangeIndAs109,
     evaluateSection194A,
     evaluateSection194O,
@@ -1606,7 +1607,7 @@ async function run() {
         cwd: path.resolve('.')
     });
     const parsedList = JSON.parse(cliListOutput);
-    if (!Array.isArray(parsedList.sections) || parsedList.total !== 33) {
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 34) {
         throw new Error('CLI list --json failed');
     }
 
@@ -2380,8 +2381,91 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient parity verified for evaluateSection43B.');
 
+    // 97. Section 281 Tax Clearance & Void Asset Transfer Risk Engine
+    console.log('\n── Test 97: Corporate M&A — Section 281 (Tax Clearance & Void Transfer Risk) ──');
+    // Scenario 1: De minimis exclusion (<= ₹10,000)
+    const deMinimisRes = evaluateSection281TaxClearance({
+        assetType: 'PLANT_AND_MACHINERY',
+        assetValueInr: 8500
+    });
+    if (deMinimisRes.statutoryDetermination !== 'EXEMPT_DE_MINIMIS' || deMinimisRes.isVoidableAgainstRevenue !== false) {
+        throw new Error('Section 281 de minimis threshold check failed');
+    }
+
+    // Scenario 2: Clean company with no pending proceedings or demand
+    const cleanRes = evaluateSection281TaxClearance({
+        assetType: 'IMMOVABLE_PROPERTY',
+        assetValueInr: 50000000,
+        hasPendingProceedings: false,
+        hasOutstandingDemand: false
+    });
+    if (cleanRes.statutoryDetermination !== 'CLEAN_NO_PROCEEDINGS_PENDING' || cleanRes.riskLevel !== 'LOW') {
+        throw new Error('Section 281 clean transferor evaluation failed');
+    }
+
+    // Scenario 3: Prior AO permission obtained under Circular 04/2011
+    const aoPermRes = evaluateSection281TaxClearance({
+        assetType: 'IMMOVABLE_PROPERTY',
+        assetValueInr: 100000000,
+        hasPendingProceedings: true,
+        pendingProceedings: [{ proceedingType: '143(2)', estimatedExposureInr: 15000000 }],
+        hasPriorAoPermission: true,
+        aoPermissionReference: 'NOC/CIT-5/DEL/2026/884',
+        alternativeSecurityFurnishedInr: 15000000
+    });
+    if (aoPermRes.statutoryDetermination !== 'PROTECTED_AO_PERMISSION' || aoPermRes.riskLevel !== 'ZERO' || aoPermRes.isVoidableAgainstRevenue !== false) {
+        throw new Error('Section 281 AO prior permission safe harbor check failed');
+    }
+
+    // Scenario 4: Bona fide purchaser for adequate consideration without notice
+    const bonaFideRes = evaluateSection281TaxClearance({
+        assetType: 'SHARES_AND_SECURITIES',
+        assetValueInr: 25000000,
+        hasPendingProceedings: true,
+        pendingProceedings: [{ proceedingType: '148', estimatedExposureInr: 5000000 }],
+        hasPriorAoPermission: false,
+        hasAdequateConsideration: true,
+        hasNoticeOfProceedingsOrDemand: false
+    });
+    if (bonaFideRes.statutoryDetermination !== 'PROTECTED_BONA_FIDE_PURCHASER' || bonaFideRes.isVoidableAgainstRevenue !== false) {
+        throw new Error('Section 281 bona fide purchaser exception check failed');
+    }
+
+    // Scenario 5: Statutorily voidable transfer (pending assessment with notice, no AO permission)
+    const voidableRes = evaluateSection281TaxClearance({
+        assetType: 'IMMOVABLE_PROPERTY',
+        assetValueInr: 80000000,
+        hasPendingProceedings: true,
+        pendingProceedings: [{ proceedingType: '143(3)', estimatedExposureInr: 20000000 }],
+        hasOutstandingDemand: true,
+        outstandingDemandInr: 12000000,
+        hasPriorAoPermission: false,
+        hasNoticeOfProceedingsOrDemand: true
+    });
+    if (voidableRes.statutoryDetermination !== 'STATUTORILY_VOIDABLE_AGAINST_REVENUE' || voidableRes.isVoidableAgainstRevenue !== true || voidableRes.riskLevel !== 'HIGH_CRITICAL') {
+        throw new Error('Section 281 voidability determination check failed');
+    }
+    if (voidableRes.totalTaxExposureInr !== 32000000 || voidableRes.isAuthorizedToDisburse !== false) {
+        throw new Error('Section 281 exposure calculation or statutory invariant failed');
+    }
+    console.log('[PASS] Section 281 Engine Verified: De minimis exclusion, Clean transferor, Prior AO NOC (Circular 04/2011), Bona fide buyer defense, and Voidability detection (₹3.2Cr exposure).');
+
+    // 98. StatutoryClient Programmatic Parity for Section 281
+    console.log('\n── Test 98: StatutoryClient Programmatic Parity for Section 281 ──');
+    const client281 = statutoryClientInstance.evaluateSection281({
+        assetType: 'IMMOVABLE_PROPERTY',
+        assetValueInr: 50000000,
+        hasPendingProceedings: true,
+        hasPriorAoPermission: true,
+        aoPermissionReference: 'NOC-281-PARITY-TEST'
+    });
+    if (client281.statutoryDetermination !== 'PROTECTED_AO_PERMISSION' || client281.isVoidableAgainstRevenue !== false) {
+        throw new Error('StatutoryClient.evaluateSection281 parity check failed');
+    }
+    console.log('[PASS] StatutoryClient parity verified for evaluateSection281.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 96 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 98 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

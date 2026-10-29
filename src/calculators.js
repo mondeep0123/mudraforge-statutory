@@ -12,7 +12,7 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-7f2bd99d81a261743773230d2ab3e21717ac9ca02a55c867545f5777b1a7d69f';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-fc208ff012bfc3044cfc6edc5fcbf1c0e445e387a8c7d806e271968b511919ce';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 export const STATUTORY_PACKAGE_VERSION = '2.11.0';
 export const OKF_CORPUS_VERSION = '2.11.0';
@@ -5206,6 +5206,187 @@ export function evaluateSection79LossContinuity({
         },
         isAuthorizedToDisburse: false,
         statutoryRationale: `${rationale} Note: Unabsorbed depreciation of INR ${unabsDep.toLocaleString('en-IN')} is unaffected by Section 79 per Supreme Court precedent (CIT v. Virmani Industries) and carries forward indefinitely.`
+    };
+}
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 31B. SECTION 281 TAX CLEARANCE & VOID TRANSFER RISK ENGINE
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Evaluates asset transfer voidability and tax clearance safe harbors in corporate
+ * restructuring, slump sales, and asset acquisitions under Section 281 of the
+ * Income-tax Act, 1961 read with CBDT Circular No. 04/2011:
+ * - Asset Scope: Land, buildings, machinery, plant, shares, securities, bank FDs > ₹10,000.
+ * - Voidability Trigger: Transfer or charge creation during pending tax proceedings
+ *   (Sec 143(2), 148, 153A, 250, 254) or outstanding demand under Section 156.
+ * - Statutory Safe Harbors:
+ *   1. Section 281(1) Proviso (ii): Prior written permission of Assessing Officer (Circular 04/2011).
+ *   2. Section 281(1) Proviso (i): Bona fide purchaser for adequate consideration without notice.
+ */
+export function evaluateSection281TaxClearance({
+    assetType = 'IMMOVABLE_PROPERTY', // 'IMMOVABLE_PROPERTY' | 'PLANT_AND_MACHINERY' | 'SHARES_AND_SECURITIES' | 'FIXED_DEPOSIT' | 'OTHER'
+    assetDescription = 'Commercial Asset / Undertaking',
+    assetValueInr = 0,
+    transferNature = 'SALE', // 'SALE' | 'MORTGAGE' | 'GIFT' | 'EXCHANGE' | 'CHARGE_CREATION'
+    hasPendingProceedings = false,
+    pendingProceedings = [],
+    hasOutstandingDemand = false,
+    outstandingDemandInr = 0,
+    hasPriorAoPermission = false,
+    aoPermissionReference = null,
+    aoPermissionDate = null,
+    hasAdequateConsideration = true,
+    hasNoticeOfProceedingsOrDemand = false,
+    alternativeSecurityFurnishedInr = 0
+} = {}) {
+    const rawAssetVal = Math.max(0, Number(assetValueInr) || 0);
+    const assetVal = roundToPaisa(rawAssetVal);
+    const rawDemand = Math.max(0, Number(outstandingDemandInr) || 0);
+    const demandInr = roundToPaisa(rawDemand);
+    const rawAltSec = Math.max(0, Number(alternativeSecurityFurnishedInr) || 0);
+    const altSecInr = roundToPaisa(rawAltSec);
+
+    let totalPendingExposureInr = demandInr;
+    if (Array.isArray(pendingProceedings)) {
+        for (const proc of pendingProceedings) {
+            const exp = Math.max(0, Number(proc.estimatedExposureInr || proc.exposureInr || proc.amountInr) || 0);
+            totalPendingExposureInr = roundToPaisa(totalPendingExposureInr + exp);
+        }
+    }
+
+    const hasAnyProceedings = Boolean(hasPendingProceedings || (Array.isArray(pendingProceedings) && pendingProceedings.length > 0));
+    const hasAnyDemand = Boolean(hasOutstandingDemand || demandInr > 0);
+
+    // ── GATE 1: DE MINIMIS STATUTORY EXCLUSION ──
+    // Section 281 Explanation: Assets exceeding INR 10,000 in value
+    if (assetVal <= 10000) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_DE_MINIMIS',
+            isVoidableAgainstRevenue: false,
+            riskLevel: 'NONE',
+            governingLaw: 'Income-tax Act, 1961 Section 281 Explanation',
+            assetParticulars: {
+                assetType,
+                assetDescription,
+                assetValueInr: assetVal,
+                transferNature
+            },
+            safeHarborQualification: 'EXEMPT_BELOW_STATUTORY_FLOOR',
+            totalTaxExposureInr: totalPendingExposureInr,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: `Asset value of INR ${assetVal.toLocaleString('en-IN')} does not exceed the statutory threshold of INR 10,000 under Section 281 Explanation. Section 281 voidability is inapplicable.`
+        };
+    }
+
+    // ── GATE 2: CLEAN TRANSFEROR (NO PROCEEDINGS OR DEMANDS) ──
+    if (!hasAnyProceedings && !hasAnyDemand) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'CLEAN_NO_PROCEEDINGS_PENDING',
+            isVoidableAgainstRevenue: false,
+            riskLevel: 'LOW',
+            governingLaw: 'Income-tax Act, 1961 Section 281',
+            assetParticulars: {
+                assetType,
+                assetDescription,
+                assetValueInr: assetVal,
+                transferNature
+            },
+            safeHarborQualification: 'NOT_APPLICABLE_NO_PENDING_PROCEEDINGS',
+            totalTaxExposureInr: 0,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'No proceedings under the Income-tax Act are pending against the transferor and no outstanding tax demands exist. Transfer/charge is not subject to statutory voidability under Section 281.'
+        };
+    }
+
+    // ── GATE 3: SAFE HARBOR 2 — PRIOR ASSESSING OFFICER PERMISSION ──
+    if (hasPriorAoPermission) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'PROTECTED_AO_PERMISSION',
+            isVoidableAgainstRevenue: false,
+            riskLevel: 'ZERO',
+            governingLaw: 'Income-tax Act, 1961 Section 281(1) Proviso (ii) & CBDT Circular No. 04/2011',
+            assetParticulars: {
+                assetType,
+                assetDescription,
+                assetValueInr: assetVal,
+                transferNature
+            },
+            safeHarborQualification: 'SECTION_281_PROVISO_II_AO_PERMISSION',
+            clearanceDetails: {
+                aoPermissionReference: aoPermissionReference || 'NOC_F_NO_SEC281_VERIFIED',
+                aoPermissionDate: aoPermissionDate || new Date().toISOString().split('T')[0],
+                alternativeSecurityFurnishedInr: altSecInr
+            },
+            totalTaxExposureInr: totalPendingExposureInr,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: `Prior written permission of the Assessing Officer obtained under Section 281(1) Proviso (ii) pursuant to CBDT Circular No. 04/2011. Transfer/charge is legally protected against avoidance or attachment by the Tax Recovery Officer.`
+        };
+    }
+
+    // ── GATE 4: SAFE HARBOR 1 — BONA FIDE PURCHASER FOR ADEQUATE CONSIDERATION WITHOUT NOTICE ──
+    if (hasAdequateConsideration && !hasNoticeOfProceedingsOrDemand) {
+        if (hasAnyDemand && demandInr > 0) {
+            // Constructive notice risk: If notice of demand under Sec 156 has been served or recorded, Department may challenge lack of notice
+            return {
+                status: 'SUCCESS',
+                statutoryDetermination: 'CONDITIONAL_BONA_FIDE_DEFENSE',
+                isVoidableAgainstRevenue: false,
+                riskLevel: 'MODERATE_NOTICE_DISPUTE_RISK',
+                governingLaw: 'Income-tax Act, 1961 Section 281(1) Proviso (i)',
+                assetParticulars: {
+                    assetType,
+                    assetDescription,
+                    assetValueInr: assetVal,
+                    transferNature
+                },
+                safeHarborQualification: 'SECTION_281_PROVISO_I_BONA_FIDE_PURCHASER',
+                totalTaxExposureInr: totalPendingExposureInr,
+                outstandingDemandInr: demandInr,
+                isAuthorizedToDisburse: false,
+                statutoryRationale: `Transaction qualifies prima facie as a bona fide transfer for adequate consideration without notice under Section 281(1) Proviso (i). However, due to existing outstanding demand of INR ${demandInr.toLocaleString('en-IN')}, buyer should secure an indemnity escrow holdback or seek formal AO clearance under Circular 04/2011 to preclude constructive notice litigation.`
+            };
+        }
+
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'PROTECTED_BONA_FIDE_PURCHASER',
+            isVoidableAgainstRevenue: false,
+            riskLevel: 'LOW_WITH_WARRANTIES',
+            governingLaw: 'Income-tax Act, 1961 Section 281(1) Proviso (i)',
+            assetParticulars: {
+                assetType,
+                assetDescription,
+                assetValueInr: assetVal,
+                transferNature
+            },
+            safeHarborQualification: 'SECTION_281_PROVISO_I_BONA_FIDE_PURCHASER',
+            totalTaxExposureInr: totalPendingExposureInr,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: `Transfer is made for adequate consideration and without notice of pending tax proceedings. Fully qualifies for statutory protection under Section 281(1) Proviso (i).`
+        };
+    }
+
+    // ── GATE 5: UNPROTECTED TRANSFER — STATUTORILY VOIDABLE AGAINST REVENUE ──
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'STATUTORILY_VOIDABLE_AGAINST_REVENUE',
+        isVoidableAgainstRevenue: true,
+        riskLevel: 'HIGH_CRITICAL',
+        governingLaw: 'Income-tax Act, 1961 Section 281(1)',
+        assetParticulars: {
+            assetType,
+            assetDescription,
+            assetValueInr: assetVal,
+            transferNature
+        },
+        safeHarborQualification: 'NONE_STATUTORILY_VOIDABLE',
+        totalTaxExposureInr: totalPendingExposureInr,
+        outstandingDemandInr: demandInr,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Transfer/charge is legally void as against the Income Tax Department under Section 281(1) of the Income-tax Act, 1961. The Tax Recovery Officer can attach and auction the transferred asset to satisfy transferor tax liabilities of INR ${totalPendingExposureInr.toLocaleString('en-IN')}. Mandatory action: obtain AO NOC under CBDT Circular No. 04/2011 or establish an escrow holdback equal to 100% of tax exposure.`
     };
 }
 

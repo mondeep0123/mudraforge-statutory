@@ -14,6 +14,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 |---|---|---|---|---|---|---|
 | `corporate_ma_restructuring` | [**ITA-SEC-79**](#ita-sec-79) | Income-tax Act, 1961 | 1962-04-01 &rarr; In Force | `Active` | General Provision | `section_79_shareholding_continuity_schedule` |
 | `corporate_ma_restructuring` | [**50B**](#50b) | Income-tax Act, 1961 | 2000-04-01 &rarr; In Force | `Active` | General Provision | `form_3cea_chartered_accountant_report` |
+| `corporate_ma_restructuring` | [**281**](#281) | Income-tax Act, 1961 | 1962-04-01 &rarr; In Force | `Active` | General Provision | `form_281_tax_clearance_application` |
 | `direct_tax` | [**115BAA-115JB**](#115baa-115jb) | Income-tax Act, 1961 | 2019-04-01 &rarr; In Force | `Active` | General Provision | `form_10ic_concessional_tax_election` |
 | `direct_tax` | [**206AB**](#206ab) | Income-tax Act, 1961 | 2021-07-01 &rarr; 2025-03-31 | **Sunset** (2025-03-31) | General Provision | N/A |
 | `direct_tax` | [**43B**](#43b) | Income-tax Act, 1961 | 1984-04-01 &rarr; In Force | `Active` | General Provision | `tax_audit_form_3cd_clause_26_schedule` |
@@ -145,6 +146,50 @@ The table below records the provenance baseline, verification standard, and oper
 **Compliance Return Schemas & Templates**:
 - [`form_3cea_chartered_accountant_report.json`](../okf/corporate_ma_restructuring/slump_sale_50b/forms/form_3cea_chartered_accountant_report.json)
 - [`section_281_tax_clearance_checklist.md`](../okf/corporate_ma_restructuring/slump_sale_50b/forms/section_281_tax_clearance_checklist.md)
+
+---
+
+<a id="281"></a>
+
+#### Section 281: Certain Transfers to be Void & Tax Clearance Requirements in Corporate Restructuring (Section 281)
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 497 (Transfers to defraud revenue to be void)
+- **Temporal Validity**: `1962-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Introduced by Income-tax Act, 1961 w.e.f. 1-4-1962. Substituted by Taxation Laws (Amendment) Act, 1975 w.e.f. 1-10-1975. Standard operating procedure issued via CBDT Circular No. 04/2011. Continues under Income-tax Act, 1961 and transitions to Section 497 of Income-tax Act, 2025.
+- **Machine-Readable Source**: [`okf/corporate_ma_restructuring/tax_clearance_sec281/section.json`](../okf/corporate_ma_restructuring/tax_clearance_sec281/section.json)
+
+**Statutory Summary**:
+> Section 281 of the Income-tax Act, 1961 enacts a statutory anti-alienation protective measure for the Revenue, providing that where an assessee creates a charge on or parts with possession (by way of sale, mortgage, gift, exchange, or any other mode of transfer) of any specified asset during the pendency of any proceeding under the Act or after the completion thereof but before service of notice of demand, such charge or transfer shall be VOID as against any claim in respect of any tax or any other sum payable by the assessee. The covered assets include land, buildings, plant, machinery, shares, securities, and bank fixed deposits exceeding INR 10,000 in value. Under the proviso to Section 281(1), a transfer or charge shall NOT be void if it satisfies either of two independent statutory safe harbors: (i) it is made for adequate consideration and without notice of the pendency of such proceeding or without notice of such tax or other sum payable by the assessee (the Bona Fide Purchaser Exception); or (ii) it is made with the previous written permission of the jurisdictional Assessing Officer (Tax Clearance Certificate under Section 281). CBDT Circular No. 04/2011 lays down the standard operating procedure for seeking prior permission: the assessee must apply at least 30 days prior to the transfer, disclose all pending scrutiny/reassessment proceedings and demands, and furnish adequate alternative security or bank guarantee if demands remain contested. In corporate M&A, business transfers (slump sales), and major capital asset acquisitions, obtaining a Section 281 NOC or verifying bona fide buyer status is an essential closing condition to prevent the Tax Recovery Officer from attaching the acquired assets under the Second Schedule.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "coveredAssetCategories": [
+    "LAND_AND_BUILDING",
+    "PLANT_AND_MACHINERY",
+    "SHARES_AND_SECURITIES",
+    "FIXED_DEPOSITS_IN_BANKS"
+  ],
+  "deMinimisThresholdInr": 10000,
+  "provisoSafeHarborOne": "Transfer made for adequate consideration without notice of pending proceedings or tax sum payable",
+  "provisoSafeHarborTwo": "Transfer made with previous written permission of the Assessing Officer",
+  "cbdtCircularReference": "Circular No. 04/2011 (F.No. 402/92/2006-MC, Dated 19 July 2011)",
+  "applicationPriorWindowDays": 30,
+  "aoDisposalWindowDays": 30
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 04/2011 (F.No. 402/92/2006-MC, Dated 19 July 2011)](https://www.incometaxindia.gov.in/communications/circular/circular04_2011.pdf): *Guidelines for grant of prior permission under Section 281 of the Income-tax Act, 1961 for transfer of assets or creation of charge*
+- **Income Tax Department, Ministry of Finance** — [Section 281, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Certain transfers to be void*
+- **Supreme Court of India** — [Palghat Electric Supply Corpn. Ltd. v. CIT ((1998) 232 ITR 245 (SC))](https://indiankanoon.org/doc/1715016/): *Statutory charge and voidability of asset transfers during pending tax assessment*
+
+**Executive Circulars Bundled**:
+- [`cbdt_circular_04_2011_sec281_clearance.md`](../okf/corporate_ma_restructuring/tax_clearance_sec281/circulars/cbdt_circular_04_2011_sec281_clearance.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_281_tax_clearance_application.json`](../okf/corporate_ma_restructuring/tax_clearance_sec281/forms/form_281_tax_clearance_application.json)
 
 ---
 

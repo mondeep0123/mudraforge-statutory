@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.11.0] - 2026-10-29
 
 ### Added
+- **Corporate M&A & Restructuring Tax Clearance (Section 281 & CBDT Circular 04/2011)**:
+  - *Corporate M&A Domain* (`corporate_ma_restructuring/tax_clearance_sec281`): Section 281 transfer voidability risk analysis for asset transfers (land, buildings, plant, machinery, shares, securities) during pending tax proceedings or unserved demand.
+  - *Prior Assessing Officer Permission Safe Harbor*: Standard Operating Procedure under CBDT Circular No. 04/2011 for seeking 30-day prior written permission with bank guarantee / alternative security.
+  - *Bona Fide Purchaser Safe Harbor*: Adequate consideration and absence of notice evaluation under Section 281(1) Proviso (i) with constructive notice risk detection.
+  - *Pure Deterministic Calculator*: `evaluateSection281TaxClearance(params)` in `src/calculators.js` with programmatic parity on `StatutoryClient.prototype.evaluateSection281`.
 - **Statutory Liabilities & Employee Welfare Deductions (Section 43B & Section 36(1)(va) Checkmate Doctrine)**:
   - *Direct Tax Domain* (`direct_tax/statutory_disallowance_43b`): Section 43B actual payment disallowances across clauses (a)-(g) (taxes, employer PF/ESI, bonus, bank interest, leave encashment, railways) with First Proviso relief for payments made on or before Section 139(1) ITR filing due date.
   - *Landmark Supreme Court Checkmate Services Doctrine*: Applied 3-judge bench ruling ((2022) 448 ITR 518 (SC)) read with Explanation 2 to Section 43B and Explanation 5 to Section 36(1)(va). Employee contributions (EPF/ESIC) withheld from payroll are strictly ineligible for Section 43B First Proviso relaxation; late deposits past the respective welfare Act deadline (15th of following month) trigger permanent statutory disallowance under Section 36(1)(va) read with Section 2(24)(x).
@@ -20,8 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - *Direct Tax Domain* (`direct_tax/tds_ecommerce_194o`): Section 194O TDS on payments to e-commerce participants by e-commerce operators, with Finance (No. 2) Act, 2024 rate cut (1.0% pre-October 2024 to 0.1% post-1 October 2024), Individual/HUF de minimis threshold (₹5,00,000 where PAN/Aadhaar furnished), and 5% missing PAN penalty cap under Section 206AA(1) second proviso.
   - *Statutory Precedence Engine*: Absolute statutory override over buyer TDS under Section 194Q and seller TCS under Section 206C(1H).
   - *Pure Deterministic Calculator*: `evaluateSection194O(params)` in `src/calculators.js` with earlier-event temporal crystallization, gross amount inclusion of direct buyer payments, and programmatic parity on `StatutoryClient.prototype.evaluateSection194O`.
-- **100% Complete Accounts Payable (AP) Statutory Cycle (33 Total Sections across 5 Domains)**:
-  - *Direct Tax Domain* (`direct_tax/tds_interest_194a`): Section 194A TDS on interest other than interest on securities (commercial borrowings, vendor delayed payments, inter-corporate deposits), ₹5,000 commercial threshold vs ₹40,000/₹50,000 banking threshold, Form 15G/15H NIL deduction, 20% missing PAN floor (Section 206AA / 397), and dual-act transition to Income-tax Act, 2025 Section 393(1) Table 4 Item (i).
+- **100% Complete Accounts Payable (AP) Statutory Cycle (34 Total Sections across 5 Domains)**:
+  - *Direct Tax Domain* (`direct_tax/tds_interest_194a`): Section 194A TDS on interest other than interest on securities (commercial borrowings, vendor delayed payments, inter-corporate deposits), ₹5,00,000 commercial threshold vs ₹40,000/₹50,000 banking threshold, Form 15G/15H NIL deduction, 20% missing PAN floor (Section 206AA / 397), and dual-act transition to Income-tax Act, 2025 Section 393(1) Table 4 Item (i).
   - *Critical MSME Section 16/23 Interaction*: Integrated MSME penal interest withholding under Section 194A alongside mandatory expenditure disallowance and tax add-back under Section 23 of the MSMED Act, 2006.
   - *Indirect Tax GST Domain* (`indirect_tax_gst/itc_reversal_rule37_37a`): Section 16(2) second proviso read with substituted Rule 37 (Notification No. 19/2022-CT) for 180-day vendor non-payment proportional ITC reversal in GSTR-3B Table 4(B)(2) with 18% annual interest under Section 50(1), explicit RCM & Schedule I exemptions, and Section 16(4)-unconstrained re-availment on payment.
   - *Rule 37A Supplier Non-Filing Reversal*: Notification No. 26/2022-CT November 30 post-FY cutoff verification for supplier GSTR-3B non-filing, 18% delayed interest, and interest-free re-availment upon filing.
@@ -29,13 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `evaluateSection194A`: Authoritative withholding calculator with earlier of credit or payment temporal resolution, payee threshold categorization, and MSME Section 23 add-back flags.
   - `calculateItcReversalRule37`: Authoritative 180-day aging, proportional unpaid ITC computation, Section 50(1) interest calculation, and GSTR-3B Table 4(B)(2) mapping.
   - `calculateRule37ASupplierNonFilingReversal`: November 30 post-FY supplier filing evaluation and delayed interest computation.
-  - Exposed helper methods on `StatutoryClient` prototype (`client.evaluateSection194A`, `client.calculateItcReversalRule37`, `client.calculateRule37ASupplierNonFilingReversal`, `client.evaluateSection194O`, `client.evaluateSection43B`).
+  - Exposed helper methods on `StatutoryClient` prototype (`client.evaluateSection194A`, `client.calculateItcReversalRule37`, `client.calculateRule37ASupplierNonFilingReversal`, `client.evaluateSection194O`, `client.evaluateSection43B`, `client.evaluateSection281`).
 - **TypeScript Declarations (`types/index.d.ts`)**:
   - Full typing support for new calculators and `StatutoryClient` methods.
 - **Authoritative Cryptographic Substrate v2.11.0**:
-  - Computed and pinned release Merkle root hash: `sha256-7f2bd99d81a261743773230d2ab3e21717ac9ca02a55c867545f5777b1a7d69f` across 99 files.
-  - Validated 125 primary statutory citations with 100% deep semantic integrity.
-  - Expanded test suite from 88 to 96 test suites passing (100% reproducible precision).
+  - Computed and pinned release Merkle root hash: `sha256-fc208ff012bfc3044cfc6edc5fcbf1c0e445e387a8c7d806e271968b511919ce` across 102 files.
+  - Validated 130 primary statutory citations with 100% deep semantic integrity.
+  - Expanded test suite from 88 to 98 test suites passing (100% reproducible precision).
 
 ---
 

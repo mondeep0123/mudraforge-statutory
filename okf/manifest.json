@@ -1,14 +1,15 @@
 {
   "okfVersion": "2.9.0",
-  "publishedAt": "2026-10-29T04:45:46.919Z",
-  "rootHash": "sha256-7f2bd99d81a261743773230d2ab3e21717ac9ca02a55c867545f5777b1a7d69f",
-  "totalSections": 33,
-  "totalFiles": 99,
+  "publishedAt": "2026-10-29T04:56:45.325Z",
+  "rootHash": "sha256-fc208ff012bfc3044cfc6edc5fcbf1c0e445e387a8c7d806e271968b511919ce",
+  "totalSections": 34,
+  "totalFiles": 102,
   "changelog": "Expanded statutory commons with 5 Corporate Finance Domains: Corporate Tax MAT vs 115BAA, Place of Supply & Zero-Rated Export LUT, Transfer Pricing ALP & Rule 10CA, Section 79 Loss Continuity, and Ind AS 21 & 109 FX Revaluation.",
   "domains": {
     "corporate_ma_restructuring": [
       "ITA-SEC-79",
-      "50B"
+      "50B",
+      "281"
     ],
     "direct_tax": [
       "115BAA-115JB",
@@ -53,6 +54,7 @@
   "sections": [
     "ITA-SEC-79",
     "50B",
+    "281",
     "115BAA-115JB",
     "206AB",
     "43B",
@@ -94,6 +96,9 @@
     "corporate_ma_restructuring/slump_sale_50b/forms/form_3cea_chartered_accountant_report.json": "ce245341e41e92f1a38a9af9abc27535578a71984bcdc4d63c45fe4d6de51a25",
     "corporate_ma_restructuring/slump_sale_50b/forms/section_281_tax_clearance_checklist.md": "3e3837a55c288a0ddb5e378896f0a8dddaf05a29bc6f9dc2269a2f91ee3dab89",
     "corporate_ma_restructuring/slump_sale_50b/section.json": "1e86356fa1916c8fcee8b4e4f66b536af66c5abe7154de6e317f874b656e9c3a",
+    "corporate_ma_restructuring/tax_clearance_sec281/circulars/cbdt_circular_04_2011_sec281_clearance.md": "ffefd8b155d2ca3a515361d612be0dccf10739933e176182d0dd3ac80bb1aa47",
+    "corporate_ma_restructuring/tax_clearance_sec281/forms/form_281_tax_clearance_application.json": "298e9cbf73ea17a4a724c6f6155aefdff940bb4efd790513eb96958e717f0073",
+    "corporate_ma_restructuring/tax_clearance_sec281/section.json": "5384467d6bdca8846beedc33a1ef5449a8fdfc296ebc0d170957343024ea909d",
     "direct_tax/corporate_tax_115baa_115jb/circulars/cbdt_circular_29_2019_concessional_tax_regime.md": "3e9c61255a3665f7ec3d85096018561b7ea534b9e05d34d89419bde8fa61371b",
     "direct_tax/corporate_tax_115baa_115jb/forms/form_10ic_concessional_tax_election.json": "a9356c38eddb614eecdb9ca2079544724459a533b7e133d2317926e23b0cac6a",
     "direct_tax/corporate_tax_115baa_115jb/section.json": "737d8fe08d99c8e5466a0a1fdd50248a2969335dab171f0c34148ab1f14b95c1",
