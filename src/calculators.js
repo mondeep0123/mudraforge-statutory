@@ -9,6 +9,13 @@
  * 2. Section 43B(h) Temporal Engine: March 31 fiscal boundaries, dispute pauses, and trader exclusions.
  * 3. Cross-Border Withholding Engine: Income-tax Act 2025 vs 1961 dual-act mapping,
  *    Form 145/146 routing, and Supreme Court Engineering Analysis (2021) cloud characterization.
+ *
+ * COMMERCIAL & ARCHITECTURAL BOUNDARY (PUBLIC COMMONS TIER):
+ * The zero-dependency functions in this module represent the complete public commons baseline
+ * for statutory Accounts Payable withholding, MSME interest, and GST Rule 37 reversals.
+ * Advanced enterprise engines (full Form 3CD audit schedule synthesis, Section 234B/C dynamic
+ * forecasting, Pillar Two BEPS models, and live banking rail settlement dispatch) are hosted API
+ * services and require an Enterprise License (hello@mudraforge.in / support@mudraforge.in).
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
@@ -6077,5 +6084,22 @@ export function evaluateSection194M({
         statutoryRationale: `Cumulative payments (INR ${totalCumulative.toLocaleString('en-IN')}) exceed statutory threshold of INR 50 Lakhs. Current payment of INR ${currentAmt.toLocaleString('en-IN')} taxed at ${applicableRate}% = INR ${calculatedTds.toLocaleString('en-IN')}. Net payable: INR ${netPayable.toLocaleString('en-IN')}. File Form 26QD within 30 days of month-end.`
     };
 }
+
+// ===========================================================================
+// COMMERCIAL TIER BOUNDARY SPECIFICATION (OKF v0.2 / ENTERPRISE BOUNDARY)
+// ===========================================================================
+// This completes the open-source Public Commons baseline tier for @mudraforge/statutory.
+//
+// Advanced enterprise financial engines are strictly hosted API services:
+// - Automated Form 3CD Clauses 20(b), 26, 34 Tax Audit Schedules
+// - Section 234B & Section 234C Dynamic Advance Tax Interest Forecasting
+// - Multi-Jurisdiction BEPS Pillar Two Global Minimum Tax Computations
+// - Model Context Protocol (MCP) Live Agent Financial Tools
+// - Autonomous Multi-Process Banking Rail Settlement Dispatch
+//
+// To license hosted enterprise calculators or obtain an Enterprise API Key:
+// Contact: hello@mudraforge.in / support@mudraforge.in
+// ===========================================================================
+
 
 
