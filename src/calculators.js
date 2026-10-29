@@ -12,7 +12,7 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-b12fab61f0ddcc8852a7db1b4831151163d1d0ff97112168d8dccf693cfe70a7';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-bf547512a57f26eae9a5ebcb9f0ec41c397421366b1b4223ab9e17d282721ca7';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 export const STATUTORY_PACKAGE_VERSION = '2.11.0';
 export const OKF_CORPUS_VERSION = '2.11.0';
@@ -3110,6 +3110,176 @@ export function evaluateSection194A({
         netPayable,
         msmeSection16Analysis: msmeAnalysis,
         taxAddbackDisallowedMsmeSec23: Boolean(isMsmeInterestSec16),
+        statutoryFormula: formulaText,
+        isAuthorizedToDisburse: false
+    };
+}
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 10. SECTION 194O: DETERMINISTIC TDS ON E-COMMERCE OPERATORS ENGINE
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Income-tax Act, 1961: Section 194O
+ * Income-tax Act, 2025: Section 393(1) Table 8, Item (i)
+ *
+ * Implements authoritative marketplace withholding logic:
+ * - Rates:
+ *   - Prior to 1 October 2024: 1.0%
+ *   - On or after 1 October 2024: 0.1% (Finance (No. 2) Act, 2024 rate cut)
+ *   - Missing / Inoperative PAN: 5.0% (Section 206AA(1) second proviso specific cap)
+ * - De Minimis Annual Threshold:
+ *   - Individuals and HUFs: ₹5,00,000 gross GMV per FY (provided PAN is furnished)
+ *   - Companies, LLPs, Firms: ₹0 threshold (TDS applies from ₹1)
+ * - Gross Amount Scope:
+ *   - Includes direct payments made by purchaser to seller deemed paid by operator (Explanation to 194O(1)).
+ * - Statutory Precedence:
+ *   - Overrides Section 194Q (buyer TDS) and Section 206C(1H) (seller TCS).
+ * - Temporal Resolution: Earlier of credit to account (including clearing) or payment.
+ */
+export function evaluateSection194O({
+    grossSaleAmount,
+    directPurchaserPaymentDeemedInr = 0,
+    priorPaymentsInCurrentFyInr = 0,
+    priorFyCategoryPayments = null,
+    priorFyPaymentsAlreadyTaxed = null,
+    participantEntityType = 'INDIVIDUAL_HUF', // 'INDIVIDUAL_HUF' | 'COMPANY' | 'PARTNERSHIP_FIRM' | 'LLP' | 'OTHER'
+    hasPan = true,
+    isPanInoperative = false,
+    transactionDate = null,
+    creditDate = null,
+    paymentDate = null,
+    lowerDeductionRate = null,
+    lowerDeductionCertificate = null,
+    certificateMonetaryCeilingInr = null,
+    certificatePriorUtilizedInr = 0,
+    certificateSection = null
+} = {}) {
+    const rawGrossSale = Number(grossSaleAmount) || 0;
+    const deemedDirectPayment = Math.max(0, Number(directPurchaserPaymentDeemedInr) || 0);
+    const totalTransactionGmv = rawGrossSale + deemedDirectPayment;
+
+    const effectivePriorInput = priorPaymentsInCurrentFyInr !== null && priorPaymentsInCurrentFyInr !== undefined
+        ? priorPaymentsInCurrentFyInr
+        : priorFyCategoryPayments;
+    const prior = Math.max(0, Number(effectivePriorInput) || 0);
+    const cumulative = prior + totalTransactionGmv;
+
+    // Temporal Resolution: "Credit or Payment, whichever is earlier"
+    let effectiveDate = transactionDate;
+    let withholdingTrigger = 'TRANSACTION_DATE';
+
+    if (creditDate && paymentDate) {
+        if (creditDate <= paymentDate) {
+            effectiveDate = creditDate;
+            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
+        } else {
+            effectiveDate = paymentDate;
+            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
+        }
+    } else if (creditDate) {
+        effectiveDate = creditDate;
+        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
+    } else if (paymentDate) {
+        effectiveDate = paymentDate;
+        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
+    }
+
+    const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
+    const governingSection = isAct2025
+        ? "Income-tax Act, 2025 Section 393(1) Table 8, Item (i)"
+        : "Income-tax Act, 1961 Section 194O";
+
+    // Rate Determination: 1.0% pre-Oct 2024, 0.1% post-Oct 2024 (Finance (No. 2) Act 2024)
+    const effectiveDateIso = effectiveDate ? String(effectiveDate).slice(0, 10) : '2025-04-01';
+    const isPostOctober2024 = effectiveDateIso >= '2024-10-01';
+    const baseStatutoryRatePercent = isPostOctober2024 ? 0.1 : 1.0;
+
+    const panAvailable = Boolean(hasPan) && !isPanInoperative;
+    // Section 206AA(1) second proviso specifies a capped 5% penalty rate for Section 194-O (not 20%)
+    const penaltyRatePercent = 5.0;
+    const standardRatePercent = panAvailable ? baseStatutoryRatePercent : penaltyRatePercent;
+
+    // De Minimis Threshold Resolution
+    const isIndividualOrHuf = participantEntityType === 'INDIVIDUAL_HUF';
+    // Individual/HUF threshold is ₹5 Lakhs, but ONLY if PAN is provided! If PAN is missing, threshold is ₹0
+    const THRESHOLD = (isIndividualOrHuf && panAvailable) ? 500000 : 0;
+    const isThresholdBreached = cumulative > THRESHOLD;
+
+    let taxableBase = 0;
+    let thresholdDisposition = 'BELOW_THRESHOLD_EXEMPT';
+
+    if (isThresholdBreached) {
+        const previouslyTaxed = priorFyPaymentsAlreadyTaxed !== null && priorFyPaymentsAlreadyTaxed !== undefined
+            ? Math.max(0, Number(priorFyPaymentsAlreadyTaxed))
+            : (prior > THRESHOLD ? prior : 0);
+
+        taxableBase = Math.max(0, cumulative - previouslyTaxed);
+        thresholdDisposition = prior <= THRESHOLD && previouslyTaxed === 0
+            ? 'CATEGORY_THRESHOLD_BREACHED_WITH_CATCHUP'
+            : 'CATEGORY_THRESHOLD_ACTIVE';
+    } else if (isIndividualOrHuf && panAvailable && cumulative <= THRESHOLD) {
+        thresholdDisposition = 'INDIVIDUAL_HUF_BELOW_5L_EXEMPT';
+    }
+
+    // Lower Deduction Certificate resolution
+    const certResolution = evaluateLowerDeductionCertificateValidity({
+        effectiveDate,
+        lowerDeductionCertificate,
+        certificateSection,
+        isAct2025
+    });
+    const hasLowerDeduction = (lowerDeductionRate !== null && lowerDeductionRate !== undefined) && certResolution.isValid;
+    const certifiedRatePercent = hasLowerDeduction ? Number(lowerDeductionRate) : standardRatePercent;
+
+    let calculatedTdsInr = 0;
+    if (taxableBase > 0) {
+        calculatedTdsInr = Number(((taxableBase * certifiedRatePercent) / 100).toFixed(2));
+    }
+
+    const effectiveRatePercent = taxableBase > 0
+        ? Number(((calculatedTdsInr / taxableBase) * 100).toFixed(4))
+        : standardRatePercent;
+
+    let formulaText = "";
+    if (taxableBase === 0) {
+        formulaText = `Section 194O inapplicable: Cumulative GMV (₹${cumulative.toLocaleString('en-IN')}) does not exceed ₹${THRESHOLD.toLocaleString('en-IN')} annual threshold for ${participantEntityType}.`;
+    } else if (hasLowerDeduction) {
+        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${certifiedRatePercent}% (${isAct2025 ? 'Section 395' : 'Section 197'} Certificate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
+    } else if (panAvailable) {
+        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${standardRatePercent}% (${isPostOctober2024 ? 'Finance (No. 2) Act 2024 rate 0.1%' : 'Pre-amendment rate 1.0%'}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
+    } else {
+        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × 5% (Section 206AA second proviso capped rate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
+    }
+
+    const netPayable = roundToPaisa(Math.max(0, rawGrossSale - calculatedTdsInr));
+
+    return {
+        section: isAct2025 ? '393' : '194O',
+        isAct2025,
+        governingSection,
+        governingPanPenaltySection: panAvailable ? null : "Section 206AA(1) second proviso",
+        rawGrossSale,
+        directPurchaserPaymentDeemedInr: deemedDirectPayment,
+        totalTransactionGmv,
+        participantEntityType,
+        priorFyGmv: prior,
+        cumulativeFyGmv: cumulative,
+        gmvThreshold: THRESHOLD,
+        isThresholdBreached,
+        thresholdDisposition,
+        isPanFurnished: panAvailable,
+        taxableBase,
+        baseStatutoryRatePercent,
+        standardRatePercent,
+        effectiveRatePercent,
+        calculatedTdsInr,
+        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
+        netPayable,
+        statutoryPrecedence: {
+            overridesSection194Q: true,
+            overridesSection206C1H: true,
+            statutoryRationale: "Under Section 194O(3) read with Section 194Q(5) and Section 206C(1H), transactions subject to Section 194O take absolute statutory precedence. No buyer TDS under 194Q or seller TCS under 206C(1H) shall be deducted or collected."
+        },
         statutoryFormula: formulaText,
         isAuthorizedToDisburse: false
     };

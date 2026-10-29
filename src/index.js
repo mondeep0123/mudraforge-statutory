@@ -28,6 +28,7 @@ import {
     evaluateSection194I,
     evaluateSection194J,
     evaluateSection194A,
+    evaluateSection194O,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
     evaluateSection206C1H,
@@ -70,7 +71,7 @@ export { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL };
 /**
  * Current verified Merkle root digest for the active OKF v0.2 corpus.
  */
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-b12fab61f0ddcc8852a7db1b4831151163d1d0ff97112168d8dccf693cfe70a7';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-bf547512a57f26eae9a5ebcb9f0ec41c397421366b1b4223ab9e17d282721ca7';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 
 /**
@@ -78,6 +79,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-bf547512a57f26eae9a5ebcb9f0ec41c397421366b1b4223ab9e17d282721ca7', // feat/ecommerce-194o (32 Sections across 5 Domains)
     'sha256-b12fab61f0ddcc8852a7db1b4831151163d1d0ff97112168d8dccf693cfe70a7', // v2.11.0 Complete Accounts Payable (31 Sections across 5 Domains)
     'sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0', // v2.9.0 Corporate Finance 5 Domains Merkle Root (29 Sections across 5 Domains)
     'sha256-3fb34bdcd34eec794b1f8e6abb2c0e0e87664746ec2f50ad2599c34bf57565b3', // v2.8.1 Finance Act, 2025 Section 206AB Sunset Root (24 Sections across 5 Domains)
@@ -1877,6 +1879,13 @@ export class StatutoryClient {
     }
 
     /**
+     * Section 194O: E-commerce operator marketplace withholding & 194Q/206C(1H) override.
+     */
+    evaluateSection194O(payload) {
+        return evaluateSection194O(payload);
+    }
+
+    /**
      * Rule 37: 180-day vendor non-payment ITC reversal & Section 50(1) 18% interest.
      */
     calculateItcReversalRule37(payload) {
@@ -2940,6 +2949,7 @@ export {
     evaluateSection194I,
     evaluateSection194J,
     evaluateSection194A,
+    evaluateSection194O,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
     evaluateSection206C1H,

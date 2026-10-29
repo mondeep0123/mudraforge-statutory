@@ -1,7 +1,7 @@
 # Statutory Knowledge Catalog
 
 > **Institutional Reference Index**  
-> Package: `@mudraforge/statutory` | Version: `2.10.0` | Standard: `OKF v0.2`  
+> Package: `@mudraforge/statutory` | Version: `2.11.0` | Standard: `OKF v0.2`  
 > Epistemic Baseline: Union Budget 2025-26, Finance Act, 2025, and official executive gazettes.
 
 This catalog is deterministically generated from the machine-readable Open Knowledge Format (`section.json`, executive circulars, and return schemas) bundled within this repository.
@@ -19,6 +19,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | `direct_tax` | [**206C(1H)**](#206c-1h-) | Income-tax Act, 1961 | 2020-10-01 &rarr; 2025-03-31 | **Sunset** (2025-03-31) | Seller > ₹10Cr; Receipts > ₹50L | N/A |
 | `direct_tax` | [**194H**](#194h) | Income-tax Act, 1961 | 2001-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
 | `direct_tax` | [**194C**](#194c) | Income-tax Act, 1961 | 1972-04-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
+| `direct_tax` | [**194O**](#194o) | Income-tax Act, 1961 | 2020-10-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_ecommerce_schedule` |
 | `direct_tax` | [**194Q**](#194q) | Income-tax Act, 1961 | 2021-07-01 &rarr; 2026-03-31 | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | `form_26q_quarterly_return` |
 | `direct_tax` | [**393**](#393) | Income-tax Act, 2025 | 2026-04-01 &rarr; In Force | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | N/A |
 | `direct_tax` | [**194A**](#194a) | Income-tax Act, 1961 | 1967-04-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_15g_15h_interest_declaration` |
@@ -343,6 +344,45 @@ The table below records the provenance baseline, verification standard, and oper
 **Compliance Return Schemas & Templates**:
 - [`form_26q_quarterly_return.json`](../okf/direct_tax/tds_contractor_194c/forms/form_26q_quarterly_return.json)
 - [`transporter_194c_declaration.json`](../okf/direct_tax/tds_contractor_194c/forms/transporter_194c_declaration.json)
+
+---
+
+<a id="194o"></a>
+
+#### Section 194O: Payment of certain sums by e-commerce operator to e-commerce participant
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 8, Item (i)
+- **Temporal Validity**: `2020-10-01` to `2026-03-31`
+- **Legislative Sunset / Transition**: Rate reduced from 1% to 0.1% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024. Transitions to Section 393(1) Table 8 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Machine-Readable Source**: [`okf/direct_tax/tds_ecommerce_194o/section.json`](../okf/direct_tax/tds_ecommerce_194o/section.json)
+
+**Statutory Summary**:
+> Every e-commerce operator facilitating the sale of goods or provision of services through its digital or electronic platform must deduct income-tax at source on the gross amount of such sales or services credited or paid to a resident e-commerce participant. Statutory Rate: (a) 1.0% prior to 1 October 2024; (b) 0.1% on or after 1 October 2024 (as amended by Finance (No. 2) Act, 2024). In the absence of a valid PAN or where PAN is inoperative, tax is deductible at 5.0% under Section 206AA(1). De Minimis Exemption: No deduction is required if the participant is a resident Individual or HUF, the gross amount of sales/services through the operator does not exceed ₹5,00,000 in the financial year, and the participant has furnished their PAN/Aadhaar. Corporate, LLP, and partnership participants have zero threshold (TDS applies from ₹1). Section 194O has statutory precedence: transactions subject to Section 194O are exempt from Section 194Q buyer TDS and Section 206C(1H) seller TCS.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "individualHufAnnualThresholdInr": 500000,
+  "corporateNonIndividualThresholdInr": 0,
+  "preOctober2024RatePercent": 1,
+  "postOctober2024RatePercent": 0.1,
+  "nonCompliantPanPenaltyRatePercent": 5,
+  "statutoryPrecedenceRule": "Section 194O overrides Section 194Q and Section 206C(1H). Transactions subjected to 194O are exempt from buyer TDS and seller TCS.",
+  "taxableBaseScope": "Deductible on gross amount of sales or provision of services facilitated by operator, including deemed direct purchaser-to-seller settlements."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Law & Justice / CBDT** — [Section 194O, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Deduction of tax at source on payments by e-commerce operators*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 8, Item (i)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on e-commerce operators under new Direct Tax Code*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 20 of 2020 (Dated 29 September 2020)](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx?year=2020): *Guidelines under Section 194O and Section 206C(1H) - Precedence and gross amount computation*
+
+**Executive Circulars Bundled**:
+- [`cbdt_circular_20_2020_guidelines_194o.md`](../okf/direct_tax/tds_ecommerce_194o/circulars/cbdt_circular_20_2020_guidelines_194o.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_26q_ecommerce_schedule.json`](../okf/direct_tax/tds_ecommerce_194o/forms/form_26q_ecommerce_schedule.json)
 
 ---
 

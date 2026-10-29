@@ -38,6 +38,7 @@ import {
     evaluateSection79LossContinuity,
     revalueForeignExchangeIndAs109,
     evaluateSection194A,
+    evaluateSection194O,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
     getStatutoryOutcomes,
@@ -1604,7 +1605,7 @@ async function run() {
         cwd: path.resolve('.')
     });
     const parsedList = JSON.parse(cliListOutput);
-    if (!Array.isArray(parsedList.sections) || parsedList.total !== 31) {
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 32) {
         throw new Error('CLI list --json failed');
     }
 
@@ -2196,8 +2197,72 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient parity verified for evaluateSection194A, calculateItcReversalRule37, and calculateRule37ASupplierNonFilingReversal.');
 
+    // 93. Direct Tax — Section 194O (E-Commerce Operator Marketplace Withholding)
+    console.log('\n── Test 93: Direct Tax — Section 194O (E-Commerce Operator Marketplace Withholding) ──');
+    const resLookup194O = await lookupStatute('194O');
+    if (resLookup194O.status !== 'SUCCESS' || resLookup194O.statute.keyStatutoryThresholds.individualHufAnnualThresholdInr !== 500000) {
+        throw new Error('Section 194O statutory lookup failed or threshold incorrect');
+    }
+
+    // Corporate participant: ₹0 threshold, post-Oct 2024 rate 0.1% on ₹10,00,000 GMV = ₹1,000 TDS
+    const calc194OCorporate = evaluateSection194O({
+        grossSaleAmount: 1000000,
+        participantEntityType: 'COMPANY',
+        hasPan: true,
+        transactionDate: '2025-05-15'
+    });
+    if (calc194OCorporate.calculatedTdsInr !== 1000 || calc194OCorporate.standardRatePercent !== 0.1 || !calc194OCorporate.statutoryPrecedence.overridesSection194Q) {
+        throw new Error(`Section 194O corporate 0.1% deduction failed: got TDS ₹${calc194OCorporate.calculatedTdsInr}`);
+    }
+
+    // Pre-October 2024 transaction: 1.0% rate on ₹10,00,000 GMV = ₹10,000 TDS
+    const calc194OPreOct = evaluateSection194O({
+        grossSaleAmount: 1000000,
+        participantEntityType: 'COMPANY',
+        hasPan: true,
+        transactionDate: '2024-06-15'
+    });
+    if (calc194OPreOct.calculatedTdsInr !== 10000 || calc194OPreOct.standardRatePercent !== 1.0) {
+        throw new Error(`Section 194O pre-October 2024 1.0% rate failed: got TDS ₹${calc194OPreOct.calculatedTdsInr}`);
+    }
+
+    // Individual participant below ₹5,00,000 threshold with valid PAN: exempt (₹0 TDS)
+    const calc194OIndBelow = evaluateSection194O({
+        grossSaleAmount: 300000,
+        participantEntityType: 'INDIVIDUAL_HUF',
+        hasPan: true,
+        transactionDate: '2025-05-15'
+    });
+    if (calc194OIndBelow.calculatedTdsInr !== 0 || calc194OIndBelow.thresholdDisposition !== 'INDIVIDUAL_HUF_BELOW_5L_EXEMPT') {
+        throw new Error(`Section 194O individual below ₹5L threshold failed: got TDS ₹${calc194OIndBelow.calculatedTdsInr}`);
+    }
+
+    // Missing PAN: Section 206AA second proviso specifies 5% penalty rate (not 20%)
+    const calc194OMissingPan = evaluateSection194O({
+        grossSaleAmount: 200000,
+        participantEntityType: 'INDIVIDUAL_HUF',
+        hasPan: false,
+        transactionDate: '2025-05-15'
+    });
+    if (calc194OMissingPan.calculatedTdsInr !== 10000 || calc194OMissingPan.standardRatePercent !== 5.0) {
+        throw new Error(`Section 194O missing PAN 5% penalty rate failed: got TDS ₹${calc194OMissingPan.calculatedTdsInr}`);
+    }
+    console.log('[PASS] Section 194O Engine Verified: Corporate 0.1% rate, Pre-Oct 2024 1.0% rate, Individual ₹5L exemption, 5% PAN penalty cap, and 194Q/206C(1H) override.');
+
+    // 94. StatutoryClient Programmatic Parity for Section 194O
+    console.log('\n── Test 94: StatutoryClient Programmatic Parity for Section 194O ──');
+    const client194O = statutoryClientInstance.evaluateSection194O({
+        grossSaleAmount: 5000000,
+        participantEntityType: 'COMPANY',
+        transactionDate: '2025-07-20'
+    });
+    if (client194O.calculatedTdsInr !== 5000 || !client194O.statutoryPrecedence.overridesSection194Q) {
+        throw new Error('StatutoryClient.evaluateSection194O parity check failed');
+    }
+    console.log('[PASS] StatutoryClient parity verified for evaluateSection194O.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 92 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 94 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 
