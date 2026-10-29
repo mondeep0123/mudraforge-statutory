@@ -18,6 +18,11 @@ import {
     roundToPaisa,
     roundSection288B,
     cleanNumericAmount,
+    toIntegerPaise,
+    fromIntegerPaise,
+    MalformedNumericInputError,
+    MissingMandatoryParameterError,
+    assertMandatoryNumeric,
     calculateCorporateTaxMatVsConcessional,
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,
@@ -2078,6 +2083,40 @@ export class StatutoryClient {
     }
 
     /**
+     * Clean and normalize raw accounting numeric input.
+     * @param {any} val
+     * @param {Object} [options]
+     */
+    cleanNumericAmount(val, options = {}) {
+        return cleanNumericAmount(val, options);
+    }
+
+    /**
+     * Round an amount to paisa precision (2 decimal places).
+     * @param {any} amount
+     */
+    roundToPaisa(amount) {
+        return roundToPaisa(amount);
+    }
+
+    /**
+     * Convert rupee amount to integer paise for zero-drift arithmetic.
+     * @param {any} amount
+     * @param {string} [fieldName='amount']
+     */
+    toIntegerPaise(amount, fieldName = 'amount') {
+        return toIntegerPaise(amount, fieldName);
+    }
+
+    /**
+     * Convert integer paise back to rounded rupees.
+     * @param {number} paise
+     */
+    fromIntegerPaise(paise) {
+        return fromIntegerPaise(paise);
+    }
+
+    /**
      * Retrieve statutory outcomes and disposition codes.
      * @param {string} [provision] Optional section code or provision alias
      * @param {Object} [options]
@@ -3096,6 +3135,11 @@ export {
     roundToPaisa,
     roundSection288B,
     cleanNumericAmount,
+    toIntegerPaise,
+    fromIntegerPaise,
+    MalformedNumericInputError,
+    MissingMandatoryParameterError,
+    assertMandatoryNumeric,
     calculateCorporateTaxMatVsConcessional,
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,

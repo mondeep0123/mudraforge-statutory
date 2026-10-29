@@ -65,16 +65,18 @@ export function parseTallyDaybookCsv(csvText) {
         date: findColIndex(headers, ['date', 'vch_date', 'voucher_date', 'txn_date']),
         voucherNo: findColIndex(headers, ['voucher_no', 'vch_no', 'invoice_no', 'ref_no', 'voucher_number']),
         voucherType: findColIndex(headers, ['voucher_type', 'vch_type', 'type']),
-        partyName: findColIndex(headers, ['party_name', 'vendor_name', 'ledger_name', 'supplier_name', 'party']),
+        partyName: findColIndex(headers, ['party_name', 'vendor_name', 'ledger_name', 'supplier_name', 'particulars', 'account', 'party']),
         pan: findColIndex(headers, ['pan', 'vendor_pan', 'party_pan']),
         gstin: findColIndex(headers, ['gstin', 'vendor_gstin', 'party_gstin']),
-        amount: findColIndex(headers, ['amount', 'gross_amount', 'invoice_amount', 'purchase_amount', 'debit', 'value']),
+        amount: findColIndex(headers, ['amount', 'gross_amount', 'invoice_amount', 'purchase_amount', 'value']),
+        debit: findColIndex(headers, ['debit', 'dr', 'debit_amount']),
+        credit: findColIndex(headers, ['credit', 'cr', 'credit_amount']),
         gstAmount: findColIndex(headers, ['gst_amount', 'tax_amount', 'gst', 'tax']),
         tdsDeducted: findColIndex(headers, ['tds_deducted', 'tds_amount', 'tds', 'tds_cut'])
     };
 
-    if (colIndex.amount === -1) {
-        throw new Error('[@mudraforge/statutory] CSV header must include an "Amount", "Gross_Amount", or "Debit" column.');
+    if (colIndex.amount === -1 && colIndex.debit === -1 && colIndex.credit === -1) {
+        throw new Error('[@mudraforge/statutory] CSV header must include an "Amount", "Gross_Amount", or "Debit"/"Credit" column.');
     }
 
     const vouchers = [];
@@ -86,8 +88,25 @@ export function parseTallyDaybookCsv(csvText) {
         const rawDate = colIndex.date !== -1 ? row[colIndex.date] : null;
         const normalizedDate = normalizeIsoDate(rawDate);
 
-        const rawAmount = colIndex.amount !== -1 ? row[colIndex.amount] : '0';
-        const amount = cleanNumericAmount(rawAmount);
+        let amount = 0;
+        if (colIndex.debit !== -1 || colIndex.credit !== -1) {
+            const rawDebit = colIndex.debit !== -1 ? row[colIndex.debit] : '0';
+            const rawCredit = colIndex.credit !== -1 ? row[colIndex.credit] : '0';
+            const debitVal = cleanNumericAmount(rawDebit);
+            const creditVal = cleanNumericAmount(rawCredit);
+            if (debitVal !== 0) {
+                amount = debitVal;
+            } else if (creditVal !== 0) {
+                // In purchase register / daybook context, Credit column indicates purchase return / debit note
+                amount = -Math.abs(creditVal);
+            } else if (colIndex.amount !== -1) {
+                amount = cleanNumericAmount(row[colIndex.amount], { interpretCreditAsNegative: true });
+            }
+        } else if (colIndex.amount !== -1) {
+            const rawAmount = row[colIndex.amount];
+            // In daybook purchase vouchers, interpret CR suffix as negative return
+            amount = cleanNumericAmount(rawAmount, { interpretCreditAsNegative: true });
+        }
 
         const rawGst = colIndex.gstAmount !== -1 ? row[colIndex.gstAmount] : '0';
         const gstAmount = Math.abs(cleanNumericAmount(rawGst));

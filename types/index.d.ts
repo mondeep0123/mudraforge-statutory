@@ -221,6 +221,10 @@ export declare class StatutoryClient {
     generateTally194QJournalXml(reconciliationResult: ReconcileDaybookResult, options?: any): string;
     generateAuditReport(reconciliationResult: ReconcileDaybookResult): string;
     generateAuditMarkdownReport(reconciliationResult: ReconcileDaybookResult): string;
+    cleanNumericAmount(val: any, options?: CleanNumericAmountOptions): number;
+    roundToPaisa(amount: number | string): number;
+    toIntegerPaise(amount: number | string, fieldName?: string): number;
+    fromIntegerPaise(paise: number): number;
     getOutcomes(provision?: string, options?: StatutoryOutcomesOptions): Promise<StatutoryOutcomesResult>;
     explain(codeOrQuery: string, options?: any): any;
 }
@@ -348,9 +352,32 @@ export declare function decodeTaxIdentifier(rawId: string): TaxIdentifierResult;
 export declare const CURRENT_RELEASE_MERKLE_ROOT: string;
 export declare const MERKLE_ROOT_OKF_V2: string;
 
+export interface CleanNumericAmountOptions {
+    strict?: boolean;
+    fieldName?: string;
+    interpretCreditAsNegative?: boolean;
+}
+
+export declare class MalformedNumericInputError extends Error {
+    code: 'MALFORMED_NUMERIC_INPUT';
+    field: string;
+    rawValue: any;
+    constructor(val: any, fieldName?: string);
+}
+
+export declare class MissingMandatoryParameterError extends Error {
+    code: 'MISSING_MANDATORY_PARAMETER';
+    field: string;
+    functionName: string;
+    constructor(fieldName: string, functionName: string);
+}
+
+export declare function assertMandatoryNumeric(val: any, fieldName: string, functionName: string, options?: CleanNumericAmountOptions): number;
+export declare function toIntegerPaise(amount: number | string, fieldName?: string): number;
+export declare function fromIntegerPaise(paise: number): number;
 export declare function roundToPaisa(amount: number | string): number;
 export declare function roundSection288B(amount: number | string): number;
-export declare function cleanNumericAmount(val: any): number;
+export declare function cleanNumericAmount(val: any, options?: CleanNumericAmountOptions): number;
 export declare function calculateCorporateTaxMatVsConcessional(payload?: any): any;
 export declare function evaluatePlaceOfSupplyAndLut(payload?: any): any;
 export declare function calculateTransferPricingAlp(payload?: any): any;

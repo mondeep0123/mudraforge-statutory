@@ -52,16 +52,85 @@ export function getRbiBankRateForDate(dateString) {
 export const MSMED_RATE_MULTIPLIER = 3;
 
 /**
+ * Error thrown when a required numeric field cannot be parsed from input.
+ */
+export class MalformedNumericInputError extends Error {
+    constructor(val, fieldName = 'amount') {
+        super(`[@mudraforge/statutory] Malformed numeric input for field "${fieldName}": "${val}". Input could not be safely resolved to a finite number.`);
+        this.name = 'MalformedNumericInputError';
+        this.code = 'MALFORMED_NUMERIC_INPUT';
+        this.field = fieldName;
+        this.rawValue = val;
+    }
+}
+
+/**
+ * Error thrown when a mandatory statutory calculation parameter is missing or null.
+ */
+export class MissingMandatoryParameterError extends Error {
+    constructor(fieldName, functionName) {
+        super(`[@mudraforge/statutory] ${functionName}: Mandatory parameter "${fieldName}" is missing or undefined.`);
+        this.name = 'MissingMandatoryParameterError';
+        this.code = 'MISSING_MANDATORY_PARAMETER';
+        this.field = fieldName;
+        this.functionName = functionName;
+    }
+}
+
+/**
+ * Validates that a required statutory input parameter is present and resolves cleanly
+ * to a finite numeric value, rejecting missing, null, or malformed input without silent coercion.
+ * 
+ * @param {any} val - The input value to validate
+ * @param {string} fieldName - The parameter name for diagnostics
+ * @param {string} functionName - The calling calculator function name
+ * @param {Object} [options]
+ * @param {boolean} [options.interpretCreditAsNegative=false]
+ * @returns {number} Clean normalized number
+ */
+export function assertMandatoryNumeric(val, fieldName, functionName, options = {}) {
+    if (val === undefined || val === null) {
+        throw new MissingMandatoryParameterError(fieldName, functionName);
+    }
+    return cleanNumericAmount(val, {
+        strict: true,
+        fieldName,
+        interpretCreditAsNegative: options.interpretCreditAsNegative || false
+    });
+}
+
+/**
  * Safely normalizes numeric inputs from numbers, strings with currency symbols (₹, $, €, Rs, INR),
  * thousands separators (commas), and whitespace into valid finite numbers.
- * Fails closed to 0 if input is not parseable or infinite.
+ * 
+ * Accounting conventions handled:
+ * - Parentheses: "(1,500.00)" or "(₹ 1,500.00)" -> -1500.00
+ * - Trailing minus: "1,500.00-" -> -1500.00
+ * - Leading minus with spaces: "- ₹ 1,500.00" -> -1500.00
+ * - Credit suffix: "1,500.00 CR" -> magnitude 1500.00. Negated only if interpretCreditAsNegative: true.
+ * - Negative zero (-0) normalized to unsigned 0.
  * 
  * @param {any} val - Input number or formatted numeric string
+ * @param {Object} [options]
+ * @param {boolean} [options.strict=false] - When true, throws MalformedNumericInputError on unparseable strings
+ * @param {string} [options.fieldName='amount'] - Diagnostic field name for error reporting
+ * @param {boolean} [options.interpretCreditAsNegative=false] - Whether "CR" suffix inverts sign
  * @returns {number} Normalized float
  */
-export function cleanNumericAmount(val) {
+export function cleanNumericAmount(val, options = {}) {
+    const {
+        strict = false,
+        fieldName = 'amount',
+        interpretCreditAsNegative = false
+    } = options;
+
     if (typeof val === 'number') {
-        if (!Number.isFinite(val) || isNaN(val)) return 0;
+        if (!Number.isFinite(val) || isNaN(val)) {
+            if (strict) {
+                throw new MalformedNumericInputError(val, fieldName);
+            }
+            return 0;
+        }
         return Object.is(val, -0) ? 0 : val;
     }
     if (val === null || val === undefined || typeof val === 'boolean') {
@@ -82,25 +151,65 @@ export function cleanNumericAmount(val) {
             // Trailing minus from legacy ERP dumps: "1,500.00-"
             isNegative = true;
             s = s.replace(/-\s*$/, '').trim();
-        } else if (/\s+(?:cr|credit)\.?$/i.test(s)) {
-            // Accounting credit suffix: "1,500.00 CR"
-            isNegative = true;
-            s = s.replace(/\s+(?:cr|credit)\.?$/i, '').trim();
         } else if (/^\s*-\s*/.test(s)) {
             // Explicit leading minus with possible whitespace: "- ₹ 1,500.00"
             isNegative = true;
             s = s.replace(/^\s*-\s*/, '').trim();
+        } else if (/(?:\s+)?(?:cr|credit)\.?$/i.test(s)) {
+            // Accounting credit suffix: "1,500.00 CR"
+            // Note: CR means credit, whose signed interpretation depends on ledger orientation.
+            // Only negate if caller explicitly requests interpretCreditAsNegative: true.
+            if (interpretCreditAsNegative) {
+                isNegative = true;
+            }
+            s = s.replace(/(?:\s+)?(?:cr|credit)\.?$/i, '').trim();
+        } else if (/(?:\s+)?(?:dr|debit)\.?$/i.test(s)) {
+            // Accounting debit suffix: "1,500.00 DR"
+            s = s.replace(/(?:\s+)?(?:dr|debit)\.?$/i, '').trim();
         }
 
         // Strip common currency symbols, commas, and currency labels
         const cleaned = s.replace(/[₹$€,\s]|(?:INR|Rs\.?)/gi, '');
         const n = parseFloat(cleaned);
-        if (!Number.isFinite(n) || isNaN(n)) return 0;
+        
+        // Check for malformed strings that had non-numeric text left over
+        const isCleanNumber = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(cleaned);
+        if (!isCleanNumber || !Number.isFinite(n) || isNaN(n)) {
+            if (strict) {
+                throw new MalformedNumericInputError(val, fieldName);
+            }
+            return 0;
+        }
 
         const res = isNegative ? -Math.abs(n) : n;
         return Object.is(res, -0) ? 0 : res;
     }
     return 0;
+}
+
+/**
+ * High-precision conversion of rupees to integer paise.
+ * Avoids IEEE-754 floating point drift during threshold and summation operations.
+ * 
+ * @param {any} amount - Rupees amount or formatted string
+ * @param {string} [fieldName='amount']
+ * @returns {number} Integer paise (e.g. 50.25 -> 5025)
+ */
+export function toIntegerPaise(amount, fieldName = 'amount') {
+    const n = cleanNumericAmount(amount, { strict: false, fieldName });
+    return Math.round(n * 100);
+}
+
+/**
+ * Converts integer paise back to rupees with 2 decimal places.
+ * 
+ * @param {number} paise - Integer paise
+ * @returns {number} Rounded rupees
+ */
+export function fromIntegerPaise(paise) {
+    if (!Number.isFinite(paise) || isNaN(paise)) return 0;
+    const rupees = paise / 100;
+    return Object.is(rupees, -0) ? 0 : Math.round(rupees * 100) / 100;
 }
 
 /**
@@ -111,7 +220,7 @@ export function cleanNumericAmount(val) {
 export function roundToPaisa(amount) {
     const n = cleanNumericAmount(amount);
     if (!Number.isFinite(n) || isNaN(n) || Object.is(n, -0)) return 0;
-    return Math.round(n * 100) / 100;
+    return fromIntegerPaise(Math.round(n * 100));
 }
 
 /**
@@ -160,7 +269,7 @@ export function calculateMsmeCompoundInterest({
     commenceDayAfter = false, // Legacy flag: when true, adds 1 day to dueDate per Section 16 agreed date rule
     includePaymentDate = false // When false, payment date is the settlement day (interest ceases at start of payment date)
 } = {}) {
-    const p = cleanNumericAmount(principal);
+    const p = assertMandatoryNumeric(principal, 'principal', 'calculateMsmeCompoundInterest');
     if (p <= 0) {
         throw new Error("Invalid principal amount for MSME interest calculation.");
     }
@@ -1637,7 +1746,7 @@ export function evaluateSection194Q({
     rateEffectiveFrom = null,
     rateEffectiveTo = null
 } = {}) {
-    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
+    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194Q');
     const gstAmount = cleanNumericAmount(gstAmountInr);
     const creditNote = cleanNumericAmount(creditNoteInr);
     const advanceNetted = cleanNumericAmount(advanceNettedInr);
@@ -1705,8 +1814,12 @@ export function evaluateSection194Q({
             ? currentFyPriorPurchasesInr
             : (priorPurchasesInCurrentFyInr !== undefined ? priorPurchasesInCurrentFyInr : priorFyPurchases)
     ));
-    const cumulative = prior + amount;
     const THRESHOLD = 5000000; // ₹50 Lakhs
+    const THRESHOLD_PAISE = 500000000; // ₹50 Lakhs in integer paise
+    const priorPaise = toIntegerPaise(prior, 'priorPurchases');
+    const amountPaise = toIntegerPaise(amount, 'amount');
+    const cumulativePaise = priorPaise + amountPaise;
+    const cumulative = fromIntegerPaise(cumulativePaise);
 
     // Buyer turnover prescription under Section 194Q(1) Explanation:
     // Person whose total sales, gross receipts or turnover exceeds ₹10 Crore in preceding FY.
@@ -1730,8 +1843,10 @@ export function evaluateSection194Q({
     // Incremental threshold absorption formula with Paisa integer precision:
     // Delta = max(0, cumulative - THRESHOLD) - max(0, prior - THRESHOLD)
     // Taxable base is min(amount, Delta)
-    const incrementalExcess = roundToPaisa(Math.max(0, cumulative - THRESHOLD) - Math.max(0, prior - THRESHOLD));
-    const conditionalTaxableBase = roundToPaisa(Math.max(0, Math.min(amount, incrementalExcess)));
+    const incrementalExcessPaise = Math.max(0, cumulativePaise - THRESHOLD_PAISE) - Math.max(0, priorPaise - THRESHOLD_PAISE);
+    const conditionalTaxableBasePaise = Math.max(0, Math.min(amountPaise, incrementalExcessPaise));
+    const conditionalTaxableBase = fromIntegerPaise(conditionalTaxableBasePaise);
+    const incrementalExcess = fromIntegerPaise(incrementalExcessPaise);
     const taxableBase = isSection194QApplicable 
         ? conditionalTaxableBase 
         : (isBuyerPrescriptionIndeterminate ? conditionalTaxableBase : 0);
@@ -2403,7 +2518,7 @@ export function evaluateSection194C({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
+    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194C');
     const gstAmount = cleanNumericAmount(gstAmountInr);
 
     // CBDT Circular No. 23/2017: If GST is separately stated, TDS applies to basic value
@@ -2746,13 +2861,13 @@ export function evaluateSection194J({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
-    const gstAmount = cleanNumericAmount(gstAmountInr);
-
     const normalizedCategory = normalize194JCategory(serviceCategory);
     if (!normalizedCategory) {
         throw new Error(`INVALID_SERVICE_CATEGORY: Unknown serviceCategory "${serviceCategory}". Allowed categories: ${VALID_194J_CATEGORIES.join(', ')}`);
     }
+
+    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194J');
+    const gstAmount = cleanNumericAmount(gstAmountInr);
 
     // CBDT Circular No. 23/2017: If GST is separately stated, TDS applies to basic value
     const effectiveServiceAmount = isAdvancePayment
@@ -2762,7 +2877,7 @@ export function evaluateSection194J({
     const effectivePriorInput = priorPaymentsInCurrentFyInr !== null && priorPaymentsInCurrentFyInr !== undefined
         ? priorPaymentsInCurrentFyInr
         : priorFyCategoryPayments;
-    const prior = Math.max(0, Number(effectivePriorInput) || 0);
+    const prior = Math.max(0, cleanNumericAmount(effectivePriorInput));
     const cumulative = prior + effectiveServiceAmount;
 
     const isDirectorFee = normalizedCategory === 'DIRECTOR_REMUNERATION';
@@ -3023,7 +3138,7 @@ export function evaluateSection194I({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
+    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194I');
     const gstAmount = cleanNumericAmount(gstAmountInr);
 
     const effectiveRentAmount = isAdvancePayment
@@ -3031,8 +3146,8 @@ export function evaluateSection194I({
         : Math.max(0, rawInvoiceAmount - gstAmount);
 
     const effectivePrior = priorFyPayments !== null && priorFyPayments !== undefined
-        ? Number(priorFyPayments) || 0
-        : Number(priorFyRent) || 0;
+        ? cleanNumericAmount(priorFyPayments)
+        : cleanNumericAmount(priorFyRent);
     const prior = Math.max(0, effectivePrior);
     const cumulative = prior + effectiveRentAmount;
 
@@ -3180,7 +3295,7 @@ export function evaluateSection194H({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInvoiceAmount = cleanNumericAmount(invoiceAmount);
+    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194H');
     const gstAmount = cleanNumericAmount(gstAmountInr);
 
     const effectiveCommissionAmount = isAdvancePayment
@@ -3347,7 +3462,7 @@ export function evaluateSection194A({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInterestAmount = cleanNumericAmount(interestAmount);
+    const rawInterestAmount = assertMandatoryNumeric(interestAmount, 'interestAmount', 'evaluateSection194A');
 
     const effectivePriorInput = priorPaymentsInCurrentFyInr !== null && priorPaymentsInCurrentFyInr !== undefined
         ? priorPaymentsInCurrentFyInr
@@ -3541,7 +3656,7 @@ export function evaluateSection194O({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawGrossSale = cleanNumericAmount(grossSaleAmount);
+    const rawGrossSale = assertMandatoryNumeric(grossSaleAmount, 'grossSaleAmount', 'evaluateSection194O');
     const deemedDirectPayment = Math.max(0, cleanNumericAmount(directPurchaserPaymentDeemedInr));
     const totalTransactionGmv = rawGrossSale + deemedDirectPayment;
 
@@ -3691,7 +3806,7 @@ export function evaluateSection194O({
  * - Dual-Act 2025: Section 393(1) Table 4 Item (q).
  */
 export function evaluateSection194IA({
-    contractualConsiderationInr = 0,
+    contractualConsiderationInr,
     stampDutyValueInr = null,
     incidentalChargesInr = 0,
     isAgriculturalLand = false,
@@ -3704,9 +3819,11 @@ export function evaluateSection194IA({
     creditDate = null,
     paymentDate = null
 } = {}) {
+    const rawBaseConsideration = Math.max(0, assertMandatoryNumeric(contractualConsiderationInr, 'contractualConsiderationInr', 'evaluateSection194IA'));
+
     // Exclusion 1: Agricultural Land
     if (isAgriculturalLand) {
-        const grossAmount = roundToPaisa(Math.max(0, cleanNumericAmount(contractualConsiderationInr)) + Math.max(0, cleanNumericAmount(incidentalChargesInr)));
+        const grossAmount = roundToPaisa(rawBaseConsideration + Math.max(0, cleanNumericAmount(incidentalChargesInr)));
         return {
             status: 'SUCCESS',
             statutoryDetermination: 'EXEMPT_AGRICULTURAL_LAND',
@@ -3734,7 +3851,6 @@ export function evaluateSection194IA({
         };
     }
 
-    const rawBaseConsideration = Math.max(0, cleanNumericAmount(contractualConsiderationInr));
     const rawIncidental = Math.max(0, cleanNumericAmount(incidentalChargesInr));
     const totalContractualConsideration = roundToPaisa(rawBaseConsideration + rawIncidental);
 
@@ -6154,7 +6270,7 @@ export function revalueForeignExchangeIndAs109({
  *    - Always returns isAuthorizedToDisburse: false.
  */
 export function evaluateSection194R({
-    currentBenefitValueInr = 0,
+    currentBenefitValueInr,
     cumulativePriorBenefitsInr = 0,
     payerEntityType = 'COMPANY',
     payerPrecedingFyTurnoverInr = null,
@@ -6167,7 +6283,7 @@ export function evaluateSection194R({
     isSpecifiedPerson206AB = false,
     effectiveDate = null
 } = {}) {
-    const benefitVal = roundToPaisa(Math.max(0, cleanNumericAmount(currentBenefitValueInr)));
+    const benefitVal = roundToPaisa(Math.max(0, assertMandatoryNumeric(currentBenefitValueInr, 'currentBenefitValueInr', 'evaluateSection194R')));
     const priorVal = roundToPaisa(Math.max(0, cleanNumericAmount(cumulativePriorBenefitsInr)));
     const totalCumulativeVal = roundToPaisa(priorVal + benefitVal);
     const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -6320,7 +6436,7 @@ export function evaluateSection194R({
  *    - Always returns isAuthorizedToDisburse: false.
  */
 export function evaluateSection194IB({
-    monthlyRentInr = 0,
+    monthlyRentInr,
     tenancyMonthsInYear = 1,
     lastMonthRentPayableInr = null,
     isPayerTaxAuditCovered = false,
@@ -6328,7 +6444,7 @@ export function evaluateSection194IB({
     isLandlordPanInoperative = false,
     effectiveDate = null
 } = {}) {
-    const monthRent = roundToPaisa(Math.max(0, cleanNumericAmount(monthlyRentInr)));
+    const monthRent = roundToPaisa(Math.max(0, assertMandatoryNumeric(monthlyRentInr, 'monthlyRentInr', 'evaluateSection194IB')));
     const months = Math.max(1, Math.min(12, Number(tenancyMonthsInYear) || 1));
     const totalRentForPeriod = roundToPaisa(monthRent * months);
     const lastMonthRent = lastMonthRentPayableInr !== null && lastMonthRentPayableInr !== undefined
@@ -6444,7 +6560,7 @@ export function evaluateSection194IB({
  *    - Always returns isAuthorizedToDisburse: false.
  */
 export function evaluateSection194M({
-    currentPaymentAmountInr = 0,
+    currentPaymentAmountInr,
     cumulativePriorPaymentsInr = 0,
     isPayerCoveredBy194C_H_J = false,
     hasPan = true,
@@ -6452,7 +6568,7 @@ export function evaluateSection194M({
     isSpecifiedPerson206AB = false,
     effectiveDate = null
 } = {}) {
-    const currentAmt = roundToPaisa(Math.max(0, cleanNumericAmount(currentPaymentAmountInr)));
+    const currentAmt = roundToPaisa(Math.max(0, assertMandatoryNumeric(currentPaymentAmountInr, 'currentPaymentAmountInr', 'evaluateSection194M')));
     const priorAmt = roundToPaisa(Math.max(0, cleanNumericAmount(cumulativePriorPaymentsInr)));
     const totalCumulative = roundToPaisa(priorAmt + currentAmt);
     const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);

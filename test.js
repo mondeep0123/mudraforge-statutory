@@ -33,7 +33,16 @@ import {
     roundToPaisa,
     roundSection288B,
     cleanNumericAmount,
+    toIntegerPaise,
+    fromIntegerPaise,
+    MalformedNumericInputError,
+    MissingMandatoryParameterError,
+    assertMandatoryNumeric,
     evaluateSection194Q,
+    evaluateSection194C,
+    evaluateSection194H,
+    evaluateSection194I,
+    evaluateSection194J,
     calculateMsmeCompoundInterest,
     calculateCorporateTaxMatVsConcessional,
     evaluatePlaceOfSupplyAndLut,
@@ -3327,13 +3336,19 @@ async function run() {
     if (cleanNumericAmount('50,000.00-') !== -50000 || cleanNumericAmount('25000-') !== -25000) {
         throw new Error('cleanNumericAmount failed to parse trailing minus numbers');
     }
-    if (cleanNumericAmount('50,000.00 CR') !== -50000 || cleanNumericAmount('₹ 1,25,000 credit') !== -125000) {
-        throw new Error('cleanNumericAmount failed to parse CR/credit accounting suffixes');
+    // Default mode: CR preserves positive magnitude without blind negative inversion
+    if (cleanNumericAmount('50,000.00 CR') !== 50000 || cleanNumericAmount('₹ 1,25,000 credit') !== 125000) {
+        throw new Error('cleanNumericAmount failed to parse CR/credit accounting suffixes with positive magnitude');
+    }
+    // Explicit purchase register / return mode: CR is interpreted as signed negative
+    if (cleanNumericAmount('50,000.00 CR', { interpretCreditAsNegative: true }) !== -50000 || 
+        cleanNumericAmount('₹ 1,25,000 credit', { interpretCreditAsNegative: true }) !== -125000) {
+        throw new Error('cleanNumericAmount failed to parse CR/credit accounting suffixes as negative when interpretCreditAsNegative: true');
     }
     if (cleanNumericAmount('- ₹ 15,000.50') !== -15000.5) {
         throw new Error('cleanNumericAmount failed on leading minus with spaced currency');
     }
-    console.log('[PASS] Accounting Negative Formats Verified: Parentheses, trailing minuses, and CR credits parsed as signed negatives.');
+    console.log('[PASS] Accounting Negative Formats Verified: Parentheses, trailing minuses, and ledger-aware CR credits parsed cleanly.');
 
     // 123. Zero-Argument Parameter Robustness across Calculators
     console.log('\n── Test 123: Zero-Argument & Empty Destructuring Robustness ──');
@@ -3412,8 +3427,127 @@ async function run() {
     if (!clientReport.includes('SECTION 194Q STATUTORY AUDIT')) throw new Error('client.generateAuditMarkdownReport failed');
     console.log('[PASS] StatutoryClient Daybook Parity Verified: parseTallyDaybookCsv, reconcile194QDaybook, generateTally194QJournalXml, and generateAuditMarkdownReport fully functional.');
 
+    // 127. Strict Malformed Numeric Rejection & Integer Paise Precision
+    console.log('\n── Test 127: Strict Malformed Numeric Rejection & Integer Paise Precision ──');
+    let malformedCaught = false;
+    try {
+        cleanNumericAmount('corrupted_alphanumeric_data', { strict: true, fieldName: 'invoiceAmount' });
+    } catch (e) {
+        if (e instanceof MalformedNumericInputError && e.code === 'MALFORMED_NUMERIC_INPUT' && e.field === 'invoiceAmount') {
+            malformedCaught = true;
+        }
+    }
+    if (!malformedCaught) throw new Error('cleanNumericAmount strict mode failed to throw MalformedNumericInputError');
+
+    if (toIntegerPaise('₹ 50,00,000.25') !== 500000025) {
+        throw new Error(`toIntegerPaise failed: expected 500000025, got ${toIntegerPaise('₹ 50,00,000.25')}`);
+    }
+    if (fromIntegerPaise(500000025) !== 5000000.25) {
+        throw new Error(`fromIntegerPaise failed: expected 5000000.25, got ${fromIntegerPaise(500000025)}`);
+    }
+    if (toIntegerPaise('(₹ 25.50)') !== -2550) {
+        throw new Error('toIntegerPaise failed on parenthesized negative');
+    }
+    if (fromIntegerPaise(-2550) !== -25.5) {
+        throw new Error('fromIntegerPaise failed on negative paise');
+    }
+    console.log('[PASS] Strict Malformed Input Rejection & Integer Paise Precision Verified: 0-drift paise roundtrips.');
+
+    // 128. Mandatory Parameter Enforcement across Calculators (No Silent Zero Coercion)
+    console.log('\n── Test 128: Mandatory Parameter Enforcement across Statutory Calculators ──');
+    const mandatoryChecks = [
+        { name: 'evaluateSection194Q', fn: () => evaluateSection194Q(), field: 'invoiceAmount' },
+        { name: 'evaluateSection194C', fn: () => evaluateSection194C(), field: 'invoiceAmount' },
+        { name: 'evaluateSection194J', fn: () => evaluateSection194J(), field: 'invoiceAmount' },
+        { name: 'evaluateSection194I', fn: () => evaluateSection194I(), field: 'invoiceAmount' },
+        { name: 'evaluateSection194H', fn: () => evaluateSection194H(), field: 'invoiceAmount' },
+        { name: 'evaluateSection194A', fn: () => evaluateSection194A(), field: 'interestAmount' },
+        { name: 'evaluateSection194O', fn: () => evaluateSection194O(), field: 'grossSaleAmount' },
+        { name: 'evaluateSection194IA', fn: () => evaluateSection194IA(), field: 'contractualConsiderationInr' },
+        { name: 'evaluateSection194R', fn: () => evaluateSection194R(), field: 'currentBenefitValueInr' },
+        { name: 'evaluateSection194IB', fn: () => evaluateSection194IB(), field: 'monthlyRentInr' },
+        { name: 'evaluateSection194M', fn: () => evaluateSection194M(), field: 'currentPaymentAmountInr' },
+        { name: 'calculateMsmeCompoundInterest', fn: () => calculateMsmeCompoundInterest(), field: 'principal' }
+    ];
+
+    for (const check of mandatoryChecks) {
+        let caught = false;
+        try {
+            check.fn();
+        } catch (err) {
+            if (err instanceof MissingMandatoryParameterError && err.code === 'MISSING_MANDATORY_PARAMETER' && err.field === check.field) {
+                caught = true;
+            }
+        }
+        if (!caught) {
+            throw new Error(`Calculator ${check.name} failed to enforce mandatory parameter "${check.field}"`);
+        }
+    }
+
+    // Verify malformed numeric string passed to mandatory parameter throws MalformedNumericInputError
+    let malformedParamCaught = false;
+    try {
+        evaluateSection194Q({ invoiceAmount: 'invalid_invoice_amount' });
+    } catch (err) {
+        if (err instanceof MalformedNumericInputError && err.code === 'MALFORMED_NUMERIC_INPUT') {
+            malformedParamCaught = true;
+        }
+    }
+    if (!malformedParamCaught) {
+        throw new Error('evaluateSection194Q failed to reject malformed numeric input with MalformedNumericInputError');
+    }
+    console.log('[PASS] Mandatory Parameter Enforcement Verified: 12 statutory calculators reject missing/malformed input fail-closed.');
+
+    // 129. Real-World Tally Daybook Ingestion: Dual Debit/Credit Columns, Particulars Header & RFC 4180 Quotes
+    console.log('\n── Test 129: Real-World Tally Daybook Ingestion: Dual Columns & RFC 4180 Quotes ──');
+    const dualColCsv = `Date,Voucher_No,Particulars,GSTIN,Voucher_Type,Debit,Credit,TDS_Deducted
+2024-05-02,INV-101,"Tata Steel, Limited",27AAACT2727Q1ZW,Purchase,"40,00,000",0,0
+2024-05-18,CRN-102,"Tata Steel, Limited",27AAACT2727Q1ZW,Credit Note,0,"10,00,000",0
+2024-05-25,INV-103,"Tata Steel, Limited",27AAACT2727Q1ZW,Purchase,"25,00,000",0,0`;
+
+    const parsedDual = parseTallyDaybookCsv(dualColCsv);
+    if (parsedDual.length !== 3) throw new Error('parseTallyDaybookCsv failed to parse dual-column daybook');
+    if (parsedDual[0].partyName !== 'Tata Steel, Limited') {
+        throw new Error(`Expected quoted partyName "Tata Steel, Limited", got "${parsedDual[0].partyName}"`);
+    }
+    if (parsedDual[0].grossAmount !== 4000000) {
+        throw new Error(`Expected debit voucher grossAmount 4000000, got ${parsedDual[0].grossAmount}`);
+    }
+    if (parsedDual[1].grossAmount !== -1000000) {
+        throw new Error(`Expected credit voucher grossAmount -1000000, got ${parsedDual[1].grossAmount}`);
+    }
+    if (parsedDual[2].grossAmount !== 2500000) {
+        throw new Error(`Expected debit voucher grossAmount 2500000, got ${parsedDual[2].grossAmount}`);
+    }
+
+    const dualAudit = reconcile194QDaybook(parsedDual, { buyerTurnoverCr: 50 });
+    // Cumulative rolling: 40L (under 50L) - 10L return = 30L -> 30L + 25L = 55L -> Excess over 50L = 5L -> TDS at 0.1% = 500
+    if (dualAudit.auditSummary.totalExcessPurchasesOver50LInr !== 500000) {
+        throw new Error(`Expected excess 500000, got ${dualAudit.auditSummary.totalExcessPurchasesOver50LInr}`);
+    }
+    if (dualAudit.auditSummary.totalTdsShortfallInr !== 500) {
+        throw new Error(`Expected TDS shortfall 500, got ${dualAudit.auditSummary.totalTdsShortfallInr}`);
+    }
+    console.log('[PASS] Dual Debit/Credit Columns & Quoted CSV Fields Verified: Particulars header, dual-column netting, and RFC 4180 compliance.');
+
+    // 130. StatutoryClient Arithmetic and Precision Parity
+    console.log('\n── Test 130: StatutoryClient Arithmetic and Precision Parity ──');
+    if (statutoryClient.cleanNumericAmount('50,000.00 CR', { interpretCreditAsNegative: true }) !== -50000) {
+        throw new Error('statutoryClient.cleanNumericAmount parity check failed');
+    }
+    if (statutoryClient.toIntegerPaise('₹ 1,00,000.50') !== 10000050) {
+        throw new Error('statutoryClient.toIntegerPaise parity check failed');
+    }
+    if (statutoryClient.fromIntegerPaise(10000050) !== 100000.5) {
+        throw new Error('statutoryClient.fromIntegerPaise parity check failed');
+    }
+    if (statutoryClient.roundToPaisa(1234.567) !== 1234.57) {
+        throw new Error('statutoryClient.roundToPaisa parity check failed');
+    }
+    console.log('[PASS] StatutoryClient Arithmetic Parity Verified: cleanNumericAmount, toIntegerPaise, fromIntegerPaise, and roundToPaisa.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 126 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 130 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 
