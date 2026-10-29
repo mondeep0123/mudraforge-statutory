@@ -30,6 +30,11 @@ import {
     reconcile194QDaybook,
     generateTally194QJournalXml,
     generateAuditMarkdownReport,
+    parseZohoBillsCsv,
+    parseZohoBillsJson,
+    parseGstr2bJson,
+    reconcileZohoGstr2b,
+    generateGstr2bAuditMarkdownReport,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
@@ -192,6 +197,29 @@ async function main() {
                 process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
             }
             await handleReconcileDaybook(filePath, { format, xmlOut, reportOut, buyerTurnover: buyerTurnover ? parseFloat(buyerTurnover) : null });
+            break;
+        }
+
+        case 'reconcile-gstr2b':
+        case 'reconcile-zoho': {
+            const zohoPath = getNamedArg(['--zoho', '--books', '-b'], rawArgs) || (args[1] && !args[1].startsWith('-') ? args[1] : null);
+            const gstr2bPath = getNamedArg(['--gstr2b', '--2b', '-g'], rawArgs) || (args[2] && !args[2].startsWith('-') ? args[2] : null);
+            const reportOut = getNamedArg(['--report-out', '--out'], rawArgs);
+            const tolerance = getNamedArg(['--tolerance'], rawArgs);
+            const asOfDate = getNamedArg(['--as-of', '--date'], rawArgs);
+            const gstin = getNamedArg(['--gstin'], rawArgs);
+
+            if (!zohoPath || !gstr2bPath) {
+                console.error('[ERROR] Please specify both Zoho Books and GSTR-2B files:');
+                console.error('  npx @mudraforge/statutory reconcile-gstr2b --zoho <zoho_bills.csv|json> --gstr2b <gstr2b.json>');
+                process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+            }
+            await handleReconcileZohoGstr2b(zohoPath, gstr2bPath, {
+                reportOut,
+                toleranceInr: tolerance ? parseFloat(tolerance) : 1.0,
+                asOfDate,
+                recipientGstin: gstin
+            });
             break;
         }
 
@@ -1010,6 +1038,76 @@ async function handleReconcileDaybook(filePath, opts = {}) {
     }
 }
 
+async function handleReconcileZohoGstr2b(zohoPath, gstr2bPath, opts = {}) {
+    const resolvedZoho = path.resolve(process.cwd(), zohoPath);
+    const resolved2b = path.resolve(process.cwd(), gstr2bPath);
+
+    if (!fs.existsSync(resolvedZoho)) {
+        console.error(`[ERROR] Zoho Books file not found: ${resolvedZoho}`);
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+    if (!fs.existsSync(resolved2b)) {
+        console.error(`[ERROR] GSTR-2B file not found: ${resolved2b}`);
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+
+    const zohoContent = fs.readFileSync(resolvedZoho, 'utf8');
+    const gstr2bContent = fs.readFileSync(resolved2b, 'utf8');
+
+    const zohoExt = path.extname(resolvedZoho).toLowerCase();
+    const zohoBills = zohoExt === '.json' ? parseZohoBillsJson(zohoContent) : parseZohoBillsCsv(zohoContent);
+    const gstr2bRecords = parseGstr2bJson(gstr2bContent);
+
+    const reconciliation = reconcileZohoGstr2b({
+        zohoBills,
+        gstr2b: gstr2bRecords,
+        options: {
+            toleranceInr: opts.toleranceInr || 1.0,
+            asOfDate: opts.asOfDate || new Date().toISOString().slice(0, 10),
+            recipientGstin: opts.recipientGstin || null
+        }
+    });
+
+    if (opts.reportOut) {
+        const reportOutPath = path.resolve(process.cwd(), opts.reportOut);
+        const reportContent = generateGstr2bAuditMarkdownReport(reconciliation);
+        fs.writeFileSync(reportOutPath, reportContent, 'utf8');
+        if (!isJsonMode) {
+            console.log(`[INFO] GSTR-2B Audit Markdown report written to: ${reportOutPath}`);
+        }
+    }
+
+    if (isJsonMode) {
+        console.log(JSON.stringify(reconciliation, null, 2));
+        process.exit(0);
+    }
+
+    const s = reconciliation.summary;
+    const fmt = n => 'INR ' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    console.log('\n===========================================================================');
+    console.log('ZOHO BOOKS & GSTR-2B AP RECONCILIATION AUDIT');
+    console.log(`Status: ${reconciliation.status} | Disposition: ${s.reconciliationStatus}`);
+    console.log('===========================================================================');
+    console.log(`Zoho Books File:            ${resolvedZoho}`);
+    console.log(`GSTR-2B File:               ${resolved2b}`);
+    console.log(`Total Zoho Books Bills:     ${s.totalBooksBillsCount}`);
+    console.log(`Total GSTR-2B Records:      ${s.totalGstr2bRecordsCount}`);
+    console.log(`---------------------------------------------------------------------------`);
+    console.log(`100% Eligible ITC:          ${s.matchedEligibleCount} bills (${fmt(s.eligibleItcInr)})`);
+    console.log(`At-Risk Missing in 2B:      ${s.missingIn2bCount} bills (${fmt(s.atRiskUnfiledItcInr)}) [Withhold]`);
+    console.log(`Sec 17(5) Blocked ITC:      ${s.blocked17_5Count} bills (${fmt(s.blocked17_5ItcInr)}) [Table 4(B)(1)]`);
+    console.log(`Place of Supply Mismatch:   ${s.posMismatchCount} bills (${fmt(s.posMismatchItcInr)}) [Dispute]`);
+    console.log(`Value Discrepancies:        ${s.amountMismatchCount} bills (${fmt(s.mismatchedItcInr)})`);
+    console.log(`Missing in Books (Unrec):   ${s.missingInBooksCount} bills (${fmt(s.missingInBooksTaxInr)})`);
+    console.log(`---------------------------------------------------------------------------`);
+    console.log(`Rule 37 Overdue (>180 Days):${s.rule37OverdueCount} bills (Reversal: ${fmt(s.rule37ReversalAmountInr)})`);
+    console.log(`Rule 37 Delayed Interest:   ${fmt(s.rule37InterestExposureInr)} (@ 18% p.a. u/s 50(1))`);
+    console.log('---------------------------------------------------------------------------');
+    console.log(`isAuthorizedToDisburse:     ${s.isAuthorizedToDisburse} (Statutory calculation never moves money)`);
+    console.log('===========================================================================\n');
+}
+
 function printHelp() {
     console.log(`
 MudraForge Statutory Commons CLI (@mudraforge/statutory)
@@ -1018,42 +1116,48 @@ Usage:
   npx @mudraforge/statutory <command> [options]
 
 Commands:
-  reconcile <file>          Reconcile Tally/ERP daybook (CSV/XML/JSON) for Section 194Q & 40(a)(ia)
-  doctor [--offline]        Run full diagnostic check of runtime, substrate integrity, & edge status
-  verify [path]             Cryptographically verify OKF substrate authenticity & file integrity
-  crosswalk <section>       Dual-act 1961 <-> 2025 bridge (earlier of credit vs payment)
-  diff                      Semantic regulatory changelog (--section, --since, --domain)
-  outcomes [provision]      Inspect API dispositions, statutory states, trigger conditions & actions
-  explain <code/status>     In-depth explanation, legal rationale & remediation steps for a disposition
-  browse                    Interactively browse local OKF statutory filesystem
-  lookup <section> [date]   Look up section details & temporal status (e.g. 194Q 2025-06-01)
-  decode-id <pan_or_gstin>  Offline ISO Mod-36 checksum, state name, and PAN entity decoding
-  check-update [--ignore]   Check edge updates; pass --ignore to snooze notices for current version
-  sync [path]               Download/sync latest versioned OKF bundle to disk (default: package okf/ or custom dir)
-  list                      List all indexed statutory sections
-  init-skill [path]         Install SKILL.md into your agent workspace (defaults to .agents/skills/)
-  help                      Show this help message
+  reconcile <file>               Reconcile Tally/ERP daybook (CSV/XML/JSON) for Section 194Q & 40(a)(ia)
+  reconcile-gstr2b [options]     Reconcile Zoho Books AP bills with GST Portal Form GSTR-2B
+  doctor [--offline]             Run full diagnostic check of runtime, substrate integrity, & edge status
+  verify [path]                  Cryptographically verify OKF substrate authenticity & file integrity
+  crosswalk <section>            Dual-act 1961 <-> 2025 bridge (earlier of credit vs payment)
+  diff                           Semantic regulatory changelog (--section, --since, --domain)
+  outcomes [provision]           Inspect API dispositions, statutory states, trigger conditions & actions
+  explain <code/status>          In-depth explanation, legal rationale & remediation steps for a disposition
+  browse                         Interactively browse local OKF statutory filesystem
+  lookup <section> [date]        Look up section details & temporal status (e.g. 194Q 2025-06-01)
+  decode-id <pan_or_gstin>       Offline ISO Mod-36 checksum, state name, and PAN entity decoding
+  check-update [--ignore]        Check edge updates; pass --ignore to snooze notices for current version
+  sync [path]                    Download/sync latest versioned OKF bundle to disk (default: package okf/ or custom dir)
+  list                           List all indexed statutory sections
+  init-skill [path]              Install SKILL.md into your agent workspace (defaults to .agents/skills/)
+  help                           Show this help message
 
 Options:
-  --format <csv|xml|json>   Explicit daybook file format parser
-  --xml-out <path>          Output path for Tally Prime compensating journal voucher XML
-  --report-out <path>       Output path for executive Markdown audit memorandum
-  --buyer-turnover <Cr>     Preceding FY buyer turnover in ₹ Crores (default: assumes > ₹10 Cr)
-  --credit <YYYY-MM-DD>     Date of credit to vendor/payee account in books (used in crosswalk)
-  --payment <YYYY-MM-DD>    Date of actual payment/disbursement (used in crosswalk)
-  --since <YYYY-MM-DD>      Filter amendments taking effect on or after date (used in diff)
-  --section, -s <section>   Filter amendments by section code (used in diff)
-  --domain <domain>         Filter amendments by statutory domain (used in diff)
-  --verbose, -v             Display full remediation steps, parameter schemas, and consequences in outcomes
-  --no-update-check         Bypass automated background npm package update checks
-  --json, -j                Emit clean, machine-parseable JSON to stdout (suppresses banners)
-  --offline, -o             Bypass outbound network checks (air-gapped / offline environment mode)
+  --zoho, -b <file>              Zoho Books bills CSV or JSON export path
+  --gstr2b, -g <file>            GST Portal Form GSTR-2B JSON file path
+  --tolerance <amount>           Reconciliation tolerance in INR (default: 1.00)
+  --as-of, --date <date>         Audit as-of date (YYYY-MM-DD) for Rule 37 180-day aging
+  --gstin <gstin>                Recipient taxpayer GSTIN (used for Place of Supply validation)
+  --format <csv|xml|json>        Explicit daybook file format parser
+  --xml-out <path>               Output path for Tally Prime compensating journal voucher XML
+  --report-out <path>            Output path for executive Markdown audit memorandum
+  --buyer-turnover <Cr>          Preceding FY buyer turnover in ₹ Crores (default: assumes > ₹10 Cr)
+  --credit <YYYY-MM-DD>          Date of credit to vendor/payee account in books (used in crosswalk)
+  --payment <YYYY-MM-DD>         Date of actual payment/disbursement (used in crosswalk)
+  --since <YYYY-MM-DD>           Filter amendments taking effect on or after date (used in diff)
+  --section, -s <section>        Filter amendments by section code (used in diff)
+  --domain <domain>              Filter amendments by statutory domain (used in diff)
+  --verbose, -v                  Display full remediation steps, parameter schemas, and consequences in outcomes
+  --no-update-check              Bypass automated background npm package update checks
+  --json, -j                     Emit clean, machine-parseable JSON to stdout (suppresses banners)
+  --offline, -o                  Bypass outbound network checks (air-gapped / offline environment mode)
 
 Exit Code Conventions:
-  0                         Success / Verification passed
-  1                         Usage or operational error (invalid syntax / parameters)
-  2                         Cryptographic authenticity or integrity violation (mismatch/revocation)
-  3                         Statutory policy violation (e.g. missing baseline provision)
+  0                              Success / Verification passed
+  1                              Usage or operational error (invalid syntax / parameters)
+  2                              Cryptographic authenticity or integrity violation (mismatch/revocation)
+  3                              Statutory policy violation (e.g. missing baseline provision)
 `);
 }
 

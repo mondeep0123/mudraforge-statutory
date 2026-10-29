@@ -10,6 +10,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.11.0] - 2026-10-29
 
 ### Added
+- **Zoho Books & GST Portal Form GSTR-2B Automated AP Reconciliation Engine**:
+  - *Automated 2-Way Accounts Payable Matching*: Ingests Zoho Books Bills CSV/API JSON and GST Portal Form GSTR-2B JSON (B2B invoices + CDNR credit/debit notes) with deterministic invoice number canonicalization (resolving slash, hyphen, space, and leading zero variations) and integer-paise arithmetic.
+  - *6 Epistemically Transparent Statutory Dispositions*:
+    1. `MATCHED_ELIGIBLE`: Corroborated in Books and GSTR-2B, eligible for full ITC claim in Form GSTR-3B Table 4(A)(5).
+    2. `MISMATCH_AMOUNT_VALUE`: Present in both sources, but taxable or tax discrepancy exceeds configured tolerance (default ₹1.00). Claims restricted to lower GSTR-2B amount; flags vendor credit note requirement.
+    3. `MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5`: Invoices matching GSTR-2B but falling under blocked statutory categories under CGST Act Section 17(5) (motor vehicles, food/catering, club memberships). Isolated for permanent reversal in GSTR-3B Table 4(B)(1).
+    4. `MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH`: Supplier charged local CGST/SGST with Place of Supply differing from recipient taxpayer's registered state. Disallowed under Section 16(2)(c) read with IGST Act Section 12.
+    5. `MISSING_IN_GSTR2B`: Bill recorded in Zoho Books but unfiled by vendor in GSTR-1. Provisional credit withheld per CGST Act Section 16(2)(aa) read with Rule 36(4) to avoid Section 50(3) 24% interest liability.
+    6. `MISSING_IN_BOOKS`: Invoice reported by supplier in GSTR-2B but absent in Zoho Books. Identifies unrecorded AP liabilities and goods-in-transit.
+  - *Rule 37 180-Day Aging Audit & Section 50(1) Delayed Interest Exposure*: Automatically computes days elapsed on unpaid bills; triggers mandatory proportional ITC reversal in GSTR-3B Table 4(B)(2) for bills past 180 days with 18% annual delayed interest under Section 50(1) calculated on exact days past 180.
+  - *Executive Markdown Memorandum Generator*: Generates an audit-ready memorandum with an ITC health matrix and actionable AP exceptions register.
+  - *CLI Command Integration*: Added `npx @mudraforge/statutory reconcile-gstr2b --zoho <file> --gstr2b <file> [--report-out <path>] [--json]` to CLI.
+  - *StatutoryClient Parity*: Added programmatic methods `parseZohoBillsCsv`, `parseZohoBillsJson`, `parseGstr2bJson`, `reconcileZohoGstr2b`, `generateGstr2bAuditMarkdownReport`, `normalizeInvoiceNumber`, and `normalizeGstin` with full TypeScript declarations in `types/index.d.ts`.
+- **Accounting Contracts, Numeric Input Resilience & Integer-Paise Precision Hardening**:
+  - *4-State Numeric Classification*: `cleanNumericAmount` cleanly classifies inputs into missing optional (default), missing mandatory (throws `MissingMandatoryParameterError`), malformed numeric (throws `MalformedNumericInputError` in strict mode), and valid zero (`0`, `"0"`, `"₹ 0.00"`).
+  - *Accounting-Aware Credit (`CR`) Handling*: Preserves positive credit balances by default; only negates when `{ interpretCreditAsNegative: true }` is explicitly provided.
+  - *Safe Integer Boundary & Sub-Paisa Rules*: Enforces `Number.MAX_SAFE_INTEGER` (₹90,071,992,547,409.91 limit) across all monetary conversions and half-up rounding on fractional paise.
+  - *Accounting Format Tolerance*: Parses parentheses accounting negatives (`(₹ 50,000.00)`), trailing minuses (`50,000.00-`), and currencies outside parentheses (`INR (25,000)`).
+  - *Daybook Dual-Column Ingestion*: Full support for dual debit/credit columns, Particulars headers, and RFC 4180 quoted strings in `parseTallyDaybookCsv`.
 - **GST Rule 42 & Rule 43 Common Input Tax Credit (ITC) Reversal Engine**:
   - *Indirect Tax GST Domain* (`indirect_tax_gst/common_itc_reversal_rule42_43`): Authoritative implementation of Section 17(1) and Section 17(2) of the CGST Act, 2017 read with Rule 42 (inputs & input services) and Rule 43 (capital goods).
   - *Rule 42 Monthly Ineligible Credit Segregation*: Segregation of gross ITC ($T$) into specific ineligibles ($T_1$ non-business, $T_2$ exempt, $T_3$ blocked u/s 17(5)), Electronic Credit Ledger credited balance ($C_1$), specific eligible credit ($T_4$ taxable/zero-rated exports), and Common Credit ($C_2$).

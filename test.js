@@ -73,6 +73,13 @@ import {
     generateTally194QJournalXml,
     generateAuditMarkdownReport,
     getIndianFinancialYear,
+    parseZohoBillsCsv,
+    parseZohoBillsJson,
+    parseGstr2bJson,
+    reconcileZohoGstr2b,
+    generateGstr2bAuditMarkdownReport,
+    normalizeInvoiceNumber,
+    normalizeGstin,
     STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
@@ -3615,8 +3622,495 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient Arithmetic Parity Verified: cleanNumericAmount, toIntegerPaise, fromIntegerPaise, and roundToPaisa.');
 
+    // 131. Zoho Books Bills CSV Parsing
+    console.log('\n── Test 131: Zoho Books Bills CSV Parsing ──');
+    const zohoCsvSample = `Bill Date,Bill Number,Due Date,Vendor Name,GST Identification Number (GSTIN),Status,Taxable Amount,Total,Balance,CGST,SGST,IGST,Account Name
+2024-06-10,"INV/2024-25/001",2024-07-10,"Acme Industrial Supplies",27AAPCA1234A1Z5,paid,100000.00,118000.00,0.00,9000.00,9000.00,0.00,General Raw Materials
+2024-06-15,INV-2024-002,2024-07-15,"Delta Transporters",27AABCD5678B1Z2,open,50000.00,59000.00,59000.00,4500.00,4500.00,0.00,Freight and Logistics
+2024-06-20,INV-2024-003,2024-07-20,"Executive Motors Ltd",27AAACE9012C1Z8,unpaid,200000.00,236000.00,236000.00,18000.00,18000.00,0.00,Motor Vehicle Maintenance
+`;
+    const parsedZohoCsv = parseZohoBillsCsv(zohoCsvSample);
+    if (parsedZohoCsv.length !== 3) {
+        throw new Error(`Expected 3 parsed Zoho bills, got ${parsedZohoCsv.length}`);
+    }
+    if (parsedZohoCsv[0].billNumber !== 'INV/2024-25/001' || parsedZohoCsv[0].exactKey !== 'INV/2024-25/001' || parsedZohoCsv[0].alphaNumericKey !== 'INV202425001') {
+        throw new Error(`Zoho bill normalization failed for bill 1: ${JSON.stringify(parsedZohoCsv[0])}`);
+    }
+    if (parsedZohoCsv[0].taxableAmountInr !== 100000 || parsedZohoCsv[0].totalTaxInr !== 18000 || parsedZohoCsv[0].totalAmountInr !== 118000) {
+        throw new Error(`Zoho bill amount extraction failed: taxable ${parsedZohoCsv[0].taxableAmountInr}, tax ${parsedZohoCsv[0].totalTaxInr}`);
+    }
+    if (!parsedZohoCsv[0].isFullyPaid || parsedZohoCsv[1].isFullyPaid) {
+        throw new Error(`Zoho bill payment status extraction failed`);
+    }
+    if (!parsedZohoCsv[2].isBlocked17_5) {
+        throw new Error(`Expected Section 17(5) blocked credit detection for Motor Vehicle Maintenance`);
+    }
+    console.log('[PASS] Zoho Books Bills CSV Ingestion Verified: headers, quotes, amounts, tax breakdown, and Section 17(5) categorization.');
+
+    // 132. Zoho Books API JSON & GST Portal GSTR-2B JSON Parsing
+    console.log('\n── Test 132: Zoho API JSON & GSTR-2B JSON Ingestion ──');
+    const zohoJsonSample = {
+        bills: [
+            {
+                bill_id: 'zb_101',
+                bill_number: 'BILL-ZOHO-001',
+                date: '2024-07-01',
+                due_date: '2024-07-31',
+                vendor_name: 'Apex Software Services',
+                gst_no: '29AAACA1111A1Z1',
+                sub_total: '75,000.00',
+                total: '88,500.00',
+                balance: '0.00',
+                cgst_amount: '0.00',
+                sgst_amount: '0.00',
+                igst_amount: '13,500.00',
+                status: 'paid',
+                category_name: 'Software Subscription'
+            }
+        ]
+    };
+    const parsedZohoJson = parseZohoBillsJson(zohoJsonSample);
+    if (parsedZohoJson.length !== 1 || parsedZohoJson[0].taxableAmountInr !== 75000 || parsedZohoJson[0].igstInr !== 13500) {
+        throw new Error(`Zoho API JSON parsing failed: ${JSON.stringify(parsedZohoJson)}`);
+    }
+
+    const gstr2bJsonSample = {
+        gstin: '27AABCT8888T1Z9',
+        fp: '062024',
+        data: {
+            b2b: [
+                {
+                    ctin: '27AAPCA1234A1Z5',
+                    cname: 'Acme Industrial Supplies',
+                    inv: [
+                        {
+                            inum: 'INV-2024-25-001',
+                            idt: '10-06-2024',
+                            val: 118000.00,
+                            pos: '27',
+                            rchrg: 'N',
+                            itcavl: 'Y',
+                            items: [
+                                {
+                                    txval: 100000.00,
+                                    cgst: 9000.00,
+                                    sgst: 9000.00,
+                                    igst: 0.00
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            cdnr: [
+                {
+                    ctin: '27AAPCA1234A1Z5',
+                    cname: 'Acme Industrial Supplies',
+                    nt: [
+                        {
+                            nt_num: 'CN-2024-01',
+                            nt_dt: '25-06-2024',
+                            typ: 'C',
+                            inum: 'INV-2024-25-001',
+                            val: 11800.00,
+                            pos: '27',
+                            rchrg: 'N',
+                            itcavl: 'Y',
+                            items: [
+                                {
+                                    txval: 10000.00,
+                                    cgst: 900.00,
+                                    sgst: 900.00,
+                                    igst: 0.00
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    };
+    const parsedGstr2b = parseGstr2bJson(gstr2bJsonSample);
+    if (parsedGstr2b.length !== 2) {
+        throw new Error(`Expected 2 records from GSTR-2B (1 invoice + 1 credit note), got ${parsedGstr2b.length}`);
+    }
+    if (parsedGstr2b[0].docType !== 'INVOICE' || parsedGstr2b[0].taxableAmountInr !== 100000 || parsedGstr2b[0].totalTaxInr !== 18000) {
+        throw new Error(`GSTR-2B B2B invoice parsing failed: ${JSON.stringify(parsedGstr2b[0])}`);
+    }
+    if (parsedGstr2b[1].docType !== 'CREDIT_NOTE' || parsedGstr2b[1].taxableAmountInr !== -10000 || parsedGstr2b[1].totalTaxInr !== -1800) {
+        throw new Error(`GSTR-2B CDNR credit note parsing failed (expected negative values): ${JSON.stringify(parsedGstr2b[1])}`);
+    }
+    console.log('[PASS] GSTR-2B JSON Ingestion Verified: B2B invoices, CDNR credit notes netting, date normalization, and item tax rollups.');
+
+    // 133. 2-Way Reconciliation — MATCHED_ELIGIBLE with Alphanumeric Key Resolution
+    console.log('\n── Test 133: 2-Way Reconciliation MATCHED_ELIGIBLE & Alphanumeric Keys ──');
+    const recon1 = reconcileZohoGstr2b({
+        zohoBills: [
+            {
+                billNumber: 'INV/2024-25/001',
+                vendorName: 'Acme Industrial Supplies',
+                vendorGstin: '27AAPCA1234A1Z5',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-10',
+                isBlocked17_5: false
+            }
+        ],
+        gstr2b: [
+            {
+                invoiceNumber: 'INV-2024-25-001', // Note difference: '-' vs '/'
+                supplierName: 'Acme Industrial Supplies',
+                supplierGstin: '27AAPCA1234A1Z5',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                invoiceDate: '2024-06-10',
+                posStateCode: '27',
+                itcAvailable: true
+            }
+        ],
+        options: {
+            toleranceInr: 1.00,
+            recipientGstin: '27AABCT8888T1Z9'
+        }
+    });
+
+    if (recon1.summary.matchedEligibleCount !== 1) {
+        throw new Error(`Expected 1 matched eligible bill, got ${recon1.summary.matchedEligibleCount}`);
+    }
+    if (recon1.summary.eligibleItcInr !== 18000) {
+        throw new Error(`Expected eligible ITC 18000, got ${recon1.summary.eligibleItcInr}`);
+    }
+    if (recon1.reconciliationItems[0].disposition !== 'MATCHED_ELIGIBLE') {
+        throw new Error(`Expected disposition MATCHED_ELIGIBLE, got ${recon1.reconciliationItems[0].disposition}`);
+    }
+    if (recon1.summary.reconciliationStatus !== 'FULLY_RECONCILED') {
+        throw new Error(`Expected FULLY_RECONCILED status, got ${recon1.summary.reconciliationStatus}`);
+    }
+    console.log('[PASS] MATCHED_ELIGIBLE & Fuzzy Alphanumeric Key Matching Verified: Separator variance (INV/24/01 vs INV-24-01) resolved cleanly.');
+
+    // 134. Statutory Dispositions: MISSING_IN_GSTR2B, MISSING_IN_BOOKS, MISMATCH_AMOUNT_VALUE
+    console.log('\n── Test 134: Statutory Dispositions (Missing 2B, Missing Books, Value Mismatch) ──');
+    const recon2 = reconcileZohoGstr2b({
+        zohoBills: [
+            // Bill 1: Unfiled in GSTR-2B by supplier
+            {
+                billNumber: 'INV-UNFILED-001',
+                vendorName: 'Non-Compliant Vendor',
+                vendorGstin: '27BBBBB1111B1Z1',
+                taxableAmountInr: 50000,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-12',
+                isBlocked17_5: false
+            },
+            // Bill 2: Value mismatch (Books has ₹1,00,000 taxable vs 2B ₹80,000)
+            {
+                billNumber: 'INV-MISMATCH-002',
+                vendorName: 'Variance Vendor',
+                vendorGstin: '27CCCCC2222C1Z2',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-15',
+                isBlocked17_5: false
+            }
+        ],
+        gstr2b: [
+            // Corresponds to Bill 2 but with mismatched amounts
+            {
+                invoiceNumber: 'INV-MISMATCH-002',
+                supplierName: 'Variance Vendor',
+                supplierGstin: '27CCCCC2222C1Z2',
+                taxableAmountInr: 80000,
+                totalTaxInr: 14400,
+                totalAmountInr: 94400,
+                invoiceDate: '2024-06-15',
+                posStateCode: '27',
+                itcAvailable: true
+            },
+            // Reported in 2B but not in Books (Unrecorded AP liability)
+            {
+                invoiceNumber: 'INV-UNRECORDED-003',
+                supplierName: 'Surprise Supplier',
+                supplierGstin: '27DDDDD3333D1Z3',
+                taxableAmountInr: 40000,
+                totalTaxInr: 7200,
+                totalAmountInr: 47200,
+                invoiceDate: '2024-06-18',
+                posStateCode: '27',
+                itcAvailable: true
+            }
+        ],
+        options: {
+            toleranceInr: 1.00,
+            recipientGstin: '27AABCT8888T1Z9'
+        }
+    });
+
+    if (recon2.summary.missingIn2bCount !== 1) {
+        throw new Error(`Expected missingIn2bCount 1, got ${recon2.summary.missingIn2bCount}`);
+    }
+    if (recon2.summary.atRiskUnfiledItcInr !== 9000) {
+        throw new Error(`Expected atRiskUnfiledItcInr 9000, got ${recon2.summary.atRiskUnfiledItcInr}`);
+    }
+    if (recon2.summary.amountMismatchCount !== 1) {
+        throw new Error(`Expected amountMismatchCount 1, got ${recon2.summary.amountMismatchCount}`);
+    }
+    if (recon2.summary.missingInBooksCount !== 1) {
+        throw new Error(`Expected missingInBooksCount 1, got ${recon2.summary.missingInBooksCount}`);
+    }
+    if (recon2.summary.missingInBooksTaxInr !== 7200) {
+        throw new Error(`Expected missingInBooksTaxInr 7200, got ${recon2.summary.missingInBooksTaxInr}`);
+    }
+    if (recon2.summary.reconciliationStatus !== 'EXCEPTIONS_IDENTIFIED') {
+        throw new Error(`Expected EXCEPTIONS_IDENTIFIED, got ${recon2.summary.reconciliationStatus}`);
+    }
+    console.log('[PASS] Statutory Dispositions Verified: MISSING_IN_GSTR2B (Rule 36(4) risk), MISMATCH_AMOUNT_VALUE, and MISSING_IN_BOOKS (unrecorded AP).');
+
+    // 135. Compliance Dispositions: Section 17(5) Blocked Credit & POS Jurisdiction Mismatch
+    console.log('\n── Test 135: Section 17(5) Blocked Credit & POS Mismatch ──');
+    const recon3 = reconcileZohoGstr2b({
+        zohoBills: [
+            // Bill 1: Blocked under Section 17(5) (Motor vehicle)
+            {
+                billNumber: 'INV-CAR-001',
+                vendorName: 'Executive Cars Ltd',
+                vendorGstin: '27EEEEE4444E1Z4',
+                taxableAmountInr: 200000,
+                totalTaxInr: 56000,
+                totalAmountInr: 256000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-01',
+                category: 'Motor Vehicles',
+                isBlocked17_5: true
+            },
+            // Bill 2: POS mismatch (Charged local CGST/SGST of State 29 Karnataka, while recipient is State 27 Maharashtra)
+            {
+                billNumber: 'INV-POS-002',
+                vendorName: 'Bangalore Tech Park',
+                vendorGstin: '29FFFFF5555F1Z5',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                cgstInr: 9000,
+                sgstInr: 9000,
+                igstInr: 0,
+                totalAmountInr: 118000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-05',
+                isBlocked17_5: false
+            }
+        ],
+        gstr2b: [
+            {
+                invoiceNumber: 'INV-CAR-001',
+                supplierName: 'Executive Cars Ltd',
+                supplierGstin: '27EEEEE4444E1Z4',
+                taxableAmountInr: 200000,
+                totalTaxInr: 56000,
+                totalAmountInr: 256000,
+                invoiceDate: '2024-06-01',
+                posStateCode: '27',
+                itcAvailable: true
+            },
+            {
+                invoiceNumber: 'INV-POS-002',
+                supplierName: 'Bangalore Tech Park',
+                supplierGstin: '29FFFFF5555F1Z5',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                cgstInr: 9000,
+                sgstInr: 9000,
+                igstInr: 0,
+                totalAmountInr: 118000,
+                invoiceDate: '2024-06-05',
+                posStateCode: '29', // POS is 29, but recipient is 27!
+                itcAvailable: true
+            }
+        ],
+        options: {
+            recipientGstin: '27AABCT8888T1Z9' // State 27 (Maharashtra)
+        }
+    });
+
+    if (recon3.summary.blocked17_5Count !== 1 || recon3.summary.blocked17_5ItcInr !== 56000) {
+        throw new Error(`Expected 1 blocked 17(5) item of 56000, got ${recon3.summary.blocked17_5Count} / ${recon3.summary.blocked17_5ItcInr}`);
+    }
+    if (recon3.summary.posMismatchCount !== 1 || recon3.summary.posMismatchItcInr !== 18000) {
+        throw new Error(`Expected 1 POS mismatch item of 18000, got ${recon3.summary.posMismatchCount} / ${recon3.summary.posMismatchItcInr}`);
+    }
+    const blockedItem = recon3.reconciliationItems.find(i => i.disposition === 'MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5');
+    if (!blockedItem || blockedItem.itcStatus !== 'INELIGIBLE_REVERSIBLE_TABLE_4B1') {
+        throw new Error(`Blocked item disposition failed: ${JSON.stringify(blockedItem)}`);
+    }
+    const posItem = recon3.reconciliationItems.find(i => i.disposition === 'MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH');
+    if (!posItem || !posItem.statutoryAction.includes('State 29 instead of IGST to State 27')) {
+        throw new Error(`POS item statutory action failed: ${JSON.stringify(posItem)}`);
+    }
+    console.log('[PASS] Section 17(5) Blocked Credit & POS Jurisdiction Mismatch Verified: GSTR-3B Table 4(B)(1) isolation and interstate credit disallowance.');
+
+    // 136. Rule 37 180-Day Aging Audit & Section 50(1) Delayed Interest
+    console.log('\n── Test 136: Rule 37 180-Day Aging Audit & Delayed Interest ──');
+    const recon4 = reconcileZohoGstr2b({
+        zohoBills: [
+            // Bill 1: Dated 2024-01-10, UNPAID on audit date 2024-08-10 (213 days elapsed > 180 days -> 33 days overdue)
+            {
+                billNumber: 'INV-OVERDUE-180',
+                vendorName: 'Stale Supplier Pvt Ltd',
+                vendorGstin: '27GGGGG6666G1Z6',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                balanceInr: 118000, // 100% unpaid
+                isFullyPaid: false,
+                billDate: '2024-01-10',
+                isBlocked17_5: false
+            },
+            // Bill 2: Dated 2024-01-10, but FULLY PAID within 30 days
+            {
+                billNumber: 'INV-PAID-ON-TIME',
+                vendorName: 'Prompt Supplier',
+                vendorGstin: '27HHHHH7777H1Z7',
+                taxableAmountInr: 50000,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000,
+                balanceInr: 0, // Fully paid!
+                isFullyPaid: true,
+                billDate: '2024-01-10',
+                isBlocked17_5: false
+            }
+        ],
+        gstr2b: [
+            {
+                invoiceNumber: 'INV-OVERDUE-180',
+                supplierName: 'Stale Supplier Pvt Ltd',
+                supplierGstin: '27GGGGG6666G1Z6',
+                taxableAmountInr: 100000,
+                totalTaxInr: 18000,
+                totalAmountInr: 118000,
+                invoiceDate: '2024-01-10',
+                posStateCode: '27',
+                itcAvailable: true
+            },
+            {
+                invoiceNumber: 'INV-PAID-ON-TIME',
+                supplierName: 'Prompt Supplier',
+                supplierGstin: '27HHHHH7777H1Z7',
+                taxableAmountInr: 50000,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000,
+                invoiceDate: '2024-01-10',
+                posStateCode: '27',
+                itcAvailable: true
+            }
+        ],
+        options: {
+            asOfDate: '2024-08-10',
+            recipientGstin: '27AABCT8888T1Z9'
+        }
+    });
+
+    if (recon4.summary.rule37OverdueCount !== 1) {
+        throw new Error(`Expected rule37OverdueCount 1, got ${recon4.summary.rule37OverdueCount}`);
+    }
+    if (recon4.summary.rule37ReversalAmountInr !== 18000) {
+        throw new Error(`Expected rule37ReversalAmountInr 18000, got ${recon4.summary.rule37ReversalAmountInr}`);
+    }
+    // Days elapsed = 213 days. Days past 180 = 33 days.
+    // Interest = 18000 * (0.18 / 365) * 33 = 292.93
+    if (recon4.summary.rule37InterestExposureInr <= 0 || recon4.summary.rule37InterestExposureInr > 350) {
+        throw new Error(`Expected interest ~292.93, got ${recon4.summary.rule37InterestExposureInr}`);
+    }
+    console.log('[PASS] Rule 37 180-Day Aging & Section 50(1) Interest Verified: Unpaid bill >180 days triggers Table 4(B)(2) reversal + 18% delayed interest exposure.');
+
+    // 137. StatutoryClient Programmatic Parity & Executive Audit Markdown Report
+    console.log('\n── Test 137: StatutoryClient Parity & Executive Report Generation ──');
+    const zohoClientRecon = statutoryClient.reconcileZohoGstr2b({
+        zohoBills: zohoCsvSample,
+        gstr2b: gstr2bJsonSample,
+        options: { recipientGstin: '27AABCT8888T1Z9' }
+    });
+    if (zohoClientRecon.status !== 'SUCCESS') {
+        throw new Error(`statutoryClient.reconcileZohoGstr2b failed: ${JSON.stringify(zohoClientRecon)}`);
+    }
+    if (zohoClientRecon.summary.isAuthorizedToDisburse !== false) {
+        throw new Error(`isAuthorizedToDisburse statutory invariant violated (must be false)`);
+    }
+
+    const markdownReport = statutoryClient.generateGstr2bAuditMarkdownReport(zohoClientRecon);
+    if (!markdownReport.includes('# ZOHO BOOKS & GSTR-2B AP RECONCILIATION AUDIT MEMORANDUM')) {
+        throw new Error('Markdown report missing header');
+    }
+    if (!markdownReport.includes('Executive Summary & ITC Health Matrix')) {
+        throw new Error('Markdown report missing ITC Health Matrix');
+    }
+    if (!markdownReport.includes('Actionable AP Exceptions Register')) {
+        throw new Error('Markdown report missing Exceptions Register');
+    }
+
+    const normInv = statutoryClient.normalizeInvoiceNumber('  inv/2024-25/0099  ');
+    if (normInv.exactKey !== 'INV/2024-25/0099' || normInv.alphaNumericKey !== 'INV2024250099') {
+        throw new Error(`statutoryClient.normalizeInvoiceNumber failed: ${JSON.stringify(normInv)}`);
+    }
+
+    const normGstin = statutoryClient.normalizeGstin('27aapca1234a1z5');
+    if (normGstin.gstin !== '27AAPCA1234A1Z5' || normGstin.stateCode !== '27' || normGstin.pan !== 'AAPCA1234A' || !normGstin.isValid) {
+        throw new Error(`statutoryClient.normalizeGstin failed: ${JSON.stringify(normGstin)}`);
+    }
+    console.log('[PASS] StatutoryClient Parity & Markdown Memorandum Verified: Client methods, report rendering, and invariant envelopes.');
+
+    // 138. CLI Integration — node bin/cli.js reconcile-gstr2b --json and --report-out
+    console.log('\n── Test 138: CLI Integration — node bin/cli.js reconcile-gstr2b ──');
+    const tmpZohoPath = path.join(os.tmpdir(), `zoho_test_bills_${Date.now()}.csv`);
+    const tmp2bPath = path.join(os.tmpdir(), `gstr2b_test_${Date.now()}.json`);
+    const tmpReportOutPath = path.join(os.tmpdir(), `gstr2b_audit_memo_${Date.now()}.md`);
+
+    try {
+        fs.writeFileSync(tmpZohoPath, zohoCsvSample, 'utf8');
+        fs.writeFileSync(tmp2bPath, JSON.stringify(gstr2bJsonSample), 'utf8');
+
+        const cliOutput = execFileSync(process.execPath, [
+            path.resolve('bin/cli.js'),
+            'reconcile-gstr2b',
+            '--zoho', tmpZohoPath,
+            '--gstr2b', tmp2bPath,
+            '--report-out', tmpReportOutPath,
+            '--gstin', '27AABCT8888T1Z9',
+            '--json'
+        ], { encoding: 'utf8', cwd: path.resolve('.') });
+
+        const parsedCli = JSON.parse(cliOutput);
+        if (parsedCli.status !== 'SUCCESS') {
+            throw new Error(`CLI reconcile-gstr2b returned non-success: ${cliOutput}`);
+        }
+        if (parsedCli.summary.matchedEligibleCount !== 1) {
+            throw new Error(`Expected 1 matched bill, got ${parsedCli.summary.matchedEligibleCount}`);
+        }
+        if (!fs.existsSync(tmpReportOutPath)) {
+            throw new Error(`Expected report file ${tmpReportOutPath} to be generated.`);
+        }
+        const reportText = fs.readFileSync(tmpReportOutPath, 'utf8');
+        if (!reportText.includes('ZOHO BOOKS & GSTR-2B AP RECONCILIATION AUDIT MEMORANDUM')) {
+            throw new Error('Generated report file missing required header');
+        }
+        console.log('[PASS] CLI reconcile-gstr2b Verified: JSON pipeline and automated Markdown exception memorandum generation.');
+    } finally {
+        if (fs.existsSync(tmpZohoPath)) fs.unlinkSync(tmpZohoPath);
+        if (fs.existsSync(tmp2bPath)) fs.unlinkSync(tmp2bPath);
+        if (fs.existsSync(tmpReportOutPath)) fs.unlinkSync(tmpReportOutPath);
+    }
+
     console.log('\n===========================================================================');
-    console.log('ALL 130 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 138 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

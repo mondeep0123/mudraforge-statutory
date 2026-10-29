@@ -75,6 +75,15 @@ import {
     generateAuditMarkdownReport,
     getIndianFinancialYear
 } from './tally.js';
+import {
+    parseZohoBillsCsv,
+    parseZohoBillsJson,
+    parseGstr2bJson,
+    reconcileZohoGstr2b,
+    generateGstr2bAuditMarkdownReport,
+    normalizeInvoiceNumber,
+    normalizeGstin
+} from './zoho_gstr2b.js';
 
 import { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL } from './constants.js';
 
@@ -2076,6 +2085,72 @@ export class StatutoryClient {
     }
 
     /**
+     * Parse raw Zoho Books Bills CSV text into normalized bill records.
+     * @param {string} csvText
+     */
+    parseZohoBillsCsv(csvText) {
+        return parseZohoBillsCsv(csvText);
+    }
+
+    /**
+     * Parse raw Zoho Books API JSON payload into normalized bill records.
+     * @param {Object|string} jsonData
+     */
+    parseZohoBillsJson(jsonData) {
+        return parseZohoBillsJson(jsonData);
+    }
+
+    /**
+     * Parse raw GST Portal Form GSTR-2B JSON payload into normalized invoice and CDNR records.
+     * @param {Object|string} gstr2bData
+     */
+    parseGstr2bJson(gstr2bData) {
+        return parseGstr2bJson(gstr2bData);
+    }
+
+    /**
+     * Reconcile Zoho Books AP Bills with Form GSTR-2B and audit Rule 37 180-day aging.
+     * @param {Object} params
+     * @param {Array<Object>|string} params.zohoBills
+     * @param {Array<Object>|string} params.gstr2b
+     * @param {Object} [params.options]
+     */
+    reconcileZohoGstr2b(params) {
+        return reconcileZohoGstr2b(params);
+    }
+
+    /**
+     * Generate an executive Markdown audit exception memorandum for Zoho Books & GSTR-2B.
+     * @param {Object} reconResult
+     */
+    generateGstr2bAuditMarkdownReport(reconResult) {
+        return generateGstr2bAuditMarkdownReport(reconResult);
+    }
+
+    /**
+     * Programmatic alias for generateGstr2bAuditMarkdownReport.
+     */
+    generateGstr2bAuditReport(reconResult) {
+        return generateGstr2bAuditMarkdownReport(reconResult);
+    }
+
+    /**
+     * Normalize invoice number for exact and alphanumeric canonical matching.
+     * @param {string} raw
+     */
+    normalizeInvoiceNumber(raw) {
+        return normalizeInvoiceNumber(raw);
+    }
+
+    /**
+     * Normalize and validate GSTIN string.
+     * @param {string} raw
+     */
+    normalizeGstin(raw) {
+        return normalizeGstin(raw);
+    }
+
+    /**
      * Programmatic alias for generateAuditReport.
      */
     generateAuditMarkdownReport(reconciliationResult) {
@@ -3186,7 +3261,14 @@ export {
     reconcile194QDaybook,
     generateTally194QJournalXml,
     generateAuditMarkdownReport,
-    getIndianFinancialYear
+    getIndianFinancialYear,
+    parseZohoBillsCsv,
+    parseZohoBillsJson,
+    parseGstr2bJson,
+    reconcileZohoGstr2b,
+    generateGstr2bAuditMarkdownReport,
+    normalizeInvoiceNumber,
+    normalizeGstin
 };
 
 

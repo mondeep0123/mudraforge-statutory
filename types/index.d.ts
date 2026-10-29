@@ -221,6 +221,14 @@ export declare class StatutoryClient {
     generateTally194QJournalXml(reconciliationResult: ReconcileDaybookResult, options?: any): string;
     generateAuditReport(reconciliationResult: ReconcileDaybookResult): string;
     generateAuditMarkdownReport(reconciliationResult: ReconcileDaybookResult): string;
+    parseZohoBillsCsv(csvText: string): ZohoBillRecord[];
+    parseZohoBillsJson(jsonData: any): ZohoBillRecord[];
+    parseGstr2bJson(gstr2bData: any): Gstr2bRecord[];
+    reconcileZohoGstr2b(params: ReconcileZohoGstr2bParams): ReconcileZohoGstr2bResult;
+    generateGstr2bAuditMarkdownReport(reconResult: ReconcileZohoGstr2bResult): string;
+    generateGstr2bAuditReport(reconResult: ReconcileZohoGstr2bResult): string;
+    normalizeInvoiceNumber(raw: string): { exactKey: string; alphaNumericKey: string };
+    normalizeGstin(raw: string): { gstin: string | null; pan: string | null; stateCode: string | null; isValid: boolean };
     cleanNumericAmount(val: any, options?: CleanNumericAmountOptions): number;
     roundToPaisa(amount: number | string): number;
     toIntegerPaise(amount: number | string, options?: string | ToIntegerPaiseOptions): number;
@@ -532,6 +540,140 @@ export declare function generateAuditMarkdownReport(
     reconciliationResult: ReconcileDaybookResult
 ): string;
 export declare function getIndianFinancialYear(dateStr: string): string;
+
+export interface ZohoBillRecord {
+    source: string;
+    rowNumber: number;
+    billId?: string | null;
+    billNumber: string;
+    exactKey: string;
+    alphaNumericKey: string;
+    billDate: string | null;
+    dueDate: string | null;
+    vendorName: string;
+    vendorGstin: string | null;
+    vendorPan: string | null;
+    isGstinValid: boolean;
+    status: string;
+    category: string;
+    isBlocked17_5: boolean;
+    taxableAmountInr: number;
+    cgstInr: number;
+    sgstInr: number;
+    igstInr: number;
+    totalTaxInr: number;
+    totalAmountInr: number;
+    balanceInr: number;
+    isFullyPaid: boolean;
+}
+
+export interface Gstr2bRecord {
+    source: string;
+    docType: 'INVOICE' | 'CREDIT_NOTE' | 'DEBIT_NOTE';
+    invoiceNumber: string;
+    originalInvoiceNumber?: string;
+    exactKey: string;
+    alphaNumericKey: string;
+    invoiceDate: string | null;
+    supplierGstin: string | null;
+    supplierPan: string | null;
+    supplierName: string;
+    recipientGstin: string;
+    posStateCode: string;
+    isRcm: boolean;
+    itcAvailable: boolean;
+    itcRevReason?: string | null;
+    taxableAmountInr: number;
+    igstInr: number;
+    cgstInr: number;
+    sgstInr: number;
+    cessInr: number;
+    totalTaxInr: number;
+    totalAmountInr: number;
+}
+
+export interface ReconcileZohoGstr2bOptions {
+    toleranceInr?: number;
+    asOfDate?: string;
+    recipientGstin?: string | null;
+}
+
+export interface ReconcileZohoGstr2bParams {
+    zohoBills: ZohoBillRecord[] | string;
+    gstr2b: Gstr2bRecord[] | string | any;
+    options?: ReconcileZohoGstr2bOptions;
+}
+
+export type Gstr2bDisposition =
+    | 'MATCHED_ELIGIBLE'
+    | 'MISMATCH_AMOUNT_VALUE'
+    | 'MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5'
+    | 'MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH'
+    | 'MISSING_IN_GSTR2B'
+    | 'MISSING_IN_BOOKS';
+
+export interface ReconcileItem {
+    disposition: Gstr2bDisposition;
+    itcStatus: string;
+    statutorySection: string;
+    vendorName: string;
+    vendorGstin: string | null;
+    billNumber: string;
+    billDate: string | null;
+    booksTaxableInr: number;
+    booksTaxInr: number;
+    gstr2bTaxableInr: number;
+    gstr2bTaxInr: number;
+    varianceTaxableInr: number;
+    varianceTaxInr: number;
+    isRule37Overdue: boolean;
+    daysElapsedSinceBill: number;
+    rule37InterestInr: number;
+    statutoryAction: string;
+    auditEvidence: Record<string, any>;
+}
+
+export interface ReconcileZohoGstr2bSummary {
+    totalBooksBillsCount: number;
+    totalGstr2bRecordsCount: number;
+    matchedEligibleCount: number;
+    amountMismatchCount: number;
+    blocked17_5Count: number;
+    posMismatchCount: number;
+    missingIn2bCount: number;
+    missingInBooksCount: number;
+    rule37OverdueCount: number;
+    totalBooksTaxableInr: number;
+    totalBooksTaxInr: number;
+    totalGstr2bTaxableInr: number;
+    totalGstr2bTaxInr: number;
+    eligibleItcInr: number;
+    atRiskUnfiledItcInr: number;
+    blocked17_5ItcInr: number;
+    posMismatchItcInr: number;
+    mismatchedItcInr: number;
+    missingInBooksTaxInr: number;
+    rule37ReversalAmountInr: number;
+    rule37InterestExposureInr: number;
+    reconciliationStatus: 'FULLY_RECONCILED' | 'EXCEPTIONS_IDENTIFIED';
+    isAuthorizedToDisburse: boolean;
+}
+
+export interface ReconcileZohoGstr2bResult {
+    status: 'SUCCESS' | 'ERROR';
+    auditDate: string;
+    summary: ReconcileZohoGstr2bSummary;
+    reconciliationItems: ReconcileItem[];
+}
+
+export declare function parseZohoBillsCsv(csvText: string): ZohoBillRecord[];
+export declare function parseZohoBillsJson(jsonData: any): ZohoBillRecord[];
+export declare function parseGstr2bJson(gstr2bData: any): Gstr2bRecord[];
+export declare function reconcileZohoGstr2b(params: ReconcileZohoGstr2bParams): ReconcileZohoGstr2bResult;
+export declare function generateGstr2bAuditMarkdownReport(reconResult: ReconcileZohoGstr2bResult): string;
+export declare function normalizeInvoiceNumber(raw: string): { exactKey: string; alphaNumericKey: string };
+export declare function normalizeGstin(raw: string): { gstin: string | null; pan: string | null; stateCode: string | null; isValid: boolean };
+
 
 
 
