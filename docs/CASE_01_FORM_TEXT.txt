@@ -1,0 +1,48 @@
+INWARD INVOICE SLIP (TAX INVOICE)
+--------------------------------------------------------------------------------
+Supplier: Precision Castings Pvt. Ltd. | GSTIN: 27AAACP1234F1ZV (Maharashtra)
+PAN     : AAACP1234F (Company)         | MSME : UDYAM-MH-03-0019842 (Micro Mfr)
+Inv No  : PCPL/25-26/0541              | Date : 01-May-2025 (GRN: 01-May-2025)
+Terms   : PO-2025-0892 (Net 60 Days)   | Supply: HSN 732599 (Valve Castings)
+Basic   : ₹20,00,000.00                | IGST 18%: ₹3,60,000.00
+Total   : ₹23,60,000.00                | Place of Supply: Gujarat (Interstate)
+
+BUYER ERP CONTEXT (Zenith Engineering Pvt. Ltd.)
+--------------------------------------------------------------------------------
+Prior FY Turnover : ₹18.50 Crore (Exceeds ₹10 Cr 194Q Gate)
+YTD Purchases     : ₹45,00,000.00 prior to this bill (Excl. GST, on credit)
+PAN Status        : Active & Operative
+
+MUDRAFORGE ENGINE OUTPUT (STATUTORY DETERMINATION)
+--------------------------------------------------------------------------------
+1. Section 194Q TDS:
+   - Taxable Base : ₹15,00,000 (Excess over ₹50L; GST excluded per Cir 13/2021)
+   - TDS Rate     : 0.1% (Standard operative PAN rate)
+   - TDS Amount   : ₹1,500.00 (Exceeds ₹50L base; satisfies Section 288B multiple-of-10 rounding)
+
+2. MSMED Act Sec 15 & Sec 43B(h):
+   - Status       : Micro Manufacturer (NIC 24311)
+   - Credit Term  : 60-day term is void; capped at 45 days from GRN (01-May-2025)
+   - Cutoff Date  : 15-June-2025 (To avoid Sec 16 interest & 43B(h) disallowance)
+
+3. General Ledger Posting:
+   - Dr. Expense ₹20,00,000 | Dr. IGST ₹3,60,000
+   - Cr. TDS Payable ₹1,500 | Cr. Vendor AP ₹23,58,500
+
+SPREADSHEET COMPLIANCE FORMULAS
+--------------------------------------------------------------------------------
+1. TDS WITHHOLDING (Section 194Q):
+   • Standard Excel (Generic All-in-One):
+     =IF(AND(BuyerTurnoverCr > 10, TxnDate >= DATE(2021,7,1)), ROUND((MAX(0, (PriorSpend + IF(IsAdvance, GrossAmt, GrossAmt - GstAmt)) - 5000000) - MAX(0, PriorSpend - 5000000)) * IF(HasOperativePAN, 0.1%, 5.0%), -1), 0)
+
+   • Standard Excel (Case 01 Values):
+     =IF(AND(18.5 > 10, DATE(2025,5,1) >= DATE(2021,7,1)), ROUND((MAX(0, (4500000 + IF(FALSE, 2360000, 2360000 - 360000)) - 5000000) - MAX(0, 4500000 - 5000000)) * IF(TRUE, 0.1%, 5.0%), -1), 0)
+
+   • MudraForge Add-in:
+     =MF.TDS("194Q", 2360000, 4500000, TRUE, "2025-05-01", 18.5, 360000, FALSE)
+   -> Result        : ₹1,500.00
+
+2. STATUTORY DUE DATE (MSMED Act Section 15 & Section 43B(h)):
+   • Standard Excel : =DeliveryDate + MIN(AgreedContractDays, 45)
+   • MudraForge     : =MF.MSME.DUEDATE("2025-05-01", TRUE, "2025-06-30")
+   -> Result        : 15-June-2025

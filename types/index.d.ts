@@ -209,6 +209,10 @@ export declare class StatutoryClient {
     evaluateSection281(payload?: any): any;
     calculateItcReversalRule37(payload?: any): any;
     calculateRule37ASupplierNonFilingReversal(payload?: any): any;
+    calculateRule42InputServiceReversal(payload?: any): any;
+    reconcileRule42AnnualTrueUp(payload?: any): any;
+    calculateRule43CapitalGoodsReversal(payload?: any): any;
+    calculateGstItcApportionmentRule42_43(payload?: any): any;
     getOutcomes(provision?: string, options?: StatutoryOutcomesOptions): Promise<StatutoryOutcomesResult>;
     explain(codeOrQuery: string, options?: any): any;
 }
@@ -362,6 +366,9 @@ export declare function evaluateSection206C1H(payload: any): any;
 export declare function evaluateSection43bH(payload: any): any;
 export declare function calculateMsmeCompoundInterest(payload: any): any;
 export declare function calculateAdvanceTaxAndInterest(payload: any): any;
+export declare function calculateRule42InputServiceReversal(payload: any): any;
+export declare function reconcileRule42AnnualTrueUp(payload: any): any;
+export declare function calculateRule43CapitalGoodsReversal(payload: any): any;
 export declare function calculateGstItcApportionmentRule42_43(payload: any): any;
 export declare function evaluateCrossBorderRemittance(payload: any): any;
 export declare function getRbiBankRateForDate(dateString?: string): number;

@@ -41,6 +41,9 @@ import {
     evaluateSection43bH,
     calculateMsmeCompoundInterest,
     calculateAdvanceTaxAndInterest,
+    calculateRule42InputServiceReversal,
+    reconcileRule42AnnualTrueUp,
+    calculateRule43CapitalGoodsReversal,
     calculateGstItcApportionmentRule42_43,
     evaluateCrossBorderRemittance,
     generateMsme1AndScheduleThreeAging,
@@ -77,7 +80,7 @@ export { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL };
 /**
  * Current verified Merkle root digest for the active OKF v0.2 corpus.
  */
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-bf547512a57f26eae9a5ebcb9f0ec41c397421366b1b4223ab9e17d282721ca7';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 
 /**
@@ -85,6 +88,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19', // feat/gst-rule-42-43 (38 Sections across 5 Domains)
     'sha256-feb1555f10c9f5c70de18ef340e0ba6cf1f060fb19cae866aa36240345c46f3a', // feat/rent-194ib-contract-194m (37 Sections across 5 Domains)
     'sha256-02090e4063a863e3486401215469350c911dc0c9a24855e1d9db2903946aa644', // feat/perquisites-194r (35 Sections across 5 Domains)
     'sha256-bd351719a8235c44f2bac87cc347423baa8ac3ecb74c0ee63d1fffa9f33dbebe', // feat/property-194ia (35 Sections across 5 Domains)
@@ -1953,6 +1957,34 @@ export class StatutoryClient {
     }
 
     /**
+     * Rule 42: Inputs and input services common ITC reversal (monthly provisional).
+     */
+    calculateRule42InputServiceReversal(payload) {
+        return calculateRule42InputServiceReversal(payload);
+    }
+
+    /**
+     * Rule 42(2): Annual common credit true-up reconciliation & Section 50(1) interest.
+     */
+    reconcileRule42AnnualTrueUp(payload) {
+        return reconcileRule42AnnualTrueUp(payload);
+    }
+
+    /**
+     * Rule 43: Capital goods common ITC 60-month amortisation and reversal.
+     */
+    calculateRule43CapitalGoodsReversal(payload) {
+        return calculateRule43CapitalGoodsReversal(payload);
+    }
+
+    /**
+     * Rule 42 & 43: Combined input tax credit apportionment orchestrator.
+     */
+    calculateGstItcApportionmentRule42_43(payload) {
+        return calculateGstItcApportionmentRule42_43(payload);
+    }
+
+    /**
      * MSMED Act Section 16: Compound interest with monthly rests at 3x RBI Bank Rate.
      */
     calculateMsmeCompoundInterest(payload) {
@@ -3015,6 +3047,9 @@ export {
     evaluateSection43bH,
     calculateMsmeCompoundInterest,
     calculateAdvanceTaxAndInterest,
+    calculateRule42InputServiceReversal,
+    reconcileRule42AnnualTrueUp,
+    calculateRule43CapitalGoodsReversal,
     calculateGstItcApportionmentRule42_43,
     evaluateCrossBorderRemittance,
     generateMsme1AndScheduleThreeAging,

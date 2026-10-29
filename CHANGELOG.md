@@ -10,6 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.11.0] - 2026-10-29
 
 ### Added
+- **GST Rule 42 & Rule 43 Common Input Tax Credit (ITC) Reversal Engine**:
+  - *Indirect Tax GST Domain* (`indirect_tax_gst/common_itc_reversal_rule42_43`): Authoritative implementation of Section 17(1) and Section 17(2) of the CGST Act, 2017 read with Rule 42 (inputs & input services) and Rule 43 (capital goods).
+  - *Rule 42 Monthly Ineligible Credit Segregation*: Segregation of gross ITC ($T$) into specific ineligibles ($T_1$ non-business, $T_2$ exempt, $T_3$ blocked u/s 17(5)), Electronic Credit Ledger credited balance ($C_1$), specific eligible credit ($T_4$ taxable/zero-rated exports), and Common Credit ($C_2$).
+  - *Monthly Turnover Apportionment ($D_1$ & $D_2$)*: Deterministic computation of exempt ratio ($E/F$), exempt reversal ($D_1 = (E/F) \times C_2$), non-business 5% reversal ($D_2 = 0.05 \times C_2$), remaining eligible common credit ($C_3$), and net eligible credit ($G = T_4 + C_3$). Includes preceding tax period turnover fallback proviso where current period turnover is zero.
+  - *Mandatory GSTR-3B Table 4(B)(1) Mapping*: Strict enforcement of CBIC Circular No. 170/02/2022-GST reporting permanent non-reclaimable reversals ($T_{\text{ineligible}} + D_1 + D_2$) in Table 4(B)(1) with zero netting-off against Table 4(A).
+  - *Rule 42(2) Annual True-Up Reconciliation Engine*: Complete reconciliation of aggregate financial year common credit ($C_2^{\text{annual}}$) against cumulative monthly reversals made in Table 4(B)(1) before the statutory cutoff date of 30th November (Finance Act, 2022 read with Notification No. 18/2022-Central Tax).
+  - *Section 50(1) 18% Statutory Interest Engine*: Automatic computation of 18% annual interest on short-reversals from 1st April of the succeeding financial year up to the true-up filing date.
+  - *Excess Reversal Reclaim Mechanism*: Taxpayer entitlement to reclaim excess provisional reversals in Form GSTR-3B Table 4(A)(5) with disclosure in Table 4(D)(1) before 30th November.
+  - *Rule 43 Capital Goods 60-Month Useful Life Amortisation*: Asset-level tracking over 60 statutory months, monthly credit slices ($T_m = T_c / 60$), aggregate monthly common slice ($T_r = \sum T_m$), and monthly exempt reversal ($T_e = (E/F) \times T_r$) added to output tax liability in Table 4(B)(1).
+  - *Asset Conversion Reductions*: 5% per quarter credit reduction under Rule 43(1)(c) for capital goods converted from exclusive exempt/non-business use to common business use.
+  - *Pure Deterministic Calculators (`src/calculators.js`)*:
+    - `calculateRule42InputServiceReversal(params)`
+    - `reconcileRule42AnnualTrueUp(params)`
+    - `calculateRule43CapitalGoodsReversal(params)`
+    - `calculateGstItcApportionmentRule42_43(params)` (backward-compatible orchestrator)
+  - *StatutoryClient Parity*: Exposed client helper methods (`client.calculateRule42InputServiceReversal`, `client.reconcileRule42AnnualTrueUp`, `client.calculateRule43CapitalGoodsReversal`, `client.calculateGstItcApportionmentRule42_43`) with full TypeScript declarations in `types/index.d.ts`.
+  - *Corpus Metrics*: OKF corpus expanded to 38 sections, 40 circulars, 39 forms across 5 canonical domains with 100% citation link integrity (146/146 verified) and 0 schema defects.
+  - *Merkle Trust Root*: Recomputed root digest `sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19` pinned in `PINNED_RELEASE_ROOTS`.
 - **Immovable Property Acquisition & Real Estate Withholding (Section 194-IA & Form 26QB)**:
   - *Direct Tax Domain* (`direct_tax/tds_property_194ia`): Section 194-IA TDS on transfer of immovable property other than agricultural land with 1.0% withholding rate on HIGHER of contractual consideration or Stamp Duty Value (SDV) pursuant to Finance Act, 2022.
   - *Incidental Charges Scope*: Full inclusion of club membership fees, car parking allotments, electricity/water facility charges, and maintenance advance payments per Finance Act, 2019 Explanation.

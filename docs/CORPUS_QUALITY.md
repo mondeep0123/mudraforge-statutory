@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.11.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-29T07:06:23.134Z
+> **Generated Timestamp**: 2026-10-29T17:36:00.058Z
 
 ---
 
@@ -11,12 +11,12 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 98 resolvable gazette URLs | 98 total citations declared | **100.0%** | VERIFIED |
-| **Temporal Validity Bounds** | 37 sections with explicit dates | 37 total bundled sections | **100.0%** | VERIFIED |
+| **Primary Source Citations** | 101 resolvable gazette URLs | 101 total citations declared | **100.0%** | VERIFIED |
+| **Temporal Validity Bounds** | 38 sections with explicit dates | 38 total bundled sections | **100.0%** | VERIFIED |
 | **Dual-Act 2025 Transition Bridges** | 15 direct tax provisions mapped | 16 direct tax provisions | **93.8%** | VERIFIED |
-| **Attached Administrative Circulars** | 38 official circulars | 37 provisions across active domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 37 schemas/templates | 37 provisions across active domains | **100% Attached** | VERIFIED |
-| **Cryptographic Merkle Verification** | 112 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
+| **Attached Administrative Circulars** | 40 official circulars | 38 provisions across active domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 39 schemas/templates | 38 provisions across active domains | **100% Attached** | VERIFIED |
+| **Cryptographic Merkle Verification** | 117 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
 
@@ -68,6 +68,7 @@
 | **194-IB** | Payment of Rent by Certain Individuals or Hindu Undivided Family (Section 194-IB) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2017-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (ib)) |
 | **194J** | Fees for professional or technical services, royalty, and non-compete fees | Income-tax Act, 1961 | `1995-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 6, Item (iii)) |
 | **17(5)** | Apportionment of credit and blocked input tax credits | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | CGST Act, 2017 (In force) (Section 17(5)(b)(i) & (b)(iii)) |
+| **RULE-42-43** | Apportionment of input tax credit on inputs, input services and capital goods, and reversal of common credit attributable to exempt or non-business supplies | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 2 | 2 | Central Goods and Services Tax Act, 2017 (Section 17(1) and Section 17(2) read with Rule 42 and Rule 43 (as amended)) |
 | **8** | Tax liability on composite and mixed supplies and classification of bundled goods and services contracts | Central Goods and Services Tax Act, 2017 | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | N/A |
 | **10** | Composition levy and ineligible tax invoice restrictions | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |
 | **34** | Credit and debit notes statutory adjustments and return filing deadlines | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |

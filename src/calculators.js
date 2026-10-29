@@ -19,7 +19,7 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-feb1555f10c9f5c70de18ef340e0ba6cf1f060fb19cae866aa36240345c46f3a';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 export const STATUTORY_PACKAGE_VERSION = '2.11.0';
 export const OKF_CORPUS_VERSION = '2.11.0';
@@ -64,13 +64,18 @@ export function roundToPaisa(amount) {
 
 /**
  * Section 288B Rounding (Rounding off of tax):
- * The amount of tax under the Income-tax Act is rounded off to the nearest rupee,
- * and if the fraction is 50 paise or more, it is rounded up; otherwise ignored.
+ * Under Section 288B of the Income-tax Act, 1961 (as substituted by the Taxation Laws
+ * (Amendment) Act, 2006 w.e.f. 13-07-2006), the amount of tax payable/deductible,
+ * interest, penalty or refund is rounded off to the nearest multiple of ten rupees:
+ * 1. Part of a rupee consisting of paise: >= 50 paise is rounded up to ₹1, < 50 paise ignored.
+ * 2. If the last digit of the resulting whole rupees is 5 or more, increased to next higher multiple of ₹10.
+ * 3. If the last digit is less than 5, reduced to next lower multiple of ₹10.
  */
 export function roundSection288B(amount) {
     const n = Number(amount);
     if (!Number.isFinite(n) || isNaN(n) || Object.is(n, -0)) return 0;
-    return Math.round(n);
+    const wholeRupees = Math.round(n);
+    return Math.round(wholeRupees / 10) * 10;
 }
 
 /**
@@ -1923,6 +1928,7 @@ export function evaluateSection194Q({
         statutoryRatePercent,
         effectiveRatePercent,
         calculatedTdsInr,
+        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
         certifiedTdsInr,
         uncoveredTdsInr,
         certificateCeiling,
@@ -2580,6 +2586,7 @@ export function evaluateSection194C({
         standardRatePercent,
         effectiveRatePercent,
         calculatedTdsInr,
+        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
         certifiedTdsInr,
         uncoveredTdsInr,
         certificateCeiling,
@@ -2904,6 +2911,7 @@ export function evaluateSection194J({
         standardRatePercent,
         effectiveRatePercent,
         calculatedTdsInr,
+        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
         certifiedTdsInr,
         uncoveredTdsInr,
         certificateCeiling,
@@ -4079,9 +4087,428 @@ export function calculateAdvanceTaxAndInterest({
  * CGST Rules 2017: Rule 42 (Inputs & Services) & Rule 43 (Capital Goods)
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * Implements monthly common credit isolation (C2), exempt supply ratio (E/F),
- * non-business 5% apportionment (D2), eligible common credit (C3),
- * 60-month capital goods depreciation apportionment (Te), and annual true-up.
+ * Implements deterministic apportionment, monthly provisional reversals (Table 4(B)(1)),
+ * annual true-up reconciliations before 30th November (Notification No. 18/2022-CT),
+ * Section 50(1) 18% statutory interest on shortfalls, Table 4(D)(1) reclaim mechanics,
+ * and 60-month capital goods asset amortisation and conversions.
+ */
+
+/**
+ * GST RULE 42: INPUTS & INPUT SERVICES COMMON ITC REVERSAL CALCULATOR
+ * CGST Act, 2017: Section 17(1) & 17(2) read with Rule 42
+ *
+ * Segregates total input tax (T) into:
+ * - Specific ineligibles: T1 (non-business), T2 (exempt), T3 (blocked u/s 17(5))
+ * - Credited to Electronic Credit Ledger: C1 = T - (T1 + T2 + T3)
+ * - Specific eligible: T4 (taxable & zero-rated supplies)
+ * - Common Credit: C2 = C1 - T4
+ * - Monthly Ineligible Reversals: D1 = (E / F) * C2, D2 = 5% of C2 (non-business)
+ * - Eligible Common Credit: C3 = C2 - (D1 + D2)
+ * - Net Eligible Inputs Credit: G = T4 + C3 = C1 - (D1 + D2)
+ */
+export function calculateRule42InputServiceReversal({
+    taxPeriod = 'CURRENT_PERIOD',
+    totalItcInr,
+    t1NonBusinessInr = 0,
+    t2ExemptInr = 0,
+    t3BlockedInr = 0,
+    t4TaxableInr = 0,
+    exemptTurnoverInr = 0,
+    totalTurnoverInr = 0,
+    hasNonBusinessUse = true,
+    precedingExemptTurnoverInr = 0,
+    precedingTotalTurnoverInr = 0
+} = {}) {
+    if (totalItcInr === undefined || totalItcInr === null) {
+        throw new Error('[@mudraforge/statutory] calculateRule42InputServiceReversal: totalItcInr is required.');
+    }
+
+    const T = roundToPaisa(Math.max(0, Number(totalItcInr) || 0));
+    const T1 = roundToPaisa(Math.max(0, Number(t1NonBusinessInr) || 0));
+    const T2 = roundToPaisa(Math.max(0, Number(t2ExemptInr) || 0));
+    const T3 = roundToPaisa(Math.max(0, Number(t3BlockedInr) || 0));
+    const T4 = roundToPaisa(Math.max(0, Number(t4TaxableInr) || 0));
+    const E = Math.max(0, Number(exemptTurnoverInr) || 0);
+    const F = Math.max(0, Number(totalTurnoverInr) || 0);
+
+    const directIneligible = roundToPaisa(T1 + T2 + T3);
+    if (directIneligible > T) {
+        throw new Error(`[@mudraforge/statutory] Sum of direct ineligible credits (T1 + T2 + T3 = ₹${directIneligible}) cannot exceed total ITC (T = ₹${T}).`);
+    }
+
+    // Step 2: C1 - Amount credited to Electronic Credit Ledger
+    const C1 = roundToPaisa(T - directIneligible);
+
+    // Step 3: T4 check
+    if (T4 > C1) {
+        throw new Error(`[@mudraforge/statutory] Exclusive taxable credit T4 (₹${T4}) cannot exceed available credit C1 (₹${C1}).`);
+    }
+
+    // Step 4: C2 - Common Input Credit
+    const C2 = roundToPaisa(C1 - T4);
+
+    // Step 5: Turnover Apportionment (E / F)
+    let exemptRatio = 0;
+    let turnoverBasis = 'CURRENT_TAX_PERIOD';
+
+    if (C2 > 0) {
+        if (F > 0) {
+            exemptRatio = Math.min(1.0, E / F);
+        } else if (E === 0 && F === 0) {
+            const precE = Math.max(0, Number(precedingExemptTurnoverInr) || 0);
+            const precF = Math.max(0, Number(precedingTotalTurnoverInr) || 0);
+            if (precF > 0) {
+                exemptRatio = Math.min(1.0, precE / precF);
+                turnoverBasis = 'PRECEDING_TAX_PERIOD_PROVISO';
+            } else {
+                exemptRatio = 0;
+                turnoverBasis = 'ZERO_TURNOVER_NO_REVERSAL';
+            }
+        } else {
+            // E > 0 but F <= 0 (defensive full exempt cap)
+            exemptRatio = 1.0;
+            turnoverBasis = 'DEFENSIVE_FULL_EXEMPT_CAP';
+        }
+    }
+
+    const D1 = C2 > 0 ? roundToPaisa(C2 * exemptRatio) : 0;
+    const D2 = (C2 > 0 && hasNonBusinessUse) ? roundToPaisa(C2 * 0.05) : 0;
+    const rule42Reversal = roundToPaisa(D1 + D2);
+    const C3 = roundToPaisa(Math.max(0, C2 - rule42Reversal));
+    const netEligibleInputsItc = roundToPaisa(T4 + C3);
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'RULE_42_APPORTIONMENT_CALCULATED',
+        governingRules: 'Central Goods and Services Tax Rules, 2017: Rule 42 (Inputs and Input Services)',
+        taxPeriod,
+        totalItcT: T,
+        directIneligibleCredits: {
+            exclusiveNonBusinessT1: T1,
+            exclusiveExemptT2: T2,
+            blockedSection17_5_T3: T3,
+            sumIneligible: directIneligible
+        },
+        creditedToElectronicCreditLedgerC1: C1,
+        exclusiveTaxableT4: T4,
+        commonCreditC2: C2,
+        exemptTurnoverE: E,
+        totalTurnoverF: F,
+        turnoverRatioE_F: Number(exemptRatio.toFixed(6)),
+        turnoverBasis,
+        reversals: {
+            ineligibleExemptCommonD1: D1,
+            nonBusinessCommonD2: D2,
+            totalRule42Reversal: rule42Reversal
+        },
+        eligibleCommonCreditC3: C3,
+        netEligibleInputsItc,
+        gstr3bReporting: {
+            table4A5GrossIngestion: T,
+            table4B1PermanentReversal: roundToPaisa(directIneligible + rule42Reversal),
+            table4B1Rule42OnlyReversal: rule42Reversal,
+            table4CNetItcAvailable: netEligibleInputsItc
+        },
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Rule 42 credited ₹${C1.toLocaleString('en-IN')} to ledger (after deducting ₹${directIneligible.toLocaleString('en-IN')} direct ineligible). Identified ₹${C2.toLocaleString('en-IN')} common credit, requiring ₹${rule42Reversal.toLocaleString('en-IN')} reversal (D1 exempt: ₹${D1}, D2 non-business: ₹${D2}). Net eligible credit: ₹${netEligibleInputsItc.toLocaleString('en-IN')}. Permanent reversal must be reported in GSTR-3B Table 4(B)(1).`
+    };
+}
+
+/**
+ * GST RULE 42(2): ANNUAL COMMON CREDIT TRUE-UP & RECONCILIATION ENGINE
+ * CGST Rules, 2017: Rule 42(2) read with Section 16(4) and Section 50(1)
+ * Amended by Finance Act, 2022 & Notification No. 18/2022-Central Tax w.e.f. 01.10.2022
+ *
+ * Annual Cutoff: 30th November following the end of the financial year.
+ * - Shortfall Reversal: Payable with 18% p.a. interest under Section 50(1) from 1st April of succeeding FY.
+ * - Excess Reversal: Reclaimable as credit in Form GSTR-3B Table 4(A)(5) and Table 4(D)(1) before 30th November.
+ */
+export function reconcileRule42AnnualTrueUp({
+    financialYear = '2024-25',
+    annualCommonCreditC2Inr,
+    annualExemptTurnoverInr = 0,
+    annualTotalTurnoverInr = 0,
+    cumulativeMonthlyReversalsInr,
+    trueUpExecutionDate = null,
+    hasNonBusinessUse = true,
+    annualInterestRatePercent = 18.0,
+    isRealEstateProject = false
+} = {}) {
+    if (annualCommonCreditC2Inr === undefined || annualCommonCreditC2Inr === null) {
+        throw new Error('[@mudraforge/statutory] reconcileRule42AnnualTrueUp: annualCommonCreditC2Inr is required.');
+    }
+    if (cumulativeMonthlyReversalsInr === undefined || cumulativeMonthlyReversalsInr === null) {
+        throw new Error('[@mudraforge/statutory] reconcileRule42AnnualTrueUp: cumulativeMonthlyReversalsInr is required.');
+    }
+
+    const C2 = roundToPaisa(Math.max(0, Number(annualCommonCreditC2Inr) || 0));
+    const priorReversals = roundToPaisa(Math.max(0, Number(cumulativeMonthlyReversalsInr) || 0));
+    const annualE = Math.max(0, Number(annualExemptTurnoverInr) || 0);
+    const annualF = Math.max(0, Number(annualTotalTurnoverInr) || 0);
+
+    // Derive succeeding FY start date & statutory cutoff (30th November)
+    let endYear = 2025;
+    const fyMatch = String(financialYear).match(/^(\d{4})-(\d{2,4})$/);
+    if (fyMatch) {
+        const y1 = parseInt(fyMatch[1], 10);
+        endYear = y1 + 1;
+    }
+    const succeedingFyStartDate = `${endYear}-04-01`;
+    const statutoryCutoffDate = `${endYear}-11-30`;
+
+    const execDateIso = trueUpExecutionDate ? String(trueUpExecutionDate).slice(0, 10) : statutoryCutoffDate;
+    const isFiledBeforeCutoff = execDateIso <= statutoryCutoffDate;
+
+    const annualRatio = annualF > 0 ? Math.min(1.0, annualE / annualF) : 0;
+    const finalAnnualD1 = roundToPaisa(C2 * annualRatio);
+    const finalAnnualD2 = hasNonBusinessUse ? roundToPaisa(C2 * 0.05) : 0;
+    const finalAnnualReversalTotal = roundToPaisa(finalAnnualD1 + finalAnnualD2);
+
+    const differential = roundToPaisa(finalAnnualReversalTotal - priorReversals);
+
+    let reconciliationOutcome = 'BALANCED_ZERO_VARIANCE';
+    let shortfallAmountInr = 0;
+    let excessReversedInr = 0;
+    let interestPayableInr = 0;
+    let daysElapsed = 0;
+    let statutoryAction = 'Annual true-up precisely matches cumulative monthly reversals. No adjustment required.';
+
+    if (differential > 0) {
+        reconciliationOutcome = 'SHORT_REVERSAL_PAYMENT_DUE';
+        shortfallAmountInr = differential;
+        
+        // Interest under Section 50(1) from 1st April of succeeding FY
+        const dStart = new Date(succeedingFyStartDate + 'T00:00:00.000Z').getTime();
+        const dExec = new Date(execDateIso + 'T00:00:00.000Z').getTime();
+        daysElapsed = Math.max(0, Math.floor((dExec - dStart) / (1000 * 60 * 60 * 24)));
+        const rateFrac = (Number(annualInterestRatePercent) || 18.0) / 100;
+        interestPayableInr = roundToPaisa(shortfallAmountInr * rateFrac * (daysElapsed / 365));
+
+        statutoryAction = `Shortfall of ₹${shortfallAmountInr.toLocaleString('en-IN')} must be added to output tax liability / reversed in GSTR-3B Table 4(B)(1) on or before ${statutoryCutoffDate} along with ₹${interestPayableInr.toLocaleString('en-IN')} interest under Section 50(1) (${daysElapsed} days @ ${annualInterestRatePercent}% p.a.).`;
+    } else if (differential < 0) {
+        reconciliationOutcome = 'EXCESS_REVERSAL_RECLAIM_PERMITTED';
+        excessReversedInr = roundToPaisa(Math.abs(differential));
+        statutoryAction = `Excess reversal of ₹${excessReversedInr.toLocaleString('en-IN')} may be reclaimed as eligible ITC in Form GSTR-3B Table 4(A)(5) and reported in Table 4(D)(1) on or before ${statutoryCutoffDate}.`;
+    }
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'ANNUAL_TRUE_UP_RECONCILED',
+        governingRules: 'Central Goods and Services Tax Rules, 2017: Rule 42(2) & Finance Act, 2022',
+        financialYear,
+        statutoryCutoffDate,
+        succeedingFyStartDate,
+        trueUpExecutionDate: execDateIso,
+        isFiledBeforeCutoff,
+        annualCommonCreditC2Inr: C2,
+        annualExemptTurnoverInr: annualE,
+        annualTotalTurnoverInr: annualF,
+        annualExemptRatio: Number(annualRatio.toFixed(6)),
+        finalAnnualReversals: {
+            finalAnnualD1ExemptInr: finalAnnualD1,
+            finalAnnualD2NonBusinessInr: finalAnnualD2,
+            finalAnnualRequiredTotalInr: finalAnnualReversalTotal
+        },
+        cumulativeMonthlyReversalsMadeInr: priorReversals,
+        differentialAdjustmentInr: differential,
+        reconciliationOutcome,
+        shortfallAmountInr,
+        excessReversedInr,
+        interestAssessment: {
+            interestRatePercent: annualInterestRatePercent,
+            interestCommencementDate: succeedingFyStartDate,
+            interestEndDate: execDateIso,
+            daysElapsed,
+            interestPayableInr
+        },
+        isRealEstateProject: !!isRealEstateProject,
+        statutoryAction,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Annual common credit ₹${C2.toLocaleString('en-IN')} with annual exempt ratio ${annualRatio.toFixed(4)} requires aggregate annual reversal of ₹${finalAnnualReversalTotal.toLocaleString('en-IN')}. Cumulative monthly reversals made: ₹${priorReversals.toLocaleString('en-IN')}. Outcome: ${reconciliationOutcome} (${differential > 0 ? `Shortfall ₹${shortfallAmountInr} + Sec 50(1) Interest ₹${interestPayableInr}` : (differential < 0 ? `Reclaimable ₹${excessReversedInr}` : 'Zero Variance')}).`
+    };
+}
+
+/**
+ * GST RULE 43: CAPITAL GOODS COMMON ITC AMORTISATION & REVERSAL CALCULATOR
+ * CGST Act, 2017: Section 17(1) & 17(2) read with Rule 43
+ *
+ * Implements:
+ * - 60-month statutory useful life tracking for each capital asset.
+ * - Monthly credit slice: Tm = Tc / 60.
+ * - Aggregate monthly common credit: Tr = sum(Tm).
+ * - Monthly exempt reversal: Te = (E / F) * Tr (added to output tax liability in Table 4(B)(1)).
+ * - Asset conversion: 5% reduction per quarter under Rule 43(1)(c) for exclusive-to-common transitions.
+ */
+export function calculateRule43CapitalGoodsReversal({
+    taxPeriod = 'CURRENT_PERIOD',
+    taxPeriodDate = new Date().toISOString().slice(0, 10),
+    exemptTurnoverInr = 0,
+    totalTurnoverInr = 0,
+    capitalGoodsList = [],
+    precedingExemptTurnoverInr = 0,
+    precedingTotalTurnoverInr = 0
+} = {}) {
+    if (!Array.isArray(capitalGoodsList)) {
+        throw new Error('[@mudraforge/statutory] calculateRule43CapitalGoodsReversal: capitalGoodsList must be an array.');
+    }
+
+    const E = Math.max(0, Number(exemptTurnoverInr) || 0);
+    const F = Math.max(0, Number(totalTurnoverInr) || 0);
+
+    let exemptRatio = 0;
+    let turnoverBasis = 'CURRENT_TAX_PERIOD';
+
+    if (F > 0) {
+        exemptRatio = Math.min(1.0, E / F);
+    } else if (E === 0 && F === 0) {
+        const precE = Math.max(0, Number(precedingExemptTurnoverInr) || 0);
+        const precF = Math.max(0, Number(precedingTotalTurnoverInr) || 0);
+        if (precF > 0) {
+            exemptRatio = Math.min(1.0, precE / precF);
+            turnoverBasis = 'PRECEDING_TAX_PERIOD_PROVISO';
+        } else {
+            exemptRatio = 0;
+            turnoverBasis = 'ZERO_TURNOVER_NO_REVERSAL';
+        }
+    } else {
+        exemptRatio = 1.0;
+        turnoverBasis = 'DEFENSIVE_FULL_EXEMPT_CAP';
+    }
+
+    const DEEMED_USEFUL_LIFE_MONTHS = 60;
+    const calcDate = new Date(String(taxPeriodDate).slice(0, 10) + 'T00:00:00.000Z');
+
+    let totalCommonTc = 0;
+    let totalMonthlySliceTr = 0;
+    const assetSchedules = [];
+
+    for (const asset of capitalGoodsList) {
+        const assetId = asset.assetId || 'ASSET-UNKNOWN';
+        const description = asset.description || 'Capital Good';
+        const rawItc = roundToPaisa(Math.max(0, Number(asset.itcAmountInr || asset.taxAmount || 0)));
+        const category = String(asset.category || asset.useCategory || 'COMMON').toUpperCase();
+        const invoiceDateIso = asset.invoiceDate ? String(asset.invoiceDate).slice(0, 10) : taxPeriodDate;
+
+        if (category === 'EXEMPT_ONLY') {
+            assetSchedules.push({
+                assetId,
+                description,
+                category,
+                invoiceDate: invoiceDateIso,
+                originalItcInr: rawItc,
+                effectiveCommonCreditInr: 0,
+                monthlyCreditTmInr: 0,
+                monthlyReversalTeInr: 0,
+                status: 'EXEMPT_EXCLUDED_FROM_LEDGER',
+                statutoryNote: 'Under Rule 43(1)(a), capital goods used exclusively for exempt supplies are not credited to Electronic Credit Ledger.'
+            });
+            continue;
+        }
+
+        if (category === 'TAXABLE_ONLY') {
+            assetSchedules.push({
+                assetId,
+                description,
+                category,
+                invoiceDate: invoiceDateIso,
+                originalItcInr: rawItc,
+                effectiveCommonCreditInr: 0,
+                monthlyCreditTmInr: 0,
+                monthlyReversalTeInr: 0,
+                status: 'TAXABLE_FULL_CREDIT_NO_REVERSAL',
+                statutoryNote: 'Under Rule 43(1)(b), capital goods used exclusively for taxable supplies are credited in full with zero monthly reversal.'
+            });
+            continue;
+        }
+
+        // Category is COMMON (or converted to COMMON)
+        let effectiveItc = rawItc;
+        let quartersElapsed = 0;
+        let reductionPercent = 0;
+
+        if (asset.priorCategory === 'EXEMPT_ONLY' && asset.conversionDate) {
+            const convDateIso = String(asset.conversionDate).slice(0, 10);
+            const dInv = new Date(invoiceDateIso + 'T00:00:00.000Z').getTime();
+            const dConv = new Date(convDateIso + 'T00:00:00.000Z').getTime();
+            const daysConv = Math.max(0, Math.floor((dConv - dInv) / (1000 * 60 * 60 * 24)));
+            quartersElapsed = daysConv > 0 ? Math.ceil(daysConv / 91.25) : 0;
+            reductionPercent = Math.min(100, quartersElapsed * 5);
+            effectiveItc = roundToPaisa(rawItc * (1 - reductionPercent / 100));
+        }
+
+        // Calculate months elapsed from invoice date to calculation date
+        const dInv = new Date(invoiceDateIso + 'T00:00:00.000Z');
+        const monthsElapsed = (calcDate.getFullYear() - dInv.getFullYear()) * 12 + (calcDate.getMonth() - dInv.getMonth());
+
+        let monthlyCreditTm = 0;
+        let monthlyReversalTe = 0;
+        let status = 'ACTIVE_IN_COMMON_POOL';
+
+        if (monthsElapsed >= 0 && monthsElapsed < DEEMED_USEFUL_LIFE_MONTHS) {
+            monthlyCreditTm = roundToPaisa(effectiveItc / DEEMED_USEFUL_LIFE_MONTHS);
+            monthlyReversalTe = roundToPaisa(monthlyCreditTm * exemptRatio);
+            totalCommonTc = roundToPaisa(totalCommonTc + effectiveItc);
+            totalMonthlySliceTr = roundToPaisa(totalMonthlySliceTr + monthlyCreditTm);
+        } else if (monthsElapsed >= DEEMED_USEFUL_LIFE_MONTHS) {
+            status = 'EXPIRED_USEFUL_LIFE_60_MONTHS';
+        } else {
+            status = 'PRE_ACQUISITION_PERIOD';
+        }
+
+        assetSchedules.push({
+            assetId,
+            description,
+            category: 'COMMON',
+            invoiceDate: invoiceDateIso,
+            originalItcInr: rawItc,
+            effectiveCommonCreditInr: effectiveItc,
+            reductionFactorAppliedPercent: reductionPercent,
+            monthsElapsed,
+            remainingUsefulLifeMonths: Math.max(0, DEEMED_USEFUL_LIFE_MONTHS - Math.max(0, monthsElapsed)),
+            monthlyCreditTmInr: monthlyCreditTm,
+            monthlyReversalTeInr: monthlyReversalTe,
+            status,
+            statutoryNote: status === 'ACTIVE_IN_COMMON_POOL'
+                ? `Active in common pool (Month ${monthsElapsed + 1}/60). Tm = ₹${monthlyCreditTm}, Te reversal = ₹${monthlyReversalTe}.`
+                : (status === 'EXPIRED_USEFUL_LIFE_60_MONTHS' ? 'Deemed useful life of 60 months has expired. No further reversal required.' : 'Asset acquired after tax period.')
+        });
+    }
+
+    const totalPeriodReversalTe = roundToPaisa(totalMonthlySliceTr * exemptRatio);
+    const netEligibleMonthlyCapitalItc = roundToPaisa(Math.max(0, totalMonthlySliceTr - totalPeriodReversalTe));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'RULE_43_CAPITAL_GOODS_APPORTIONED',
+        governingRules: 'Central Goods and Services Tax Rules, 2017: Rule 43 (Capital Goods)',
+        taxPeriod,
+        taxPeriodDate: String(taxPeriodDate).slice(0, 10),
+        exemptTurnoverE: E,
+        totalTurnoverF: F,
+        turnoverRatioE_F: Number(exemptRatio.toFixed(6)),
+        turnoverBasis,
+        deemedUsefulLifeMonths: DEEMED_USEFUL_LIFE_MONTHS,
+        summary: {
+            totalAssetsAssessed: capitalGoodsList.length,
+            activeCommonAssetsCount: assetSchedules.filter(a => a.status === 'ACTIVE_IN_COMMON_POOL').length,
+            totalCommonCreditTcInr: totalCommonTc,
+            monthlyCommonCreditSliceTrInr: totalMonthlySliceTr,
+            monthlyReversalTeInr: totalPeriodReversalTe,
+            netEligibleMonthlyCapitalItcInr: netEligibleMonthlyCapitalItc
+        },
+        gstr3bReporting: {
+            reportingTable: 'Table 4(B)(1) (Permanent Reversals)',
+            monthlyReversalAmountInr: totalPeriodReversalTe
+        },
+        assetSchedules,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Assessed ${capitalGoodsList.length} capital goods. Common pool ITC (Tc): ₹${totalCommonTc.toLocaleString('en-IN')}, monthly slice (Tr): ₹${totalMonthlySliceTr.toLocaleString('en-IN')}. Monthly exempt reversal (Te = Tr * E/F): ₹${totalPeriodReversalTe.toLocaleString('en-IN')}. Reversal must be added to output tax liability / reported in Table 4(B)(1).`
+    };
+}
+
+/**
+ * UNIFIED ORCHESTRATOR: GST RULE 42 & 43 COMBINED APPORTIONMENT
+ * Backward-compatible facade coordinating inputs/services, capital goods, and annual true-ups.
  */
 export function calculateGstItcApportionmentRule42_43({
     taxPeriod = null,
@@ -4094,16 +4521,19 @@ export function calculateGstItcApportionmentRule42_43({
     exclusiveTaxableT4 = 0,
     exemptTurnoverE = 0,
     totalTurnoverF = 0,
+    hasNonBusinessUse = true,
     // Rule 43 Inputs (Capital Goods):
     capitalGoodsCommonCreditA = 0,
     capitalGoodsPriorQuartersExempt = 0,
+    capitalGoodsList = null,
     // Annual True-Up Reconciliation parameters:
     isAnnualTrueUp = false,
     annualExemptTurnover = null,
     annualTotalTurnover = null,
     sumOfMonthlyReversalsD1 = 0,
-    isRealEstateProject = false
-}) {
+    isRealEstateProject = false,
+    trueUpExecutionDate = null
+} = {}) {
     if (totalInputTaxCreditT === undefined || totalInputTaxCreditT === null) {
         return {
             status: 'INDETERMINATE',
@@ -4116,121 +4546,101 @@ export function calculateGstItcApportionmentRule42_43({
         };
     }
 
-    const T = Number(totalInputTaxCreditT);
-    const T1 = Math.max(0, Number(exclusiveNonBusinessT1 || 0));
-    const T2 = Math.max(0, Number(exclusiveExemptT2 || 0));
-    const T3 = Math.max(0, Number(blockedSection17_5_T3 || 0));
-    const T4 = Math.max(0, Number(exclusiveTaxableT4 || 0));
-    const E = Math.max(0, Number(exemptTurnoverE || 0));
-    const F = Math.max(0, Number(totalTurnoverF || 0));
+    // Step 1: Rule 42 Inputs & Input Services Evaluation
+    const rule42Result = calculateRule42InputServiceReversal({
+        taxPeriod: taxPeriod || 'CURRENT_MONTH',
+        totalItcInr: totalInputTaxCreditT,
+        t1NonBusinessInr: exclusiveNonBusinessT1,
+        t2ExemptInr: exclusiveExemptT2,
+        t3BlockedInr: blockedSection17_5_T3,
+        t4TaxableInr: exclusiveTaxableT4,
+        exemptTurnoverInr: exemptTurnoverE,
+        totalTurnoverInr: totalTurnoverF,
+        hasNonBusinessUse
+    });
 
-    if (isNaN(T) || T < 0 || !Number.isFinite(T)) {
-        throw new Error('[@mudraforge/statutory] Invalid totalInputTaxCreditT: expected non-negative finite number.');
-    }
-
-    // Step 1: Ineligible credits under Rule 42(1)(a)-(c)
-    const ineligibleDirect = roundToPaisa(T1 + T2 + T3);
-    if (ineligibleDirect > T) {
-        throw new Error(`[@mudraforge/statutory] Sum of direct ineligible credits (T1 + T2 + T3 = ₹${ineligibleDirect}) cannot exceed total ITC (T = ₹${T}).`);
-    }
-
-    // Step 2: C1 - Amount credited to Electronic Credit Ledger
-    const C1 = roundToPaisa(T - ineligibleDirect);
-
-    // Step 3: T4 - Exclusive taxable supplies
-    if (T4 > C1) {
-        throw new Error(`[@mudraforge/statutory] Exclusive taxable credit T4 (₹${T4}) cannot exceed available credit C1 (₹${C1}).`);
-    }
-
-    // Step 4: C2 - Common Input Credit
-    const C2 = roundToPaisa(C1 - T4);
-
-    // Step 5: D1 - Ineligible common credit attributable to exempt supplies
-    // Formula: D1 = (E / F) * C2
-    let exemptRatio = 0;
-    let D1 = 0;
-    let turnoverBasis = 'TAX_PERIOD_TURNOVER';
-
-    if (C2 > 0) {
-        if (F > 0) {
-            exemptRatio = E / F;
-            if (exemptRatio > 1) exemptRatio = 1; // Defensive cap: exempt cannot exceed total turnover
-            D1 = roundToPaisa(C2 * exemptRatio);
-        } else if (E === 0 && F === 0) {
-            // No turnover in tax period; Rule 42 proviso: use last tax period with turnover
-            turnoverBasis = 'ZERO_TURNOVER_DEFERRED_TO_PRECEDING_PERIOD';
-            exemptRatio = 0;
-            D1 = 0;
-        } else {
-            // E > 0 but F <= 0 (data anomaly)
-            exemptRatio = 1.0;
-            D1 = C2;
-        }
-    }
-
-    // Step 6: D2 - Ineligible common credit attributable to non-business use (5% of C2)
-    const D2 = C2 > 0 ? roundToPaisa(C2 * 0.05) : 0;
-
-    // Step 7: C3 - Eligible common credit
-    // Formula: C3 = C2 - (D1 + D2)
-    const C3 = roundToPaisa(Math.max(0, C2 - (D1 + D2)));
-
-    // Total Rule 42 reversal added to output tax liability:
-    const rule42Reversal = roundToPaisa(D1 + D2);
-
-    // Total net eligible input credit for the period (exclusive taxable T4 + eligible common C3):
-    const netEligibleInputsItc = roundToPaisa(T4 + C3);
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // RULE 43: CAPITAL GOODS APPORTIONMENT
-    // ═══════════════════════════════════════════════════════════════════════
-    const rawA = Math.max(0, Number(capitalGoodsCommonCreditA || 0));
-    const priorQ = Math.max(0, Number(capitalGoodsPriorQuartersExempt || 0));
-    
-    // If capital goods were used exclusively for exempt/non-business and converted to common,
-    // reduce credit by 5% per quarter of prior usage
-    const reductionFactor = Math.min(1.0, priorQ * 0.05);
-    const effectiveA = roundToPaisa(rawA * (1 - reductionFactor));
-
-    // Deemed useful life: 60 months (5 years)
-    const DEEMED_USEFUL_LIFE_MONTHS = 60;
-    const monthlyCapitalGoodsCreditTm = rawA > 0 ? roundToPaisa(effectiveA / DEEMED_USEFUL_LIFE_MONTHS) : 0;
-
-    // Capital goods reversal for the month: Te = (E / F) * Tr
+    // Step 2: Rule 43 Capital Goods Evaluation
+    let capitalGoodsBreakdown = null;
     let capitalGoodsReversalTe = 0;
-    if (monthlyCapitalGoodsCreditTm > 0 && F > 0) {
-        capitalGoodsReversalTe = roundToPaisa(monthlyCapitalGoodsCreditTm * exemptRatio);
+    let monthlyCapitalGoodsCreditTm = 0;
+    const DEEMED_USEFUL_LIFE_MONTHS = 60;
+
+    if (Array.isArray(capitalGoodsList) && capitalGoodsList.length > 0) {
+        const rule43Result = calculateRule43CapitalGoodsReversal({
+            taxPeriod: taxPeriod || 'CURRENT_MONTH',
+            exemptTurnoverInr: exemptTurnoverE,
+            totalTurnoverInr: totalTurnoverF,
+            capitalGoodsList
+        });
+        capitalGoodsReversalTe = rule43Result.summary.monthlyReversalTeInr;
+        monthlyCapitalGoodsCreditTm = rule43Result.summary.monthlyCommonCreditSliceTrInr;
+        capitalGoodsBreakdown = {
+            capitalGoodsCommonCreditA: rule43Result.summary.totalCommonCreditTcInr,
+            deemedUsefulLifeMonths: DEEMED_USEFUL_LIFE_MONTHS,
+            priorQuartersExempt: 0,
+            reductionFactorAppliedPercent: 0,
+            effectiveCommonCredit: rule43Result.summary.totalCommonCreditTcInr,
+            monthlyCreditTm: monthlyCapitalGoodsCreditTm,
+            monthlyReversalTe: capitalGoodsReversalTe,
+            eligibleCapitalGoodsCreditMonthly: rule43Result.summary.netEligibleMonthlyCapitalItcInr,
+            assetSchedules: rule43Result.assetSchedules
+        };
+    } else {
+        const rawA = Math.max(0, Number(capitalGoodsCommonCreditA || 0));
+        const priorQ = Math.max(0, Number(capitalGoodsPriorQuartersExempt || 0));
+        const reductionFactor = Math.min(1.0, priorQ * 0.05);
+        const effectiveA = roundToPaisa(rawA * (1 - reductionFactor));
+        monthlyCapitalGoodsCreditTm = rawA > 0 ? roundToPaisa(effectiveA / DEEMED_USEFUL_LIFE_MONTHS) : 0;
+        capitalGoodsReversalTe = monthlyCapitalGoodsCreditTm > 0 && Number(totalTurnoverF) > 0
+            ? roundToPaisa(monthlyCapitalGoodsCreditTm * rule42Result.turnoverRatioE_F)
+            : 0;
+
+        capitalGoodsBreakdown = {
+            capitalGoodsCommonCreditA: rawA,
+            deemedUsefulLifeMonths: DEEMED_USEFUL_LIFE_MONTHS,
+            priorQuartersExempt: priorQ,
+            reductionFactorAppliedPercent: reductionFactor * 100,
+            effectiveCommonCredit: effectiveA,
+            monthlyCreditTm: monthlyCapitalGoodsCreditTm,
+            monthlyReversalTe: capitalGoodsReversalTe,
+            eligibleCapitalGoodsCreditMonthly: Math.max(0, monthlyCapitalGoodsCreditTm - capitalGoodsReversalTe)
+        };
     }
 
-    const totalPeriodReversal = roundToPaisa(rule42Reversal + capitalGoodsReversalTe);
-    const totalNetEligibleItc = roundToPaisa(netEligibleInputsItc + Math.max(0, monthlyCapitalGoodsCreditTm - capitalGoodsReversalTe));
+    const totalPeriodReversal = roundToPaisa(rule42Result.reversals.totalRule42Reversal + capitalGoodsReversalTe);
+    const totalNetEligibleItc = roundToPaisa(rule42Result.netEligibleInputsItc + Math.max(0, monthlyCapitalGoodsCreditTm - capitalGoodsReversalTe));
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // ANNUAL TRUE-UP RECONCILIATION (RULE 42(2) & 43(2))
-    // ═══════════════════════════════════════════════════════════════════════
+    // Step 3: Annual True-Up Reconciliation (Rule 42(2) & 43(2))
     let annualTrueUpDetails = null;
     if (isAnnualTrueUp && annualTotalTurnover !== null && annualExemptTurnover !== null) {
-        const annualE = Math.max(0, Number(annualExemptTurnover || 0));
-        const annualF = Math.max(0, Number(annualTotalTurnover || 0));
-        const annualRatio = annualF > 0 ? (annualE / annualF) : 0;
-        
-        // Final annual D1 calculated on cumulative common credit C2
-        const annualD1Final = roundToPaisa(C2 * annualRatio);
-        const priorD1Claimed = Math.max(0, Number(sumOfMonthlyReversalsD1 || 0));
-        const trueUpDifference = roundToPaisa(annualD1Final - priorD1Claimed);
+        const trueUpResult = reconcileRule42AnnualTrueUp({
+            financialYear,
+            annualCommonCreditC2Inr: rule42Result.commonCreditC2,
+            annualExemptTurnoverInr: annualExemptTurnover,
+            annualTotalTurnoverInr: annualTotalTurnover,
+            cumulativeMonthlyReversalsInr: sumOfMonthlyReversalsD1,
+            trueUpExecutionDate,
+            hasNonBusinessUse,
+            isRealEstateProject
+        });
 
         annualTrueUpDetails = {
             isAnnualTrueUp: true,
             financialYear,
-            annualExemptTurnover: annualE,
-            annualTotalTurnover: annualF,
-            annualExemptRatio: Number(annualRatio.toFixed(6)),
-            finalAnnualD1Inr: annualD1Final,
-            sumOfMonthlyD1ReversalsClaimedInr: priorD1Claimed,
-            differentialAdjustmentInr: trueUpDifference,
-            adjustmentAction: trueUpDifference > 0 
-                ? 'ADD_TO_OUTPUT_LIABILITY_WITH_SECTION_50_INTEREST' 
-                : (trueUpDifference < 0 ? 'RECLAIM_AS_ELIGIBLE_ITC' : 'ZERO_DIFFERENTIAL_MATCHED'),
+            annualExemptTurnover: trueUpResult.annualExemptTurnoverInr,
+            annualTotalTurnover: trueUpResult.annualTotalTurnoverInr,
+            annualExemptRatio: trueUpResult.annualExemptRatio,
+            finalAnnualD1Inr: trueUpResult.finalAnnualReversals.finalAnnualD1ExemptInr,
+            sumOfMonthlyD1ReversalsClaimedInr: trueUpResult.cumulativeMonthlyReversalsMadeInr,
+            differentialAdjustmentInr: trueUpResult.differentialAdjustmentInr,
+            adjustmentAction: trueUpResult.reconciliationOutcome === 'SHORT_REVERSAL_PAYMENT_DUE'
+                ? 'ADD_TO_OUTPUT_LIABILITY_WITH_SECTION_50_INTEREST'
+                : (trueUpResult.reconciliationOutcome === 'EXCESS_REVERSAL_RECLAIM_PERMITTED' ? 'RECLAIM_AS_ELIGIBLE_ITC' : 'ZERO_DIFFERENTIAL_MATCHED'),
+            reconciliationOutcome: trueUpResult.reconciliationOutcome,
+            shortfallAmountInr: trueUpResult.shortfallAmountInr,
+            excessReversedInr: trueUpResult.excessReversedInr,
+            interestAssessment: trueUpResult.interestAssessment,
+            statutoryAction: trueUpResult.statutoryAction,
             statutoryFilingDeadlineNotice: isRealEstateProject
                 ? 'Real estate project true-up governed by Annexure I/II of Notification 16/2019-CT.'
                 : 'Annual adjustment due on or before filing return for month of September following FY end (or 30th November cutoff).'
@@ -4244,48 +4654,39 @@ export function calculateGstItcApportionmentRule42_43({
         taxPeriod: taxPeriod || 'CURRENT_MONTH',
         financialYear,
         rule42InputsBreakdown: {
-            totalItcT: T,
+            totalItcT: rule42Result.totalItcT,
             directIneligible: {
-                exclusiveNonBusinessT1: T1,
-                exclusiveExemptT2: T2,
-                blockedSection17_5_T3: T3,
-                sumIneligible: ineligibleDirect
+                exclusiveNonBusinessT1: rule42Result.directIneligibleCredits.exclusiveNonBusinessT1,
+                exclusiveExemptT2: rule42Result.directIneligibleCredits.exclusiveExemptT2,
+                blockedSection17_5_T3: rule42Result.directIneligibleCredits.blockedSection17_5_T3,
+                sumIneligible: rule42Result.directIneligibleCredits.sumIneligible
             },
-            creditedToElectronicLedgerC1: C1,
-            exclusiveTaxableT4: T4,
-            commonCreditC2: C2,
-            exemptTurnoverE: E,
-            totalTurnoverF: F,
-            exemptRatio: Number(exemptRatio.toFixed(6)),
-            turnoverBasis,
+            creditedToElectronicLedgerC1: rule42Result.creditedToElectronicCreditLedgerC1,
+            exclusiveTaxableT4: rule42Result.exclusiveTaxableT4,
+            commonCreditC2: rule42Result.commonCreditC2,
+            exemptTurnoverE: rule42Result.exemptTurnoverE,
+            totalTurnoverF: rule42Result.totalTurnoverF,
+            exemptRatio: rule42Result.turnoverRatioE_F,
+            turnoverBasis: rule42Result.turnoverBasis,
             reversals: {
-                ineligibleExemptCommonD1: D1,
-                nonBusinessCommonD2: D2,
-                totalRule42Reversal: rule42Reversal
+                ineligibleExemptCommonD1: rule42Result.reversals.ineligibleExemptCommonD1,
+                nonBusinessCommonD2: rule42Result.reversals.nonBusinessCommonD2,
+                totalRule42Reversal: rule42Result.reversals.totalRule42Reversal
             },
-            eligibleCommonCreditC3: C3,
-            netEligibleInputsItc
+            eligibleCommonCreditC3: rule42Result.eligibleCommonCreditC3,
+            netEligibleInputsItc: rule42Result.netEligibleInputsItc
         },
-        rule43CapitalGoodsBreakdown: {
-            capitalGoodsCommonCreditA: rawA,
-            deemedUsefulLifeMonths: DEEMED_USEFUL_LIFE_MONTHS,
-            priorQuartersExempt: priorQ,
-            reductionFactorAppliedPercent: reductionFactor * 100,
-            effectiveCommonCredit: effectiveA,
-            monthlyCreditTm: monthlyCapitalGoodsCreditTm,
-            monthlyReversalTe: capitalGoodsReversalTe,
-            eligibleCapitalGoodsCreditMonthly: Math.max(0, monthlyCapitalGoodsCreditTm - capitalGoodsReversalTe)
-        },
+        rule43CapitalGoodsBreakdown: capitalGoodsBreakdown,
         summary: {
-            totalGrossItcT: T,
-            totalDirectIneligible: ineligibleDirect,
-            totalCommonCreditApportioned: C2,
+            totalGrossItcT: rule42Result.totalItcT,
+            totalDirectIneligible: rule42Result.directIneligibleCredits.sumIneligible,
+            totalCommonCreditApportioned: rule42Result.commonCreditC2,
             totalMonthlyReversalAddedToOutputLiability: totalPeriodReversal,
             netEligibleItcTotal: totalNetEligibleItc
         },
         annualTrueUp: annualTrueUpDetails,
         isAuthorizedToDisburse: false,
-        statutoryRationale: `Rule 42 credited ₹${C1.toLocaleString('en-IN')} to ledger, identified ₹${C2.toLocaleString('en-IN')} common credit, and calculated ₹${rule42Reversal.toLocaleString('en-IN')} reversal (D1: ₹${D1}, D2: ₹${D2}). Rule 43 capital goods reversal: ₹${capitalGoodsReversalTe.toLocaleString('en-IN')}. Net eligible ITC: ₹${totalNetEligibleItc.toLocaleString('en-IN')}. Reversal must be added to GSTR-3B Table 4(B).`
+        statutoryRationale: `Rule 42 credited ₹${rule42Result.creditedToElectronicCreditLedgerC1.toLocaleString('en-IN')} to ledger, identified ₹${rule42Result.commonCreditC2.toLocaleString('en-IN')} common credit, and calculated ₹${rule42Result.reversals.totalRule42Reversal.toLocaleString('en-IN')} reversal (D1: ₹${rule42Result.reversals.ineligibleExemptCommonD1}, D2: ₹${rule42Result.reversals.nonBusinessCommonD2}). Rule 43 capital goods reversal: ₹${capitalGoodsReversalTe.toLocaleString('en-IN')}. Net eligible ITC: ₹${totalNetEligibleItc.toLocaleString('en-IN')}. Reversal must be added to GSTR-3B Table 4(B).`
     };
 }
 

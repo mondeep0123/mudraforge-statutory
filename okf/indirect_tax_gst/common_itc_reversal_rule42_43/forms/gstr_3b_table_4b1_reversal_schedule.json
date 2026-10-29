@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GSTR-3B Table 4(B)(1) Permanent ITC Reversal Schedule",
+  "description": "Statutory reporting schema for Rule 42 (Inputs/Input Services D1+D2) and Rule 43 (Capital Goods Te) permanent reversals in GSTR-3B Table 4(B)(1)",
+  "type": "object",
+  "required": [
+    "recipientGstin",
+    "returnPeriod",
+    "taxPeriodYear",
+    "taxPeriodMonth",
+    "totalItcAvailableT",
+    "t1NonBusinessInr",
+    "t2ExemptInr",
+    "t3BlockedInr",
+    "eligibleC1Inr",
+    "t4TaxableInr",
+    "commonCreditC2Inr",
+    "exemptTurnoverEInr",
+    "totalTurnoverFInr",
+    "rule42D1ExemptReversalInr",
+    "rule42D2NonBusinessReversalInr",
+    "rule43TeCapitalGoodsReversalInr",
+    "totalPermanentReversalTable4B1Inr",
+    "isPermanentNonReclaimable"
+  ],
+  "properties": {
+    "recipientGstin": {
+      "type": "string",
+      "pattern": "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
+    },
+    "returnPeriod": {
+      "type": "string",
+      "pattern": "^(0[1-9]|1[0-2])20[2-9][0-9]$"
+    },
+    "taxPeriodYear": {
+      "type": "integer",
+      "minimum": 2017
+    },
+    "taxPeriodMonth": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "totalItcAvailableT": {
+      "type": "number",
+      "minimum": 0
+    },
+    "t1NonBusinessInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "t2ExemptInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "t3BlockedInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "eligibleC1Inr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "t4TaxableInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "commonCreditC2Inr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "exemptTurnoverEInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "totalTurnoverFInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "rule42D1ExemptReversalInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "rule42D2NonBusinessReversalInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "rule43TeCapitalGoodsReversalInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "totalPermanentReversalTable4B1Inr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "isPermanentNonReclaimable": {
+      "type": "boolean",
+      "const": true
+    }
+  }
+}

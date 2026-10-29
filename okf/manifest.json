@@ -1,9 +1,9 @@
 {
   "okfVersion": "2.9.0",
-  "publishedAt": "2026-10-29T07:01:13.976Z",
-  "rootHash": "sha256-feb1555f10c9f5c70de18ef340e0ba6cf1f060fb19cae866aa36240345c46f3a",
-  "totalSections": 37,
-  "totalFiles": 112,
+  "publishedAt": "2026-10-29T17:32:07.330Z",
+  "rootHash": "sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19",
+  "totalSections": 38,
+  "totalFiles": 117,
   "changelog": "Expanded statutory commons with 5 Corporate Finance Domains: Corporate Tax MAT vs 115BAA, Place of Supply & Zero-Rated Export LUT, Transfer Pricing ALP & Rule 10CA, Section 79 Loss Continuity, and Ind AS 21 & 109 FX Revaluation.",
   "domains": {
     "corporate_ma_restructuring": [
@@ -31,6 +31,7 @@
     ],
     "indirect_tax_gst": [
       "17(5)",
+      "RULE-42-43",
       "8",
       "10",
       "34",
@@ -75,6 +76,7 @@
     "194-IB",
     "194J",
     "17(5)",
+    "RULE-42-43",
     "8",
     "10",
     "34",
@@ -156,6 +158,11 @@
     "indirect_tax_gst/blocked_itc_17_5/circulars/cbic_circular_172_2022_employer_obligations.md": "fe0e64e35ced26bbdb4fe77526d518c42f4e38c27ad68e94b1e96d10229f3507",
     "indirect_tax_gst/blocked_itc_17_5/forms/gstr_2b_ineligible_reconciliation.json": "b71b26a0797077ad1f5195fa07b25e8c499fcec46c4073360195b35ca431c6f6",
     "indirect_tax_gst/blocked_itc_17_5/section.json": "85e8d74b4f2f6d35503840ad8e7ae80c493d6da8f5bb437f878ca72b300fde62",
+    "indirect_tax_gst/common_itc_reversal_rule42_43/circulars/cbic_circular_170_2022_itc_reporting.md": "55ed3bdf04508ca4ab184964bd4560033c3595bbded6559a75fefaef12d7202e",
+    "indirect_tax_gst/common_itc_reversal_rule42_43/circulars/cbic_notification_18_2022_cutoff_amendment.md": "b4e02b93f9dcf6dd0c8a8d0565453742db7b941173e23a547af384d2d11dd25f",
+    "indirect_tax_gst/common_itc_reversal_rule42_43/forms/gstr_3b_table_4b1_reversal_schedule.json": "0f08d602b234517384ed41b2d2cc9c504e44fdd885def7b319dd1f05021f7f56",
+    "indirect_tax_gst/common_itc_reversal_rule42_43/forms/rule_42_43_annual_reconciliation_worksheet.json": "9d926b8ef3795b7d893096b99f420b7c7784cec7d562de7c56ecf6cdffde7381",
+    "indirect_tax_gst/common_itc_reversal_rule42_43/section.json": "6bea1f1cee5875975f2b18b93634fa9713298936f5908f4eda66f91b9dc0dd8c",
     "indirect_tax_gst/composite_mixed_supplies_sec8/circulars/cbic_circular_47_2018_composite_mixed_supplies.md": "88ce49a04aaffe4310482e6023183ae59826c8a32fc0661f0894856a32b3acb5",
     "indirect_tax_gst/composite_mixed_supplies_sec8/forms/composite_mixed_supply_assessment_matrix.json": "18a33182fd26b74c1dc18a0138e67ba671004f642ea131abc668c60c7f0f9555",
     "indirect_tax_gst/composite_mixed_supplies_sec8/section.json": "1adac2d105ebc66707b91ae5655d9d04a06587a35a79eb8783eb1143c338e8dd",

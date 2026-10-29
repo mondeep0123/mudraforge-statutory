@@ -47,6 +47,10 @@ import {
     evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
+    calculateRule42InputServiceReversal,
+    reconcileRule42AnnualTrueUp,
+    calculateRule43CapitalGoodsReversal,
+    calculateGstItcApportionmentRule42_43,
     getStatutoryOutcomes,
     explainStatutoryDisposition,
     enrichWithOutcomeExplanation,
@@ -1611,7 +1615,7 @@ async function run() {
         cwd: path.resolve('.')
     });
     const parsedList = JSON.parse(cliListOutput);
-    if (!Array.isArray(parsedList.sections) || parsedList.total !== 37) {
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 38) {
         throw new Error('CLI list --json failed');
     }
 
@@ -2778,8 +2782,242 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient parity verified for evaluateSection194M.');
 
+    // 107. GST Rule 42: Inputs & Input Services Monthly Apportionment Engine
+    console.log('\n── Test 107: GST Rule 42 — Monthly Inputs & Services Common ITC Reversal ──');
+    const rule42Monthly = calculateRule42InputServiceReversal({
+        taxPeriod: '2024-05',
+        totalItcInr: 100000,
+        t1NonBusinessInr: 5000,
+        t2ExemptInr: 10000,
+        t3BlockedInr: 5000,
+        t4TaxableInr: 50000,
+        exemptTurnoverInr: 200000,
+        totalTurnoverInr: 1000000,
+        hasNonBusinessUse: true
+    });
+    if (rule42Monthly.creditedToElectronicCreditLedgerC1 !== 80000) {
+        throw new Error(`Expected C1 = 80000, got ${rule42Monthly.creditedToElectronicCreditLedgerC1}`);
+    }
+    if (rule42Monthly.commonCreditC2 !== 30000) {
+        throw new Error(`Expected C2 = 30000, got ${rule42Monthly.commonCreditC2}`);
+    }
+    if (rule42Monthly.reversals.ineligibleExemptCommonD1 !== 6000) {
+        throw new Error(`Expected D1 = 6000, got ${rule42Monthly.reversals.ineligibleExemptCommonD1}`);
+    }
+    if (rule42Monthly.reversals.nonBusinessCommonD2 !== 1500) {
+        throw new Error(`Expected D2 = 1500, got ${rule42Monthly.reversals.nonBusinessCommonD2}`);
+    }
+    if (rule42Monthly.reversals.totalRule42Reversal !== 7500) {
+        throw new Error(`Expected total Rule 42 reversal = 7500, got ${rule42Monthly.reversals.totalRule42Reversal}`);
+    }
+    if (rule42Monthly.netEligibleInputsItc !== 72500) {
+        throw new Error(`Expected net eligible ITC = 72500, got ${rule42Monthly.netEligibleInputsItc}`);
+    }
+    if (rule42Monthly.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+    }
+    // Proviso check: zero turnover with preceding turnover fallback
+    const rule42PrecedingProviso = calculateRule42InputServiceReversal({
+        taxPeriod: '2024-06',
+        totalItcInr: 50000,
+        t4TaxableInr: 20000,
+        exemptTurnoverInr: 0,
+        totalTurnoverInr: 0,
+        precedingExemptTurnoverInr: 100000,
+        precedingTotalTurnoverInr: 500000
+    });
+    if (rule42PrecedingProviso.turnoverBasis !== 'PRECEDING_TAX_PERIOD_PROVISO' || rule42PrecedingProviso.turnoverRatioE_F !== 0.2) {
+        throw new Error('Rule 42 preceding tax period turnover proviso fallback failed');
+    }
+    console.log('[PASS] GST Rule 42 Monthly Reversal Verified: C1 ledger credit, C2 common credit, D1 exempt ratio, D2 5% non-business, and preceding period proviso fallback.');
+
+    // 108. GST Rule 42(2): Annual True-Up Reconciliation & Section 50(1) 18% Interest
+    console.log('\n── Test 108: GST Rule 42(2) — Annual True-up Reconciliation & Section 50(1) Interest ──');
+    // Scenario A: Shortfall reversal (Under-reversed during FY -> Section 50(1) interest from April 1)
+    const annualShortfall = reconcileRule42AnnualTrueUp({
+        financialYear: '2024-25',
+        annualCommonCreditC2Inr: 360000,
+        annualExemptTurnoverInr: 3000000,
+        annualTotalTurnoverInr: 10000000,
+        cumulativeMonthlyReversalsInr: 100000,
+        trueUpExecutionDate: '2025-10-20'
+    });
+    if (annualShortfall.reconciliationOutcome !== 'SHORT_REVERSAL_PAYMENT_DUE') {
+        throw new Error(`Expected SHORT_REVERSAL_PAYMENT_DUE, got ${annualShortfall.reconciliationOutcome}`);
+    }
+    if (annualShortfall.shortfallAmountInr !== 26000) {
+        throw new Error(`Expected shortfall = 26000, got ${annualShortfall.shortfallAmountInr}`);
+    }
+    if (annualShortfall.interestAssessment.daysElapsed !== 202) {
+        throw new Error(`Expected 202 days elapsed, got ${annualShortfall.interestAssessment.daysElapsed}`);
+    }
+    if (annualShortfall.interestAssessment.interestPayableInr !== 2590.03) {
+        throw new Error(`Expected interest = 2590.03, got ${annualShortfall.interestAssessment.interestPayableInr}`);
+    }
+    if (annualShortfall.statutoryCutoffDate !== '2025-11-30') {
+        throw new Error(`Expected statutory cutoff 2025-11-30, got ${annualShortfall.statutoryCutoffDate}`);
+    }
+    if (annualShortfall.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+    }
+
+    // Scenario B: Excess reversal (Over-reversed during FY -> Reclaim in Table 4(A)(5) and 4(D)(1))
+    const annualExcess = reconcileRule42AnnualTrueUp({
+        financialYear: '2024-25',
+        annualCommonCreditC2Inr: 360000,
+        annualExemptTurnoverInr: 1000000,
+        annualTotalTurnoverInr: 10000000,
+        cumulativeMonthlyReversalsInr: 70000,
+        trueUpExecutionDate: '2025-10-20'
+    });
+    if (annualExcess.reconciliationOutcome !== 'EXCESS_REVERSAL_RECLAIM_PERMITTED') {
+        throw new Error(`Expected EXCESS_REVERSAL_RECLAIM_PERMITTED, got ${annualExcess.reconciliationOutcome}`);
+    }
+    if (annualExcess.excessReversedInr !== 16000) {
+        throw new Error(`Expected excess reversed = 16000, got ${annualExcess.excessReversedInr}`);
+    }
+    if (annualExcess.interestAssessment.interestPayableInr !== 0) {
+        throw new Error(`Expected zero interest on excess reversal, got ${annualExcess.interestAssessment.interestPayableInr}`);
+    }
+
+    // Scenario C: Balanced Zero Variance
+    const annualBalanced = reconcileRule42AnnualTrueUp({
+        financialYear: '2024-25',
+        annualCommonCreditC2Inr: 360000,
+        annualExemptTurnoverInr: 1000000,
+        annualTotalTurnoverInr: 10000000,
+        cumulativeMonthlyReversalsInr: 54000
+    });
+    if (annualBalanced.reconciliationOutcome !== 'BALANCED_ZERO_VARIANCE' || annualBalanced.differentialAdjustmentInr !== 0) {
+        throw new Error('Expected BALANCED_ZERO_VARIANCE for matched true-up');
+    }
+    console.log('[PASS] GST Rule 42(2) Annual True-up Verified: Shortfall with Section 50(1) 18% interest, Excess reversal reclaim mechanism, and 30th November statutory cutoff.');
+
+    // 109. GST Rule 43: Capital Goods Common ITC Amortisation & Asset Portfolio Tracking
+    console.log('\n── Test 109: GST Rule 43 — Capital Goods Useful Life Amortisation & Reversal ──');
+    const rule43Result = calculateRule43CapitalGoodsReversal({
+        taxPeriod: '2024-04',
+        taxPeriodDate: '2024-04-15',
+        exemptTurnoverInr: 200000,
+        totalTurnoverInr: 1000000,
+        capitalGoodsList: [
+            {
+                assetId: 'ASSET-001',
+                description: 'CNC Machine',
+                invoiceDate: '2023-04-10',
+                itcAmountInr: 600000,
+                category: 'COMMON'
+            },
+            {
+                assetId: 'ASSET-002',
+                description: 'Testing Rig (Exempt to Common)',
+                invoiceDate: '2023-10-01',
+                itcAmountInr: 300000,
+                category: 'COMMON',
+                priorCategory: 'EXEMPT_ONLY',
+                conversionDate: '2024-04-01'
+            },
+            {
+                assetId: 'ASSET-003',
+                description: 'Office Car (Blocked 17(5))',
+                invoiceDate: '2023-05-01',
+                itcAmountInr: 250000,
+                category: 'EXEMPT_ONLY'
+            },
+            {
+                assetId: 'ASSET-004',
+                description: 'Old Lathe (Expired 60 months)',
+                invoiceDate: '2018-01-01',
+                itcAmountInr: 360000,
+                category: 'COMMON'
+            }
+        ]
+    });
+    if (rule43Result.summary.totalAssetsAssessed !== 4) {
+        throw new Error(`Expected 4 assets assessed, got ${rule43Result.summary.totalAssetsAssessed}`);
+    }
+    if (rule43Result.summary.activeCommonAssetsCount !== 2) {
+        throw new Error(`Expected 2 active common assets, got ${rule43Result.summary.activeCommonAssetsCount}`);
+    }
+    if (rule43Result.summary.totalCommonCreditTcInr !== 855000) {
+        throw new Error(`Expected total common Tc = 855000, got ${rule43Result.summary.totalCommonCreditTcInr}`);
+    }
+    if (rule43Result.summary.monthlyCommonCreditSliceTrInr !== 14250) {
+        throw new Error(`Expected Tr = 14250, got ${rule43Result.summary.monthlyCommonCreditSliceTrInr}`);
+    }
+    if (rule43Result.summary.monthlyReversalTeInr !== 2850) {
+        throw new Error(`Expected Te = 2850, got ${rule43Result.summary.monthlyReversalTeInr}`);
+    }
+    if (rule43Result.summary.netEligibleMonthlyCapitalItcInr !== 11400) {
+        throw new Error(`Expected net eligible capital ITC = 11400, got ${rule43Result.summary.netEligibleMonthlyCapitalItcInr}`);
+    }
+    const expiredAsset = rule43Result.assetSchedules.find(a => a.assetId === 'ASSET-004');
+    if (expiredAsset.status !== 'EXPIRED_USEFUL_LIFE_60_MONTHS' || expiredAsset.monthlyCreditTmInr !== 0) {
+        throw new Error('Expired asset useful life check failed');
+    }
+    if (rule43Result.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+    }
+    console.log('[PASS] GST Rule 43 Engine Verified: 60-month useful life tracking, asset conversion quarter reduction, monthly Tr slice, and Te exempt reversal.');
+
+    // 110. StatutoryClient Programmatic Parity for GST Rule 42 & Rule 43
+    console.log('\n── Test 110: StatutoryClient Programmatic Parity for Rule 42 & Rule 43 ──');
+    const clientR42 = statutoryClientInstance.calculateRule42InputServiceReversal({
+        taxPeriod: '2024-05',
+        totalItcInr: 100000,
+        t4TaxableInr: 50000,
+        exemptTurnoverInr: 200000,
+        totalTurnoverInr: 1000000
+    });
+    if (clientR42.reversals.totalRule42Reversal !== 12500) {
+        throw new Error(`StatutoryClient.calculateRule42InputServiceReversal parity check failed, got ${clientR42.reversals.totalRule42Reversal}`);
+    }
+
+    const clientTrueUp = statutoryClientInstance.reconcileRule42AnnualTrueUp({
+        financialYear: '2024-25',
+        annualCommonCreditC2Inr: 360000,
+        annualExemptTurnoverInr: 3000000,
+        annualTotalTurnoverInr: 10000000,
+        cumulativeMonthlyReversalsInr: 100000,
+        trueUpExecutionDate: '2025-10-20'
+    });
+    if (clientTrueUp.shortfallAmountInr !== 26000) {
+        throw new Error('StatutoryClient.reconcileRule42AnnualTrueUp parity check failed');
+    }
+
+    const clientR43 = statutoryClientInstance.calculateRule43CapitalGoodsReversal({
+        taxPeriod: '2024-04',
+        exemptTurnoverInr: 200000,
+        totalTurnoverInr: 1000000,
+        capitalGoodsList: [
+            {
+                assetId: 'ASSET-001',
+                description: 'CNC Machine',
+                invoiceDate: '2023-04-10',
+                itcAmountInr: 600000,
+                category: 'COMMON'
+            }
+        ]
+    });
+    if (clientR43.summary.monthlyReversalTeInr !== 2000) {
+        throw new Error('StatutoryClient.calculateRule43CapitalGoodsReversal parity check failed');
+    }
+
+    const unifiedResult = statutoryClientInstance.calculateGstItcApportionmentRule42_43({
+        taxPeriod: '2024-05',
+        totalInputTaxCreditT: 100000,
+        exclusiveTaxableT4: 50000,
+        exemptTurnoverE: 200000,
+        totalTurnoverF: 1000000,
+        capitalGoodsCommonCreditA: 600000
+    });
+    if (unifiedResult.summary.totalMonthlyReversalAddedToOutputLiability !== 14500) {
+        throw new Error(`Unified orchestrator parity failed: expected 14500, got ${unifiedResult.summary.totalMonthlyReversalAddedToOutputLiability}`);
+    }
+    console.log('[PASS] StatutoryClient programmatic parity verified across all Rule 42 & Rule 43 interfaces.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 106 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 110 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 
