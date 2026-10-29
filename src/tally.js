@@ -83,7 +83,7 @@ export function parseTallyDaybookCsv(csvText) {
 
     for (let i = 1; i < lines.length; i++) {
         const row = parseCsvRow(lines[i], delimiter);
-        if (row.length === 0 || (row.length === 1 && !row[0])) continue;
+        if (row.length === 0 || row.every(cell => !cell || !cell.trim())) continue;
 
         const rawDate = colIndex.date !== -1 ? row[colIndex.date] : null;
         const normalizedDate = normalizeIsoDate(rawDate);

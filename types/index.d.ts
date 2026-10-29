@@ -223,7 +223,7 @@ export declare class StatutoryClient {
     generateAuditMarkdownReport(reconciliationResult: ReconcileDaybookResult): string;
     cleanNumericAmount(val: any, options?: CleanNumericAmountOptions): number;
     roundToPaisa(amount: number | string): number;
-    toIntegerPaise(amount: number | string, fieldName?: string): number;
+    toIntegerPaise(amount: number | string, options?: string | ToIntegerPaiseOptions): number;
     fromIntegerPaise(paise: number): number;
     getOutcomes(provision?: string, options?: StatutoryOutcomesOptions): Promise<StatutoryOutcomesResult>;
     explain(codeOrQuery: string, options?: any): any;
@@ -372,8 +372,14 @@ export declare class MissingMandatoryParameterError extends Error {
     constructor(fieldName: string, functionName: string);
 }
 
+export interface ToIntegerPaiseOptions {
+    fieldName?: string;
+    strict?: boolean;
+    strictSubPaisa?: boolean;
+}
+
 export declare function assertMandatoryNumeric(val: any, fieldName: string, functionName: string, options?: CleanNumericAmountOptions): number;
-export declare function toIntegerPaise(amount: number | string, fieldName?: string): number;
+export declare function toIntegerPaise(amount: number | string, options?: string | ToIntegerPaiseOptions): number;
 export declare function fromIntegerPaise(paise: number): number;
 export declare function roundToPaisa(amount: number | string): number;
 export declare function roundSection288B(amount: number | string): number;

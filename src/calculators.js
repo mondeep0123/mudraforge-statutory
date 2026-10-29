@@ -143,6 +143,20 @@ export function cleanNumericAmount(val, options = {}) {
         let isNegative = false;
         let s = trimmed;
 
+        // Financial malformation checks:
+        // 1. Digits separated by whitespace (e.g. "100 200" or concatenated invoice numbers)
+        // 2. Double commas or double decimal points (e.g. "1,,000" or "100..50")
+        // 3. Comma appearing after a decimal point (e.g. "100.50,25")
+        if (/\d\s+\d/.test(s) || /(?:,,|\.\.)/.test(s) || /\.\d*,/.test(s)) {
+            if (strict) {
+                throw new MalformedNumericInputError(val, fieldName);
+            }
+            return 0;
+        }
+
+        // Strip leading currency label before parenthesis or sign: "₹ (50,000.00)" or "INR -50,000"
+        s = s.replace(/^(?:₹|\$|€|INR|Rs\.?)\s*/i, '');
+
         // Accounting parentheses: (1,500.00) or (₹ 1,500.00)
         if (/^\(.*\)$/.test(s)) {
             isNegative = true;
@@ -152,7 +166,7 @@ export function cleanNumericAmount(val, options = {}) {
             isNegative = true;
             s = s.replace(/-\s*$/, '').trim();
         } else if (/^\s*-\s*/.test(s)) {
-            // Explicit leading minus with possible whitespace: "- ₹ 1,500.00"
+            // Explicit leading minus with possible whitespace: "- ₹ 1,500.00" or "-1500"
             isNegative = true;
             s = s.replace(/^\s*-\s*/, '').trim();
         } else if (/(?:\s+)?(?:cr|credit)\.?$/i.test(s)) {
@@ -168,7 +182,7 @@ export function cleanNumericAmount(val, options = {}) {
             s = s.replace(/(?:\s+)?(?:dr|debit)\.?$/i, '').trim();
         }
 
-        // Strip common currency symbols, commas, and currency labels
+        // Strip remaining currency symbols, commas, and currency labels
         const cleaned = s.replace(/[₹$€,\s]|(?:INR|Rs\.?)/gi, '');
         const n = parseFloat(cleaned);
         
@@ -191,23 +205,58 @@ export function cleanNumericAmount(val, options = {}) {
  * High-precision conversion of rupees to integer paise.
  * Avoids IEEE-754 floating point drift during threshold and summation operations.
  * 
+ * Safety Bounds & Precision Policy:
+ * - Bounds: Asserts absolute value does not exceed JavaScript Number.MAX_SAFE_INTEGER (53-bit integer limit).
+ * - Precision: Applies standard statutory half-up rounding (Math.round) to the nearest integer paisa.
+ * - Strict sub-paisa: When options.strictSubPaisa is true, rejects amounts having fractional sub-paisa (>2 decimals).
+ * 
  * @param {any} amount - Rupees amount or formatted string
- * @param {string} [fieldName='amount']
+ * @param {string|Object} [options='amount'] - Diagnostic field name or options object
+ * @param {string} [options.fieldName='amount']
+ * @param {boolean} [options.strict=false]
+ * @param {boolean} [options.strictSubPaisa=false]
  * @returns {number} Integer paise (e.g. 50.25 -> 5025)
  */
-export function toIntegerPaise(amount, fieldName = 'amount') {
-    const n = cleanNumericAmount(amount, { strict: false, fieldName });
-    return Math.round(n * 100);
+export function toIntegerPaise(amount, options = 'amount') {
+    const opts = typeof options === 'string' ? { fieldName: options } : (options || {});
+    const {
+        fieldName = 'amount',
+        strict = false,
+        strictSubPaisa = false
+    } = opts;
+
+    const n = cleanNumericAmount(amount, { strict, fieldName });
+    const rawPaise = n * 100;
+
+    // Safe integer boundary assertion (9 quadrillion paise / ~₹90 Trillion limit)
+    if (Math.abs(rawPaise) > Number.MAX_SAFE_INTEGER) {
+        throw new RangeError(`[@mudraforge/statutory] Amount exceeds JavaScript MAX_SAFE_INTEGER (53-bit limit) in field "${fieldName}".`);
+    }
+
+    const roundedPaise = Math.round(rawPaise);
+
+    // Explicit sub-paisa fractional detection
+    if (strictSubPaisa && Math.abs(rawPaise - roundedPaise) > 1e-4) {
+        throw new MalformedNumericInputError(amount, fieldName);
+    }
+
+    return roundedPaise;
 }
 
 /**
  * Converts integer paise back to rupees with 2 decimal places.
+ * 
+ * Safety Bounds:
+ * - Asserts input paise does not exceed Number.MAX_SAFE_INTEGER.
  * 
  * @param {number} paise - Integer paise
  * @returns {number} Rounded rupees
  */
 export function fromIntegerPaise(paise) {
     if (!Number.isFinite(paise) || isNaN(paise)) return 0;
+    if (Math.abs(paise) > Number.MAX_SAFE_INTEGER) {
+        throw new RangeError('[@mudraforge/statutory] Integer paise exceeds JavaScript MAX_SAFE_INTEGER (53-bit limit).');
+    }
     const rupees = paise / 100;
     return Object.is(rupees, -0) ? 0 : Math.round(rupees * 100) / 100;
 }

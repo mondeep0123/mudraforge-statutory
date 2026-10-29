@@ -3439,6 +3439,40 @@ async function run() {
     }
     if (!malformedCaught) throw new Error('cleanNumericAmount strict mode failed to throw MalformedNumericInputError');
 
+    // Financial formatting edge cases: currency outside parenthesis & invalid syntax
+    if (cleanNumericAmount('₹ (50,000.00)') !== -50000 || cleanNumericAmount('INR (25,000)') !== -25000) {
+        throw new Error('cleanNumericAmount failed on currency outside parenthesis "₹ (50,000.00)"');
+    }
+    if (cleanNumericAmount('₹ -50,000.00') !== -50000) {
+        throw new Error('cleanNumericAmount failed on currency before minus "₹ -50,000.00"');
+    }
+
+    // Malformed input rejection: spaced digits, double commas, and commas after decimals
+    let spacedDigitsRejected = false;
+    try {
+        cleanNumericAmount('100 200', { strict: true });
+    } catch (e) {
+        if (e instanceof MalformedNumericInputError) spacedDigitsRejected = true;
+    }
+    if (!spacedDigitsRejected) throw new Error('cleanNumericAmount failed to reject spaced digits "100 200"');
+
+    let doubleCommaRejected = false;
+    try {
+        cleanNumericAmount('1,,000', { strict: true });
+    } catch (e) {
+        if (e instanceof MalformedNumericInputError) doubleCommaRejected = true;
+    }
+    if (!doubleCommaRejected) throw new Error('cleanNumericAmount failed to reject double comma "1,,000"');
+
+    let commaAfterDotRejected = false;
+    try {
+        cleanNumericAmount('100.50,25', { strict: true });
+    } catch (e) {
+        if (e instanceof MalformedNumericInputError) commaAfterDotRejected = true;
+    }
+    if (!commaAfterDotRejected) throw new Error('cleanNumericAmount failed to reject comma after dot "100.50,25"');
+
+    // Integer paise roundtrip & safe integer boundary
     if (toIntegerPaise('₹ 50,00,000.25') !== 500000025) {
         throw new Error(`toIntegerPaise failed: expected 500000025, got ${toIntegerPaise('₹ 50,00,000.25')}`);
     }
@@ -3451,7 +3485,29 @@ async function run() {
     if (fromIntegerPaise(-2550) !== -25.5) {
         throw new Error('fromIntegerPaise failed on negative paise');
     }
-    console.log('[PASS] Strict Malformed Input Rejection & Integer Paise Precision Verified: 0-drift paise roundtrips.');
+
+    // Safe integer threshold (Number.MAX_SAFE_INTEGER)
+    let maxSafeExceeded = false;
+    try {
+        toIntegerPaise(1e16); // 10 quadrillion exceeds 9.007 quadrillion limit
+    } catch (e) {
+        if (e instanceof RangeError) maxSafeExceeded = true;
+    }
+    if (!maxSafeExceeded) throw new Error('toIntegerPaise failed to throw RangeError on Number.MAX_SAFE_INTEGER breach');
+
+    // Explicit sub-paisa precision handling
+    if (toIntegerPaise('100.555') !== 10056) {
+        throw new Error('toIntegerPaise default half-up rounding failed on 100.555');
+    }
+    let strictSubPaisaRejected = false;
+    try {
+        toIntegerPaise('100.555', { strictSubPaisa: true });
+    } catch (e) {
+        if (e instanceof MalformedNumericInputError) strictSubPaisaRejected = true;
+    }
+    if (!strictSubPaisaRejected) throw new Error('toIntegerPaise strictSubPaisa failed to reject fractional sub-paisa');
+
+    console.log('[PASS] Strict Malformed Input Rejection & Integer Paise Precision Verified: 0-drift paise roundtrips, MAX_SAFE_INTEGER bounds, and sub-paisa policies.');
 
     // 128. Mandatory Parameter Enforcement across Calculators (No Silent Zero Coercion)
     console.log('\n── Test 128: Mandatory Parameter Enforcement across Statutory Calculators ──');
@@ -3528,7 +3584,20 @@ async function run() {
     if (dualAudit.auditSummary.totalTdsShortfallInr !== 500) {
         throw new Error(`Expected TDS shortfall 500, got ${dualAudit.auditSummary.totalTdsShortfallInr}`);
     }
-    console.log('[PASS] Dual Debit/Credit Columns & Quoted CSV Fields Verified: Particulars header, dual-column netting, and RFC 4180 compliance.');
+
+    // Malformed rows & blank lines with commas handling:
+    const csvWithBlanks = `Date,Voucher_No,Particulars,Gross_Amount
+2024-05-01,INV-1,Tata Steel,1000000
+,,,,
+   
+2024-05-02,INV-2,JSW Steel,2000000
+,,,,,
+`;
+    const parsedWithBlanks = parseTallyDaybookCsv(csvWithBlanks);
+    if (parsedWithBlanks.length !== 2) {
+        throw new Error(`Expected 2 vouchers after filtering blank/comma rows, got ${parsedWithBlanks.length}`);
+    }
+    console.log('[PASS] Dual Debit/Credit Columns & Quoted CSV Fields Verified: Particulars header, dual-column netting, blank-row filtering, and RFC 4180 compliance.');
 
     // 130. StatutoryClient Arithmetic and Precision Parity
     console.log('\n── Test 130: StatutoryClient Arithmetic and Precision Parity ──');
