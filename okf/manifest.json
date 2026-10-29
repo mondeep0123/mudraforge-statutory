@@ -1,9 +1,9 @@
 {
   "okfVersion": "2.9.0",
-  "publishedAt": "2026-10-29T04:30:45.261Z",
-  "rootHash": "sha256-bf547512a57f26eae9a5ebcb9f0ec41c397421366b1b4223ab9e17d282721ca7",
-  "totalSections": 32,
-  "totalFiles": 96,
+  "publishedAt": "2026-10-29T04:45:46.919Z",
+  "rootHash": "sha256-7f2bd99d81a261743773230d2ab3e21717ac9ca02a55c867545f5777b1a7d69f",
+  "totalSections": 33,
+  "totalFiles": 99,
   "changelog": "Expanded statutory commons with 5 Corporate Finance Domains: Corporate Tax MAT vs 115BAA, Place of Supply & Zero-Rated Export LUT, Transfer Pricing ALP & Rule 10CA, Section 79 Loss Continuity, and Ind AS 21 & 109 FX Revaluation.",
   "domains": {
     "corporate_ma_restructuring": [
@@ -13,6 +13,7 @@
     "direct_tax": [
       "115BAA-115JB",
       "206AB",
+      "43B",
       "206C(1H)",
       "194H",
       "194C",
@@ -54,6 +55,7 @@
     "50B",
     "115BAA-115JB",
     "206AB",
+    "43B",
     "206C(1H)",
     "194H",
     "194C",
@@ -97,6 +99,9 @@
     "direct_tax/corporate_tax_115baa_115jb/section.json": "737d8fe08d99c8e5466a0a1fdd50248a2969335dab171f0c34148ab1f14b95c1",
     "direct_tax/special_rates_non_filer_206ab/circulars/cbdt_circular_11_2021_compliance_check.md": "ed29b48cbeb3fb71c750f1d6418f25a1e0568c7de94354dd84ccf22c45d179ad",
     "direct_tax/special_rates_non_filer_206ab/section.json": "dc70762b5f81fd385e599804af640eb4f13025bb941e8b60c9f0fbcbe3d7073e",
+    "direct_tax/statutory_disallowance_43b/circulars/supreme_court_checkmate_services_2022.md": "6644a982cba935614d40db89d042fa0efccba73f26a61216eb528ab63400b400",
+    "direct_tax/statutory_disallowance_43b/forms/tax_audit_form_3cd_clause_26_schedule.json": "35387601cc6d2cce928b900a4ce5db7ef92e8def3e4c305f20a005b36be7964f",
+    "direct_tax/statutory_disallowance_43b/section.json": "ac780f42f2d27792859dcf0ee0187407e8abd658992cbe0cbd48ea91fc8a9cd5",
     "direct_tax/tcs_goods_206c_1h/circulars/finance_act_2025_sunset_memo.md": "179191f428a939e01d0874a64a13904ec383133cf6fff64ba62e9c6f49c7bbc8",
     "direct_tax/tcs_goods_206c_1h/section.json": "fde222ebc061ffd8e4b40671f15ee47ec32e0b90ad07e6a1cd3b14a9354918c9",
     "direct_tax/tds_commission_194h/circulars/finance_act_2024_rate_cut_memo.md": "00d8dccf377b08e98e62244272e1c8145bb7fe00244ce328128ac8ca5498b281",

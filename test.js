@@ -39,6 +39,7 @@ import {
     revalueForeignExchangeIndAs109,
     evaluateSection194A,
     evaluateSection194O,
+    evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
     getStatutoryOutcomes,
@@ -1605,7 +1606,7 @@ async function run() {
         cwd: path.resolve('.')
     });
     const parsedList = JSON.parse(cliListOutput);
-    if (!Array.isArray(parsedList.sections) || parsedList.total !== 32) {
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 33) {
         throw new Error('CLI list --json failed');
     }
 
@@ -2261,8 +2262,126 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient parity verified for evaluateSection194O.');
 
+    // 95. Section 43B / Section 36(1)(va) — Statutory Payables & Checkmate Doctrine Engine
+    console.log('\n── Test 95: Direct Tax — Section 43B & Section 36(1)(va) (Checkmate Doctrine) ──');
+    const payablesPayload = {
+        financialYear: '2025-26',
+        itrFilingDueDate: '2026-10-31',
+        payables: [
+            // On-time First Proviso items
+            {
+                payableId: 'PAY-GST-01',
+                clause: '43B(a)',
+                description: 'Q4 GST Output Liability Net Payable',
+                amountInr: 500000,
+                paidDate: '2026-04-20'
+            },
+            {
+                payableId: 'PAY-EPF-ER',
+                clause: '43B(b)',
+                description: 'Employer EPF Contribution March 2026',
+                amountInr: 120000,
+                paidDate: '2026-04-12'
+            },
+            {
+                payableId: 'PAY-BONUS',
+                clause: '43B(c)',
+                description: 'Annual Employee Bonus Accrual',
+                amountInr: 300000,
+                paidDate: '2026-10-15'
+            },
+            // Disallowed timing difference items under Section 43B
+            {
+                payableId: 'PAY-LEAVE',
+                clause: '43B(f)',
+                description: 'Provision for Employee Leave Encashment',
+                amountInr: 250000,
+                paidDate: null // unpaid as of 2026-10-31
+            },
+            {
+                payableId: 'PAY-LOAN-INT',
+                clause: '43B(e)',
+                description: 'Scheduled Bank Term Loan Interest Converted to FITL',
+                amountInr: 180000,
+                paidDate: '2026-09-15',
+                isInterestConvertedToLoan: true // Explanation 3D test
+            },
+            // Employee Welfare Contributions under Section 36(1)(va)
+            {
+                payableId: 'PAY-EPF-EE-ONTIME',
+                clause: '36(1)(va)',
+                description: 'Employee EPF Deduction March 2026 (On-time deposit)',
+                amountInr: 120000,
+                statutoryDueDate: '2026-04-15',
+                paidDate: '2026-04-14'
+            },
+            {
+                payableId: 'PAY-ESI-EE-LATE',
+                clause: '36(1)(va)',
+                description: 'Employee ESIC Deduction March 2026 (Deposited 7 days late)',
+                amountInr: 30000,
+                statutoryDueDate: '2026-04-15',
+                paidDate: '2026-04-22' // Late by 7 days, but before Oct 31 ITR! Checkmate Doctrine test!
+            }
+        ]
+    };
+
+    const sec43bResult = evaluateSection43BStatutoryPayables(payablesPayload);
+
+    if (sec43bResult.status !== 'SUCCESS') {
+        throw new Error(`Section 43B evaluation failed with status ${sec43bResult.status}`);
+    }
+    if (sec43bResult.statutoryDetermination !== 'DISALLOWED_MIXED_PERMANENT_AND_TIMING') {
+        throw new Error(`Expected DISALLOWED_MIXED_PERMANENT_AND_TIMING, got ${sec43bResult.statutoryDetermination}`);
+    }
+    if (sec43bResult.summary.totalIncurredInr !== 1500000) {
+        throw new Error(`Expected totalIncurredInr 1500000, got ${sec43bResult.summary.totalIncurredInr}`);
+    }
+    if (sec43bResult.summary.totalAllowedInr !== 1040000) {
+        throw new Error(`Expected totalAllowedInr 1040000, got ${sec43bResult.summary.totalAllowedInr}`);
+    }
+    if (sec43bResult.summary.totalDisallowedInr !== 460000) {
+        throw new Error(`Expected totalDisallowedInr 460000, got ${sec43bResult.summary.totalDisallowedInr}`);
+    }
+    if (sec43bResult.summary.totalTimingDifferencesInr !== 430000) {
+        throw new Error(`Expected totalTimingDifferencesInr 430000, got ${sec43bResult.summary.totalTimingDifferencesInr}`);
+    }
+    if (sec43bResult.summary.totalPermanentDisallowancesInr !== 30000) {
+        throw new Error(`Expected totalPermanentDisallowancesInr 30000 (Checkmate), got ${sec43bResult.summary.totalPermanentDisallowancesInr}`);
+    }
+    if (sec43bResult.summary.form3CdClause26DisallowanceInr !== 430000) {
+        throw new Error(`Expected form3CdClause26DisallowanceInr 430000, got ${sec43bResult.summary.form3CdClause26DisallowanceInr}`);
+    }
+    if (sec43bResult.summary.form3CdClause20bDisallowanceInr !== 30000) {
+        throw new Error(`Expected form3CdClause20bDisallowanceInr 30000, got ${sec43bResult.summary.form3CdClause20bDisallowanceInr}`);
+    }
+    if (sec43bResult.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+    }
+
+    // Verify Checkmate specific item
+    const checkmateItem = sec43bResult.evaluatedPayables.find(p => p.payableId === 'PAY-ESI-EE-LATE');
+    if (!checkmateItem || checkmateItem.disallowanceType !== 'PERMANENT_ADD_BACK' || checkmateItem.allowedAmountInr !== 0) {
+        throw new Error('Checkmate doctrine item PAY-ESI-EE-LATE not properly permanently disallowed');
+    }
+
+    // Verify Explanation 3D interest conversion item
+    const fitlItem = sec43bResult.evaluatedPayables.find(p => p.payableId === 'PAY-LOAN-INT');
+    if (!fitlItem || fitlItem.statutoryOutcome !== 'DISALLOWED_INTEREST_CONVERSION' || fitlItem.disallowedAmountInr !== 180000) {
+        throw new Error('Explanation 3D interest conversion item PAY-LOAN-INT not properly disallowed');
+    }
+    console.log('[PASS] Section 43B & 36(1)(va) Engine Verified: First Proviso, Checkmate Doctrine permanent disallowance (₹30,000), Explanation 3D loan conversion (₹1,80,000), and Form 3CD Clause 26/20(b) mapping.');
+
+    // 96. StatutoryClient Programmatic Parity for Section 43B
+    console.log('\n── Test 96: StatutoryClient Programmatic Parity for Section 43B ──');
+    const client43b = statutoryClientInstance.evaluateSection43B(payablesPayload);
+    if (client43b.summary.totalDisallowedInr !== 460000 || client43b.summary.form3CdClause20bDisallowanceInr !== 30000) {
+        throw new Error('StatutoryClient.evaluateSection43B parity check failed');
+    }
+    console.log('[PASS] StatutoryClient parity verified for evaluateSection43B.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 94 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 96 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

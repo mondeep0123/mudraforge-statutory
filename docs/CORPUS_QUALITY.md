@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.11.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-29T04:34:07.853Z
+> **Generated Timestamp**: 2026-10-29T04:49:23.694Z
 
 ---
 
@@ -11,12 +11,12 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 85 resolvable gazette URLs | 85 total citations declared | **100.0%** | VERIFIED |
-| **Temporal Validity Bounds** | 32 sections with explicit dates | 32 total bundled sections | **100.0%** | VERIFIED |
-| **Dual-Act 2025 Transition Bridges** | 11 direct tax provisions mapped | 12 direct tax provisions | **91.7%** | VERIFIED |
-| **Attached Administrative Circulars** | 33 official circulars | 32 provisions across active domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 31 schemas/templates | 32 provisions across active domains | **100% Attached** | VERIFIED |
-| **Cryptographic Merkle Verification** | 96 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
+| **Primary Source Citations** | 88 resolvable gazette URLs | 88 total citations declared | **100.0%** | VERIFIED |
+| **Temporal Validity Bounds** | 33 sections with explicit dates | 33 total bundled sections | **100.0%** | VERIFIED |
+| **Dual-Act 2025 Transition Bridges** | 12 direct tax provisions mapped | 13 direct tax provisions | **92.3%** | VERIFIED |
+| **Attached Administrative Circulars** | 34 official circulars | 33 provisions across active domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 32 schemas/templates | 33 provisions across active domains | **100% Attached** | VERIFIED |
+| **Cryptographic Merkle Verification** | 99 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
 
@@ -52,6 +52,7 @@
 | **50B** | Special provision for computation of capital gains in case of slump sale | Income-tax Act, 1961 (Act No. 43 of 1961) | `2000-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 2 | 2 | Income-tax Act, 2025 (Section 78 (Capital gains on slump sale of undertakings)) |
 | **115BAA-115JB** | Tax on income of certain domestic companies (Section 115BAA) and Minimum Alternate Tax (Section 115JB) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2019-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Income-tax Act, 2025 (Chapter XI (Corporate Taxation & Special Regimes)) |
 | **206AB** | Special provision for deduction of tax at source for non-filers of income-tax return (Omitted effective 1 April 2025) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2025-03-31` | `SUNSET_SUPERSEDED` | 1 | 1 | 0 | Finance Act, 2025 (Statutory Omission) (Section 206AB Omitted) |
+| **43B** | Statutory Disallowance on Certain Deductions to be Only on Actual Payment (Section 43B) and Employee Welfare Deductions (Section 36(1)(va)) | Income-tax Act, 1961 (Act No. 43 of 1961) | `1984-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 47 (Deductions on actual payment basis) and Section 35(1)(xvi)) |
 | **206C(1H)** | Collection of tax at source by seller on receipt of consideration for sale of goods (Omitted effective 1 April 2025) | Income-tax Act, 1961 | `2020-10-01` to `2025-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 0 | Finance Act, 2025 (Statutory Sunset) (Section 206C(1H) Omitted) |
 | **194H** | Deduction of tax at source on commission or brokerage | Income-tax Act, 1961 (Act No. 43 of 1961) | `2001-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 4, Item (i)) |
 | **194C** | Deduction of tax at source on payments to contractors and sub-contractors | Income-tax Act, 1961 (Act No. 43 of 1961) | `1972-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 3, Item (i)) |

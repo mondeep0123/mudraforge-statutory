@@ -29,6 +29,7 @@ import {
     evaluateSection194J,
     evaluateSection194A,
     evaluateSection194O,
+    evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
     evaluateSection206C1H,
@@ -79,6 +80,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-7f2bd99d81a261743773230d2ab3e21717ac9ca02a55c867545f5777b1a7d69f', // feat/statutory-43b-payroll (33 Sections across 5 Domains)
     'sha256-bf547512a57f26eae9a5ebcb9f0ec41c397421366b1b4223ab9e17d282721ca7', // feat/ecommerce-194o (32 Sections across 5 Domains)
     'sha256-b12fab61f0ddcc8852a7db1b4831151163d1d0ff97112168d8dccf693cfe70a7', // v2.11.0 Complete Accounts Payable (31 Sections across 5 Domains)
     'sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0', // v2.9.0 Corporate Finance 5 Domains Merkle Root (29 Sections across 5 Domains)
@@ -1886,6 +1888,13 @@ export class StatutoryClient {
     }
 
     /**
+     * Section 43B / Section 36(1)(va): Statutory payables disallowance & Supreme Court Checkmate Doctrine.
+     */
+    evaluateSection43B(payload) {
+        return evaluateSection43BStatutoryPayables(payload);
+    }
+
+    /**
      * Rule 37: 180-day vendor non-payment ITC reversal & Section 50(1) 18% interest.
      */
     calculateItcReversalRule37(payload) {
@@ -2950,6 +2959,7 @@ export {
     evaluateSection194J,
     evaluateSection194A,
     evaluateSection194O,
+    evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
     evaluateSection206C1H,

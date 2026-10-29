@@ -12,7 +12,7 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-bf547512a57f26eae9a5ebcb9f0ec41c397421366b1b4223ab9e17d282721ca7';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-7f2bd99d81a261743773230d2ab3e21717ac9ca02a55c867545f5777b1a7d69f';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 export const STATUTORY_PACKAGE_VERSION = '2.11.0';
 export const OKF_CORPUS_VERSION = '2.11.0';
@@ -637,6 +637,325 @@ export function evaluateSection43bH({
         statutoryAction: isCurrentlyOverdue
             ? `Invoice is currently overdue past ${dueDateStr}. To prevent Section 43B(h) disallowance, payment must be completed before ${fyEndStr} (March 31).`
             : `Invoice is within terms until ${dueDateStr}. Ensure payment is settled before the due date.`
+    };
+}
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 2B. SECTION 43B STATUTORY PAYABLES & SECTION 36(1)(va) CHECKMATE ENGINE
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Evaluates corporate statutory liabilities and payroll welfare deductions under:
+ * - Section 43B(a): Taxes, duties, cess, fee (GST, Customs, Property Tax)
+ * - Section 43B(b): Employer contribution to EPF, ESIC, gratuity, superannuation
+ * - Section 43B(c): Bonus or commission to employees (Sec 36(1)(ii))
+ * - Section 43B(d)/(da)/(e): Interest on loans from PFIs, NBFCs, scheduled banks
+ * - Section 43B(f): Leave encashment provision
+ * - Section 43B(g): Railway payables
+ * - Section 36(1)(va) read with Section 2(24)(x): Employee welfare contributions
+ *
+ * Governing Legal Principles:
+ * 1. First Proviso to Section 43B:
+ *    - For 43B(a) through 43B(g), deduction is ALLOWED in the year of accrual
+ *      if actually paid on or before the due date for filing return under Section 139(1).
+ *    - If paid after Section 139(1) due date, deduction is disallowed in current FY
+ *      and allowed in the subsequent FY when actually paid (timing difference).
+ * 2. Supreme Court Checkmate Doctrine (Checkmate Services P. Ltd. v. CIT (2022) 448 ITR 518 (SC)):
+ *    - First Proviso relaxation strictly DOES NOT APPLY to employee contributions (Sec 36(1)(va)).
+ *    - Employee contributions withheld from salary constitute deemed income under Section 2(24)(x).
+ *    - Allowable as deduction ONLY IF deposited on or before the statutory due date
+ *      under the respective Act (e.g. 15th of following month for EPF/ESIC).
+ *    - Late deposit results in PERMANENT DISALLOWANCE in that Assessment Year.
+ * 3. Explanations 3C & 3D to Section 43B:
+ *    - Conversion of unpaid interest into a loan, advance, debenture, or other instrument
+ *      does NOT constitute actual payment and remains disallowed.
+ */
+export function evaluateSection43BStatutoryPayables({
+    financialYear = '2025-26',
+    assessmentYear = null,
+    itrFilingDueDate = '2026-10-31', // Section 139(1) due date for assessees subject to tax audit
+    payables = []
+} = {}) {
+    const defaultAy = assessmentYear || (() => {
+        const parts = String(financialYear).split('-');
+        if (parts.length === 2 && !isNaN(Number(parts[0]))) {
+            const startYr = Number(parts[0]);
+            return `${startYr + 1}-${String(startYr + 2).slice(-2)}`;
+        }
+        return '2026-27';
+    })();
+
+    if (!Array.isArray(payables) || payables.length === 0) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'NO_PAYABLES_EVALUATED',
+            financialYear,
+            assessmentYear: defaultAy,
+            itrFilingDueDate,
+            totalPayablesCount: 0,
+            summary: {
+                totalIncurredInr: 0,
+                totalAllowedInr: 0,
+                totalDisallowedInr: 0,
+                totalTimingDifferencesInr: 0,
+                totalPermanentDisallowancesInr: 0,
+                form3CdClause26DisallowanceInr: 0,
+                form3CdClause20bDisallowanceInr: 0
+            },
+            evaluatedPayables: [],
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'No statutory payable items submitted for Section 43B / 36(1)(va) evaluation.'
+        };
+    }
+
+    const evaluatedPayables = [];
+    let totalIncurredInr = 0;
+    let totalAllowedInr = 0;
+    let totalDisallowedInr = 0;
+    let totalTimingDifferencesInr = 0;
+    let totalPermanentDisallowancesInr = 0;
+    let form3CdClause26DisallowanceInr = 0;
+    let form3CdClause20bDisallowanceInr = 0;
+
+    const clauseBreakdown = {};
+
+    payables.forEach((item, idx) => {
+        const payableId = item.payableId || `PAY-${String(idx + 1).padStart(3, '0')}`;
+        const rawClause = String(item.clause || '43B(a)').trim();
+        const normalizedClause = rawClause.toLowerCase().includes('36')
+            ? '36(1)(va)'
+            : rawClause.toUpperCase(); // e.g. '43B(A)', '43B(B)', '43B(C)', etc.
+        const description = item.description || `Statutory Liability under ${normalizedClause}`;
+        const amountInr = roundToPaisa(Math.max(0, Number(item.amountInr) || 0));
+        const statutoryDueDate = item.statutoryDueDate ? String(item.statutoryDueDate).trim() : null;
+        const paidDate = item.paidDate ? String(item.paidDate).trim() : null;
+        const paidAmountInr = paidDate
+            ? roundToPaisa(item.paidAmountInr !== undefined && item.paidAmountInr !== null
+                ? Math.max(0, Number(item.paidAmountInr) || 0)
+                : amountInr)
+            : 0;
+        const isInterestConvertedToLoan = Boolean(item.isInterestConvertedToLoan);
+
+        totalIncurredInr = roundToPaisa(totalIncurredInr + amountInr);
+
+        if (!clauseBreakdown[normalizedClause]) {
+            clauseBreakdown[normalizedClause] = {
+                incurredInr: 0,
+                allowedInr: 0,
+                disallowedInr: 0
+            };
+        }
+        clauseBreakdown[normalizedClause].incurredInr = roundToPaisa(clauseBreakdown[normalizedClause].incurredInr + amountInr);
+
+        // ── CATEGORY 1: EMPLOYEE WELFARE CONTRIBUTIONS (Section 36(1)(va)) ──
+        if (normalizedClause === '36(1)(va)') {
+            // Checkmate Doctrine: Must be deposited on or before statutory due date under EPF/ESIC regulations
+            const effectiveDueDate = statutoryDueDate || '2026-04-15';
+            const isOnTime = Boolean(paidDate && paidDate <= effectiveDueDate);
+
+            if (isOnTime) {
+                const allowedAmt = roundToPaisa(Math.min(paidAmountInr, amountInr));
+                const disallowedAmt = roundToPaisa(amountInr - allowedAmt);
+
+                totalAllowedInr = roundToPaisa(totalAllowedInr + allowedAmt);
+                clauseBreakdown[normalizedClause].allowedInr = roundToPaisa(clauseBreakdown[normalizedClause].allowedInr + allowedAmt);
+
+                if (disallowedAmt > 0) {
+                    totalDisallowedInr = roundToPaisa(totalDisallowedInr + disallowedAmt);
+                    totalPermanentDisallowancesInr = roundToPaisa(totalPermanentDisallowancesInr + disallowedAmt);
+                    form3CdClause20bDisallowanceInr = roundToPaisa(form3CdClause20bDisallowanceInr + disallowedAmt);
+                    clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + disallowedAmt);
+                }
+
+                evaluatedPayables.push({
+                    payableId,
+                    clause: normalizedClause,
+                    description,
+                    amountInr,
+                    statutoryDueDate: effectiveDueDate,
+                    paidDate,
+                    paidAmountInr,
+                    isAllowed: disallowedAmt === 0,
+                    allowedAmountInr: allowedAmt,
+                    disallowedAmountInr: disallowedAmt,
+                    disallowanceType: disallowedAmt > 0 ? 'PERMANENT_ADD_BACK' : 'NONE',
+                    governingRule: 'Section 36(1)(va) read with Section 2(24)(x) & Checkmate Doctrine',
+                    taxAuditReporting: {
+                        form: 'Form 3CD',
+                        clause: 'Clause 20(b)',
+                        status: disallowedAmt > 0 ? 'PARTIAL_DISALLOWANCE_REPORTABLE' : 'COMPLIANT'
+                    },
+                    statutoryOutcome: disallowedAmt > 0 ? 'DISALLOWED_PERMANENT_CHECKMATE' : 'ALLOWED',
+                    statutoryAction: disallowedAmt > 0
+                        ? `Unpaid portion of INR ${disallowedAmt.toLocaleString('en-IN')} permanently disallowed under Section 36(1)(va).`
+                        : `Employee contribution deposited on or before statutory due date (${effectiveDueDate}). Fully deductible under Section 36(1)(va).`
+                });
+            } else {
+                // Late deposit or unpaid -> Permanent Disallowance under Checkmate Services (2022)
+                totalDisallowedInr = roundToPaisa(totalDisallowedInr + amountInr);
+                totalPermanentDisallowancesInr = roundToPaisa(totalPermanentDisallowancesInr + amountInr);
+                form3CdClause20bDisallowanceInr = roundToPaisa(form3CdClause20bDisallowanceInr + amountInr);
+                clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + amountInr);
+
+                evaluatedPayables.push({
+                    payableId,
+                    clause: normalizedClause,
+                    description,
+                    amountInr,
+                    statutoryDueDate: effectiveDueDate,
+                    paidDate,
+                    paidAmountInr,
+                    isAllowed: false,
+                    allowedAmountInr: 0,
+                    disallowedAmountInr: amountInr,
+                    disallowanceType: 'PERMANENT_ADD_BACK',
+                    governingRule: 'Section 36(1)(va) read with Section 2(24)(x) & Supreme Court ruling in Checkmate Services (2022) 448 ITR 518 (SC)',
+                    taxAuditReporting: {
+                        form: 'Form 3CD',
+                        clause: 'Clause 20(b)',
+                        status: 'MANDATORY_PERMANENT_DISALLOWANCE'
+                    },
+                    statutoryOutcome: 'DISALLOWED_PERMANENT_CHECKMATE',
+                    statutoryAction: paidDate
+                        ? `Deposited after statutory due date (${paidDate} > ${effectiveDueDate}). Under Supreme Court Checkmate Doctrine read with Explanation 5 to Section 36(1)(va) and Section 2(24)(x), late deposit of employee contribution is permanently disallowed. Cannot be claimed under Section 43B or in any subsequent year.`
+                        : `Unpaid employee contribution past statutory due date (${effectiveDueDate}). Permanently disallowed under Section 36(1)(va) read with Section 2(24)(x).`
+                });
+            }
+        }
+        // ── CATEGORY 2: EMPLOYER STATUTORY PAYABLES (Section 43B(a) to 43B(g)) ──
+        else {
+            // Check Explanation 3C & 3D for loan conversion
+            if (isInterestConvertedToLoan) {
+                totalDisallowedInr = roundToPaisa(totalDisallowedInr + amountInr);
+                totalTimingDifferencesInr = roundToPaisa(totalTimingDifferencesInr + amountInr);
+                form3CdClause26DisallowanceInr = roundToPaisa(form3CdClause26DisallowanceInr + amountInr);
+                clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + amountInr);
+
+                evaluatedPayables.push({
+                    payableId,
+                    clause: normalizedClause,
+                    description,
+                    amountInr,
+                    itrFilingDueDate,
+                    paidDate,
+                    paidAmountInr,
+                    isAllowed: false,
+                    allowedAmountInr: 0,
+                    disallowedAmountInr: amountInr,
+                    disallowanceType: 'TIMING_DIFFERENCE_ADD_BACK',
+                    governingRule: 'Section 43B Explanations 3C & 3D (No actual payment via debt restructuring)',
+                    taxAuditReporting: {
+                        form: 'Form 3CD',
+                        clause: 'Clause 26',
+                        status: 'DISALLOWANCE_REPORTABLE'
+                    },
+                    statutoryOutcome: 'DISALLOWED_INTEREST_CONVERSION',
+                    statutoryAction: 'Conversion of unpaid interest into a loan, advance, debenture, or funded interest term loan does NOT constitute actual payment under Explanation 3C/3D to Section 43B. Disallowed until actual cash/bank outflow occurs.'
+                });
+            } else {
+                // First Proviso evaluation: Paid on or before Section 139(1) due date
+                const isPaidBeforeItrDue = Boolean(paidDate && paidDate <= itrFilingDueDate);
+
+                if (isPaidBeforeItrDue) {
+                    const allowedAmt = roundToPaisa(Math.min(paidAmountInr, amountInr));
+                    const disallowedAmt = roundToPaisa(amountInr - allowedAmt);
+
+                    totalAllowedInr = roundToPaisa(totalAllowedInr + allowedAmt);
+                    clauseBreakdown[normalizedClause].allowedInr = roundToPaisa(clauseBreakdown[normalizedClause].allowedInr + allowedAmt);
+
+                    if (disallowedAmt > 0) {
+                        totalDisallowedInr = roundToPaisa(totalDisallowedInr + disallowedAmt);
+                        totalTimingDifferencesInr = roundToPaisa(totalTimingDifferencesInr + disallowedAmt);
+                        form3CdClause26DisallowanceInr = roundToPaisa(form3CdClause26DisallowanceInr + disallowedAmt);
+                        clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + disallowedAmt);
+                    }
+
+                    evaluatedPayables.push({
+                        payableId,
+                        clause: normalizedClause,
+                        description,
+                        amountInr,
+                        itrFilingDueDate,
+                        paidDate,
+                        paidAmountInr,
+                        isAllowed: disallowedAmt === 0,
+                        allowedAmountInr: allowedAmt,
+                        disallowedAmountInr: disallowedAmt,
+                        disallowanceType: disallowedAmt > 0 ? 'TIMING_DIFFERENCE_ADD_BACK' : 'NONE',
+                        governingRule: 'Section 43B First Proviso (Actual payment before return filing cutoff)',
+                        taxAuditReporting: {
+                            form: 'Form 3CD',
+                            clause: 'Clause 26',
+                            status: disallowedAmt > 0 ? 'PARTIAL_DISALLOWANCE_REPORTABLE' : 'COMPLIANT'
+                        },
+                        statutoryOutcome: disallowedAmt > 0 ? 'DISALLOWED_TIMING_DIFFERENCE' : 'ALLOWED_FIRST_PROVISO',
+                        statutoryAction: disallowedAmt > 0
+                            ? `Unpaid balance of INR ${disallowedAmt.toLocaleString('en-IN')} disallowed in current FY; allowable upon actual payment in subsequent FY.`
+                            : `Paid on or before Section 139(1) return filing due date (${paidDate} <= ${itrFilingDueDate}). Fully deductible in current financial year (${financialYear}) under Section 43B First Proviso.`
+                    });
+                } else {
+                    // Late payment or unpaid -> Timing Difference Disallowance under Section 43B
+                    totalDisallowedInr = roundToPaisa(totalDisallowedInr + amountInr);
+                    totalTimingDifferencesInr = roundToPaisa(totalTimingDifferencesInr + amountInr);
+                    form3CdClause26DisallowanceInr = roundToPaisa(form3CdClause26DisallowanceInr + amountInr);
+                    clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + amountInr);
+
+                    evaluatedPayables.push({
+                        payableId,
+                        clause: normalizedClause,
+                        description,
+                        amountInr,
+                        itrFilingDueDate,
+                        paidDate,
+                        paidAmountInr,
+                        isAllowed: false,
+                        allowedAmountInr: 0,
+                        disallowedAmountInr: amountInr,
+                        disallowanceType: 'TIMING_DIFFERENCE_ADD_BACK',
+                        governingRule: 'Section 43B (Payment not made on or before Section 139(1) due date)',
+                        taxAuditReporting: {
+                            form: 'Form 3CD',
+                            clause: 'Clause 26',
+                            status: 'MANDATORY_DISALLOWANCE_REPORTABLE'
+                        },
+                        statutoryOutcome: 'DISALLOWED_TIMING_DIFFERENCE',
+                        statutoryAction: paidDate
+                            ? `Paid after Section 139(1) return filing due date (${paidDate} > ${itrFilingDueDate}). Strictly DISALLOWED in current FY (${financialYear}) and carried forward as deductible in the subsequent FY of actual disbursement.`
+                            : `Unpaid as of Section 139(1) return filing due date (${itrFilingDueDate}). Disallowed in current FY (${financialYear}); will become deductible upon actual payment in subsequent financial year.`
+                    });
+                }
+            }
+        }
+    });
+
+    let overallDetermination = 'ALL_PAYABLES_QUALIFIED';
+    if (totalPermanentDisallowancesInr > 0 && totalTimingDifferencesInr > 0) {
+        overallDetermination = 'DISALLOWED_MIXED_PERMANENT_AND_TIMING';
+    } else if (totalPermanentDisallowancesInr > 0) {
+        overallDetermination = 'DISALLOWED_PERMANENT_CHECKMATE';
+    } else if (totalTimingDifferencesInr > 0) {
+        overallDetermination = 'DISALLOWED_TIMING_DIFFERENCE';
+    }
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: overallDetermination,
+        financialYear,
+        assessmentYear: defaultAy,
+        itrFilingDueDate,
+        totalPayablesCount: evaluatedPayables.length,
+        summary: {
+            totalIncurredInr,
+            totalAllowedInr,
+            totalDisallowedInr,
+            totalTimingDifferencesInr,
+            totalPermanentDisallowancesInr,
+            form3CdClause26DisallowanceInr,
+            form3CdClause20bDisallowanceInr,
+            clauseBreakdown
+        },
+        evaluatedPayables,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Section 43B / 36(1)(va) Evaluation: Evaluated ${evaluatedPayables.length} liabilities (Total INR ${totalIncurredInr.toLocaleString('en-IN')}). Allowed: INR ${totalAllowedInr.toLocaleString('en-IN')}; Total Disallowed: INR ${totalDisallowedInr.toLocaleString('en-IN')} (Permanent Clause 20(b) Checkmate: INR ${totalPermanentDisallowancesInr.toLocaleString('en-IN')}; Timing Difference Clause 26: INR ${totalTimingDifferencesInr.toLocaleString('en-IN')}). Statutory audit calculations do not authorize payment disbursement.`
     };
 }
 

@@ -1,0 +1,71 @@
+{
+  "formId": "FORM_3CD_CLAUSE_26_AND_20B",
+  "title": "Tax Audit Report Schedule for Section 43B Liabilities (Clause 26) & Employee Welfare Contributions (Clause 20(b))",
+  "applicableSectionCode": "43B",
+  "governingRule": "Income-tax Rules, 1962 (Rule 6G, Form 3CD)",
+  "filingFrequency": "ANNUAL_TAX_AUDIT",
+  "statutoryDueWindow": "On or before September 30 (or October 31 as extended under Section 139(1)) of the relevant Assessment Year",
+  "officialSourceUrl": "https://www.incometaxindia.gov.in/forms/income-tax-rules/form3cd.pdf",
+  "clause26Section43BReporting": {
+    "subClauses": [
+      {
+        "clause": "43B(a)",
+        "description": "Any sum payable by way of tax, duty, cess or fee under any law (GST, Customs, Property Tax, etc.)",
+        "fields": ["LIABILITY_PREVIOUS_YEAR", "PAID_ON_OR_BEFORE_139_1_DUE_DATE", "PAID_AFTER_139_1_DUE_DATE", "UNPAID_AMOUNT"]
+      },
+      {
+        "clause": "43B(b)",
+        "description": "Any sum payable by the assessee as an employer by way of contribution to provident fund, superannuation fund, gratuity fund, or staff welfare fund",
+        "fields": ["LIABILITY_PREVIOUS_YEAR", "PAID_ON_OR_BEFORE_139_1_DUE_DATE", "PAID_AFTER_139_1_DUE_DATE", "UNPAID_AMOUNT"]
+      },
+      {
+        "clause": "43B(c)",
+        "description": "Any sum payable as bonus or commission to employees for services rendered (Section 36(1)(ii))",
+        "fields": ["LIABILITY_PREVIOUS_YEAR", "PAID_ON_OR_BEFORE_139_1_DUE_DATE", "PAID_AFTER_139_1_DUE_DATE", "UNPAID_AMOUNT"]
+      },
+      {
+        "clause": "43B(d)",
+        "description": "Any sum payable as interest on loan or borrowing from Public Financial Institutions, SFCs, SIICs",
+        "fields": ["LIABILITY_PREVIOUS_YEAR", "PAID_ON_OR_BEFORE_139_1_DUE_DATE", "PAID_AFTER_139_1_DUE_DATE", "UNPAID_AMOUNT", "EXPLANATION_3C_LOAN_CONVERSION_FLAG"]
+      },
+      {
+        "clause": "43B(da)",
+        "description": "Any sum payable as interest on loan or borrowing from deposit-taking NBFC or systemically important non-deposit taking NBFC",
+        "fields": ["LIABILITY_PREVIOUS_YEAR", "PAID_ON_OR_BEFORE_139_1_DUE_DATE", "PAID_AFTER_139_1_DUE_DATE", "UNPAID_AMOUNT"]
+      },
+      {
+        "clause": "43B(e)",
+        "description": "Any sum payable as interest on loan or advance from scheduled bank or co-operative bank",
+        "fields": ["LIABILITY_PREVIOUS_YEAR", "PAID_ON_OR_BEFORE_139_1_DUE_DATE", "PAID_AFTER_139_1_DUE_DATE", "UNPAID_AMOUNT", "EXPLANATION_3D_LOAN_CONVERSION_FLAG"]
+      },
+      {
+        "clause": "43B(f)",
+        "description": "Any sum payable by the assessee as an employer in lieu of leave at the credit of his employee (leave encashment)",
+        "fields": ["LIABILITY_PREVIOUS_YEAR", "PAID_ON_OR_BEFORE_139_1_DUE_DATE", "PAID_AFTER_139_1_DUE_DATE", "UNPAID_AMOUNT"]
+      },
+      {
+        "clause": "43B(g)",
+        "description": "Any sum payable by the assessee to Indian Railways for the use of railway assets",
+        "fields": ["LIABILITY_PREVIOUS_YEAR", "PAID_ON_OR_BEFORE_139_1_DUE_DATE", "PAID_AFTER_139_1_DUE_DATE", "UNPAID_AMOUNT"]
+      }
+    ]
+  },
+  "clause20bEmployeeWelfareReporting": {
+    "description": "Details of contributions received from employees for various funds as referred to in Section 36(1)(va)",
+    "columns": [
+      "SERIAL_NUMBER",
+      "NATURE_OF_FUND_EPF_ESIC_OTHER",
+      "SUM_RECEIVED_FROM_EMPLOYEES_INR",
+      "DUE_DATE_FOR_PAYMENT_UNDER_RELEVANT_ACT",
+      "ACTUAL_DATE_OF_PAYMENT_TO_AUTHORITIES",
+      "ACTUAL_AMOUNT_PAID_INR",
+      "DISALLOWED_UNDER_SECTION_36_1_VA_PERMANENT"
+    ]
+  },
+  "auditVerification": [
+    "NAME_OF_AUDITING_CHARTERED_ACCOUNTANT",
+    "MEMBERSHIP_NUMBER_AND_FRN",
+    "UNIQUE_DOCUMENT_IDENTIFICATION_NUMBER_UDIN",
+    "DIGITAL_SIGNATURE_TIMESTAMP"
+  ]
+}

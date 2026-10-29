@@ -16,6 +16,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | `corporate_ma_restructuring` | [**50B**](#50b) | Income-tax Act, 1961 | 2000-04-01 &rarr; In Force | `Active` | General Provision | `form_3cea_chartered_accountant_report` |
 | `direct_tax` | [**115BAA-115JB**](#115baa-115jb) | Income-tax Act, 1961 | 2019-04-01 &rarr; In Force | `Active` | General Provision | `form_10ic_concessional_tax_election` |
 | `direct_tax` | [**206AB**](#206ab) | Income-tax Act, 1961 | 2021-07-01 &rarr; 2025-03-31 | **Sunset** (2025-03-31) | General Provision | N/A |
+| `direct_tax` | [**43B**](#43b) | Income-tax Act, 1961 | 1984-04-01 &rarr; In Force | `Active` | General Provision | `tax_audit_form_3cd_clause_26_schedule` |
 | `direct_tax` | [**206C(1H)**](#206c-1h-) | Income-tax Act, 1961 | 2020-10-01 &rarr; 2025-03-31 | **Sunset** (2025-03-31) | Seller > ₹10Cr; Receipts > ₹50L | N/A |
 | `direct_tax` | [**194H**](#194h) | Income-tax Act, 1961 | 2001-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
 | `direct_tax` | [**194C**](#194c) | Income-tax Act, 1961 | 1972-04-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
@@ -231,6 +232,54 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Executive Circulars Bundled**:
 - [`cbdt_circular_11_2021_compliance_check.md`](../okf/direct_tax/special_rates_non_filer_206ab/circulars/cbdt_circular_11_2021_compliance_check.md)
+
+---
+
+<a id="43b"></a>
+
+#### Section 43B: Statutory Disallowance on Certain Deductions to be Only on Actual Payment (Section 43B) and Employee Welfare Deductions (Section 36(1)(va))
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 47 (Deductions on actual payment basis) and Section 35(1)(xvi)
+- **Temporal Validity**: `1984-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Section 43B was introduced by Finance Act, 1983 w.e.f. 1-4-1984. Finance Act 2021 inserted Explanation 2 to Section 43B and Explanation 5 to Section 36(1)(va) clarifying that Section 43B first proviso does not apply to employee welfare contributions. Landmarked by Supreme Court in Checkmate Services (2022). Continues under Income-tax Act, 1961 and transitions to Section 47 of Income-tax Act, 2025.
+- **Machine-Readable Source**: [`okf/direct_tax/statutory_disallowance_43b/section.json`](../okf/direct_tax/statutory_disallowance_43b/section.json)
+
+**Statutory Summary**:
+> Section 43B of the Income-tax Act, 1961 enacts a statutory non-obstante restriction where specified business liabilities accrued under mercantile accounting are allowable as deductions ONLY upon actual payment disbursement. The covered statutory payables include: (a) any tax, duty, cess, or fee under any law (e.g. GST, Customs, municipal property tax); (b) employer contributions to any provident fund, superannuation fund, gratuity fund, or other employee welfare fund; (c) bonus or commission payable to employees for services rendered; (d) interest on any loan or borrowing from public financial institutions (PFIs), state financial corporations, or state industrial investment corporations; (da) interest on loans from NBFCs; (e) interest on loans or advances from scheduled banks or co-operative banks; (f) provision for leave encashment payable to employees; and (g) sums payable to the Indian Railways for railway asset usage. Under the First Proviso to Section 43B, deductions for clauses (a) through (g) ARE ALLOWED in the year the liability was incurred if actually paid on or before the due date for filing the return of income under Section 139(1). If paid after the Section 139(1) due date, deduction is disallowed in that assessment year and allowed only in the subsequent financial year in which payment occurs. Crucially, under the landmark Supreme Court ruling in Checkmate Services P. Ltd. v. CIT (2022) read with Explanation 2 to Section 43B and Explanation 5 to Section 36(1)(va), the First Proviso relaxation DOES NOT APPLY to employee welfare contributions (EPF/ESIC deducted from payroll). Under Section 2(24)(x) read with Section 36(1)(va), employee contributions constitute deemed income of the employer and are deductible ONLY if deposited on or before the statutory due date prescribed under the respective welfare Act (the 15th of the subsequent month). Depositing employee contributions even one day late permanently disallows the deduction under Section 36(1)(va) for that assessment year, with zero recourse under Section 43B. Furthermore, under Explanations 3C and 3D, converting unpaid interest into a loan, advance, or debenture does not constitute actual payment.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "firstProvisoCoveredClauses": [
+    "43B(a)",
+    "43B(b)",
+    "43B(c)",
+    "43B(d)",
+    "43B(da)",
+    "43B(e)",
+    "43B(f)",
+    "43B(g)"
+  ],
+  "firstProvisoPaymentCutoff": "Due date of furnishing return of income under Section 139(1)",
+  "employeeContributionSection": "Section 36(1)(va) read with Section 2(24)(x)",
+  "employeeContributionCutoff": "Due date under respective welfare statute (15th of the subsequent calendar month)",
+  "checkmateDoctrineApplicability": "Strict permanent disallowance for late deposit of employee contribution; Section 43B proviso strictly barred",
+  "interestConversionAsPaymentProhibited": true,
+  "msmePaymentProvisoExclusion": "Section 43B(h) is excluded from the first proviso; strictly governed by Section 15 of the MSMED Act, 2006 (15/45 days)"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Supreme Court of India** — [Landmark Judgment in Checkmate Services P. Ltd. v. CIT (Civil Appeal No. 2833 of 2016, (2022) 448 ITR 518)](https://indiankanoon.org/doc/184132840/): *Disallowance of employee contribution to PF/ESI under Section 36(1)(va) if deposited after statutory due date; inapplicability of Section 43B first proviso*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 22/2015 (F.No. 279/Misc./140/2015/ITJ, Dated 17 December 2015)](https://www.incometaxindia.gov.in/communications/circular/circular22_2015.pdf): *Allowability of employer contribution under Section 43B if paid before Section 139(1) due date*
+- **Income Tax Department, Ministry of Finance** — [Section 43B, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Certain deductions to be only on actual payment*
+
+**Executive Circulars Bundled**:
+- [`supreme_court_checkmate_services_2022.md`](../okf/direct_tax/statutory_disallowance_43b/circulars/supreme_court_checkmate_services_2022.md)
+
+**Compliance Return Schemas & Templates**:
+- [`tax_audit_form_3cd_clause_26_schedule.json`](../okf/direct_tax/statutory_disallowance_43b/forms/tax_audit_form_3cd_clause_26_schedule.json)
 
 ---
 

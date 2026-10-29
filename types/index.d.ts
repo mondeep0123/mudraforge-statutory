@@ -201,6 +201,7 @@ export declare class StatutoryClient {
     revalueForeignExchangeIndAs109(payload?: any): any;
     evaluateSection194A(payload?: any): any;
     evaluateSection194O(payload?: any): any;
+    evaluateSection43B(payload?: any): any;
     calculateItcReversalRule37(payload?: any): any;
     calculateRule37ASupplierNonFilingReversal(payload?: any): any;
     getOutcomes(provision?: string, options?: StatutoryOutcomesOptions): Promise<StatutoryOutcomesResult>;
@@ -344,6 +345,7 @@ export declare function evaluateSection194I(payload: any): any;
 export declare function evaluateSection194J(payload: any): any;
 export declare function evaluateSection194A(payload: any): any;
 export declare function evaluateSection194O(payload: any): any;
+export declare function evaluateSection43BStatutoryPayables(payload: any): any;
 export declare function calculateItcReversalRule37(payload: any): any;
 export declare function calculateRule37ASupplierNonFilingReversal(payload: any): any;
 export declare function evaluateSection206C1H(payload: any): any;

@@ -1,0 +1,77 @@
+{
+  "sectionId": "ITA1961_SEC43B_36_1_VA",
+  "sectionCode": "43B",
+  "aliases": [
+    "43B",
+    "sec43b",
+    "section 43b",
+    "statutory payables",
+    "checkmate",
+    "checkmate doctrine",
+    "36(1)(va)",
+    "pf esi disallowance",
+    "bonus disallowance",
+    "bank interest disallowance",
+    "leave encashment 43b"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Section 43B read with Section 36(1)(va) and Section 2(24)(x)",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 47 (Deductions on actual payment basis) and Section 35(1)(xvi)",
+  "title": "Statutory Disallowance on Certain Deductions to be Only on Actual Payment (Section 43B) and Employee Welfare Deductions (Section 36(1)(va))",
+  "effectivePeriod": {
+    "validFrom": "1984-04-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Annual corporate income tax assessment year determination",
+    "sunsetNotes": "Section 43B was introduced by Finance Act, 1983 w.e.f. 1-4-1984. Finance Act 2021 inserted Explanation 2 to Section 43B and Explanation 5 to Section 36(1)(va) clarifying that Section 43B first proviso does not apply to employee welfare contributions. Landmarked by Supreme Court in Checkmate Services (2022). Continues under Income-tax Act, 1961 and transitions to Section 47 of Income-tax Act, 2025."
+  },
+  "plainTextSummary": "Section 43B of the Income-tax Act, 1961 enacts a statutory non-obstante restriction where specified business liabilities accrued under mercantile accounting are allowable as deductions ONLY upon actual payment disbursement. The covered statutory payables include: (a) any tax, duty, cess, or fee under any law (e.g. GST, Customs, municipal property tax); (b) employer contributions to any provident fund, superannuation fund, gratuity fund, or other employee welfare fund; (c) bonus or commission payable to employees for services rendered; (d) interest on any loan or borrowing from public financial institutions (PFIs), state financial corporations, or state industrial investment corporations; (da) interest on loans from NBFCs; (e) interest on loans or advances from scheduled banks or co-operative banks; (f) provision for leave encashment payable to employees; and (g) sums payable to the Indian Railways for railway asset usage. Under the First Proviso to Section 43B, deductions for clauses (a) through (g) ARE ALLOWED in the year the liability was incurred if actually paid on or before the due date for filing the return of income under Section 139(1). If paid after the Section 139(1) due date, deduction is disallowed in that assessment year and allowed only in the subsequent financial year in which payment occurs. Crucially, under the landmark Supreme Court ruling in Checkmate Services P. Ltd. v. CIT (2022) read with Explanation 2 to Section 43B and Explanation 5 to Section 36(1)(va), the First Proviso relaxation DOES NOT APPLY to employee welfare contributions (EPF/ESIC deducted from payroll). Under Section 2(24)(x) read with Section 36(1)(va), employee contributions constitute deemed income of the employer and are deductible ONLY if deposited on or before the statutory due date prescribed under the respective welfare Act (the 15th of the subsequent month). Depositing employee contributions even one day late permanently disallows the deduction under Section 36(1)(va) for that assessment year, with zero recourse under Section 43B. Furthermore, under Explanations 3C and 3D, converting unpaid interest into a loan, advance, or debenture does not constitute actual payment.",
+  "keyStatutoryThresholds": {
+    "firstProvisoCoveredClauses": [
+      "43B(a)",
+      "43B(b)",
+      "43B(c)",
+      "43B(d)",
+      "43B(da)",
+      "43B(e)",
+      "43B(f)",
+      "43B(g)"
+    ],
+    "firstProvisoPaymentCutoff": "Due date of furnishing return of income under Section 139(1)",
+    "employeeContributionSection": "Section 36(1)(va) read with Section 2(24)(x)",
+    "employeeContributionCutoff": "Due date under respective welfare statute (15th of the subsequent calendar month)",
+    "checkmateDoctrineApplicability": "Strict permanent disallowance for late deposit of employee contribution; Section 43B proviso strictly barred",
+    "interestConversionAsPaymentProhibited": true,
+    "msmePaymentProvisoExclusion": "Section 43B(h) is excluded from the first proviso; strictly governed by Section 15 of the MSMED Act, 2006 (15/45 days)"
+  },
+  "officialCitations": [
+    {
+      "authority": "Supreme Court of India",
+      "instrument": "Landmark Judgment in Checkmate Services P. Ltd. v. CIT (Civil Appeal No. 2833 of 2016, (2022) 448 ITR 518)",
+      "subject": "Disallowance of employee contribution to PF/ESI under Section 36(1)(va) if deposited after statutory due date; inapplicability of Section 43B first proviso",
+      "officialUrl": "https://indiankanoon.org/doc/184132840/"
+    },
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 22/2015 (F.No. 279/Misc./140/2015/ITJ, Dated 17 December 2015)",
+      "subject": "Allowability of employer contribution under Section 43B if paid before Section 139(1) due date",
+      "officialUrl": "https://www.incometaxindia.gov.in/communications/circular/circular22_2015.pdf"
+    },
+    {
+      "authority": "Income Tax Department, Ministry of Finance",
+      "instrument": "Section 43B, Income-tax Act, 1961",
+      "subject": "Certain deductions to be only on actual payment",
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Form 3CD Tax Audit Report Clause 26 (Section 43B statutory liabilities incurred and payment dates)",
+    "Form 3CD Tax Audit Report Clause 20(b) (Employee PF/ESI contribution collections and deposit dates against statutory due dates)",
+    "EPF Electronic Challan-cum-Return (ECR) payment receipt and CRN confirmation",
+    "ESIC Monthly Contribution payment challan and receipt",
+    "GST Challan PMT-06 / GSTR-3B tax payment receipt for year-end indirect tax balance",
+    "Bank / Financial Institution interest payment confirmation certificate and no-dues certificate"
+  ],
+  "tier": "STANDARD_FREE",
+  "version": "0.2.0"
+}
