@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.11.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-29T06:45:52.675Z
+> **Generated Timestamp**: 2026-10-29T07:06:23.134Z
 
 ---
 
@@ -11,12 +11,12 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 94 resolvable gazette URLs | 94 total citations declared | **100.0%** | VERIFIED |
-| **Temporal Validity Bounds** | 35 sections with explicit dates | 35 total bundled sections | **100.0%** | VERIFIED |
-| **Dual-Act 2025 Transition Bridges** | 13 direct tax provisions mapped | 14 direct tax provisions | **92.9%** | VERIFIED |
-| **Attached Administrative Circulars** | 36 official circulars | 35 provisions across active domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 35 schemas/templates | 35 provisions across active domains | **100% Attached** | VERIFIED |
-| **Cryptographic Merkle Verification** | 106 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
+| **Primary Source Citations** | 98 resolvable gazette URLs | 98 total citations declared | **100.0%** | VERIFIED |
+| **Temporal Validity Bounds** | 37 sections with explicit dates | 37 total bundled sections | **100.0%** | VERIFIED |
+| **Dual-Act 2025 Transition Bridges** | 15 direct tax provisions mapped | 16 direct tax provisions | **93.8%** | VERIFIED |
+| **Attached Administrative Circulars** | 38 official circulars | 37 provisions across active domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 37 schemas/templates | 37 provisions across active domains | **100% Attached** | VERIFIED |
+| **Cryptographic Merkle Verification** | 112 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
 
@@ -60,10 +60,12 @@
 | **194O** | Payment of certain sums by e-commerce operator to e-commerce participant | Income-tax Act, 1961 (Act No. 43 of 1961) | `2020-10-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 8, Item (i)) |
 | **194Q** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 2 | 2 | Income-tax Act, 2025 (Section 393(1), Table 8, Item (ii)) |
 | **393** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 2025 (Act No. 1 of 2025) | `2026-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 0 | 0 | N/A |
+| **194M** | Payment of Certain Sums by Certain Individuals or Hindu Undivided Family (Section 194M) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2019-09-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (m)) |
 | **194A** | Deduction of tax at source on payment of interest other than interest on securities | Income-tax Act, 1961 (Act No. 43 of 1961) | `1967-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 4, Item (i)) |
 | **194R** | Deduction of tax at source on benefit or perquisite in respect of business or profession | Income-tax Act, 1961 (Act No. 43 of 1961) | `2022-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 8, Item 12) |
 | **194-IA** | Payment on Transfer of Certain Immovable Property Other than Agricultural Land (Section 194-IA) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2013-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1) Table 4 Item (q)) |
 | **194I** | Deduction of tax at source on payment of rent | Income-tax Act, 1961 (Act No. 43 of 1961) | `1994-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (i)) |
+| **194-IB** | Payment of Rent by Certain Individuals or Hindu Undivided Family (Section 194-IB) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2017-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (ib)) |
 | **194J** | Fees for professional or technical services, royalty, and non-compete fees | Income-tax Act, 1961 | `1995-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 6, Item (iii)) |
 | **17(5)** | Apportionment of credit and blocked input tax credits | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | CGST Act, 2017 (In force) (Section 17(5)(b)(i) & (b)(iii)) |
 | **8** | Tax liability on composite and mixed supplies and classification of bundled goods and services contracts | Central Goods and Services Tax Act, 2017 | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | N/A |

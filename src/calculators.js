@@ -12,7 +12,7 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-02090e4063a863e3486401215469350c911dc0c9a24855e1d9db2903946aa644';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-feb1555f10c9f5c70de18ef340e0ba6cf1f060fb19cae866aa36240345c46f3a';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 export const STATUTORY_PACKAGE_VERSION = '2.11.0';
 export const OKF_CORPUS_VERSION = '2.11.0';
@@ -5835,6 +5835,246 @@ export function evaluateSection194R({
         governingLaw: `Income-tax Act, 1961 Section 194R(1) read with ${rateLaw}`,
         isAuthorizedToDisburse: false,
         statutoryRationale: `Cumulative benefits (INR ${totalCumulativeVal.toLocaleString('en-IN')}) exceed statutory threshold of INR 20,000. TDS of INR ${calculatedTds.toLocaleString('en-IN')} (rate: ${applicableRate}%) applies under Section 194R.`
+    };
+}
+
+/**
+ * Evaluates Tax Deduction at Source on Payment of Rent by Certain Individuals or HUF under Section 194-IB.
+ * 
+ * Rules Enforced:
+ * 1. Payer Qualification:
+ *    - Individuals and HUFs not liable to tax audit under Section 44AB.
+ * 2. Monthly Rent Threshold:
+ *    - Rent exceeding INR 50,000 for a month or part of a month in the previous year.
+ *    - Rent <= INR 50,000/month: EXEMPT_BELOW_MONTHLY_THRESHOLD.
+ * 3. Rate Rationalization (Finance (No. 2) Act, 2024):
+ *    - Transactions prior to 1 October 2024: 5.0%.
+ *    - Transactions on or after 1 October 2024: 2.0%.
+ * 4. Section 206AA Penalty & Statutory Ceiling (Section 194-IB(4)):
+ *    - 20.0% penalty rate if landlord has missing/inoperative PAN.
+ *    - Mandatory Statutory Cap: Deduction under Section 206AA shall NOT exceed the rent payable for the last month of the tenancy.
+ * 5. Compliance Return:
+ *    - Form 26QC challan-cum-statement within 30 days of month-end; Form 16C certificate.
+ * 6. Statutory Invariant:
+ *    - Always returns isAuthorizedToDisburse: false.
+ */
+export function evaluateSection194IB({
+    monthlyRentInr = 0,
+    tenancyMonthsInYear = 1,
+    lastMonthRentPayableInr = null,
+    isPayerTaxAuditCovered = false,
+    hasLandlordPan = true,
+    isLandlordPanInoperative = false,
+    effectiveDate = null
+} = {}) {
+    const monthRent = roundToPaisa(Math.max(0, Number(monthlyRentInr) || 0));
+    const months = Math.max(1, Math.min(12, Number(tenancyMonthsInYear) || 1));
+    const totalRentForPeriod = roundToPaisa(monthRent * months);
+    const lastMonthRent = lastMonthRentPayableInr !== null && lastMonthRentPayableInr !== undefined && !isNaN(Number(lastMonthRentPayableInr))
+        ? roundToPaisa(Math.max(0, Number(lastMonthRentPayableInr)))
+        : monthRent;
+    const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
+
+    // Condition 1: Payer covered under Section 194-I (Tax audit covered)
+    if (isPayerTaxAuditCovered) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'GOVERNED_BY_SECTION_194I',
+            applicableTdsRatePercent: null,
+            taxableBaseInr: null,
+            calculatedTdsInr: null,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194-I (Commercial / Audit Payer Rent)',
+            statutoryRationale: 'Payer is subject to tax audit under Section 44AB. Rent payments are governed by Section 194-I (2% machinery / 10% land & building) with Form 26Q quarterly reporting, rather than Section 194-IB.'
+        };
+    }
+
+    // Condition 2: Monthly Rent Threshold (<= INR 50,000 per month)
+    const STATUTORY_MONTHLY_THRESHOLD_INR = 50000;
+    if (monthRent <= STATUTORY_MONTHLY_THRESHOLD_INR) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_BELOW_MONTHLY_THRESHOLD',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            monthlyRentInr: monthRent,
+            tenancyMonthsInYear: months,
+            totalRentInr: totalRentForPeriod,
+            monthlyThresholdCeilingInr: STATUTORY_MONTHLY_THRESHOLD_INR,
+            netPayableToLandlordInr: totalRentForPeriod,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194-IB(1)',
+            statutoryRationale: `Monthly rent of INR ${monthRent.toLocaleString('en-IN')} does not exceed the statutory threshold of INR 50,000 per month. No tax deduction at source is required.`
+        };
+    }
+
+    // Rate Determination
+    const isPostRateCut = dateStr >= '2024-10-01';
+    let applicableRate = isPostRateCut ? 2.0 : 5.0;
+    let rateDescription = isPostRateCut
+        ? 'Section 194-IB amended rate (2% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024)'
+        : 'Section 194-IB historical rate (5% prior to 1 October 2024)';
+    let isCappedByLastMonthRent = false;
+
+    // Penalty Rate Check (Section 206AA)
+    if (!hasLandlordPan || isLandlordPanInoperative) {
+        applicableRate = 20.0;
+        rateDescription = 'Section 206AA penal rate (20%) due to missing or inoperative Landlord PAN';
+    }
+
+    const rawTdsAmount = roundToPaisa((totalRentForPeriod * applicableRate) / 100);
+    let finalTdsAmount = rawTdsAmount;
+
+    // Section 194-IB(4) Statutory Ceiling for Section 206AA
+    if ((!hasLandlordPan || isLandlordPanInoperative) && rawTdsAmount > lastMonthRent) {
+        finalTdsAmount = lastMonthRent;
+        isCappedByLastMonthRent = true;
+    }
+
+    const netPayable = roundToPaisa(Math.max(0, totalRentForPeriod - finalTdsAmount));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'DEDUCTION_MANDATORY',
+        applicableTdsRatePercent: applicableRate,
+        taxableBaseInr: totalRentForPeriod,
+        calculatedTdsInr: finalTdsAmount,
+        uncappedTdsInr: rawTdsAmount,
+        monthlyRentInr: monthRent,
+        tenancyMonthsInYear: months,
+        totalRentInr: totalRentForPeriod,
+        lastMonthRentCeilingInr: lastMonthRent,
+        isCappedByLastMonthRent,
+        netPayableToLandlordInr: netPayable,
+        complianceRequirements: {
+            challanCumStatementForm: 'Form 26QC (Electronic)',
+            challanFilingCutoff: 'Within 30 days from the end of the month in which deduction was made',
+            tdsCertificateForm: 'Form 16C (TRACES)',
+            certificateIssuanceCutoff: 'Within 15 days from the due date for furnishing Form 26QC',
+            tanRequired: false
+        },
+        governingLaw: `Income-tax Act, 1961 Section 194-IB read with ${rateDescription}`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: isCappedByLastMonthRent
+            ? `Section 194-IB Applicable: 20% Section 206AA penalty on INR ${totalRentForPeriod.toLocaleString('en-IN')} (INR ${rawTdsAmount.toLocaleString('en-IN')}) was legally capped at INR ${lastMonthRent.toLocaleString('en-IN')} under Section 194-IB(4) (rent payable for last month of tenancy). Net payable: INR ${netPayable.toLocaleString('en-IN')}.`
+            : `Section 194-IB Applicable: Total rent INR ${totalRentForPeriod.toLocaleString('en-IN')} for ${months} months taxed at ${applicableRate}% = INR ${finalTdsAmount.toLocaleString('en-IN')}. Net payable: INR ${netPayable.toLocaleString('en-IN')}. File Form 26QC within 30 days of month-end.`
+    };
+}
+
+/**
+ * Evaluates Tax Deduction at Source on Payments to Contractors/Professionals by Certain Individuals or HUF under Section 194M.
+ * 
+ * Rules Enforced:
+ * 1. Payer Qualification:
+ *    - Individuals and HUFs not liable to deduct TDS under Section 194C, 194H, or 194J.
+ * 2. Cumulative Financial Year Threshold:
+ *    - Aggregate sum exceeding INR 50,00,000 in a financial year.
+ *    - Aggregate <= INR 50 Lakhs: EXEMPT_BELOW_THRESHOLD.
+ * 3. Rate Rationalization (Finance (No. 2) Act, 2024):
+ *    - Transactions prior to 1 October 2024: 5.0%.
+ *    - Transactions on or after 1 October 2024: 2.0%.
+ * 4. Section 206AA / 206AB Penalties:
+ *    - 20.0% penalty for missing/inoperative PAN.
+ *    - Section 206AB omitted w.e.f. 1 April 2025 by Finance Act, 2025.
+ * 5. Compliance Return:
+ *    - Form 26QD challan-cum-statement within 30 days of month-end; Form 16D certificate. No TAN required.
+ * 6. Statutory Invariant:
+ *    - Always returns isAuthorizedToDisburse: false.
+ */
+export function evaluateSection194M({
+    currentPaymentAmountInr = 0,
+    cumulativePriorPaymentsInr = 0,
+    isPayerCoveredBy194C_H_J = false,
+    hasPan = true,
+    isPanInoperative = false,
+    isSpecifiedPerson206AB = false,
+    effectiveDate = null
+} = {}) {
+    const currentAmt = roundToPaisa(Math.max(0, Number(currentPaymentAmountInr) || 0));
+    const priorAmt = roundToPaisa(Math.max(0, Number(cumulativePriorPaymentsInr) || 0));
+    const totalCumulative = roundToPaisa(priorAmt + currentAmt);
+    const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
+
+    // Condition 1: Covered by standard 194C, 194H, or 194J
+    if (isPayerCoveredBy194C_H_J) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'GOVERNED_BY_PRIMARY_SECTIONS',
+            applicableTdsRatePercent: null,
+            taxableBaseInr: null,
+            calculatedTdsInr: null,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194C, 194H, or 194J',
+            statutoryRationale: 'Payer is covered under tax audit or entity thresholds of Section 194C, 194H, or 194J. Payments must be routed through standard quarterly Form 26Q reporting with TAN, not Section 194M.'
+        };
+    }
+
+    // Condition 2: Cumulative Annual Threshold (<= INR 50,00,000)
+    const STATUTORY_ANNUAL_THRESHOLD_INR = 5000000;
+    if (totalCumulative <= STATUTORY_ANNUAL_THRESHOLD_INR) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_BELOW_THRESHOLD',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            currentPaymentInr: currentAmt,
+            cumulativePriorPaymentsInr: priorAmt,
+            totalCumulativeInr: totalCumulative,
+            thresholdCeilingInr: STATUTORY_ANNUAL_THRESHOLD_INR,
+            netPayableToPayeeInr: currentAmt,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194M(1)',
+            statutoryRationale: `Cumulative payments in financial year (INR ${totalCumulative.toLocaleString('en-IN')}) do not exceed statutory threshold of INR 50 Lakhs. No tax deduction is required.`
+        };
+    }
+
+    // Rate Determination
+    const isPostRateCut = dateStr >= '2024-10-01';
+    let applicableRate = isPostRateCut ? 2.0 : 5.0;
+    let rateDescription = isPostRateCut
+        ? 'Section 194M amended rate (2% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024)'
+        : 'Section 194M historical rate (5% prior to 1 October 2024)';
+
+    // Section 206AA: Missing or inoperative PAN
+    if (!hasPan || isPanInoperative) {
+        applicableRate = 20.0;
+        rateDescription = 'Section 206AA penal rate (20%) due to missing or inoperative Payee PAN';
+    } else if (isSpecifiedPerson206AB) {
+        // Section 206AB: Non-filer higher rate (omitted w.e.f. 1 April 2025)
+        if (dateStr < '2025-04-01') {
+            applicableRate = 20.0;
+            rateDescription = 'Section 206AB higher rate (20%) for non-filer prior to 1 April 2025';
+        } else {
+            applicableRate = isPostRateCut ? 2.0 : 5.0;
+            rateDescription = `${rateDescription} - Section 206AB omitted w.e.f. 1 April 2025`;
+        }
+    }
+
+    const calculatedTds = roundToPaisa((currentAmt * applicableRate) / 100);
+    const netPayable = roundToPaisa(Math.max(0, currentAmt - calculatedTds));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'DEDUCTION_MANDATORY',
+        applicableTdsRatePercent: applicableRate,
+        taxableBaseInr: currentAmt,
+        calculatedTdsInr: calculatedTds,
+        currentPaymentInr: currentAmt,
+        cumulativePriorPaymentsInr: priorAmt,
+        totalCumulativeInr: totalCumulative,
+        netPayableToPayeeInr: netPayable,
+        complianceRequirements: {
+            challanCumStatementForm: 'Form 26QD (Electronic)',
+            challanFilingCutoff: 'Within 30 days from the end of the month in which deduction was made',
+            tdsCertificateForm: 'Form 16D (TRACES)',
+            certificateIssuanceCutoff: 'Within 15 days from the due date for furnishing Form 26QD',
+            tanRequired: false
+        },
+        governingLaw: `Income-tax Act, 1961 Section 194M read with ${rateDescription}`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Cumulative payments (INR ${totalCumulative.toLocaleString('en-IN')}) exceed statutory threshold of INR 50 Lakhs. Current payment of INR ${currentAmt.toLocaleString('en-IN')} taxed at ${applicableRate}% = INR ${calculatedTds.toLocaleString('en-IN')}. Net payable: INR ${netPayable.toLocaleString('en-IN')}. File Form 26QD within 30 days of month-end.`
     };
 }
 

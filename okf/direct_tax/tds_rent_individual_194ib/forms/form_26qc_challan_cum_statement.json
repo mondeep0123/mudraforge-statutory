@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Form 26QC Section 194-IB Rent Challan-Cum-Statement",
+  "description": "Statutory return and challan-cum-statement for payment of tax deducted on rent by individuals/HUFs under Section 194-IB",
+  "type": "object",
+  "required": [
+    "financialYear",
+    "tenantPan",
+    "landlordPan",
+    "propertyAddress",
+    "tenancyPeriodMonths",
+    "monthlyRentInr",
+    "totalRentPaidOrCreditedInr",
+    "dateOfCreditOrPayment",
+    "rateOfTdsPercent",
+    "tdsDeductedInr"
+  ],
+  "properties": {
+    "financialYear": {
+      "type": "string",
+      "pattern": "^20[2-9][0-9]-20[2-9][0-9]$"
+    },
+    "tenantPan": {
+      "type": "string",
+      "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$"
+    },
+    "landlordPan": {
+      "type": "string",
+      "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$"
+    },
+    "propertyAddress": {
+      "type": "string"
+    },
+    "tenancyPeriodMonths": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "monthlyRentInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "totalRentPaidOrCreditedInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "dateOfCreditOrPayment": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "rateOfTdsPercent": {
+      "type": "number",
+      "enum": [0.0, 2.0, 5.0, 20.0]
+    },
+    "tdsDeductedInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "lastMonthRentPayableCeilingInr": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Statutory ceiling under Section 194-IB(4) for Section 206AA penalty deduction"
+    },
+    "challanDetails": {
+      "type": "object",
+      "properties": {
+        "bsrCode": { "type": "string", "pattern": "^[0-9]{7}$" },
+        "dateOfChallan": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "challanSerialNumber": { "type": "string" },
+        "cin": { "type": "string" }
+      }
+    }
+  }
+}

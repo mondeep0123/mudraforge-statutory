@@ -41,6 +41,8 @@ import {
     evaluateSection194A,
     evaluateSection194O,
     evaluateSection194IA,
+    evaluateSection194IB,
+    evaluateSection194M,
     evaluateSection194R,
     evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
@@ -1609,7 +1611,7 @@ async function run() {
         cwd: path.resolve('.')
     });
     const parsedList = JSON.parse(cliListOutput);
-    if (!Array.isArray(parsedList.sections) || parsedList.total !== 35) {
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 37) {
         throw new Error('CLI list --json failed');
     }
 
@@ -2640,8 +2642,144 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient parity verified for evaluateSection194R.');
 
+    // 103. Direct Tax — Section 194-IB (TDS on Rent by Certain Individuals/HUF)
+    console.log('\n── Test 103: Direct Tax — Section 194-IB (TDS on Rent by Certain Individuals/HUF) ──');
+    // Scenario 1: Tax audit payer redirection to Section 194-I
+    const auditRentRes = evaluateSection194IB({
+        monthlyRentInr: 75000,
+        isPayerTaxAuditCovered: true
+    });
+    if (auditRentRes.statutoryDetermination !== 'GOVERNED_BY_SECTION_194I' || auditRentRes.calculatedTdsInr !== null) {
+        throw new Error('Section 194-IB audit payer redirection check failed');
+    }
+
+    // Scenario 2: Below monthly threshold (<= INR 50,000)
+    const belowRentThresh = evaluateSection194IB({
+        monthlyRentInr: 45000,
+        tenancyMonthsInYear: 10
+    });
+    if (belowRentThresh.statutoryDetermination !== 'EXEMPT_BELOW_MONTHLY_THRESHOLD' || belowRentThresh.calculatedTdsInr !== 0) {
+        throw new Error('Section 194-IB monthly de minimis check failed');
+    }
+
+    // Scenario 3: Pre-Oct 2024 transaction (5% rate)
+    const preOctRentRes = evaluateSection194IB({
+        monthlyRentInr: 80000,
+        tenancyMonthsInYear: 10, // Total = 8,00,000
+        effectiveDate: '2024-06-15'
+    });
+    if (preOctRentRes.applicableTdsRatePercent !== 5.0 || preOctRentRes.calculatedTdsInr !== 40000) {
+        throw new Error(`Expected 5% TDS 40000, got ${preOctRentRes.calculatedTdsInr}`);
+    }
+
+    // Scenario 4: Post-Oct 2024 transaction (amended 2% rate)
+    const postOctRentRes = evaluateSection194IB({
+        monthlyRentInr: 80000,
+        tenancyMonthsInYear: 10, // Total = 8,00,000
+        effectiveDate: '2024-11-15'
+    });
+    if (postOctRentRes.applicableTdsRatePercent !== 2.0 || postOctRentRes.calculatedTdsInr !== 16000) {
+        throw new Error(`Expected 2% TDS 16000, got ${postOctRentRes.calculatedTdsInr}`);
+    }
+    if (postOctRentRes.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+    }
+
+    // Scenario 5: Missing Landlord PAN & Section 194-IB(4) Statutory Ceiling
+    // Annual rent 12,00,000 (1,00,000 x 12). 20% Section 206AA = 2,40,000, but capped at last month rent 1,00,000.
+    const cappedRentRes = evaluateSection194IB({
+        monthlyRentInr: 100000,
+        tenancyMonthsInYear: 12,
+        lastMonthRentPayableInr: 100000,
+        hasLandlordPan: false,
+        effectiveDate: '2024-11-15'
+    });
+    if (cappedRentRes.calculatedTdsInr !== 100000 || !cappedRentRes.isCappedByLastMonthRent || cappedRentRes.uncappedTdsInr !== 240000 || cappedRentRes.netPayableToLandlordInr !== 1100000) {
+        throw new Error('Section 194-IB(4) statutory last-month rent ceiling check failed');
+    }
+    console.log('[PASS] Section 194-IB Engine Verified: Audit payer redirection, Monthly threshold (<=50k), Pre-Oct 5% rate, Post-Oct 2% amended rate, and Section 194-IB(4) last-month rent statutory ceiling.');
+
+    // 104. StatutoryClient Programmatic Parity for Section 194-IB
+    console.log('\n── Test 104: StatutoryClient Programmatic Parity for Section 194-IB ──');
+    const client194IB = statutoryClientInstance.evaluateSection194IB({
+        monthlyRentInr: 60000,
+        tenancyMonthsInYear: 6,
+        effectiveDate: '2025-01-10'
+    });
+    if (client194IB.calculatedTdsInr !== 7200 || client194IB.applicableTdsRatePercent !== 2.0) {
+        throw new Error('StatutoryClient.evaluateSection194IB parity check failed');
+    }
+    console.log('[PASS] StatutoryClient parity verified for evaluateSection194IB.');
+
+    // 105. Direct Tax — Section 194M (Payment of Certain Sums by Individuals/HUF)
+    console.log('\n── Test 105: Direct Tax — Section 194M (Payment of Certain Sums by Individuals/HUF) ──');
+    // Scenario 1: Primary section 194C/H/J payer redirection
+    const primaryPayerRes = evaluateSection194M({
+        currentPaymentAmountInr: 2000000,
+        isPayerCoveredBy194C_H_J: true
+    });
+    if (primaryPayerRes.statutoryDetermination !== 'GOVERNED_BY_PRIMARY_SECTIONS' || primaryPayerRes.calculatedTdsInr !== null) {
+        throw new Error('Section 194M primary section redirection check failed');
+    }
+
+    // Scenario 2: Cumulative payments <= INR 50 Lakhs
+    const below50LRes = evaluateSection194M({
+        currentPaymentAmountInr: 1500000,
+        cumulativePriorPaymentsInr: 3000000 // Total 45L <= 50L
+    });
+    if (below50LRes.statutoryDetermination !== 'EXEMPT_BELOW_THRESHOLD' || below50LRes.calculatedTdsInr !== 0) {
+        throw new Error('Section 194M cumulative 50L threshold check failed');
+    }
+
+    // Scenario 3: Pre-Oct 2024 payment (>50L, 5% rate)
+    const preOct194M = evaluateSection194M({
+        currentPaymentAmountInr: 1500000,
+        cumulativePriorPaymentsInr: 4000000, // Total 55L > 50L
+        effectiveDate: '2024-05-10'
+    });
+    if (preOct194M.applicableTdsRatePercent !== 5.0 || preOct194M.calculatedTdsInr !== 75000) {
+        throw new Error(`Expected 5% TDS 75000, got ${preOct194M.calculatedTdsInr}`);
+    }
+
+    // Scenario 4: Post-Oct 2024 payment (>50L, amended 2% rate)
+    const postOct194M = evaluateSection194M({
+        currentPaymentAmountInr: 1500000,
+        cumulativePriorPaymentsInr: 4000000,
+        effectiveDate: '2024-11-10'
+    });
+    if (postOct194M.applicableTdsRatePercent !== 2.0 || postOct194M.calculatedTdsInr !== 30000) {
+        throw new Error(`Expected 2% TDS 30000, got ${postOct194M.calculatedTdsInr}`);
+    }
+    if (postOct194M.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+    }
+
+    // Scenario 5: Missing PAN penalty rate (Section 206AA 20%)
+    const penalty194M = evaluateSection194M({
+        currentPaymentAmountInr: 1000000,
+        cumulativePriorPaymentsInr: 5000000,
+        hasPan: false,
+        effectiveDate: '2025-02-10'
+    });
+    if (penalty194M.applicableTdsRatePercent !== 20.0 || penalty194M.calculatedTdsInr !== 200000) {
+        throw new Error('Section 194M missing PAN 20% penalty check failed');
+    }
+    console.log('[PASS] Section 194M Engine Verified: Primary section redirection, 50L threshold, Pre-Oct 5% rate, Post-Oct 2% amended rate, and Section 206AA 20% penalty.');
+
+    // 106. StatutoryClient Programmatic Parity for Section 194M
+    console.log('\n── Test 106: StatutoryClient Programmatic Parity for Section 194M ──');
+    const client194M = statutoryClientInstance.evaluateSection194M({
+        currentPaymentAmountInr: 2000000,
+        cumulativePriorPaymentsInr: 5000000,
+        effectiveDate: '2025-01-15'
+    });
+    if (client194M.calculatedTdsInr !== 40000 || client194M.applicableTdsRatePercent !== 2.0) {
+        throw new Error('StatutoryClient.evaluateSection194M parity check failed');
+    }
+    console.log('[PASS] StatutoryClient parity verified for evaluateSection194M.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 102 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 106 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 
