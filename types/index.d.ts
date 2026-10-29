@@ -598,7 +598,9 @@ export interface ReconcileZohoGstr2bOptions {
     recipientGstin?: string | null;
     recipientRegisteredStates?: string[];
     recipientRegisteredGstins?: string[];
-    eclUtilizationStatus?: 'UTILIZED' | 'UNUTILIZED';
+    paymentAppropriationMethod?: 'PROPORTIONATE' | 'VALUE_FIRST' | 'TAX_FIRST';
+    minimumEclBalanceInr?: number;
+    eclUtilizationStatus?: 'UTILIZED' | 'UNUTILIZED' | 'UNKNOWN';
     goodsInTransitWindowDays?: number;
 }
 
@@ -616,13 +618,22 @@ export type Gstr2bDisposition =
     | 'MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST'
     | 'MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH'
     | 'GSTR2B_INELIGIBLE_FLAGGED_BY_GSTN'
+    | 'REQUIRES_HUMAN_VERIFICATION'
     | 'MISSING_IN_GSTR2B'
     | 'MISSING_IN_GSTR2B_TIMING'
     | 'MISSING_IN_BOOKS'
     | 'MISSING_IN_BOOKS_GOODS_IN_TRANSIT';
 
+export interface JurisdictionDecisions {
+    taxClassification: 'INTRASTATE_CORRECT' | 'INTERSTATE_CORRECT' | 'ERRONEOUS_INTRASTATE_LEVY' | 'ERRONEOUS_INTERSTATE_LEVY' | 'INDETERMINATE';
+    recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS' | 'REGISTERED_DISTINCT_PERSON_BRANCH' | 'UNREGISTERED_IN_POS_STATE' | 'INDETERMINATE';
+    itcEligibility: 'ELIGIBLE_NORMAL' | 'ELIGIBLE_IN_BRANCH_RETURN' | 'INELIGIBLE_STRANDED_LOCAL_LEVY' | 'INELIGIBLE_BLOCKED_SEC_17_5' | 'INELIGIBLE_DEFECTIVE_INVOICE' | 'INELIGIBLE_PORTAL_FLAGGED' | 'PROVISIONAL_PENDING_FILING' | 'INDETERMINATE';
+    operationalRouting: 'CLAIM_IN_CURRENT_GSTR3B_TABLE_4A5' | 'ROUTE_TO_BRANCH_GSTIN' | 'BOOK_AS_EXPENSE_NO_ITC' | 'REPORT_IN_GSTR3B_TABLE_4B1_PERMANENT_REVERSAL' | 'REQUEST_VENDOR_CREDIT_NOTE_AMENDMENT' | 'WITHHOLD_CLAIM_PENDING_SUPPLIER_GSTR1' | 'PHYSICAL_GOODS_RECEIPT_VERIFICATION_PENDING' | 'MANUAL_HUMAN_INVESTIGATION_REQUIRED';
+}
+
 export interface ReconcileItem {
     disposition: Gstr2bDisposition;
+    uncertaintyReason?: string;
     itcStatus: string;
     statutorySection: string;
     vendorName: string;
@@ -640,8 +651,11 @@ export interface ReconcileItem {
     rule37Status: string;
     rule37ReversalTaxInr: number;
     rule37InterestInr: number;
+    rule37InterestExplanation?: string;
     isReclaimableUponPayment: boolean;
     isRcm?: boolean;
+    paymentAppropriationDetails?: Record<string, any> | null;
+    jurisdictionDecisions?: JurisdictionDecisions;
     statutoryAction: string;
     auditEvidence: Record<string, any>;
 }
@@ -656,6 +670,7 @@ export interface ReconcileZohoGstr2bSummary {
     routableToBranchCount: number;
     strandedLocalCount: number;
     gstr2bPortalIneligibleCount: number;
+    requiresHumanVerificationCount: number;
     missingIn2bCount: number;
     missingInBooksCount: number;
     rule37OverdueCount: number;
@@ -670,11 +685,14 @@ export interface ReconcileZohoGstr2bSummary {
     routableToBranchItcInr: number;
     strandedLocalItcInr: number;
     gstr2bPortalIneligibleItcInr: number;
+    requiresHumanVerificationItcInr: number;
     mismatchedItcInr: number;
     missingInBooksTaxInr: number;
     rule37ReversalAmountInr: number;
     rule37InterestExposureInr: number;
-    eclUtilizationStatus: 'UTILIZED' | 'UNUTILIZED';
+    paymentAppropriationMethod: 'PROPORTIONATE' | 'VALUE_FIRST' | 'TAX_FIRST';
+    minimumEclBalanceInr: number | null;
+    eclUtilizationStatus: 'UTILIZED' | 'UNUTILIZED' | 'UNKNOWN';
     reconciliationStatus: 'FULLY_RECONCILED' | 'EXCEPTIONS_IDENTIFIED';
     isAuthorizedToDisburse: boolean;
 }

@@ -12,15 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Zoho Books & GST Portal Form GSTR-2B Automated AP Reconciliation Engine**:
   - *Automated 2-Way Accounts Payable Matching*: Ingests Zoho Books Bills CSV/API JSON and GST Portal Form GSTR-2B JSON (B2B invoices + CDNR credit/debit notes) with deterministic invoice number canonicalization (resolving slash, hyphen, space, and leading zero variations) and integer-paise arithmetic.
-  - *6 Epistemically Transparent Statutory Dispositions*:
-    1. `MATCHED_ELIGIBLE`: Corroborated in Books and GSTR-2B, eligible for full ITC claim in Form GSTR-3B Table 4(A)(5).
-    2. `MISMATCH_AMOUNT_VALUE`: Present in both sources, but taxable or tax discrepancy exceeds configured tolerance (default ₹1.00). Claims restricted to lower GSTR-2B amount; flags vendor credit note requirement.
-    3. `MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5`: Invoices matching GSTR-2B but falling under blocked statutory categories under CGST Act Section 17(5) (motor vehicles, food/catering, club memberships). Isolated for permanent reversal in GSTR-3B Table 4(B)(1).
-    4. `MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH`: Supplier charged local CGST/SGST with Place of Supply differing from recipient taxpayer's registered state. Disallowed under Section 16(2)(c) read with IGST Act Section 12.
-    5. `MISSING_IN_GSTR2B`: Bill recorded in Zoho Books but unfiled by vendor in GSTR-1. Provisional credit withheld per CGST Act Section 16(2)(aa) read with Rule 36(4) to avoid Section 50(3) 24% interest liability.
-    6. `MISSING_IN_BOOKS`: Invoice reported by supplier in GSTR-2B but absent in Zoho Books. Identifies unrecorded AP liabilities and goods-in-transit.
-  - *Rule 37 180-Day Aging Audit & Section 50(1) Delayed Interest Exposure*: Automatically computes days elapsed on unpaid bills; triggers mandatory proportional ITC reversal in GSTR-3B Table 4(B)(2) for bills past 180 days with 18% annual delayed interest under Section 50(1) calculated on exact days past 180.
-  - *Executive Markdown Memorandum Generator*: Generates an audit-ready memorandum with an ITC health matrix and actionable AP exceptions register.
+  - *Decoupled 4-Way Jurisdictional Decisions*: Replaces monolithic eligibility flags with 4 orthogonal, discrete decisions per transaction:
+    1. `taxClassification`: `INTRASTATE_CORRECT`, `INTERSTATE_CORRECT`, `ERRONEOUS_INTRASTATE_LEVY`, `ERRONEOUS_INTERSTATE_LEVY`, `INDETERMINATE`.
+    2. `recipientJurisdiction`: `FILING_GSTIN_MATCHES_POS`, `REGISTERED_DISTINCT_PERSON_BRANCH`, `UNREGISTERED_IN_POS_STATE`, `INDETERMINATE`.
+    3. `itcEligibility`: `ELIGIBLE_NORMAL`, `ELIGIBLE_IN_BRANCH_RETURN`, `INELIGIBLE_STRANDED_LOCAL_LEVY`, `INELIGIBLE_BLOCKED_SEC_17_5`, `INELIGIBLE_DEFECTIVE_INVOICE`, `INELIGIBLE_PORTAL_FLAGGED`, `PROVISIONAL_PENDING_FILING`, `INDETERMINATE`.
+    4. `operationalRouting`: `CLAIM_IN_CURRENT_GSTR3B_TABLE_4A5`, `ROUTE_TO_BRANCH_GSTIN`, `BOOK_AS_EXPENSE_NO_ITC`, `REPORT_IN_GSTR3B_TABLE_4B1_PERMANENT_REVERSAL`, `REQUEST_VENDOR_CREDIT_NOTE_AMENDMENT`, `WITHHOLD_CLAIM_PENDING_SUPPLIER_GSTR1`, `PHYSICAL_GOODS_RECEIPT_VERIFICATION_PENDING`, `MANUAL_HUMAN_INVESTIGATION_REQUIRED`.
+  - *Epistemic Uncertainty Routing (`REQUIRES_HUMAN_VERIFICATION`)*: Engine refuses to manufacture false certainty on incomplete evidence. Fails open to human auditor review with explicit `uncertaintyReason`:
+    - `INVALID_SUPPLIER_GSTIN_CHECKSUM`: Failed ISO Mod-36 checksum validation.
+    - `AMBIGUOUS_DUPLICATE_INVOICE_MATCH`: Multiple candidate records sharing identical supplier GSTIN and invoice number.
+    - `CONTRADICTORY_TAX_SPLIT`: Concurrent CGST/SGST and IGST on the same voucher.
+    - `MISSING_POS_DATA`: Missing or indeterminate place-of-supply information.
+  - *Rule 37 Payment Appropriation Policies*: Implements Section 16(2) second proviso read with Rule 37(1) supporting `PROPORTIONATE` (default statutory baseline), `VALUE_FIRST`, and `TAX_FIRST` payment allocation policies. Exempts Reverse Charge (RCM) and Schedule I deemed supplies.
+  - *Rule 88B(3) Electronic Credit Ledger (ECL) Utilization Audit*: Section 50(1) 18% delayed interest is audited against minimum daily ECL closing balances (`minimumEclBalanceInr`). Applies 0% interest if ECL balance exceeded unreversed ITC throughout the default window per Rule 88B(3) Proviso; applies interest strictly to the dipped/utilized portion.
+  - *Executive Markdown Memorandum Generator*: Generates an audit-ready memorandum with an ITC health matrix, actionable AP exceptions register, and statutory assurance invariants.
   - *CLI Command Integration*: Added `npx @mudraforge/statutory reconcile-gstr2b --zoho <file> --gstr2b <file> [--report-out <path>] [--json]` to CLI.
   - *StatutoryClient Parity*: Added programmatic methods `parseZohoBillsCsv`, `parseZohoBillsJson`, `parseGstr2bJson`, `reconcileZohoGstr2b`, `generateGstr2bAuditMarkdownReport`, `normalizeInvoiceNumber`, and `normalizeGstin` with full TypeScript declarations in `types/index.d.ts`.
 - **Accounting Contracts, Numeric Input Resilience & Integer-Paise Precision Hardening**:

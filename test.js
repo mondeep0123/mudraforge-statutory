@@ -4425,8 +4425,523 @@ async function run() {
     }
     console.log('[PASS] Zoho Books Vendor Credits Netting Verified: Native parsing of vendor_credits array with negative tax netting.');
 
+    // 143. Explicit Uncertainty Routing — REQUIRES_HUMAN_VERIFICATION
+    console.log('\n── Test 143: Explicit Uncertainty Routing (REQUIRES_HUMAN_VERIFICATION) ──');
+    const uncertaintyRecon = reconcileZohoGstr2b({
+        zohoBills: [
+            // Case 1: Corrupted Supplier GSTIN Checksum
+            {
+                billNumber: 'INV-BAD-GSTIN-01',
+                vendorName: 'Faulty Vendor',
+                vendorGstin: '27AAPCA1234A1ZZ', // Invalid checksum!
+                taxableAmountInr: 50000,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-10',
+                isGstinValid: false
+            },
+            // Case 2: Contradictory Tax Split (Concurrent CGST/SGST + IGST)
+            {
+                billNumber: 'INV-SPLIT-ERROR-02',
+                vendorName: 'Confused Vendor',
+                vendorGstin: '27AAPCA1234A1Z5',
+                taxableAmountInr: 100000,
+                cgstInr: 9000,
+                sgstInr: 9000,
+                igstInr: 18000, // Contradictory!
+                totalTaxInr: 36000,
+                totalAmountInr: 136000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-12'
+            },
+            // Case 3 & 4: Ambiguous Duplicate Bills in Books
+            {
+                billNumber: 'INV-DUP-03',
+                vendorName: 'Duplicate Supplier',
+                vendorGstin: '27AABCD5678B1Z2',
+                taxableAmountInr: 40000,
+                totalTaxInr: 7200,
+                totalAmountInr: 47200,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-15'
+            },
+            {
+                billNumber: 'INV-DUP-03', // Exact duplicate bill number!
+                vendorName: 'Duplicate Supplier',
+                vendorGstin: '27AABCD5678B1Z2',
+                taxableAmountInr: 45000,
+                totalTaxInr: 8100,
+                totalAmountInr: 53100,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-16'
+            }
+        ],
+        gstr2b: [
+            { invoiceNumber: 'INV-SPLIT-ERROR-02', supplierGstin: '27AAPCA1234A1Z5', taxableAmountInr: 100000, totalTaxInr: 36000, itcAvailable: true },
+            { invoiceNumber: 'INV-DUP-03', supplierGstin: '27AABCD5678B1Z2', taxableAmountInr: 40000, totalTaxInr: 7200, itcAvailable: true }
+        ],
+        options: {
+            recipientGstin: '27AABCT8888T1Z9'
+        }
+    });
+
+    if (uncertaintyRecon.summary.requiresHumanVerificationCount < 3) {
+        throw new Error(`Expected at least 3 requiresHumanVerification items, got ${uncertaintyRecon.summary.requiresHumanVerificationCount}`);
+    }
+
+    const badGstinItem = uncertaintyRecon.reconciliationItems.find(i => i.uncertaintyReason === 'INVALID_SUPPLIER_GSTIN_CHECKSUM');
+    if (!badGstinItem || badGstinItem.disposition !== 'REQUIRES_HUMAN_VERIFICATION') {
+        throw new Error(`Bad GSTIN uncertainty check failed: ${JSON.stringify(badGstinItem)}`);
+    }
+
+    const splitErrorItem = uncertaintyRecon.reconciliationItems.find(i => i.uncertaintyReason === 'CONTRADICTORY_TAX_SPLIT');
+    if (!splitErrorItem || splitErrorItem.disposition !== 'REQUIRES_HUMAN_VERIFICATION') {
+        throw new Error(`Contradictory split uncertainty check failed: ${JSON.stringify(splitErrorItem)}`);
+    }
+
+    const dupItem = uncertaintyRecon.reconciliationItems.find(i => i.uncertaintyReason === 'AMBIGUOUS_DUPLICATE_INVOICE_MATCH');
+    if (!dupItem || dupItem.disposition !== 'REQUIRES_HUMAN_VERIFICATION') {
+        throw new Error(`Duplicate match uncertainty check failed: ${JSON.stringify(dupItem)}`);
+    }
+    console.log('[PASS] Explicit Uncertainty Routing Verified: Engine refuses to manufacture false certainty on bad GSTIN, contradictory tax split, and ambiguous duplicate invoices.');
+
+    // 144. Payment Appropriation Policies & Rule 88B(3) Dipped ECL Math
+    console.log('\n── Test 144: Payment Appropriation Policies & Rule 88B(3) Dipped ECL ──');
+    const invoiceGross = 118000;
+    const invoiceTax = 18000;
+    const invoiceTaxable = 100000;
+    const amountPaid = 100000;
+    const balanceRemaining = 18000;
+
+    // Policy 1: VALUE_FIRST (Payment satisfies ₹1,00,000 value first; unpaid portion is tax ₹18,000)
+    const reconValueFirst = reconcileZohoGstr2b({
+        zohoBills: [{
+            billNumber: 'INV-APP-01',
+            vendorName: 'App Vendor',
+            vendorGstin: '27AAPCA1234A1Z5',
+            taxableAmountInr: invoiceTaxable,
+            totalTaxInr: invoiceTax,
+            totalAmountInr: invoiceGross,
+            balanceInr: balanceRemaining,
+            billDate: '2024-01-10'
+        }],
+        gstr2b: [{ invoiceNumber: 'INV-APP-01', supplierGstin: '27AAPCA1234A1Z5', taxableAmountInr: invoiceTaxable, totalTaxInr: invoiceTax, itcAvailable: true }],
+        options: {
+            asOfDate: '2024-08-10',
+            recipientGstin: '27AABCT8888T1Z9',
+            paymentAppropriationMethod: 'VALUE_FIRST',
+            minimumEclBalanceInr: 10000 // Dipped ECL: minimum closing balance was ₹10,000
+        }
+    });
+
+    const itemValFirst = reconValueFirst.reconciliationItems[0];
+    if (itemValFirst.rule37ReversalTaxInr !== 18000) {
+        throw new Error(`Expected VALUE_FIRST reversal of 18000, got ${itemValFirst.rule37ReversalTaxInr}`);
+    }
+    // Dipped ECL: Unreversed ITC = ₹18,000, Minimum ECL = ₹10,000 -> Wrongful utilization = ₹8,000!
+    // Days past 180 = 33 days. Interest = 8000 * (0.18 / 365) * 33 = 130.19
+    if (itemValFirst.rule37InterestInr <= 0 || itemValFirst.rule37InterestInr > 150) {
+        throw new Error(`Expected Rule 88B(3) dipped ECL interest ~130.19, got ${itemValFirst.rule37InterestInr}`);
+    }
+    if (!itemValFirst.rule37InterestExplanation.includes('Minimum ECL balance')) {
+        throw new Error(`Expected Rule 88B(3) explanation, got ${itemValFirst.rule37InterestExplanation}`);
+    }
+
+    // Policy 2: PROPORTIONATE (Standard statutory baseline: unpaid ratio = 18000 / 118000 = 15.254%)
+    const reconProp = reconcileZohoGstr2b({
+        zohoBills: [{
+            billNumber: 'INV-APP-01',
+            vendorName: 'App Vendor',
+            vendorGstin: '27AAPCA1234A1Z5',
+            taxableAmountInr: invoiceTaxable,
+            totalTaxInr: invoiceTax,
+            totalAmountInr: invoiceGross,
+            balanceInr: balanceRemaining,
+            billDate: '2024-01-10'
+        }],
+        gstr2b: [{ invoiceNumber: 'INV-APP-01', supplierGstin: '27AAPCA1234A1Z5', taxableAmountInr: invoiceTaxable, totalTaxInr: invoiceTax, itcAvailable: true }],
+        options: {
+            asOfDate: '2024-08-10',
+            recipientGstin: '27AABCT8888T1Z9',
+            paymentAppropriationMethod: 'PROPORTIONATE',
+            minimumEclBalanceInr: 50000 // Ample ECL: minimum balance ₹50,000 > ₹2,745.76
+        }
+    });
+
+    const itemProp = reconProp.reconciliationItems[0];
+    // Reversal = 18000 * (18000 / 118000) = 2745.76
+    if (Math.abs(itemProp.rule37ReversalTaxInr - 2745.76) > 1.0) {
+        throw new Error(`Expected PROPORTIONATE reversal ~2745.76, got ${itemProp.rule37ReversalTaxInr}`);
+    }
+    // Ample ECL -> 0.00% interest
+    if (itemProp.rule37InterestInr !== 0) {
+        throw new Error(`Expected 0 interest for ample ECL, got ${itemProp.rule37InterestInr}`);
+    }
+    console.log('[PASS] Payment Appropriation & Rule 88B(3) Math Verified: VALUE_FIRST vs PROPORTIONATE payment allocation and dipped ECL interest computation.');
+
+    // 145. Decoupled Jurisdictional Decisions Structure
+    console.log('\n── Test 145: Decoupled Jurisdictional Decisions Verification ──');
+    const hotelRecon = reconcileZohoGstr2b({
+        zohoBills: [{
+            billNumber: 'INV-HTL-10',
+            vendorName: 'ITC Grand Chola',
+            vendorGstin: '33AAACI1111I1Z1', // Tamil Nadu
+            taxableAmountInr: 20000,
+            cgstInr: 1800,
+            sgstInr: 1800,
+            igstInr: 0,
+            totalTaxInr: 3600,
+            totalAmountInr: 23600,
+            balanceInr: 0,
+            isFullyPaid: true,
+            billDate: '2024-06-01',
+            category: 'Hotel Lodging'
+        }],
+        gstr2b: [{
+            invoiceNumber: 'INV-HTL-10',
+            supplierName: 'ITC Grand Chola',
+            supplierGstin: '33AAACI1111I1Z1',
+            taxableAmountInr: 20000,
+            cgstInr: 1800,
+            sgstInr: 1800,
+            igstInr: 0,
+            totalTaxInr: 3600,
+            totalAmountInr: 23600,
+            posStateCode: '33',
+            itcAvailable: true
+        }],
+        options: {
+            recipientGstin: '27AABCT8888T1Z9' // Maharashtra (No TN registration)
+        }
+    });
+
+    const jd = hotelRecon.reconciliationItems[0].jurisdictionDecisions;
+    if (!jd) {
+        throw new Error('Missing jurisdictionDecisions object in reconciliation item');
+    }
+    if (jd.taxClassification !== 'INTRASTATE_CORRECT') {
+        throw new Error(`Expected taxClassification INTRASTATE_CORRECT, got ${jd.taxClassification}`);
+    }
+    if (jd.recipientJurisdiction !== 'UNREGISTERED_IN_POS_STATE') {
+        throw new Error(`Expected recipientJurisdiction UNREGISTERED_IN_POS_STATE, got ${jd.recipientJurisdiction}`);
+    }
+    if (jd.itcEligibility !== 'INELIGIBLE_STRANDED_LOCAL_LEVY') {
+        throw new Error(`Expected itcEligibility INELIGIBLE_STRANDED_LOCAL_LEVY, got ${jd.itcEligibility}`);
+    }
+    if (jd.operationalRouting !== 'BOOK_AS_EXPENSE_NO_ITC') {
+        throw new Error(`Expected operationalRouting BOOK_AS_EXPENSE_NO_ITC, got ${jd.operationalRouting}`);
+    }
+    console.log('[PASS] Decoupled Jurisdictional Decisions Verified: Orthogonal taxClassification, recipientJurisdiction, itcEligibility, and operationalRouting.');
+
+    // 146. Comprehensive 50-Transaction Synthetic E2E Batch Test
+    console.log('\n── Test 146: Comprehensive 50-Transaction Synthetic E2E Batch Test ──');
+    const syntheticBills = [];
+    const syntheticGstr2b = [];
+
+    for (let i = 1; i <= 50; i++) {
+        const invNum = `SYNTH-INV-${String(i).padStart(3, '0')}`;
+        const baseTaxable = i * 10000;
+        const taxRate = 0.18;
+        const taxVal = Math.round(baseTaxable * taxRate);
+        const grossVal = baseTaxable + taxVal;
+
+        if (i <= 20) {
+            // Group 1 (1-20): Clean Matched Eligible Invoices (Alternating Intrastate 27 & Interstate 29)
+            const isLocal = i % 2 === 1;
+            const supplierGstin = isLocal ? '27AAPCA1234A1Z5' : '29AABCD5678B1ZM';
+            syntheticBills.push({
+                billNumber: invNum,
+                vendorName: `Compliant Vendor ${i}`,
+                vendorGstin: supplierGstin,
+                taxableAmountInr: baseTaxable,
+                cgstInr: isLocal ? taxVal / 2 : 0,
+                sgstInr: isLocal ? taxVal / 2 : 0,
+                igstInr: isLocal ? 0 : taxVal,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-01',
+                category: 'Raw Materials'
+            });
+            syntheticGstr2b.push({
+                invoiceNumber: invNum,
+                supplierName: `Compliant Vendor ${i}`,
+                supplierGstin: supplierGstin,
+                taxableAmountInr: baseTaxable,
+                cgstInr: isLocal ? taxVal / 2 : 0,
+                sgstInr: isLocal ? taxVal / 2 : 0,
+                igstInr: isLocal ? 0 : taxVal,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                posStateCode: '27',
+                itcAvailable: true
+            });
+        } else if (i <= 25) {
+            // Group 2 (21-25): Multi-State Branch Routable (POS Karnataka 29, Recipient has branch in 29)
+            syntheticBills.push({
+                billNumber: invNum,
+                vendorName: `Bangalore Vendor ${i}`,
+                vendorGstin: '29AAACA1111A1ZO',
+                taxableAmountInr: baseTaxable,
+                cgstInr: taxVal / 2,
+                sgstInr: taxVal / 2,
+                igstInr: 0,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-05',
+                category: 'IT Maintenance'
+            });
+            syntheticGstr2b.push({
+                invoiceNumber: invNum,
+                supplierName: `Bangalore Vendor ${i}`,
+                supplierGstin: '29AAACA1111A1ZO',
+                taxableAmountInr: baseTaxable,
+                cgstInr: taxVal / 2,
+                sgstInr: taxVal / 2,
+                igstInr: 0,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                posStateCode: '29',
+                itcAvailable: true
+            });
+        } else if (i <= 30) {
+            // Group 3 (26-30): Stranded Local Hotel Levies in Tamil Nadu (State 33, no recipient registration)
+            syntheticBills.push({
+                billNumber: invNum,
+                vendorName: `Chennai Hotel ${i}`,
+                vendorGstin: '33AAACH2222H1Z8',
+                taxableAmountInr: baseTaxable,
+                cgstInr: taxVal / 2,
+                sgstInr: taxVal / 2,
+                igstInr: 0,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-06-08',
+                category: 'Hotel Accommodation'
+            });
+            syntheticGstr2b.push({
+                invoiceNumber: invNum,
+                supplierName: `Chennai Hotel ${i}`,
+                supplierGstin: '33AAACH2222H1Z8',
+                taxableAmountInr: baseTaxable,
+                cgstInr: taxVal / 2,
+                sgstInr: taxVal / 2,
+                igstInr: 0,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                posStateCode: '33',
+                itcAvailable: true
+            });
+        } else if (i <= 35) {
+            // Group 4 (31-35): Rule 37 Overdue Invoices (210 days old, 50% paid balance)
+            syntheticBills.push({
+                billNumber: invNum,
+                vendorName: `Credit Vendor ${i}`,
+                vendorGstin: '27AAPCA1234A1Z5',
+                taxableAmountInr: baseTaxable,
+                cgstInr: taxVal / 2,
+                sgstInr: taxVal / 2,
+                igstInr: 0,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                balanceInr: Math.round(grossVal / 2), // 50% unpaid
+                isFullyPaid: false,
+                billDate: '2024-01-10', // > 180 days from 2024-08-10
+                category: 'Consulting'
+            });
+            syntheticGstr2b.push({
+                invoiceNumber: invNum,
+                supplierName: `Credit Vendor ${i}`,
+                supplierGstin: '27AAPCA1234A1Z5',
+                taxableAmountInr: baseTaxable,
+                cgstInr: taxVal / 2,
+                sgstInr: taxVal / 2,
+                igstInr: 0,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                posStateCode: '27',
+                itcAvailable: true
+            });
+        } else if (i <= 38) {
+            // Group 5 (36-38): Rule 37 Exempt (RCM GTA Invoices)
+            syntheticBills.push({
+                billNumber: invNum,
+                vendorName: `GTA Logistics ${i}`,
+                vendorGstin: '27AABCT3333T1ZT',
+                taxableAmountInr: baseTaxable,
+                totalTaxInr: Math.round(baseTaxable * 0.05),
+                totalAmountInr: Math.round(baseTaxable * 1.05),
+                balanceInr: Math.round(baseTaxable * 1.05),
+                isFullyPaid: false,
+                billDate: '2024-01-10',
+                isRcm: true
+            });
+            syntheticGstr2b.push({
+                invoiceNumber: invNum,
+                supplierName: `GTA Logistics ${i}`,
+                supplierGstin: '27AABCT3333T1ZT',
+                taxableAmountInr: baseTaxable,
+                totalTaxInr: Math.round(baseTaxable * 0.05),
+                totalAmountInr: Math.round(baseTaxable * 1.05),
+                isRcm: true,
+                itcAvailable: true
+            });
+        } else if (i <= 41) {
+            // Group 6 (39-41): GSTR-2B Time-Barred Ineligible Flagged
+            syntheticBills.push({
+                billNumber: invNum,
+                vendorName: `Time Barred Vendor ${i}`,
+                vendorGstin: '27AABCT4444T1ZN',
+                taxableAmountInr: baseTaxable,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2023-04-10'
+            });
+            syntheticGstr2b.push({
+                invoiceNumber: invNum,
+                supplierName: `Time Barred Vendor ${i}`,
+                supplierGstin: '27AABCT4444T1ZN',
+                taxableAmountInr: baseTaxable,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                itcAvailable: false,
+                itcRevReason: 'TIME_BARRED_SEC_16_4'
+            });
+        } else if (i <= 44) {
+            // Group 7 (42-44): Missing in GSTR-2B Timing Difference (Dated 5 days ago)
+            syntheticBills.push({
+                billNumber: invNum,
+                vendorName: `Fresh Vendor ${i}`,
+                vendorGstin: '27AABCT5555T1ZH',
+                taxableAmountInr: baseTaxable,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-08-05' // 5 days before asOfDate 2024-08-10
+            });
+        } else if (i <= 47) {
+            // Group 8 (45-47): Missing in Books Goods-In-Transit (In 2B dated 3 days ago)
+            syntheticGstr2b.push({
+                invoiceNumber: invNum,
+                supplierName: `Fast Transit ${i}`,
+                supplierGstin: '27AABCT6666T1ZB',
+                taxableAmountInr: baseTaxable,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                invoiceDate: '2024-08-07',
+                itcAvailable: true
+            });
+        } else {
+            // Group 9 (48-50): Explicit Uncertainty (Invalid GSTIN, Contradictory tax, Missing POS)
+            if (i === 48) {
+                syntheticBills.push({
+                    billNumber: invNum,
+                    vendorName: 'Bad GSTIN Vendor',
+                    vendorGstin: '27AAPCA1234A1ZZ',
+                    taxableAmountInr: baseTaxable,
+                    totalTaxInr: taxVal,
+                    totalAmountInr: grossVal,
+                    balanceInr: 0,
+                    isFullyPaid: true,
+                    billDate: '2024-06-10',
+                    isGstinValid: false
+                });
+            } else if (i === 49) {
+                syntheticBills.push({
+                    billNumber: invNum,
+                    vendorName: 'Contradictory Tax Vendor',
+                    vendorGstin: '27AAPCA1234A1Z5',
+                    taxableAmountInr: baseTaxable,
+                    cgstInr: taxVal / 2,
+                    sgstInr: taxVal / 2,
+                    igstInr: taxVal,
+                    totalTaxInr: taxVal * 2,
+                    totalAmountInr: baseTaxable + taxVal * 2,
+                    balanceInr: 0,
+                    isFullyPaid: true,
+                    billDate: '2024-06-10'
+                });
+            } else {
+                syntheticBills.push({
+                    billNumber: invNum,
+                    vendorName: 'Missing POS Vendor',
+                    vendorGstin: '27AAPCA1234A1Z5',
+                    taxableAmountInr: baseTaxable,
+                    totalTaxInr: taxVal,
+                    totalAmountInr: grossVal,
+                    balanceInr: 0,
+                    isFullyPaid: true,
+                    billDate: '2024-06-10',
+                    posStateCode: null
+                });
+                syntheticGstr2b.push({
+                    invoiceNumber: invNum,
+                    supplierName: 'Missing POS Vendor',
+                    supplierGstin: '27AAPCA1234A1Z5',
+                    taxableAmountInr: baseTaxable,
+                    totalTaxInr: taxVal,
+                    totalAmountInr: grossVal,
+                    posStateCode: null,
+                    itcAvailable: true
+                });
+            }
+        }
+    }
+
+    const batchRecon = reconcileZohoGstr2b({
+        zohoBills: syntheticBills,
+        gstr2b: syntheticGstr2b,
+        options: {
+            asOfDate: '2024-08-10',
+            recipientGstin: '27AABCT8888T1ZZ',
+            recipientRegisteredStates: ['27', '29'],
+            minimumEclBalanceInr: 1000000 // ₹10,00,000 minimum ECL
+        }
+    });
+
+    if (batchRecon.status !== 'SUCCESS') {
+        throw new Error('Batch reconciliation failed');
+    }
+    if (batchRecon.summary.matchedEligibleCount !== 28) { // 20 clean + 5 Rule 37 overdue + 3 RCM
+        throw new Error(`Expected 28 matched eligible, got ${batchRecon.summary.matchedEligibleCount}`);
+    }
+    if (batchRecon.summary.routableToBranchCount !== 5) {
+        throw new Error(`Expected 5 branch routable, got ${batchRecon.summary.routableToBranchCount}`);
+    }
+    if (batchRecon.summary.strandedLocalCount !== 5) {
+        throw new Error(`Expected 5 stranded local, got ${batchRecon.summary.strandedLocalCount}`);
+    }
+    if (batchRecon.summary.rule37OverdueCount !== 5) {
+        throw new Error(`Expected 5 Rule 37 overdue, got ${batchRecon.summary.rule37OverdueCount}`);
+    }
+    if (batchRecon.summary.gstr2bPortalIneligibleCount !== 3) {
+        throw new Error(`Expected 3 portal ineligible, got ${batchRecon.summary.gstr2bPortalIneligibleCount}`);
+    }
+    if (batchRecon.summary.requiresHumanVerificationCount < 3) {
+        throw new Error(`Expected >=3 requires human verification, got ${batchRecon.summary.requiresHumanVerificationCount}`);
+    }
+
+    const reportMd = generateGstr2bAuditMarkdownReport(batchRecon);
+    if (!reportMd.includes('Actionable AP Exceptions Register') || !reportMd.includes('Statutory Assurance & Governance Invariants')) {
+        throw new Error('Batch report generation missing required sections');
+    }
+    console.log(`[PASS] 50-Transaction Synthetic E2E Batch Verified: ${batchRecon.summary.totalBooksBillsCount} bills and ${batchRecon.summary.totalGstr2bRecordsCount} 2B records evaluated across 9 orthogonal compliance groups.`);
+
     console.log('\n===========================================================================');
-    console.log('ALL 142 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 146 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 
