@@ -2040,6 +2040,13 @@ export class StatutoryClient {
     }
 
     /**
+     * Programmatic alias for reconcileDaybook.
+     */
+    reconcile194QDaybook(vouchers, options = {}) {
+        return reconcile194QDaybook(vouchers, options);
+    }
+
+    /**
      * Generate Tally-compliant XML compensating journal vouchers for unwithheld TDS.
      * @param {Object} reconciliationResult
      * @param {Object} [options]
@@ -2049,10 +2056,24 @@ export class StatutoryClient {
     }
 
     /**
+     * Programmatic alias for generateTallyJournalXml.
+     */
+    generateTally194QJournalXml(reconciliationResult, options = {}) {
+        return generateTally194QJournalXml(reconciliationResult, options);
+    }
+
+    /**
      * Format a clean Markdown audit exception report for Form 3CD working papers.
      * @param {Object} reconciliationResult
      */
     generateAuditReport(reconciliationResult) {
+        return generateAuditMarkdownReport(reconciliationResult);
+    }
+
+    /**
+     * Programmatic alias for generateAuditReport.
+     */
+    generateAuditMarkdownReport(reconciliationResult) {
         return generateAuditMarkdownReport(reconciliationResult);
     }
 

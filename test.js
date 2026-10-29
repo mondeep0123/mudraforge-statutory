@@ -3319,8 +3319,101 @@ async function run() {
     }
     console.log('[PASS] Diverse Date Normalization Verified: Excel serials, slash formats, and Indian date conventions normalized.');
 
+    // 122. Accounting Negative Formats: Parentheses, Trailing Minus & CR Suffix
+    console.log('\n── Test 122: Accounting Negative Formats: Parentheses, Trailing Minus & CR Suffix ──');
+    if (cleanNumericAmount('(₹ 50,000.00)') !== -50000 || cleanNumericAmount('(25,000)') !== -25000) {
+        throw new Error('cleanNumericAmount failed to parse parenthesized negative numbers');
+    }
+    if (cleanNumericAmount('50,000.00-') !== -50000 || cleanNumericAmount('25000-') !== -25000) {
+        throw new Error('cleanNumericAmount failed to parse trailing minus numbers');
+    }
+    if (cleanNumericAmount('50,000.00 CR') !== -50000 || cleanNumericAmount('₹ 1,25,000 credit') !== -125000) {
+        throw new Error('cleanNumericAmount failed to parse CR/credit accounting suffixes');
+    }
+    if (cleanNumericAmount('- ₹ 15,000.50') !== -15000.5) {
+        throw new Error('cleanNumericAmount failed on leading minus with spaced currency');
+    }
+    console.log('[PASS] Accounting Negative Formats Verified: Parentheses, trailing minuses, and CR credits parsed as signed negatives.');
+
+    // 123. Zero-Argument Parameter Robustness across Calculators
+    console.log('\n── Test 123: Zero-Argument & Empty Destructuring Robustness ──');
+    // Ensure invoking with empty arguments does not throw unhandled TypeError: Cannot destructure property
+    const corpRes = calculateCorporateTaxMatVsConcessional();
+    if (!corpRes || corpRes.status !== 'SUCCESS') throw new Error('calculateCorporateTaxMatVsConcessional failed on no-args');
+
+    const tpRes = calculateTransferPricingAlp();
+    if (!tpRes || tpRes.statutoryDetermination !== 'ARM_LENGTH_COMPLIANT') throw new Error('calculateTransferPricingAlp failed on no-args');
+
+    const sec79Res = evaluateSection79LossContinuity();
+    if (!sec79Res || sec79Res.status !== 'SUCCESS') throw new Error('evaluateSection79LossContinuity failed on no-args');
+
+    const fxRes = revalueForeignExchangeIndAs109();
+    if (!fxRes || fxRes.status !== 'SUCCESS') throw new Error('revalueForeignExchangeIndAs109 failed on no-args');
+
+    const posRes = evaluatePlaceOfSupplyAndLut();
+    if (!posRes || posRes.status !== 'SUCCESS') throw new Error('evaluatePlaceOfSupplyAndLut failed on no-args');
+
+    console.log('[PASS] Destructuring Robustness Verified: Zero-argument invocations execute cleanly without unhandled TypeErrors.');
+
+    // 124. UTF-8 Byte Order Mark (BOM) & European Delimiter (Semicolon & Tab) Daybook Parsing
+    console.log('\n── Test 124: UTF-8 BOM & Semicolon / Tab Delimiter Parsing ──');
+    const bomCsv = '\uFEFFDate,Voucher_No,Party_Name,GSTIN,Voucher_Type,Gross_Amount,TDS_Deducted\n' +
+        '2024-05-10,BOM-01,Tata Steel,27AAACT2727Q1ZW,Purchase,2500000,0';
+    const parsedBom = parseTallyDaybookCsv(bomCsv);
+    if (parsedBom.length !== 1 || parsedBom[0].partyName !== 'Tata Steel' || parsedBom[0].grossAmount !== 2500000) {
+        throw new Error('Failed to parse CSV with UTF-8 BOM header');
+    }
+
+    const semiCsv = 'Date;Voucher_No;Party_Name;GSTIN;Voucher_Type;Gross_Amount;TDS_Deducted\n' +
+        '2024-05-10;SEMI-01;Tata Steel;27AAACT2727Q1ZW;Purchase;3000000;0';
+    const parsedSemi = parseTallyDaybookCsv(semiCsv);
+    if (parsedSemi.length !== 1 || parsedSemi[0].voucherNo !== 'SEMI-01' || parsedSemi[0].grossAmount !== 3000000) {
+        throw new Error('Failed to parse semicolon-delimited CSV');
+    }
+
+    const tsvText = 'Date\tVoucher_No\tParty_Name\tGSTIN\tVoucher_Type\tGross_Amount\tTDS_Deducted\n' +
+        '2024-05-10\tTSV-01\tTata Steel\t27AAACT2727Q1ZW\tPurchase\t4000000\t0';
+    const parsedTsv = parseTallyDaybookCsv(tsvText);
+    if (parsedTsv.length !== 1 || parsedTsv[0].voucherNo !== 'TSV-01' || parsedTsv[0].grossAmount !== 4000000) {
+        throw new Error('Failed to parse tab-delimited TSV');
+    }
+    console.log('[PASS] BOM & European Delimiters Verified: UTF-8 BOM, semicolon, and tab delimiters normalized with zero external deps.');
+
+    // 125. Parenthesized Negative Vouchers in CSV Daybook & Purchase Return Netting
+    console.log('\n── Test 125: Parenthesized Negative Vouchers & Purchase Return Netting ──');
+    const returnCsv = `Date,Voucher_No,Party_Name,GSTIN,Voucher_Type,Gross_Amount,TDS_Deducted
+2024-05-01,INV-01,JSW Steel,27AAACJ1234A1Z5,Purchase,4000000,0
+2024-05-15,RET-02,JSW Steel,27AAACJ1234A1Z5,Purchase,"(₹ 10,00,000)",0
+2024-05-20,INV-03,JSW Steel,27AAACJ1234A1Z5,Purchase,1500000,0`;
+    const parsedReturn = parseTallyDaybookCsv(returnCsv);
+    if (parsedReturn.length !== 3 || parsedReturn[1].grossAmount !== -1000000) {
+        throw new Error(`Expected parsed return grossAmount -1000000, got ${parsedReturn[1]?.grossAmount}`);
+    }
+    const returnAudit = reconcile194QDaybook(parsedReturn, { buyerTurnoverCr: 50 });
+    // Vendor net purchases: 40L - 10L + 15L = 45L <= 50L threshold!
+    // Therefore, excess over 50L = 0 and TDS shortfall = 0!
+    if (returnAudit.auditSummary.totalExcessPurchasesOver50LInr !== 0 || returnAudit.auditSummary.totalTdsShortfallInr !== 0) {
+        throw new Error(`Expected zero excess purchases after return netting, got ${returnAudit.auditSummary.totalExcessPurchasesOver50LInr}`);
+    }
+    console.log('[PASS] Parenthesized Return Netting Verified: Accounting "(₹ 10,00,000)" negative voucher reduced rolling purchase base to ₹45L, preventing wrongful TDS alert.');
+
+    // 126. StatutoryClient Programmatic Parity for Daybook Reconciler
+    console.log('\n── Test 126: StatutoryClient Programmatic Parity for Daybook Reconciler ──');
+    const statutoryClient = new StatutoryClient();
+    const clientParsed = statutoryClient.parseTallyDaybookCsv(returnCsv);
+    if (clientParsed.length !== 3) throw new Error('client.parseTallyDaybookCsv failed');
+    const clientRecon = statutoryClient.reconcile194QDaybook(clientParsed, { buyerTurnoverCr: 50 });
+    if (!clientRecon.auditSummary || clientRecon.auditSummary.totalVouchersScanned !== 3) {
+        throw new Error('client.reconcile194QDaybook failed');
+    }
+    const clientXml = statutoryClient.generateTally194QJournalXml(clientRecon);
+    if (!clientXml.includes('<ENVELOPE>')) throw new Error('client.generateTally194QJournalXml failed');
+    const clientReport = statutoryClient.generateAuditMarkdownReport(clientRecon);
+    if (!clientReport.includes('SECTION 194Q STATUTORY AUDIT')) throw new Error('client.generateAuditMarkdownReport failed');
+    console.log('[PASS] StatutoryClient Daybook Parity Verified: parseTallyDaybookCsv, reconcile194QDaybook, generateTally194QJournalXml, and generateAuditMarkdownReport fully functional.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 121 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 126 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

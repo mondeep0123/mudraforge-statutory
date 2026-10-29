@@ -213,6 +213,14 @@ export declare class StatutoryClient {
     reconcileRule42AnnualTrueUp(payload?: any): any;
     calculateRule43CapitalGoodsReversal(payload?: any): any;
     calculateGstItcApportionmentRule42_43(payload?: any): any;
+    parseTallyDaybookCsv(csvText: string): DaybookVoucherInput[];
+    parseTallyDaybookXml(xmlText: string): DaybookVoucherInput[];
+    reconcileDaybook(vouchers: DaybookVoucherInput[], options?: ReconcileDaybookOptions): ReconcileDaybookResult;
+    reconcile194QDaybook(vouchers: DaybookVoucherInput[], options?: ReconcileDaybookOptions): ReconcileDaybookResult;
+    generateTallyJournalXml(reconciliationResult: ReconcileDaybookResult, options?: any): string;
+    generateTally194QJournalXml(reconciliationResult: ReconcileDaybookResult, options?: any): string;
+    generateAuditReport(reconciliationResult: ReconcileDaybookResult): string;
+    generateAuditMarkdownReport(reconciliationResult: ReconcileDaybookResult): string;
     getOutcomes(provision?: string, options?: StatutoryOutcomesOptions): Promise<StatutoryOutcomesResult>;
     explain(codeOrQuery: string, options?: any): any;
 }

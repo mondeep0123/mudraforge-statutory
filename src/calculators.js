@@ -61,7 +61,8 @@ export const MSMED_RATE_MULTIPLIER = 3;
  */
 export function cleanNumericAmount(val) {
     if (typeof val === 'number') {
-        return Number.isFinite(val) && !isNaN(val) ? val : 0;
+        if (!Number.isFinite(val) || isNaN(val)) return 0;
+        return Object.is(val, -0) ? 0 : val;
     }
     if (val === null || val === undefined || typeof val === 'boolean') {
         return 0;
@@ -69,10 +70,35 @@ export function cleanNumericAmount(val) {
     if (typeof val === 'string') {
         const trimmed = val.trim();
         if (!trimmed) return 0;
+
+        let isNegative = false;
+        let s = trimmed;
+
+        // Accounting parentheses: (1,500.00) or (₹ 1,500.00)
+        if (/^\(.*\)$/.test(s)) {
+            isNegative = true;
+            s = s.slice(1, -1).trim();
+        } else if (/-\s*$/.test(s)) {
+            // Trailing minus from legacy ERP dumps: "1,500.00-"
+            isNegative = true;
+            s = s.replace(/-\s*$/, '').trim();
+        } else if (/\s+(?:cr|credit)\.?$/i.test(s)) {
+            // Accounting credit suffix: "1,500.00 CR"
+            isNegative = true;
+            s = s.replace(/\s+(?:cr|credit)\.?$/i, '').trim();
+        } else if (/^\s*-\s*/.test(s)) {
+            // Explicit leading minus with possible whitespace: "- ₹ 1,500.00"
+            isNegative = true;
+            s = s.replace(/^\s*-\s*/, '').trim();
+        }
+
         // Strip common currency symbols, commas, and currency labels
-        const cleaned = trimmed.replace(/[₹$€,\s]|(?:INR|Rs\.?)/gi, '');
+        const cleaned = s.replace(/[₹$€,\s]|(?:INR|Rs\.?)/gi, '');
         const n = parseFloat(cleaned);
-        return Number.isFinite(n) && !isNaN(n) ? n : 0;
+        if (!Number.isFinite(n) || isNaN(n)) return 0;
+
+        const res = isNegative ? -Math.abs(n) : n;
+        return Object.is(res, -0) ? 0 : res;
     }
     return 0;
 }
@@ -133,7 +159,7 @@ export function calculateMsmeCompoundInterest({
     dateConvention = 'START_DATE_INCLUSIVE', // 'START_DATE_INCLUSIVE' | 'SECTION_16_DAY_AFTER_DUE' | 'FROM_APPOINTED_DAY' | 'FROM_DAY_AFTER_AGREED_DATE'
     commenceDayAfter = false, // Legacy flag: when true, adds 1 day to dueDate per Section 16 agreed date rule
     includePaymentDate = false // When false, payment date is the settlement day (interest ceases at start of payment date)
-}) {
+} = {}) {
     const p = cleanNumericAmount(principal);
     if (p <= 0) {
         throw new Error("Invalid principal amount for MSME interest calculation.");
@@ -519,7 +545,7 @@ export function evaluateSection43bH({
     fyEndDate = null,
     supplierType = 'MANUFACTURER', // 'MICRO_MANUFACTURER', 'SMALL_MANUFACTURER', 'TRADER', 'MEDIUM'
     nicCode = null
-}) {
+} = {}) {
     const baseAcceptanceDate = new Date(acceptanceDate || invoiceDate);
     
     // Dynamically calculate fiscal year end based on invoice/acceptance date if not explicitly overridden
@@ -1018,9 +1044,10 @@ export function evaluateCrossBorderRemittance({
     hasNoPe = false,
     hasForm10F = false,
     hasAoCertificate = false
-}) {
-    const usd = Number(amountUsd);
-    const amountInr = Number((usd * fxRate).toFixed(2));
+} = {}) {
+    const usd = cleanNumericAmount(amountUsd);
+    const rate = cleanNumericAmount(fxRate) || 83.5;
+    const amountInr = roundToPaisa(usd * rate);
     const txDate = new Date(transactionDate);
 
     // If treaty relief is claimed (TRC, No-PE, or Form 10F) but country is missing,
@@ -3161,8 +3188,8 @@ export function evaluateSection194H({
         : Math.max(0, rawInvoiceAmount - gstAmount);
 
     const effectivePrior = priorFyPayments !== null && priorFyPayments !== undefined
-        ? Number(priorFyPayments) || 0
-        : Number(priorFyCommission) || 0;
+        ? cleanNumericAmount(priorFyPayments)
+        : cleanNumericAmount(priorFyCommission);
     const prior = Math.max(0, effectivePrior);
     const cumulative = prior + effectiveCommissionAmount;
 
@@ -3320,12 +3347,12 @@ export function evaluateSection194A({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawInterestAmount = Number(interestAmount) || 0;
+    const rawInterestAmount = cleanNumericAmount(interestAmount);
 
     const effectivePriorInput = priorPaymentsInCurrentFyInr !== null && priorPaymentsInCurrentFyInr !== undefined
         ? priorPaymentsInCurrentFyInr
         : priorFyCategoryPayments;
-    const prior = Math.max(0, Number(effectivePriorInput) || 0);
+    const prior = Math.max(0, cleanNumericAmount(effectivePriorInput));
     const cumulative = prior + rawInterestAmount;
 
     // Temporal Resolution: "Credit or Payment, whichever is earlier"
@@ -3514,14 +3541,14 @@ export function evaluateSection194O({
     certificatePriorUtilizedInr = 0,
     certificateSection = null
 } = {}) {
-    const rawGrossSale = Number(grossSaleAmount) || 0;
-    const deemedDirectPayment = Math.max(0, Number(directPurchaserPaymentDeemedInr) || 0);
+    const rawGrossSale = cleanNumericAmount(grossSaleAmount);
+    const deemedDirectPayment = Math.max(0, cleanNumericAmount(directPurchaserPaymentDeemedInr));
     const totalTransactionGmv = rawGrossSale + deemedDirectPayment;
 
     const effectivePriorInput = priorPaymentsInCurrentFyInr !== null && priorPaymentsInCurrentFyInr !== undefined
         ? priorPaymentsInCurrentFyInr
         : priorFyCategoryPayments;
-    const prior = Math.max(0, Number(effectivePriorInput) || 0);
+    const prior = Math.max(0, cleanNumericAmount(effectivePriorInput));
     const cumulative = prior + totalTransactionGmv;
 
     // Temporal Resolution: "Credit or Payment, whichever is earlier"
@@ -3679,7 +3706,7 @@ export function evaluateSection194IA({
 } = {}) {
     // Exclusion 1: Agricultural Land
     if (isAgriculturalLand) {
-        const grossAmount = roundToPaisa(Math.max(0, Number(contractualConsiderationInr) || 0) + Math.max(0, Number(incidentalChargesInr) || 0));
+        const grossAmount = roundToPaisa(Math.max(0, cleanNumericAmount(contractualConsiderationInr)) + Math.max(0, cleanNumericAmount(incidentalChargesInr)));
         return {
             status: 'SUCCESS',
             statutoryDetermination: 'EXEMPT_AGRICULTURAL_LAND',
@@ -3707,12 +3734,12 @@ export function evaluateSection194IA({
         };
     }
 
-    const rawBaseConsideration = Math.max(0, Number(contractualConsiderationInr) || 0);
-    const rawIncidental = Math.max(0, Number(incidentalChargesInr) || 0);
+    const rawBaseConsideration = Math.max(0, cleanNumericAmount(contractualConsiderationInr));
+    const rawIncidental = Math.max(0, cleanNumericAmount(incidentalChargesInr));
     const totalContractualConsideration = roundToPaisa(rawBaseConsideration + rawIncidental);
 
-    const effectiveSdv = (stampDutyValueInr !== null && stampDutyValueInr !== undefined && !isNaN(Number(stampDutyValueInr)))
-        ? roundToPaisa(Math.max(0, Number(stampDutyValueInr)))
+    const effectiveSdv = (stampDutyValueInr !== null && stampDutyValueInr !== undefined)
+        ? roundToPaisa(Math.max(0, cleanNumericAmount(stampDutyValueInr)))
         : totalContractualConsideration;
 
     // Finance Act 2022 Amendment: Higher of consideration or Stamp Duty Value
@@ -3838,7 +3865,7 @@ export function calculateAdvanceTaxAndInterest({
     suddenIncomeExceptions = null,
     assessmentDate = null,
     isAct2025 = null
-}) {
+} = {}) {
     if (estimatedAssessedTaxInr === undefined || estimatedAssessedTaxInr === null) {
         return {
             status: 'INDETERMINATE',
@@ -3851,12 +3878,12 @@ export function calculateAdvanceTaxAndInterest({
         };
     }
 
-    const estimatedTax = Number(estimatedAssessedTaxInr);
-    const credits = Number(tdsTcsCreditInr || 0);
-    if (isNaN(estimatedTax) || estimatedTax < 0 || !Number.isFinite(estimatedTax)) {
+    const estimatedTax = cleanNumericAmount(estimatedAssessedTaxInr);
+    const credits = cleanNumericAmount(tdsTcsCreditInr);
+    if (estimatedTax < 0) {
         throw new Error('[@mudraforge/statutory] Invalid estimatedAssessedTaxInr: expected non-negative finite number.');
     }
-    if (isNaN(credits) || credits < 0 || !Number.isFinite(credits)) {
+    if (credits < 0) {
         throw new Error('[@mudraforge/statutory] Invalid tdsTcsCreditInr: expected non-negative finite number.');
     }
 
@@ -3901,10 +3928,10 @@ export function calculateAdvanceTaxAndInterest({
     }
 
     // Cumulative installments calculation (15%, 45%, 75%, 100%)
-    const pQ1 = Math.max(0, Number(paidQ1Inr || 0));
-    const pQ2 = Math.max(0, Number(paidQ2Inr || 0));
-    const pQ3 = Math.max(0, Number(paidQ3Inr || 0));
-    const pQ4 = Math.max(0, Number(paidQ4Inr || 0));
+    const pQ1 = Math.max(0, cleanNumericAmount(paidQ1Inr));
+    const pQ2 = Math.max(0, cleanNumericAmount(paidQ2Inr));
+    const pQ3 = Math.max(0, cleanNumericAmount(paidQ3Inr));
+    const pQ4 = Math.max(0, cleanNumericAmount(paidQ4Inr));
 
     const cumPaidQ1 = pQ1;
     const cumPaidQ2 = cumPaidQ1 + pQ2;
@@ -4149,13 +4176,13 @@ export function calculateRule42InputServiceReversal({
         throw new Error('[@mudraforge/statutory] calculateRule42InputServiceReversal: totalItcInr is required.');
     }
 
-    const T = roundToPaisa(Math.max(0, Number(totalItcInr) || 0));
-    const T1 = roundToPaisa(Math.max(0, Number(t1NonBusinessInr) || 0));
-    const T2 = roundToPaisa(Math.max(0, Number(t2ExemptInr) || 0));
-    const T3 = roundToPaisa(Math.max(0, Number(t3BlockedInr) || 0));
-    const T4 = roundToPaisa(Math.max(0, Number(t4TaxableInr) || 0));
-    const E = Math.max(0, Number(exemptTurnoverInr) || 0);
-    const F = Math.max(0, Number(totalTurnoverInr) || 0);
+    const T = roundToPaisa(Math.max(0, cleanNumericAmount(totalItcInr)));
+    const T1 = roundToPaisa(Math.max(0, cleanNumericAmount(t1NonBusinessInr)));
+    const T2 = roundToPaisa(Math.max(0, cleanNumericAmount(t2ExemptInr)));
+    const T3 = roundToPaisa(Math.max(0, cleanNumericAmount(t3BlockedInr)));
+    const T4 = roundToPaisa(Math.max(0, cleanNumericAmount(t4TaxableInr)));
+    const E = Math.max(0, cleanNumericAmount(exemptTurnoverInr));
+    const F = Math.max(0, cleanNumericAmount(totalTurnoverInr));
 
     const directIneligible = roundToPaisa(T1 + T2 + T3);
     if (directIneligible > T) {
@@ -4181,8 +4208,8 @@ export function calculateRule42InputServiceReversal({
         if (F > 0) {
             exemptRatio = Math.min(1.0, E / F);
         } else if (E === 0 && F === 0) {
-            const precE = Math.max(0, Number(precedingExemptTurnoverInr) || 0);
-            const precF = Math.max(0, Number(precedingTotalTurnoverInr) || 0);
+            const precE = Math.max(0, cleanNumericAmount(precedingExemptTurnoverInr));
+            const precF = Math.max(0, cleanNumericAmount(precedingTotalTurnoverInr));
             if (precF > 0) {
                 exemptRatio = Math.min(1.0, precE / precF);
                 turnoverBasis = 'PRECEDING_TAX_PERIOD_PROVISO';
@@ -4267,10 +4294,10 @@ export function reconcileRule42AnnualTrueUp({
         throw new Error('[@mudraforge/statutory] reconcileRule42AnnualTrueUp: cumulativeMonthlyReversalsInr is required.');
     }
 
-    const C2 = roundToPaisa(Math.max(0, Number(annualCommonCreditC2Inr) || 0));
-    const priorReversals = roundToPaisa(Math.max(0, Number(cumulativeMonthlyReversalsInr) || 0));
-    const annualE = Math.max(0, Number(annualExemptTurnoverInr) || 0);
-    const annualF = Math.max(0, Number(annualTotalTurnoverInr) || 0);
+    const C2 = roundToPaisa(Math.max(0, cleanNumericAmount(annualCommonCreditC2Inr)));
+    const priorReversals = roundToPaisa(Math.max(0, cleanNumericAmount(cumulativeMonthlyReversalsInr)));
+    const annualE = Math.max(0, cleanNumericAmount(annualExemptTurnoverInr));
+    const annualF = Math.max(0, cleanNumericAmount(annualTotalTurnoverInr));
 
     // Derive succeeding FY start date & statutory cutoff (30th November)
     let endYear = 2025;
@@ -4378,8 +4405,8 @@ export function calculateRule43CapitalGoodsReversal({
         throw new Error('[@mudraforge/statutory] calculateRule43CapitalGoodsReversal: capitalGoodsList must be an array.');
     }
 
-    const E = Math.max(0, Number(exemptTurnoverInr) || 0);
-    const F = Math.max(0, Number(totalTurnoverInr) || 0);
+    const E = Math.max(0, cleanNumericAmount(exemptTurnoverInr));
+    const F = Math.max(0, cleanNumericAmount(totalTurnoverInr));
 
     let exemptRatio = 0;
     let turnoverBasis = 'CURRENT_TAX_PERIOD';
@@ -4387,8 +4414,8 @@ export function calculateRule43CapitalGoodsReversal({
     if (F > 0) {
         exemptRatio = Math.min(1.0, E / F);
     } else if (E === 0 && F === 0) {
-        const precE = Math.max(0, Number(precedingExemptTurnoverInr) || 0);
-        const precF = Math.max(0, Number(precedingTotalTurnoverInr) || 0);
+        const precE = Math.max(0, cleanNumericAmount(precedingExemptTurnoverInr));
+        const precF = Math.max(0, cleanNumericAmount(precedingTotalTurnoverInr));
         if (precF > 0) {
             exemptRatio = Math.min(1.0, precE / precF);
             turnoverBasis = 'PRECEDING_TAX_PERIOD_PROVISO';
@@ -4411,7 +4438,7 @@ export function calculateRule43CapitalGoodsReversal({
     for (const asset of capitalGoodsList) {
         const assetId = asset.assetId || 'ASSET-UNKNOWN';
         const description = asset.description || 'Capital Good';
-        const rawItc = roundToPaisa(Math.max(0, Number(asset.itcAmountInr || asset.taxAmount || 0)));
+        const rawItc = roundToPaisa(Math.max(0, cleanNumericAmount(asset.itcAmountInr || asset.taxAmount)));
         const category = String(asset.category || asset.useCategory || 'COMMON').toUpperCase();
         const invoiceDateIso = asset.invoiceDate ? String(asset.invoiceDate).slice(0, 10) : taxPeriodDate;
 
@@ -4912,7 +4939,7 @@ export function calculateRule37ASupplierNonFilingReversal({
     calculationDate = new Date().toISOString().slice(0, 10),
     annualInterestRatePercent = 18.0
 } = {}) {
-    const rawItc = Number(itcAmount) || 0;
+    const rawItc = cleanNumericAmount(itcAmount);
     const calcDateIso = String(calculationDate).slice(0, 10);
 
     // Compute November 30 cutoff date for the given financial year
@@ -5009,7 +5036,7 @@ export function generateMsme1AndScheduleThreeAging({
     asOfDate = new Date().toISOString().slice(0, 10),
     halfYearPeriod = null, // 'APRIL_TO_SEPTEMBER' | 'OCTOBER_TO_MARCH'
     payables = []
-}) {
+} = {}) {
     if (!Array.isArray(payables)) {
         throw new Error('[@mudraforge/statutory] Invalid payables: expected an array of payable records.');
     }
@@ -5033,7 +5060,7 @@ export function generateMsme1AndScheduleThreeAging({
     const assessedPayables = [];
 
     for (const item of payables) {
-        const amount = Math.max(0, Number(item.amount || item.invoiceAmount || 0));
+        const amount = Math.max(0, cleanNumericAmount(item.amount || item.invoiceAmount));
         if (amount === 0) continue;
 
         const isUnbilled = item.isUnbilled === true;
@@ -5206,14 +5233,14 @@ export function calculateCorporateTaxMatVsConcessional({
     bookProfitAdjustments = null,
     adjustedBookProfitInr = null,
     optedSection115BAA = null
-}) {
+} = {}) {
     const fy = financialYear || '2025-26';
     const ay = assessmentYear || (fy === '2025-26' ? '2026-27' : '2027-28');
-    const turnover = Number(turnoverPrecedingFyInr) || 0;
-    const npbt = Number(netProfitBeforeTaxInr) || 0;
-    const additions = Number(normalTaxAdditionsInr) || 0;
-    const deductions = Number(normalTaxDeductionsInr) || 0;
-    const priorMatCredit = Number(accumulatedMatCreditInr) || 0;
+    const turnover = cleanNumericAmount(turnoverPrecedingFyInr);
+    const npbt = cleanNumericAmount(netProfitBeforeTaxInr);
+    const additions = cleanNumericAmount(normalTaxAdditionsInr);
+    const deductions = cleanNumericAmount(normalTaxDeductionsInr);
+    const priorMatCredit = cleanNumericAmount(accumulatedMatCreditInr);
 
     // A. Normal Corporate Tax Regime
     const taxableIncomeNormal = Math.max(0, roundToPaisa(npbt + additions - deductions));
@@ -5410,8 +5437,8 @@ export function evaluatePlaceOfSupplyAndLut({
     isIntermediaryService = false,
     hasValidLut = false,
     lutArn = null
-}) {
-    const amount = Number(invoiceAmountInr) || 0;
+} = {}) {
+    const amount = cleanNumericAmount(invoiceAmountInr);
     const rate = Number(gstRate) || 0.18;
     const isTransExport = transactionType === 'EXPORT_SERVICES' || transactionType === 'EXPORT_GOODS' || (recipientCountryCode && recipientCountryCode.toUpperCase() !== 'IN');
 
@@ -5592,9 +5619,9 @@ export function calculateTransferPricingAlp({
     isWholesaleTrading = false,
     comparablesData = [],
     transferPricingMethod = 'TNMM'
-}) {
-    const amount = Number(internationalTransactionAmountInr) || 0;
-    const testedMargin = Number(testedPartyOperatingMarginPercent) || 0;
+} = {}) {
+    const amount = cleanNumericAmount(internationalTransactionAmountInr);
+    const testedMargin = cleanNumericAmount(testedPartyOperatingMarginPercent);
     const tolerancePercent = isWholesaleTrading ? 3.0 : 1.0;
 
     if (!isAssociatedEnterprise) {
@@ -5725,9 +5752,9 @@ export function evaluateSection79LossContinuity({
     shareholdingInLossYear = [],
     shareholdingInSetOffYear = [],
     votingPowerHeldByOriginalShareholdersPercent = null
-}) {
-    const bfLoss = Math.max(0, Number(accumulatedBroughtForwardLossInr) || 0);
-    const unabsDep = Math.max(0, Number(unabsorbedDepreciationInr) || 0);
+} = {}) {
+    const bfLoss = Math.max(0, cleanNumericAmount(accumulatedBroughtForwardLossInr));
+    const unabsDep = Math.max(0, cleanNumericAmount(unabsorbedDepreciationInr));
 
     let continuityPercent = votingPowerHeldByOriginalShareholdersPercent !== null
         ? Number(votingPowerHeldByOriginalShareholdersPercent)
@@ -6007,7 +6034,7 @@ export function revalueForeignExchangeIndAs109({
     asOfDate = null,
     reportingCurrency = 'INR',
     items = []
-}) {
+} = {}) {
     const dAsOf = asOfDate ? new Date(asOfDate) : new Date();
     const asOfIso = !isNaN(dAsOf.getTime()) ? dAsOf.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
@@ -6023,9 +6050,9 @@ export function revalueForeignExchangeIndAs109({
         const desc = item.description || item.itemDescription || 'FX Item';
         const itemType = (item.itemType || 'MONETARY_ASSET').toUpperCase();
         const ccy = item.foreignCurrency || item.currency || 'USD';
-        const fcyAmt = Number(item.foreignAmount || item.amount || 0);
-        const bookRate = Number(item.bookingRate || item.historicalRate || 1);
-        const closeRate = Number(item.closingRate || item.spotRate || bookRate);
+        const fcyAmt = cleanNumericAmount(item.foreignAmount || item.amount);
+        const bookRate = cleanNumericAmount(item.bookingRate || item.historicalRate) || 1;
+        const closeRate = cleanNumericAmount(item.closingRate || item.spotRate) || bookRate;
         const isHedge = item.isDesignatedCashFlowHedge === true;
 
         if (itemType === 'NON_MONETARY') {
@@ -6140,8 +6167,8 @@ export function evaluateSection194R({
     isSpecifiedPerson206AB = false,
     effectiveDate = null
 } = {}) {
-    const benefitVal = roundToPaisa(Math.max(0, Number(currentBenefitValueInr) || 0));
-    const priorVal = roundToPaisa(Math.max(0, Number(cumulativePriorBenefitsInr) || 0));
+    const benefitVal = roundToPaisa(Math.max(0, cleanNumericAmount(currentBenefitValueInr)));
+    const priorVal = roundToPaisa(Math.max(0, cleanNumericAmount(cumulativePriorBenefitsInr)));
     const totalCumulativeVal = roundToPaisa(priorVal + benefitVal);
     const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
 
@@ -6166,8 +6193,8 @@ export function evaluateSection194R({
     // Exclusion 2: Individual / HUF Payer Turnover Floor
     const normalizedEntityType = String(payerEntityType || 'COMPANY').toUpperCase();
     if (normalizedEntityType === 'INDIVIDUAL' || normalizedEntityType === 'HUF' || normalizedEntityType === 'INDIVIDUAL_HUF') {
-        const turnover = Number(payerPrecedingFyTurnoverInr) || 0;
-        const profReceipts = Number(payerPrecedingFyProfessionReceiptsInr) || 0;
+        const turnover = cleanNumericAmount(payerPrecedingFyTurnoverInr);
+        const profReceipts = cleanNumericAmount(payerPrecedingFyProfessionReceiptsInr);
         const exceedsBusinessFloor = turnover > 10000000; // > 1 Crore
         const exceedsProfessionFloor = profReceipts > 5000000; // > 50 Lakhs
 
@@ -6301,11 +6328,11 @@ export function evaluateSection194IB({
     isLandlordPanInoperative = false,
     effectiveDate = null
 } = {}) {
-    const monthRent = roundToPaisa(Math.max(0, Number(monthlyRentInr) || 0));
+    const monthRent = roundToPaisa(Math.max(0, cleanNumericAmount(monthlyRentInr)));
     const months = Math.max(1, Math.min(12, Number(tenancyMonthsInYear) || 1));
     const totalRentForPeriod = roundToPaisa(monthRent * months);
-    const lastMonthRent = lastMonthRentPayableInr !== null && lastMonthRentPayableInr !== undefined && !isNaN(Number(lastMonthRentPayableInr))
-        ? roundToPaisa(Math.max(0, Number(lastMonthRentPayableInr)))
+    const lastMonthRent = lastMonthRentPayableInr !== null && lastMonthRentPayableInr !== undefined
+        ? roundToPaisa(Math.max(0, cleanNumericAmount(lastMonthRentPayableInr)))
         : monthRent;
     const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
 
@@ -6425,8 +6452,8 @@ export function evaluateSection194M({
     isSpecifiedPerson206AB = false,
     effectiveDate = null
 } = {}) {
-    const currentAmt = roundToPaisa(Math.max(0, Number(currentPaymentAmountInr) || 0));
-    const priorAmt = roundToPaisa(Math.max(0, Number(cumulativePriorPaymentsInr) || 0));
+    const currentAmt = roundToPaisa(Math.max(0, cleanNumericAmount(currentPaymentAmountInr)));
+    const priorAmt = roundToPaisa(Math.max(0, cleanNumericAmount(cumulativePriorPaymentsInr)));
     const totalCumulative = roundToPaisa(priorAmt + currentAmt);
     const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
 

@@ -15,7 +15,7 @@
  * Zero external npm dependencies: Native ES module and pure string/math parsing only.
  */
 
-import { evaluateSection194Q, roundToPaisa } from './calculators.js';
+import { evaluateSection194Q, roundToPaisa, cleanNumericAmount } from './calculators.js';
 import { decodeTaxIdentifier } from './index.js';
 
 const STATUTORY_THRESHOLD_INR = 5000000; // ₹50 Lakhs (Section 194Q(1))
@@ -23,6 +23,8 @@ const STATUTORY_THRESHOLD_INR = 5000000; // ₹50 Lakhs (Section 194Q(1))
 /**
  * Parses a standard CSV string representing a Tally or ERP purchase daybook.
  * Tolerates variations in header casing and common column aliases.
+ * Resilient against UTF-8 BOM, diverse delimiters (comma, semicolon, tab),
+ * and accounting formatted currency strings.
  * 
  * Supported columns (case-insensitive):
  * - Date: date, vch_date, voucher_date, txn_date
@@ -43,13 +45,19 @@ export function parseTallyDaybookCsv(csvText) {
         throw new Error('[@mudraforge/statutory] Daybook CSV content must be a non-empty string.');
     }
 
-    const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    // Strip UTF-8 Byte Order Mark (BOM) inserted by Windows/Excel
+    const cleanCsv = csvText.replace(/^\uFEFF/, '');
+    const lines = cleanCsv.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     if (lines.length < 2) {
         return [];
     }
 
+    // Auto-detect delimiter: comma vs semicolon vs tab
+    const firstLine = lines[0];
+    const delimiter = !firstLine.includes(',') && firstLine.includes(';') ? ';' : (!firstLine.includes(',') && firstLine.includes('\t') ? '\t' : ',');
+
     // Parse header row
-    const rawHeaders = parseCsvRow(lines[0]);
+    const rawHeaders = parseCsvRow(lines[0], delimiter);
     const headers = rawHeaders.map(h => h.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
 
     // Map column indices
@@ -72,20 +80,20 @@ export function parseTallyDaybookCsv(csvText) {
     const vouchers = [];
 
     for (let i = 1; i < lines.length; i++) {
-        const row = parseCsvRow(lines[i]);
+        const row = parseCsvRow(lines[i], delimiter);
         if (row.length === 0 || (row.length === 1 && !row[0])) continue;
 
         const rawDate = colIndex.date !== -1 ? row[colIndex.date] : null;
         const normalizedDate = normalizeIsoDate(rawDate);
 
         const rawAmount = colIndex.amount !== -1 ? row[colIndex.amount] : '0';
-        const amount = Math.abs(parseFloat(String(rawAmount).replace(/[^0-9.-]/g, '')) || 0);
+        const amount = cleanNumericAmount(rawAmount);
 
         const rawGst = colIndex.gstAmount !== -1 ? row[colIndex.gstAmount] : '0';
-        const gstAmount = Math.abs(parseFloat(String(rawGst).replace(/[^0-9.-]/g, '')) || 0);
+        const gstAmount = Math.abs(cleanNumericAmount(rawGst));
 
         const rawTds = colIndex.tdsDeducted !== -1 ? row[colIndex.tdsDeducted] : '0';
-        const tdsDeducted = Math.abs(parseFloat(String(rawTds).replace(/[^0-9.-]/g, '')) || 0);
+        const tdsDeducted = Math.abs(cleanNumericAmount(rawTds));
 
         const partyName = colIndex.partyName !== -1 ? (row[colIndex.partyName] || 'Unknown Vendor').trim() : 'Unknown Vendor';
         const rawPan = colIndex.pan !== -1 ? (row[colIndex.pan] || '').trim().toUpperCase() : '';
@@ -651,7 +659,7 @@ export function generateAuditMarkdownReport(reconciliationResult) {
 // INTERNAL HELPER UTILITIES
 // -----------------------------------------------------------------------------
 
-function parseCsvRow(rowText) {
+function parseCsvRow(rowText, delimiter = ',') {
     const result = [];
     let insideQuotes = false;
     let current = '';
@@ -665,7 +673,7 @@ function parseCsvRow(rowText) {
             } else {
                 insideQuotes = !insideQuotes;
             }
-        } else if (char === ',' && !insideQuotes) {
+        } else if (char === delimiter && !insideQuotes) {
             result.push(current.trim());
             current = '';
         } else {
