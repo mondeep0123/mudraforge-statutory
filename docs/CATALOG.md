@@ -21,6 +21,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | `direct_tax` | [**194C**](#194c) | Income-tax Act, 1961 | 1972-04-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
 | `direct_tax` | [**194Q**](#194q) | Income-tax Act, 1961 | 2021-07-01 &rarr; 2026-03-31 | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | `form_26q_quarterly_return` |
 | `direct_tax` | [**393**](#393) | Income-tax Act, 2025 | 2026-04-01 &rarr; In Force | `Active` | Buyer > ₹10Cr; Purchases > ₹50L | N/A |
+| `direct_tax` | [**194A**](#194a) | Income-tax Act, 1961 | 1967-04-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_15g_15h_interest_declaration` |
 | `direct_tax` | [**194R**](#194r) | Income-tax Act, 1961 | 2022-07-01 &rarr; In Force | `Active` | General Provision | N/A |
 | `direct_tax` | [**194I**](#194i) | Income-tax Act, 1961 | 1994-06-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_26q_quarterly_return` |
 | `direct_tax` | [**194J**](#194j) | Income-tax Act, 1961 | 1995-07-01 &rarr; 2026-03-31 | `Active` | General Provision | `form_16a_tds_certificate` |
@@ -32,6 +33,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | `indirect_tax_gst` | [**IGST-SEC-16-LUT**](#igst-sec-16-lut) | Integrated Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `lut_form_gst_rfnd_11_declaration` |
 | `indirect_tax_gst` | [**51**](#51) | Central Goods and Services Tax Act, 2017 | 2018-10-01 &rarr; In Force | `Active` | General Provision | N/A |
 | `indirect_tax_gst` | [**16(2)**](#16-2-) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_3b_table_4_itc_reversal` |
+| `indirect_tax_gst` | [**RULE-37-37A**](#rule-37-37a) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_3b_table_4b_reversal` |
 | `indirect_tax_gst` | [**9(3)**](#9-3-) | Central Goods and Services Tax Act, 2017 read with Notification No. 13/2017-Central Tax | 2017-07-01 &rarr; In Force | `Active` | General Provision | `rcm_self_invoice_payment_voucher` |
 | `international_tax` | [**195**](#195) | Income-tax Act, 1961 read with Double Taxation Avoidance Agreements | 1962-04-01 &rarr; In Force | `Active` | General Provision | `form_15ca_15cb_compliance_checklist` |
 | `international_tax` | [**INDAS-21-109-FX**](#indas-21-109-fx) | Companies | 2016-04-01 &rarr; In Force | `Active` | General Provision | `indas_109_cash_flow_hedge_reserve_schedule` |
@@ -410,6 +412,45 @@ The table below records the provenance baseline, verification standard, and oper
 - **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 8, Item (ii)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on purchase of goods exceeding ₹50 Lakhs*
 - **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 397(2)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Higher withholding rate (5%) for failure to furnish PAN*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 13 of 2021 (Principles saved under Section 536(2) transitional savings)](https://www.incometaxindia.gov.in/w/circular-no.-13/2021-guidelines-under-section-194q-of-the-income-tax-act-1961): *Threshold calculation & advance netting guidelines saved under 2025 Act*
+
+---
+
+<a id="194a"></a>
+
+#### Section 194A: Deduction of tax at source on payment of interest other than interest on securities
+
+- **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 4, Item (i)
+- **Temporal Validity**: `1967-04-01` to `2026-03-31`
+- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 4 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Machine-Readable Source**: [`okf/direct_tax/tds_interest_194a/section.json`](../okf/direct_tax/tds_interest_194a/section.json)
+
+**Statutory Summary**:
+> Any person (other than an individual or HUF not liable to audit under Section 44AB in the preceding FY) responsible for paying any income by way of interest other than 'Interest on securities' to a resident payee must deduct 10% tax at source. Statutory Annual Thresholds: (a) ₹40,000 where payer is a banking company, co-operative bank, or post office (₹50,000 if payee is a resident Senior Citizen u/s 80TTB); (b) ₹5,000 for all other payers (e.g. corporate borrowers, vendor trade delayed interest, inter-corporate deposits, NBFC interest). Under Section 206AA, if payee PAN is missing or inoperative, tax is deductible at 20%. Section 194A(3) provides specific exemptions for interest paid to banks, financial corporations, and interest paid by a firm to its partners. Notice: Penal interest paid under Section 16 of the MSMED Act to Micro & Small enterprises is subject to 194A withholding if exceeding ₹5,000, and is non-deductible (statutory add-back to taxable income) under Section 23 of the MSMED Act.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "commercialPayerAnnualThresholdInr": 5000,
+  "bankCooperativePayerAnnualThresholdInr": 40000,
+  "seniorCitizenBankPayerThresholdInr": 50000,
+  "standardDeductionRatePercent": 10,
+  "nonCompliantPanPenaltyRatePercent": 20,
+  "msmeSection16Interaction": "MSME Section 16 delayed payment penal interest is subject to Section 194A withholding if exceeding ₹5,000 in a FY, and must be permanently added back to taxable income under Section 23 of the MSMED Act."
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Law & Justice / CBDT** — [Section 194A, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Deduction of tax at source on interest other than interest on securities*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 4, Item (i)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on interest other than interest on securities under new Direct Tax Code*
+- **Central Board of Direct Taxes (CBDT)** — [Circular No. 03 of 2010 (Dated 02 March 2010)](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx?year=2010): *Instruction on TDS deduction on interest payments*
+
+**Executive Circulars Bundled**:
+- [`cbdt_circular_03_2010_interest_tds.md`](../okf/direct_tax/tds_interest_194a/circulars/cbdt_circular_03_2010_interest_tds.md)
+
+**Compliance Return Schemas & Templates**:
+- [`form_15g_15h_interest_declaration.json`](../okf/direct_tax/tds_interest_194a/forms/form_15g_15h_interest_declaration.json)
+- [`form_26q_interest_schedule.json`](../okf/direct_tax/tds_interest_194a/forms/form_26q_interest_schedule.json)
 
 ---
 
@@ -820,6 +861,44 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Compliance Return Schemas & Templates**:
 - [`gstr_3b_table_4_itc_reversal.json`](../okf/indirect_tax_gst/itc_eligibility_16_2/forms/gstr_3b_table_4_itc_reversal.json)
+
+---
+
+<a id="rule-37-37a"></a>
+
+#### Section RULE-37-37A: Reversal of input tax credit in case of non-payment of consideration to vendor within 180 days and non-filing by supplier
+
+- **Governing Statute**: Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)
+- **Successor Provision**: Central Goods and Services Tax Act, 2017 &mdash; Section 16(2) second proviso read with Rule 37 and Rule 37A (as amended)
+- **Temporal Validity**: `2017-07-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Rule 37 amended w.e.f. 01.10.2022 by Notification No. 19/2022-CT to align interest calculation with Section 50(1); Rule 37A inserted w.e.f. 26.12.2022 by Notification No. 26/2022-CT.
+- **Machine-Readable Source**: [`okf/indirect_tax_gst/itc_reversal_rule37_37a/section.json`](../okf/indirect_tax_gst/itc_reversal_rule37_37a/section.json)
+
+**Statutory Summary**:
+> Under Section 16(2) second proviso of the CGST Act read with Rule 37, where a registered recipient fails to pay the supplier the amount towards the value of supply along with tax within 180 days from the invoice date, the recipient must reverse the input tax credit proportionate to the unpaid amount in Form GSTR-3B for the tax period immediately following the expiry of 180 days, along with 18% annual interest under Section 50(1). Supplies under Reverse Charge (RCM) and deemed supplies without consideration under Schedule I are exempt from this reversal. The recipient can re-avail the reversed ITC upon subsequent payment without time limit under Section 16(4). Under Rule 37A, if a supplier reports an invoice in GSTR-1 but fails to file GSTR-3B by 30th November following the end of the financial year, the recipient must reverse the ITC by 30th November, and may re-avail it interest-free once the supplier files GSTR-3B.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "vendorPaymentGracePeriodDays": 180,
+  "statutoryInterestRatePercent": 18,
+  "gstr3bReportingTable": "Table 4(B)(2) - Others (Reclaimable)",
+  "reAvailmentTable": "Table 4(A)(5) and Table 4(D)(1)",
+  "rcmExemption": "Supplies subject to Reverse Charge Mechanism under Section 9(3) or 9(4) are strictly exempt from 180-day payment reversal.",
+  "rule37aCutoffDate": "30th November following the end of the financial year in which ITC was availed"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 19/2022-Central Tax (Dated 28 September 2022)](https://taxinformation.cbic.gov.in/view-pdf/1009511/ENG/Notifications): *Substitution of Rule 37 to align 180-day ITC reversal and Section 50 interest*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 26/2022-Central Tax (Dated 26 December 2022)](https://taxinformation.cbic.gov.in/view-pdf/1009605/ENG/Notifications): *Insertion of Rule 37A for ITC reversal where supplier fails to file GSTR-3B*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 170/02/2022-GST (Dated 06 July 2022)](https://taxinformation.cbic.gov.in/view-pdf/1003110/ENG/Circulars): *Mandatory reporting of reclaimable ITC reversals in Table 4(B)(2) of Form GSTR-3B*
+
+**Executive Circulars Bundled**:
+- [`cbic_notification_19_2022_rule37.md`](../okf/indirect_tax_gst/itc_reversal_rule37_37a/circulars/cbic_notification_19_2022_rule37.md)
+
+**Compliance Return Schemas & Templates**:
+- [`gstr_3b_table_4b_reversal.json`](../okf/indirect_tax_gst/itc_reversal_rule37_37a/forms/gstr_3b_table_4b_reversal.json)
 
 ---
 

@@ -199,6 +199,9 @@ export declare class StatutoryClient {
     calculateTransferPricingAlp(payload?: any): any;
     evaluateSection79LossContinuity(payload?: any): any;
     revalueForeignExchangeIndAs109(payload?: any): any;
+    evaluateSection194A(payload?: any): any;
+    calculateItcReversalRule37(payload?: any): any;
+    calculateRule37ASupplierNonFilingReversal(payload?: any): any;
     getOutcomes(provision?: string, options?: StatutoryOutcomesOptions): Promise<StatutoryOutcomesResult>;
     explain(codeOrQuery: string, options?: any): any;
 }
@@ -338,6 +341,9 @@ export declare function evaluateSection194C(payload: any): any;
 export declare function evaluateSection194H(payload: any): any;
 export declare function evaluateSection194I(payload: any): any;
 export declare function evaluateSection194J(payload: any): any;
+export declare function evaluateSection194A(payload: any): any;
+export declare function calculateItcReversalRule37(payload: any): any;
+export declare function calculateRule37ASupplierNonFilingReversal(payload: any): any;
 export declare function evaluateSection206C1H(payload: any): any;
 export declare function evaluateSection43bH(payload: any): any;
 export declare function calculateMsmeCompoundInterest(payload: any): any;

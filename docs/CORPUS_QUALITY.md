@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.10.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-28T05:11:55.462Z
+> **Generated Timestamp**: 2026-10-29T04:17:17.274Z
 
 ---
 
@@ -11,12 +11,12 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 76 resolvable gazette URLs | 76 total citations declared | **100.0%** | VERIFIED |
-| **Temporal Validity Bounds** | 29 sections with explicit dates | 29 total bundled sections | **100.0%** | VERIFIED |
-| **Dual-Act 2025 Transition Bridges** | 9 direct tax provisions mapped | 10 direct tax provisions | **90.0%** | VERIFIED |
-| **Attached Administrative Circulars** | 30 official circulars | 29 provisions across active domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 27 schemas/templates | 29 provisions across active domains | **100% Attached** | VERIFIED |
-| **Cryptographic Merkle Verification** | 86 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
+| **Primary Source Citations** | 82 resolvable gazette URLs | 82 total citations declared | **100.0%** | VERIFIED |
+| **Temporal Validity Bounds** | 31 sections with explicit dates | 31 total bundled sections | **100.0%** | VERIFIED |
+| **Dual-Act 2025 Transition Bridges** | 10 direct tax provisions mapped | 11 direct tax provisions | **90.9%** | VERIFIED |
+| **Attached Administrative Circulars** | 32 official circulars | 31 provisions across active domains | **100% Attached** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 30 schemas/templates | 31 provisions across active domains | **100% Attached** | VERIFIED |
+| **Cryptographic Merkle Verification** | 93 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
 
@@ -57,6 +57,7 @@
 | **194C** | Deduction of tax at source on payments to contractors and sub-contractors | Income-tax Act, 1961 (Act No. 43 of 1961) | `1972-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 3, Item (i)) |
 | **194Q** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 2 | 2 | Income-tax Act, 2025 (Section 393(1), Table 8, Item (ii)) |
 | **393** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 2025 (Act No. 1 of 2025) | `2026-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 0 | 0 | N/A |
+| **194A** | Deduction of tax at source on payment of interest other than interest on securities | Income-tax Act, 1961 (Act No. 43 of 1961) | `1967-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 4, Item (i)) |
 | **194R** | Deduction of tax at source on benefit or perquisite in respect of business or profession | Income-tax Act, 1961 (Act No. 43 of 1961) | `2022-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | Income-tax Act, 2025 (Section 393(1), Table 8, Item 12) |
 | **194I** | Deduction of tax at source on payment of rent | Income-tax Act, 1961 (Act No. 43 of 1961) | `1994-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (i)) |
 | **194J** | Fees for professional or technical services, royalty, and non-compete fees | Income-tax Act, 1961 | `1995-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 6, Item (iii)) |
@@ -68,6 +69,7 @@
 | **RULE-48(4)** | Mandatory electronic invoicing (E-Invoicing), IRN generation, and invoice validity | Central Goods and Services Tax Rules, 2017 | `2020-10-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |
 | **51** | Tax deduction at source under Goods and Services Tax | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2018-10-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |
 | **16(2)** | Eligibility and conditions for taking input tax credit and mandatory 180-day payment rule | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 4 | 1 | 1 | CGST Act, 2017 (In force) (Section 16(2), (3), (4), (5), (6)) |
+| **RULE-37-37A** | Reversal of input tax credit in case of non-payment of consideration to vendor within 180 days and non-filing by supplier | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Central Goods and Services Tax Act, 2017 (Section 16(2) second proviso read with Rule 37 and Rule 37A (as amended)) |
 | **9(3)** | Reverse Charge Mechanism (RCM) mandatory tax liability on recipient, self-invoicing, payment voucher issuance, and electronic cash discharge | Central Goods and Services Tax Act, 2017 read with Notification No. 13/2017-Central Tax (Rate) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | N/A |
 | **195** | Deduction of tax at source on foreign cross-border payments to non-residents, DTAA treaty benefits, documentation, Form 15CA/15CB, and cloud software exemption | Income-tax Act, 1961 read with Double Taxation Avoidance Agreements (DTAA) under Section 90 | `1962-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 2 | 1 | Income-tax Act, 2025 Section 393(2) (Section 393(2) of Income-tax Act, 2025) |
 | **INDAS-21-109-FX** | Foreign Exchange Monetary Asset/Liability Revaluation and Cash Flow Hedge Accounting | Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013 | `2016-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Companies Act, 2013 (Indian Accounting Standards) (Ind AS 21 & Ind AS 109) |

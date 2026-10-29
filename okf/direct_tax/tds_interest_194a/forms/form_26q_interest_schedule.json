@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Form 26Q Section 194A Quarterly TDS Schedule",
+  "description": "Statutory reporting schedule for interest payments other than interest on securities under Section 194A",
+  "type": "object",
+  "required": [
+    "deductorTan",
+    "financialYear",
+    "quarter",
+    "deducteePan",
+    "sectionCode",
+    "amountCreditedOrPaid",
+    "dateOfPaymentOrCredit",
+    "rateOfTds",
+    "tdsDeducted",
+    "challanDetails"
+  ],
+  "properties": {
+    "deductorTan": {
+      "type": "string",
+      "pattern": "^[A-Z]{4}[0-9]{5}[A-Z]{1}$"
+    },
+    "financialYear": {
+      "type": "string"
+    },
+    "quarter": {
+      "type": "string",
+      "enum": ["Q1", "Q2", "Q3", "Q4"]
+    },
+    "deducteePan": {
+      "type": "string",
+      "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$"
+    },
+    "sectionCode": {
+      "type": "string",
+      "enum": ["194A", "94A"]
+    },
+    "amountCreditedOrPaid": {
+      "type": "number",
+      "minimum": 0
+    },
+    "dateOfPaymentOrCredit": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "rateOfTds": {
+      "type": "number"
+    },
+    "tdsDeducted": {
+      "type": "number",
+      "minimum": 0
+    },
+    "isMsmePenalInterest": {
+      "type": "boolean",
+      "description": "Flag indicating whether payment represents Section 16 MSMED interest"
+    },
+    "reasonForLowerOrNonDeduction": {
+      "type": "string",
+      "enum": ["A", "B", "C", "Y", "S", "NONE"],
+      "description": "A: Lower deduction u/s 197, B: 15G/15H, C: 197A(1F), Y: Threshold exempt, NONE: Standard"
+    },
+    "challanDetails": {
+      "type": "object",
+      "required": ["bsrCode", "dateOfChallan", "challanSerialNumber"],
+      "properties": {
+        "bsrCode": { "type": "string", "pattern": "^[0-9]{7}$" },
+        "dateOfChallan": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "challanSerialNumber": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,9 +1,9 @@
 {
   "okfVersion": "2.9.0",
-  "publishedAt": "2026-10-26T21:03:27.210Z",
-  "rootHash": "sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0",
-  "totalSections": 29,
-  "totalFiles": 86,
+  "publishedAt": "2026-10-29T04:13:56.433Z",
+  "rootHash": "sha256-b12fab61f0ddcc8852a7db1b4831151163d1d0ff97112168d8dccf693cfe70a7",
+  "totalSections": 31,
+  "totalFiles": 93,
   "changelog": "Expanded statutory commons with 5 Corporate Finance Domains: Corporate Tax MAT vs 115BAA, Place of Supply & Zero-Rated Export LUT, Transfer Pricing ALP & Rule 10CA, Section 79 Loss Continuity, and Ind AS 21 & 109 FX Revaluation.",
   "domains": {
     "corporate_ma_restructuring": [
@@ -18,6 +18,7 @@
       "194C",
       "194Q",
       "393",
+      "194A",
       "194R",
       "194I",
       "194J"
@@ -31,6 +32,7 @@
       "IGST-SEC-16-LUT",
       "51",
       "16(2)",
+      "RULE-37-37A",
       "9(3)"
     ],
     "international_tax": [
@@ -56,6 +58,7 @@
     "194C",
     "194Q",
     "393",
+    "194A",
     "194R",
     "194I",
     "194J",
@@ -67,6 +70,7 @@
     "IGST-SEC-16-LUT",
     "51",
     "16(2)",
+    "RULE-37-37A",
     "9(3)",
     "195",
     "INDAS-21-109-FX",
@@ -106,6 +110,10 @@
     "direct_tax/tds_goods_194q/forms/vendor_pan_declaration.md": "1fadbae2f18b9d542509f186b365874575e6251f20916db3d31898a5804e5ef9",
     "direct_tax/tds_goods_194q/section.json": "4550fae0fc1f2825112225f25f29545f8b4a353506c93d3c1a13af977e3e3ef2",
     "direct_tax/tds_goods_393/section.json": "76c583c0cadb73f93a44a74d6a14b0e310b3c4c10edaf23d6c0bf099b7bf59ad",
+    "direct_tax/tds_interest_194a/circulars/cbdt_circular_03_2010_interest_tds.md": "739dbaea4f002a1a22eebf974a159f0cc772715257ab78acfa21e47bae8fe921",
+    "direct_tax/tds_interest_194a/forms/form_15g_15h_interest_declaration.json": "c872913a3f73e0838573c64289413de8e1b176b61de489ac721b774883d42624",
+    "direct_tax/tds_interest_194a/forms/form_26q_interest_schedule.json": "0d538a8763e6453ba615bd9a610c3346cb3ab2e6f8ff970b8e6ba692c1a39c20",
+    "direct_tax/tds_interest_194a/section.json": "f4bd7c6995d7d2be81bb114d577c51e17c49442b7278aa51331aac60d899556c",
     "direct_tax/tds_perquisites_194r/circulars/cbdt_circular_12_2022_perquisites.md": "a70dc9e21493a00692987bd70006bbdf192865dd43648cc8e613af6c3763ec39",
     "direct_tax/tds_perquisites_194r/section.json": "d1be884d59f62d833da8c7f19fd256cf409e703240d05c383e3e843be9bf6cbb",
     "direct_tax/tds_rent_194i/circulars/cbdt_circular_23_2017_gst_unbundling.md": "dd99c46ad87c16aa6ade773ab92a920c12fd738a19545aa05855e24c4c6ccc7e",
@@ -134,6 +142,9 @@
     "indirect_tax_gst/itc_eligibility_16_2/circulars/cbic_circular_170_2022_itc_reporting.md": "90e5c9d23922e34b4e4c3494363a2fd9723247f6749961b398022bf8fcc05203",
     "indirect_tax_gst/itc_eligibility_16_2/forms/gstr_3b_table_4_itc_reversal.json": "65406aaa7414ad07a81ae32ac9d8858965229d396d3b574412293dacda718ce6",
     "indirect_tax_gst/itc_eligibility_16_2/section.json": "48f1b232f9fa38dfaf316e7fa64e919af4c70aaf1d7231a83d3f875ef90d80d4",
+    "indirect_tax_gst/itc_reversal_rule37_37a/circulars/cbic_notification_19_2022_rule37.md": "d9f4e6910db5f8d38eb1a5b55f039e9c3364e789e4dda840f3109c2c57ee1aeb",
+    "indirect_tax_gst/itc_reversal_rule37_37a/forms/gstr_3b_table_4b_reversal.json": "150a993f6528d9800b40dcb2332b3ce28e4e632d1d27bea0384fd95c3f9aa142",
+    "indirect_tax_gst/itc_reversal_rule37_37a/section.json": "2e14d1d237f234b7119d221e02956138af4b4426f0c4b1e3630aa469cdeefc2c",
     "indirect_tax_gst/rcm_liability_sec9_3/circulars/cbic_circular_102_2019_rcm_clarifications.md": "d0aee33e231ece18030d00037feb54f3a8c292a193b5b317e86af17eac48a6a8",
     "indirect_tax_gst/rcm_liability_sec9_3/forms/rcm_self_invoice_payment_voucher.json": "5b0b6cd1ca9e08083d060245963da9d271e81ecdf77fd8d0af9749cb49ed06f0",
     "indirect_tax_gst/rcm_liability_sec9_3/section.json": "f080ed74a4c03fd04bde34de30b53aac89016c494280e8e2e08a8a4de3007987",

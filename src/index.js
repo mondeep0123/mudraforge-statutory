@@ -27,6 +27,9 @@ import {
     evaluateSection194H,
     evaluateSection194I,
     evaluateSection194J,
+    evaluateSection194A,
+    calculateItcReversalRule37,
+    calculateRule37ASupplierNonFilingReversal,
     evaluateSection206C1H,
     evaluateSection43bH,
     calculateMsmeCompoundInterest,
@@ -67,7 +70,7 @@ export { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL };
 /**
  * Current verified Merkle root digest for the active OKF v0.2 corpus.
  */
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-b12fab61f0ddcc8852a7db1b4831151163d1d0ff97112168d8dccf693cfe70a7';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 
 /**
@@ -75,6 +78,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-b12fab61f0ddcc8852a7db1b4831151163d1d0ff97112168d8dccf693cfe70a7', // v2.11.0 Complete Accounts Payable (31 Sections across 5 Domains)
     'sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0', // v2.9.0 Corporate Finance 5 Domains Merkle Root (29 Sections across 5 Domains)
     'sha256-3fb34bdcd34eec794b1f8e6abb2c0e0e87664746ec2f50ad2599c34bf57565b3', // v2.8.1 Finance Act, 2025 Section 206AB Sunset Root (24 Sections across 5 Domains)
     'sha256-239641de2bef05917673f693f9ba4d14bd5e137d64554fba5db87e426bc13e14', // v2.8.0 Deep Semantic Citation Merkle Root (24 Sections across 5 Domains)
@@ -1866,6 +1870,27 @@ export class StatutoryClient {
     }
 
     /**
+     * Section 194A: Withholding on interest other than interest on securities.
+     */
+    evaluateSection194A(payload) {
+        return evaluateSection194A(payload);
+    }
+
+    /**
+     * Rule 37: 180-day vendor non-payment ITC reversal & Section 50(1) 18% interest.
+     */
+    calculateItcReversalRule37(payload) {
+        return calculateItcReversalRule37(payload);
+    }
+
+    /**
+     * Rule 37A: Reversal of ITC where supplier failed to furnish Form GSTR-3B by November 30.
+     */
+    calculateRule37ASupplierNonFilingReversal(payload) {
+        return calculateRule37ASupplierNonFilingReversal(payload);
+    }
+
+    /**
      * MSMED Act Section 16: Compound interest with monthly rests at 3x RBI Bank Rate.
      */
     calculateMsmeCompoundInterest(payload) {
@@ -2914,6 +2939,9 @@ export {
     evaluateSection194H,
     evaluateSection194I,
     evaluateSection194J,
+    evaluateSection194A,
+    calculateItcReversalRule37,
+    calculateRule37ASupplierNonFilingReversal,
     evaluateSection206C1H,
     evaluateSection43bH,
     calculateMsmeCompoundInterest,

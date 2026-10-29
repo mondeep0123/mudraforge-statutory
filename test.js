@@ -37,6 +37,9 @@ import {
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
     revalueForeignExchangeIndAs109,
+    evaluateSection194A,
+    calculateItcReversalRule37,
+    calculateRule37ASupplierNonFilingReversal,
     getStatutoryOutcomes,
     explainStatutoryDisposition,
     enrichWithOutcomeExplanation,
@@ -1601,7 +1604,7 @@ async function run() {
         cwd: path.resolve('.')
     });
     const parsedList = JSON.parse(cliListOutput);
-    if (!Array.isArray(parsedList.sections) || parsedList.total !== 29) {
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 31) {
         throw new Error('CLI list --json failed');
     }
 
@@ -2053,8 +2056,148 @@ async function run() {
     }
     console.log(`[PASS] enrichWithOutcomeExplanation correctly attached remediation, explanation, and missingFactsExplanation.`);
 
+    // 89. Direct Tax — Section 194A (TDS on Interest & MSME Section 16 Interaction)
+    console.log('\n── Test 89: Direct Tax — Section 194A (TDS on Interest & MSME Interaction) ──');
+    const resLookup194A = await lookupStatute('194A');
+    if (resLookup194A.status !== 'SUCCESS' || resLookup194A.statute.keyStatutoryThresholds.commercialPayerAnnualThresholdInr !== 5000) {
+        throw new Error('Section 194A statutory lookup failed or threshold incorrect');
+    }
+
+    // Standard commercial interest exceeding ₹5,000 threshold
+    const calc194AStandard = evaluateSection194A({
+        interestAmount: 20000,
+        priorPaymentsInCurrentFyInr: 0,
+        payeeCategory: 'COMMERCIAL_OTHER',
+        hasPan: true,
+        transactionDate: '2025-08-15'
+    });
+    if (calc194AStandard.calculatedTdsInr !== 2000 || calc194AStandard.netPayable !== 18000 || calc194AStandard.standardRatePercent !== 10) {
+        throw new Error(`Section 194A standard deduction calculation failed: got TDS ₹${calc194AStandard.calculatedTdsInr}`);
+    }
+
+    // Missing PAN penalty floor (20% u/s 206AA)
+    const calc194ANoPan = evaluateSection194A({
+        interestAmount: 20000,
+        hasPan: false,
+        payeeCategory: 'COMMERCIAL_OTHER',
+        transactionDate: '2025-08-15'
+    });
+    if (calc194ANoPan.calculatedTdsInr !== 4000 || calc194ANoPan.standardRatePercent !== 20) {
+        throw new Error(`Section 194A missing PAN 20% penalty failed: got TDS ₹${calc194ANoPan.calculatedTdsInr}`);
+    }
+
+    // Form 15G / 15H zero deduction
+    const calc194AForm15 = evaluateSection194A({
+        interestAmount: 20000,
+        hasForm15G15H: true,
+        isForm15Valid: true,
+        payeeCategory: 'COMMERCIAL_OTHER',
+        transactionDate: '2025-08-15'
+    });
+    if (calc194AForm15.calculatedTdsInr !== 0 || calc194AForm15.netPayable !== 20000) {
+        throw new Error(`Section 194A Form 15G/15H NIL deduction failed`);
+    }
+
+    // MSME Section 16 Penal Interest Interaction: Subject to 194A withholding + Section 23 tax addback
+    const calc194AMsme = evaluateSection194A({
+        interestAmount: 25000,
+        payeeCategory: 'COMMERCIAL_OTHER',
+        isMsmeInterestSec16: true,
+        transactionDate: '2025-09-20'
+    });
+    if (calc194AMsme.calculatedTdsInr !== 2500 || !calc194AMsme.taxAddbackDisallowedMsmeSec23 || !calc194AMsme.msmeSection16Analysis) {
+        throw new Error('Section 194A MSME Section 16 penal interest addback failed');
+    }
+    console.log('[PASS] Section 194A Engine Verified: Standard 10% TDS, Missing PAN 20% Penalty, Form 15G Exemption, and MSMED Sec 16/23 Add-Back.');
+
+    // 90. Indirect Tax (GST) — Rule 37 (180-Day Vendor Non-Payment ITC Reversal)
+    console.log('\n── Test 90: Indirect Tax (GST) — Rule 37 (180-Day Vendor Non-Payment ITC Reversal) ──');
+    const resLookupRule37 = await lookupStatute('RULE-37');
+    if (resLookupRule37.status !== 'SUCCESS' || resLookupRule37.statute.keyStatutoryThresholds.vendorPaymentGracePeriodDays !== 180) {
+        throw new Error('Rule 37 statutory lookup failed or grace period incorrect');
+    }
+
+    // Invoice within 180 days: zero reversal
+    const calcRule37WithinGrace = calculateItcReversalRule37({
+        invoiceNumber: 'INV-2025-001',
+        invoiceDate: '2025-04-01',
+        calculationDate: '2025-07-01', // ~91 days elapsed
+        invoiceAmount: 118000,
+        taxAmount: 18000,
+        paidAmount: 0
+    });
+    if (calcRule37WithinGrace.isOverdue || calcRule37WithinGrace.reversalAmountInr !== 0) {
+        throw new Error('Rule 37 erroneously triggered reversal within 180 days');
+    }
+
+    // Invoice overdue past 180 days with partial payment (50% paid): 50% reversal + 18% Section 50 interest
+    const calcRule37Overdue = calculateItcReversalRule37({
+        invoiceNumber: 'INV-2025-002',
+        invoiceDate: '2024-10-01',
+        calculationDate: '2025-05-01', // 212 days elapsed (32 days overdue beyond 180)
+        invoiceAmount: 118000,
+        taxAmount: 18000,
+        paidAmount: 59000 // 50% unpaid
+    });
+    if (!calcRule37Overdue.isOverdue || calcRule37Overdue.reversalAmountInr !== 9000 || calcRule37Overdue.interestPayableInr <= 0 || !calcRule37Overdue.canReclaimOnPayment) {
+        throw new Error(`Rule 37 proportional reversal failed: got reversal ₹${calcRule37Overdue.reversalAmountInr}`);
+    }
+
+    // RCM supply: strictly exempt from 180-day reversal under Section 16(2) second proviso
+    const calcRule37Rcm = calculateItcReversalRule37({
+        invoiceNumber: 'INV-2025-003',
+        invoiceDate: '2024-08-01',
+        calculationDate: '2025-05-01',
+        invoiceAmount: 50000,
+        taxAmount: 9000,
+        paidAmount: 0,
+        isRcm: true
+    });
+    if (calcRule37Rcm.isOverdue || calcRule37Rcm.reversalAmountInr !== 0 || !calcRule37Rcm.isExempt) {
+        throw new Error('Rule 37 failed to exempt Reverse Charge (RCM) supply');
+    }
+    console.log('[PASS] Rule 37 Engine Verified: 180-day grace period, 50% proportional reversal (₹9,000), 18% Section 50 interest, and RCM exemption.');
+
+    // 91. Indirect Tax (GST) — Rule 37A (Supplier GSTR-3B Non-Filing Reversal)
+    console.log('\n── Test 91: Indirect Tax (GST) — Rule 37A (Supplier GSTR-3B Non-Filing Reversal) ──');
+    // Supplier filed GSTR-3B: zero reversal
+    const calcRule37AFiled = calculateRule37ASupplierNonFilingReversal({
+        financialYear: '2024-25',
+        invoiceDate: '2024-11-15',
+        itcAmount: 25000,
+        supplierGstr3bFiled: true,
+        calculationDate: '2025-12-15'
+    });
+    if (calcRule37AFiled.isReversalRequired || calcRule37AFiled.reversalAmountInr !== 0) {
+        throw new Error('Rule 37A erroneously required reversal when supplier GSTR-3B was filed');
+    }
+
+    // Supplier did NOT file GSTR-3B and calculation date is past 30th November (15 December 2025)
+    const calcRule37AUnfiled = calculateRule37ASupplierNonFilingReversal({
+        financialYear: '2024-25',
+        invoiceDate: '2024-11-15',
+        itcAmount: 25000,
+        supplierGstr3bFiled: false,
+        calculationDate: '2025-12-15'
+    });
+    if (!calcRule37AUnfiled.isReversalRequired || calcRule37AUnfiled.reversalAmountInr !== 25000 || calcRule37AUnfiled.interestPayableInr <= 0) {
+        throw new Error(`Rule 37A failed mandatory reversal past November 30: got ₹${calcRule37AUnfiled.reversalAmountInr}`);
+    }
+    console.log('[PASS] Rule 37A Engine Verified: Zero reversal when filed, mandatory reversal + 18% interest post-November 30.');
+
+    // 92. StatutoryClient Programmatic Parity for Section 194A and Rule 37/37A
+    console.log('\n── Test 92: StatutoryClient Programmatic Parity for Section 194A and Rule 37/37A ──');
+    const statutoryClientInstance = new StatutoryClient({ offlineFirst: true });
+    const client194A = statutoryClientInstance.evaluateSection194A({ interestAmount: 10000, payeeCategory: 'COMMERCIAL_OTHER' });
+    const clientRule37 = statutoryClientInstance.calculateItcReversalRule37({ invoiceDate: '2025-01-01', invoiceAmount: 10000, taxAmount: 1800, calculationDate: '2025-03-01' });
+    const clientRule37A = statutoryClientInstance.calculateRule37ASupplierNonFilingReversal({ financialYear: '2024-25', itcAmount: 5000, supplierGstr3bFiled: true });
+    if (client194A.calculatedTdsInr !== 1000 || clientRule37.isOverdue || clientRule37A.isReversalRequired) {
+        throw new Error('StatutoryClient helper methods parity check failed');
+    }
+    console.log('[PASS] StatutoryClient parity verified for evaluateSection194A, calculateItcReversalRule37, and calculateRule37ASupplierNonFilingReversal.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 88 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 92 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

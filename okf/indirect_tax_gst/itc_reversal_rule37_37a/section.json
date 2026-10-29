@@ -1,0 +1,64 @@
+{
+  "sectionId": "CGST2017_RULE37_37A",
+  "sectionCode": "RULE-37-37A",
+  "aliases": [
+    "RULE-37",
+    "RULE-37A",
+    "rule37",
+    "rule37a",
+    "rule 37",
+    "rule 37a",
+    "180 days reversal",
+    "vendor non-payment reversal",
+    "itc reversal 180 days",
+    "rule 37 itc reversal"
+  ],
+  "governingStatute": "Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)",
+  "statutorySection": "Section 16(2) second proviso read with Rule 37 and Rule 37A",
+  "successorStatute": "Central Goods and Services Tax Act, 2017",
+  "successorSection": "Section 16(2) second proviso read with Rule 37 and Rule 37A (as amended)",
+  "title": "Reversal of input tax credit in case of non-payment of consideration to vendor within 180 days and non-filing by supplier",
+  "effectivePeriod": {
+    "validFrom": "2017-07-01",
+    "validTo": "OPEN_ENDED",
+    "sunsetNotes": "Rule 37 amended w.e.f. 01.10.2022 by Notification No. 19/2022-CT to align interest calculation with Section 50(1); Rule 37A inserted w.e.f. 26.12.2022 by Notification No. 26/2022-CT."
+  },
+  "plainTextSummary": "Under Section 16(2) second proviso of the CGST Act read with Rule 37, where a registered recipient fails to pay the supplier the amount towards the value of supply along with tax within 180 days from the invoice date, the recipient must reverse the input tax credit proportionate to the unpaid amount in Form GSTR-3B for the tax period immediately following the expiry of 180 days, along with 18% annual interest under Section 50(1). Supplies under Reverse Charge (RCM) and deemed supplies without consideration under Schedule I are exempt from this reversal. The recipient can re-avail the reversed ITC upon subsequent payment without time limit under Section 16(4). Under Rule 37A, if a supplier reports an invoice in GSTR-1 but fails to file GSTR-3B by 30th November following the end of the financial year, the recipient must reverse the ITC by 30th November, and may re-avail it interest-free once the supplier files GSTR-3B.",
+  "keyStatutoryThresholds": {
+    "vendorPaymentGracePeriodDays": 180,
+    "statutoryInterestRatePercent": 18,
+    "gstr3bReportingTable": "Table 4(B)(2) - Others (Reclaimable)",
+    "reAvailmentTable": "Table 4(A)(5) and Table 4(D)(1)",
+    "rcmExemption": "Supplies subject to Reverse Charge Mechanism under Section 9(3) or 9(4) are strictly exempt from 180-day payment reversal.",
+    "rule37aCutoffDate": "30th November following the end of the financial year in which ITC was availed"
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Notification No. 19/2022-Central Tax (Dated 28 September 2022)",
+      "subject": "Substitution of Rule 37 to align 180-day ITC reversal and Section 50 interest",
+      "officialUrl": "https://taxinformation.cbic.gov.in/view-pdf/1009511/ENG/Notifications"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Notification No. 26/2022-Central Tax (Dated 26 December 2022)",
+      "subject": "Insertion of Rule 37A for ITC reversal where supplier fails to file GSTR-3B",
+      "officialUrl": "https://taxinformation.cbic.gov.in/view-pdf/1009605/ENG/Notifications"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Circular No. 170/02/2022-GST (Dated 06 July 2022)",
+      "subject": "Mandatory reporting of reclaimable ITC reversals in Table 4(B)(2) of Form GSTR-3B",
+      "officialUrl": "https://taxinformation.cbic.gov.in/view-pdf/1003110/ENG/Circulars"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Supplier Tax Invoice with invoice date and payment terms",
+    "Accounts Payable Aging Ledger showing unpaid balances beyond 180 days",
+    "Bank payment vouchers confirming partial or full settlement dates",
+    "GSTR-2B statement showing initial ITC availment month",
+    "Form GSTR-3B Table 4(B)(2) reversal disclosure voucher"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.10.0"
+}

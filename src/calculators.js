@@ -12,10 +12,10 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-4bbe36c3db841b833dd2bebbd6c1c5ed735498e7b20d1221c323ceb211529fe0';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-b12fab61f0ddcc8852a7db1b4831151163d1d0ff97112168d8dccf693cfe70a7';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
-export const STATUTORY_PACKAGE_VERSION = '2.10.0';
-export const OKF_CORPUS_VERSION = '2.9.0';
+export const STATUTORY_PACKAGE_VERSION = '2.11.0';
+export const OKF_CORPUS_VERSION = '2.11.0';
 
 // Current RBI Bank Rate (H2 2024 - 2026 baseline): 6.75%
 export const DEFAULT_RBI_BANK_RATE = 0.0675;
@@ -2919,6 +2919,203 @@ export function evaluateSection194H({
 }
 
 /**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 9. SECTION 194A: DETERMINISTIC TDS ON INTEREST (OTHER THAN SECURITIES)
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Income-tax Act, 1961: Section 194A
+ * Income-tax Act, 2025: Section 393(1) Table 4, Item (i)
+ *
+ * Implements authoritative interest withholding logic:
+ * - Rates:
+ *   - Standard rate: 10.0%
+ *   - Missing / Inoperative PAN: 20.0% (Section 206AA(1)(iii) / Section 397)
+ *   - Valid Form 15G / Form 15H: 0.0%
+ * - Annual Thresholds per Payee:
+ *   - Banking Company, Co-operative Bank, or Post Office: ₹40,000 (₹50,000 for Senior Citizens u/s 80TTB)
+ *   - Any Other Payer (Commercial, Vendor Delayed Interest, Inter-Corporate Loans): ₹5,000
+ *   - Firm to Partner / Exempt Institutions: Always 0% (Section 194A(3) statutory exclusion)
+ * - MSMED Act Section 16 Interaction:
+ *   - Penal interest payable under Section 16 to Micro & Small enterprises is subject to 194A withholding if exceeding ₹5,000.
+ *   - Section 23 of MSMED Act: Strictly disallowed as deduction in computing taxable income (tax add-back).
+ * - Temporal Resolution: Earlier of credit in books or payment disbursement.
+ * - Dual-Act Crystallization: Pre-1 April 2026 -> 1961 Act; Post-1 April 2026 -> 2025 Act.
+ */
+export function evaluateSection194A({
+    interestAmount,
+    priorPaymentsInCurrentFyInr = 0,
+    priorFyCategoryPayments = null,
+    priorFyPaymentsAlreadyTaxed = null,
+    payeeCategory = 'COMMERCIAL_OTHER', // 'COMMERCIAL_OTHER' | 'BANKING_OR_COOPERATIVE' | 'SENIOR_CITIZEN_DEPOSIT' | 'FIRM_TO_PARTNER' | 'EXEMPT_INSTITUTION'
+    hasPan = true,
+    isPanInoperative = false,
+    hasForm15G15H = false,
+    isForm15Valid = true,
+    isMsmeInterestSec16 = false,
+    transactionDate = null,
+    creditDate = null,
+    paymentDate = null,
+    lowerDeductionRate = null,
+    lowerDeductionCertificate = null,
+    certificateMonetaryCeilingInr = null,
+    certificatePriorUtilizedInr = 0,
+    certificateSection = null
+} = {}) {
+    const rawInterestAmount = Number(interestAmount) || 0;
+
+    const effectivePriorInput = priorPaymentsInCurrentFyInr !== null && priorPaymentsInCurrentFyInr !== undefined
+        ? priorPaymentsInCurrentFyInr
+        : priorFyCategoryPayments;
+    const prior = Math.max(0, Number(effectivePriorInput) || 0);
+    const cumulative = prior + rawInterestAmount;
+
+    // Temporal Resolution: "Credit or Payment, whichever is earlier"
+    let effectiveDate = transactionDate;
+    let withholdingTrigger = 'TRANSACTION_DATE';
+
+    if (creditDate && paymentDate) {
+        if (creditDate <= paymentDate) {
+            effectiveDate = creditDate;
+            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
+        } else {
+            effectiveDate = paymentDate;
+            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
+        }
+    } else if (creditDate) {
+        effectiveDate = creditDate;
+        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
+    } else if (paymentDate) {
+        effectiveDate = paymentDate;
+        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
+    }
+
+    const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
+    const governingSection = isAct2025
+        ? "Income-tax Act, 2025 Section 393(1) Table 4, Item (i)"
+        : "Income-tax Act, 1961 Section 194A";
+
+    // Payee Category & Threshold Resolution
+    const isExemptInstitution = payeeCategory === 'EXEMPT_INSTITUTION';
+    const isFirmToPartner = payeeCategory === 'FIRM_TO_PARTNER';
+    const isStatutoryExclusion = isExemptInstitution || isFirmToPartner;
+
+    let INTEREST_THRESHOLD = 5000;
+    if (payeeCategory === 'BANKING_OR_COOPERATIVE') {
+        INTEREST_THRESHOLD = 40000;
+    } else if (payeeCategory === 'SENIOR_CITIZEN_DEPOSIT') {
+        INTEREST_THRESHOLD = 50000;
+    }
+
+    const isThresholdBreached = !isStatutoryExclusion && (cumulative > INTEREST_THRESHOLD);
+
+    let taxableBase = 0;
+    let thresholdDisposition = 'BELOW_THRESHOLD_EXEMPT';
+
+    if (isStatutoryExclusion) {
+        taxableBase = 0;
+        thresholdDisposition = isFirmToPartner
+            ? 'EXEMPT_FIRM_TO_PARTNER_SEC_194A_3_IV'
+            : 'EXEMPT_INSTITUTION_SEC_194A_3_III';
+    } else if (isThresholdBreached) {
+        const previouslyTaxed = priorFyPaymentsAlreadyTaxed !== null && priorFyPaymentsAlreadyTaxed !== undefined
+            ? Math.max(0, Number(priorFyPaymentsAlreadyTaxed))
+            : (prior > INTEREST_THRESHOLD ? prior : 0);
+
+        taxableBase = Math.max(0, cumulative - previouslyTaxed);
+        thresholdDisposition = prior <= INTEREST_THRESHOLD && previouslyTaxed === 0
+            ? 'CATEGORY_THRESHOLD_BREACHED_WITH_CATCHUP'
+            : 'CATEGORY_THRESHOLD_ACTIVE';
+    }
+
+    // Form 15G / 15H Exemption
+    const isForm15Applied = Boolean(hasForm15G15H) && Boolean(isForm15Valid) && !isStatutoryExclusion;
+
+    // Rate Determination
+    const baseStatutoryRatePercent = (isStatutoryExclusion || isForm15Applied) ? 0.0 : 10.0;
+    const panAvailable = Boolean(hasPan) && !isPanInoperative;
+    const panFloorResolution = resolveMissingPanPenaltyFloor({
+        sectionCode: '194A',
+        tableItem: isAct2025 ? '393_4' : null,
+        isAct2025
+    });
+
+    const standardRatePercent = (isStatutoryExclusion || isForm15Applied)
+        ? 0.0
+        : (panAvailable ? baseStatutoryRatePercent : Math.max(baseStatutoryRatePercent, panFloorResolution.penaltyFloorPercent));
+
+    // Lower Deduction Certificate resolution
+    const certResolution = evaluateLowerDeductionCertificateValidity({
+        effectiveDate,
+        lowerDeductionCertificate,
+        certificateSection,
+        isAct2025
+    });
+    const hasLowerDeduction = (lowerDeductionRate !== null && lowerDeductionRate !== undefined) && certResolution.isValid && !isStatutoryExclusion && !isForm15Applied;
+    const certifiedRatePercent = hasLowerDeduction ? Number(lowerDeductionRate) : standardRatePercent;
+
+    let calculatedTdsInr = 0;
+    if (taxableBase > 0 && !isForm15Applied && !isStatutoryExclusion) {
+        calculatedTdsInr = Number(((taxableBase * certifiedRatePercent) / 100).toFixed(2));
+    }
+
+    const effectiveRatePercent = taxableBase > 0
+        ? Number(((calculatedTdsInr / taxableBase) * 100).toFixed(4))
+        : standardRatePercent;
+
+    // MSMED Act Section 16 & Section 23 Interaction
+    const msmeAnalysis = isMsmeInterestSec16 ? {
+        isMsmePenalInterest: true,
+        msmedStatute: "Micro, Small and Medium Enterprises Development Act, 2006",
+        section16Status: "SUBJECT_TO_SECTION_194A_WITHHOLDING",
+        section23Disallowance: "MANDATORY_TAX_ADDBACK",
+        statutoryRationale: "Interest paid under Section 16 of the MSMED Act constitutes interest under Section 2(28A) of the Income-tax Act, 1961 and is subject to Section 194A TDS upon crossing ₹5,000 threshold. Under Section 23 of the MSMED Act, this interest is strictly non-deductible as an expenditure in computing total taxable income."
+    } : null;
+
+    let formulaText = "";
+    if (isStatutoryExclusion) {
+        formulaText = `Section 194A exempt: Payee category ${payeeCategory} excluded under Section 194A(3).`;
+    } else if (isForm15Applied) {
+        formulaText = `Section 194A NIL deduction: Payee furnished valid Form 15G/15H declaration under Section 197A.`;
+    } else if (taxableBase === 0) {
+        formulaText = `Section 194A inapplicable: Cumulative interest (₹${cumulative.toLocaleString('en-IN')}) does not exceed ₹${INTEREST_THRESHOLD.toLocaleString('en-IN')} annual threshold.`;
+    } else if (hasLowerDeduction) {
+        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${certifiedRatePercent}% (${isAct2025 ? 'Section 395' : 'Section 197'} Certificate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
+    } else if (panAvailable) {
+        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${standardRatePercent}% = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
+    } else {
+        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × 20% (${panFloorResolution.governingProviso}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
+    }
+
+    const netPayable = roundToPaisa(Math.max(0, rawInterestAmount - calculatedTdsInr));
+
+    return {
+        section: isAct2025 ? '393' : '194A',
+        isAct2025,
+        governingSection,
+        governingPanPenaltySection: panFloorResolution.governingProviso,
+        rawInterestAmount,
+        payeeCategory,
+        priorFyInterest: prior,
+        cumulativeFyInterest: cumulative,
+        interestThreshold: INTEREST_THRESHOLD,
+        isThresholdBreached,
+        thresholdDisposition,
+        hasForm15G15H: isForm15Applied,
+        isPanFurnished: panAvailable,
+        taxableBase,
+        baseStatutoryRatePercent,
+        standardRatePercent,
+        effectiveRatePercent,
+        calculatedTdsInr,
+        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
+        netPayable,
+        msmeSection16Analysis: msmeAnalysis,
+        taxAddbackDisallowedMsmeSec23: Boolean(isMsmeInterestSec16),
+        statutoryFormula: formulaText,
+        isAuthorizedToDisburse: false
+    };
+}
+
+/**
  * ═══════════════════════════════════════════════════════════════════════════
  * CORPORATE FINANCE: ADVANCE TAX & INTEREST CALCULATOR (DUAL-ACT ENGINE)
  * Income-tax Act, 1961: Sections 208, 209, 211, 234B, 234C
@@ -3423,6 +3620,284 @@ export function calculateGstItcApportionmentRule42_43({
         annualTrueUp: annualTrueUpDetails,
         isAuthorizedToDisburse: false,
         statutoryRationale: `Rule 42 credited ₹${C1.toLocaleString('en-IN')} to ledger, identified ₹${C2.toLocaleString('en-IN')} common credit, and calculated ₹${rule42Reversal.toLocaleString('en-IN')} reversal (D1: ₹${D1}, D2: ₹${D2}). Rule 43 capital goods reversal: ₹${capitalGoodsReversalTe.toLocaleString('en-IN')}. Net eligible ITC: ₹${totalNetEligibleItc.toLocaleString('en-IN')}. Reversal must be added to GSTR-3B Table 4(B).`
+    };
+}
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * GST RULE 37: 180-DAY VENDOR NON-PAYMENT ITC REVERSAL & INTEREST CALCULATOR
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CGST Act, 2017: Section 16(2) second proviso read with Rule 37
+ * Amended by Notification No. 19/2022-Central Tax w.e.f. 01.10.2022.
+ *
+ * Implements authoritative 180-day aging, proportional unpaid ITC computation,
+ * Section 50(1) 18% annual interest, RCM/Schedule I exemptions, and GSTR-3B Table 4(B)(2) mapping.
+ */
+export function calculateItcReversalRule37({
+    invoiceNumber = 'INV-UNKNOWN',
+    invoiceDate,
+    calculationDate = new Date().toISOString().slice(0, 10),
+    invoiceAmount, // Total invoice value (taxable + tax)
+    taxAmount,    // Total ITC availed
+    paidAmount = 0, // Amount paid to supplier towards invoice value + tax
+    itcAvailmentDate = null,
+    isRcm = false, // Supplies under Section 9(3)/9(4) RCM are exempt
+    isScheduleISupply = false, // Deemed supplies without consideration under Schedule I are exempt
+    annualInterestRatePercent = 18.0
+} = {}) {
+    const totalInvoice = Number(invoiceAmount) || 0;
+    const totalItc = Number(taxAmount) || 0;
+    const totalPaid = Math.max(0, Number(paidAmount) || 0);
+    const unpaidAmount = roundToPaisa(Math.max(0, totalInvoice - totalPaid));
+
+    if (!invoiceDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(invoiceDate).slice(0, 10))) {
+        throw new Error('[@mudraforge/statutory] calculateItcReversalRule37: invoiceDate must be a valid ISO YYYY-MM-DD date.');
+    }
+
+    const calcDateIso = String(calculationDate).slice(0, 10);
+    const invDateIso = String(invoiceDate).slice(0, 10);
+    const availDateIso = itcAvailmentDate ? String(itcAvailmentDate).slice(0, 10) : invDateIso;
+
+    const invTime = new Date(invDateIso).getTime();
+    const calcTime = new Date(calcDateIso).getTime();
+    const daysElapsed = Math.max(0, Math.floor((calcTime - invTime) / (1000 * 60 * 60 * 24)));
+
+    // Statutory 180-day grace period under Section 16(2) second proviso
+    const GRACE_PERIOD_DAYS = 180;
+    const isOverdue = daysElapsed > GRACE_PERIOD_DAYS;
+    const daysOverdueBeyond180 = isOverdue ? daysElapsed - GRACE_PERIOD_DAYS : 0;
+
+    // Exemptions under Section 16(2) provisos & Rule 37(1) provisos
+    if (isRcm) {
+        return {
+            invoiceNumber,
+            invoiceDate: invDateIso,
+            calculationDate: calcDateIso,
+            invoiceAmount: totalInvoice,
+            taxAmount: totalItc,
+            paidAmount: totalPaid,
+            unpaidAmount,
+            daysElapsed,
+            isOverdue: false,
+            isExempt: true,
+            exemptionReason: 'RCM_SUPPLY_SECTION_9_3_9_4',
+            reversalAmountInr: 0,
+            interestPayableInr: 0,
+            gstr3bReportingTable: null,
+            canReclaimOnPayment: false,
+            statutoryDisposition: 'EXEMPT_FROM_180_DAY_REVERSAL_RCM',
+            statutoryRationale: 'Supplies subject to reverse charge mechanism under Section 9(3) or 9(4) are expressly excluded from the second proviso to Section 16(2).',
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    if (isScheduleISupply) {
+        return {
+            invoiceNumber,
+            invoiceDate: invDateIso,
+            calculationDate: calcDateIso,
+            invoiceAmount: totalInvoice,
+            taxAmount: totalItc,
+            paidAmount: totalPaid,
+            unpaidAmount,
+            daysElapsed,
+            isOverdue: false,
+            isExempt: true,
+            exemptionReason: 'SCHEDULE_I_SUPPLY_WITHOUT_CONSIDERATION',
+            reversalAmountInr: 0,
+            interestPayableInr: 0,
+            gstr3bReportingTable: null,
+            canReclaimOnPayment: false,
+            statutoryDisposition: 'EXEMPT_FROM_180_DAY_REVERSAL_SCHEDULE_I',
+            statutoryRationale: 'Deemed supplies without consideration under Schedule I of the CGST Act are deemed paid under first proviso to Rule 37(1).',
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    if (!isOverdue) {
+        return {
+            invoiceNumber,
+            invoiceDate: invDateIso,
+            calculationDate: calcDateIso,
+            invoiceAmount: totalInvoice,
+            taxAmount: totalItc,
+            paidAmount: totalPaid,
+            unpaidAmount,
+            daysElapsed,
+            daysRemainingInGracePeriod: GRACE_PERIOD_DAYS - daysElapsed,
+            isOverdue: false,
+            isExempt: false,
+            reversalAmountInr: 0,
+            interestPayableInr: 0,
+            gstr3bReportingTable: null,
+            canReclaimOnPayment: false,
+            statutoryDisposition: 'WITHIN_180_DAYS_GRACE_PERIOD',
+            statutoryRationale: `Invoice age is ${daysElapsed} days, which is within the statutory 180-day grace period under Section 16(2).`,
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    // Days elapsed > 180 days: Evaluate unpaid portion
+    if (unpaidAmount === 0) {
+        return {
+            invoiceNumber,
+            invoiceDate: invDateIso,
+            calculationDate: calcDateIso,
+            invoiceAmount: totalInvoice,
+            taxAmount: totalItc,
+            paidAmount: totalPaid,
+            unpaidAmount: 0,
+            daysElapsed,
+            isOverdue: false,
+            isExempt: false,
+            reversalAmountInr: 0,
+            interestPayableInr: 0,
+            gstr3bReportingTable: null,
+            canReclaimOnPayment: false,
+            statutoryDisposition: 'FULLY_PAID_NO_REVERSAL',
+            statutoryRationale: 'Supplier has been fully paid within or prior to evaluation. Zero ITC reversal required.',
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    // Proportionate Reversal: ITC to reverse = (Unpaid Amount / Total Invoice Value) * Total ITC availed
+    const proportionUnpaid = totalInvoice > 0 ? (unpaidAmount / totalInvoice) : 1;
+    const reversalAmountInr = roundToPaisa(totalItc * proportionUnpaid);
+
+    // Interest calculation under Section 50(1) at 18% per annum
+    // Under substituted Rule 37(1) w.e.f. 01.10.2022: interest runs from date of availing ITC till date of reversal
+    const availTime = new Date(availDateIso).getTime();
+    const interestDays = Math.max(0, Math.floor((calcTime - availTime) / (1000 * 60 * 60 * 24)));
+    const annualRate = Number(annualInterestRatePercent) / 100;
+    const interestPayableInr = roundToPaisa(reversalAmountInr * annualRate * (interestDays / 365));
+
+    return {
+        invoiceNumber,
+        invoiceDate: invDateIso,
+        calculationDate: calcDateIso,
+        itcAvailmentDate: availDateIso,
+        invoiceAmount: totalInvoice,
+        taxAmount: totalItc,
+        paidAmount: totalPaid,
+        unpaidAmount,
+        daysElapsed,
+        daysOverdueBeyond180,
+        isOverdue: true,
+        isExempt: false,
+        reversalAmountInr,
+        interestDays,
+        annualInterestRatePercent,
+        interestPayableInr,
+        gstr3bReportingTable: 'TABLE_4_B_2_OTHERS_RECLAIMABLE',
+        reAvailmentTable: 'TABLE_4_A_5_AND_4_D_1',
+        canReclaimOnPayment: true,
+        statutoryDisposition: 'ITC_REVERSAL_MANDATORY_RULE_37',
+        statutoryRationale: `Payment of ₹${unpaidAmount.toLocaleString('en-IN')} outstanding beyond 180 days (${daysElapsed} days elapsed). Proportional ITC of ₹${reversalAmountInr.toLocaleString('en-IN')} must be reversed in Form GSTR-3B Table 4(B)(2) along with ₹${interestPayableInr.toLocaleString('en-IN')} interest under Section 50(1). Reclaimable upon payment.`,
+        isAuthorizedToDisburse: false
+    };
+}
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * GST RULE 37A: SUPPLIER GSTR-3B NON-FILING REVERSAL CALCULATOR
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CGST Rules, 2017: Rule 37A (Inserted by Notification No. 26/2022-CT w.e.f. 26.12.2022)
+ *
+ * Where supplier reported invoice in GSTR-1/IFF but failed to file GSTR-3B by
+ * 30th November following the end of the FY in which ITC was availed:
+ * - Recipient must reverse ITC in GSTR-3B on or before 30th November.
+ * - If delayed past 30th November: 18% annual interest applies u/s 50(1).
+ * - Interest-free re-availment permitted once supplier subsequently furnishes GSTR-3B.
+ */
+export function calculateRule37ASupplierNonFilingReversal({
+    financialYear, // e.g. '2024-25'
+    invoiceNumber = 'INV-UNKNOWN',
+    invoiceDate,
+    itcAmount,
+    supplierGstr1Filed = true,
+    supplierGstr3bFiled = false,
+    calculationDate = new Date().toISOString().slice(0, 10),
+    annualInterestRatePercent = 18.0
+} = {}) {
+    const rawItc = Number(itcAmount) || 0;
+    const calcDateIso = String(calculationDate).slice(0, 10);
+
+    // Compute November 30 cutoff date for the given financial year
+    let cutoffYear = null;
+    if (financialYear && typeof financialYear === 'string') {
+        const parts = financialYear.split('-');
+        if (parts.length === 2 && parts[0].length === 4) {
+            cutoffYear = parseInt(parts[0], 10) + 1;
+        }
+    } else if (invoiceDate) {
+        const d = new Date(invoiceDate);
+        const invYear = d.getFullYear();
+        const invMonth = d.getMonth() + 1;
+        cutoffYear = invMonth >= 4 ? invYear + 1 : invYear;
+    } else {
+        cutoffYear = new Date().getFullYear();
+    }
+
+    const cutoffDate = `${cutoffYear}-11-30`;
+    const isPastCutoff = calcDateIso > cutoffDate;
+
+    if (supplierGstr3bFiled) {
+        return {
+            invoiceNumber,
+            financialYear,
+            cutoffDate,
+            calculationDate: calcDateIso,
+            itcAmount: rawItc,
+            supplierGstr3bFiled: true,
+            isReversalRequired: false,
+            reversalAmountInr: 0,
+            interestPayableInr: 0,
+            statutoryDisposition: 'SUPPLIER_GSTR3B_FILED_NO_REVERSAL',
+            statutoryRationale: 'Supplier has furnished Form GSTR-3B. Section 16(2)(c) tax payment requirement satisfied.',
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    if (!isPastCutoff) {
+        return {
+            invoiceNumber,
+            financialYear,
+            cutoffDate,
+            calculationDate: calcDateIso,
+            itcAmount: rawItc,
+            supplierGstr3bFiled: false,
+            isReversalRequired: false,
+            reversalAmountInr: 0,
+            interestPayableInr: 0,
+            statutoryDisposition: 'WITHIN_RULE_37A_GRACE_PERIOD',
+            statutoryRationale: `Supplier has not yet filed GSTR-3B, but calculation date ${calcDateIso} is on or before statutory cutoff ${cutoffDate}. Reversal not yet mandatory.`,
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    // Past 30th November and supplier has not filed GSTR-3B: Reversal is mandatory!
+    const cutoffTime = new Date(cutoffDate).getTime();
+    const calcTime = new Date(calcDateIso).getTime();
+    const delayDays = Math.max(0, Math.floor((calcTime - cutoffTime) / (1000 * 60 * 60 * 24)));
+    const annualRate = Number(annualInterestRatePercent) / 100;
+    const interestPayableInr = roundToPaisa(rawItc * annualRate * (delayDays / 365));
+
+    return {
+        invoiceNumber,
+        financialYear,
+        cutoffDate,
+        calculationDate: calcDateIso,
+        itcAmount: rawItc,
+        supplierGstr3bFiled: false,
+        isReversalRequired: true,
+        reversalAmountInr: rawItc,
+        delayDaysBeyondNovember30: delayDays,
+        interestPayableInr,
+        gstr3bReportingTable: 'TABLE_4_B_2_OTHERS_RECLAIMABLE',
+        canReclaimOnSupplierFiling: true,
+        statutoryDisposition: 'RULE_37A_REVERSAL_MANDATORY',
+        statutoryRationale: `Supplier failed to furnish Form GSTR-3B on or before ${cutoffDate}. Input tax credit of ₹${rawItc.toLocaleString('en-IN')} must be reversed under Rule 37A. ${delayDays > 0 ? `Delayed by ${delayDays} days: interest of ₹${interestPayableInr.toLocaleString('en-IN')} payable under Section 50.` : 'Reversal within November returns carries zero interest.'} May be re-availed interest-free upon subsequent supplier GSTR-3B filing.`,
+        isAuthorizedToDisburse: false
     };
 }
 

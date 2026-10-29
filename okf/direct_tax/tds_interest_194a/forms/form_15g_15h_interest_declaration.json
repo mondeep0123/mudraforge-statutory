@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Form 15G / Form 15H Self-Declaration Schema (Section 197A / Section 194A)",
+  "description": "Statutory self-declaration by resident payee claiming receipt of interest income without deduction of tax",
+  "type": "object",
+  "required": [
+    "declarantName",
+    "declarantPan",
+    "declarationFormType",
+    "financialYear",
+    "estimatedTotalIncome",
+    "estimatedInterestIncome",
+    "verificationConfirmed"
+  ],
+  "properties": {
+    "declarantName": {
+      "type": "string",
+      "description": "Full legal name of the individual / senior citizen declarant"
+    },
+    "declarantPan": {
+      "type": "string",
+      "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$",
+      "description": "Permanent Account Number of the declarant"
+    },
+    "declarationFormType": {
+      "type": "string",
+      "enum": ["FORM_15G", "FORM_15H"],
+      "description": "Form 15G (Resident Individual below 60 years / HUF) or Form 15H (Senior Citizen aged 60 years or above)"
+    },
+    "financialYear": {
+      "type": "string",
+      "pattern": "^20[2-9][0-9]-20[2-9][0-9]$",
+      "description": "Financial year for which declaration is made"
+    },
+    "estimatedTotalIncome": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Estimated total income of the declarant for the FY (For 15G, must not exceed basic exemption limit)"
+    },
+    "estimatedInterestIncome": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Estimated interest income to which this declaration relates"
+    },
+    "uniqueIdentificationNumber": {
+      "type": "string",
+      "description": "UIN allotted by the deductor upon upload to ITD portal"
+    },
+    "verificationConfirmed": {
+      "type": "boolean",
+      "const": true,
+      "description": "Statutory attestation that the statements are true and correct"
+    }
+  }
+}
