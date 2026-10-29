@@ -39,11 +39,13 @@ function run() {
         .sort();
 
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf8'));
+    const snapshotDate = new Date().toISOString().slice(0, 10);
 
     let md = `# Statutory Knowledge Catalog
 
 > **Institutional Reference Index**  
 > Package: \`@mudraforge/statutory\` | Version: \`${pkg.version}\` | Standard: \`OKF v0.2\`  
+> Compiled Snapshot: \`${snapshotDate}\` (Continuously expanded with new gazettes and provisions)  
 > Epistemic Baseline: Union Budget 2025-26, Finance Act, 2025, and official executive gazettes.
 
 This catalog is deterministically generated from the machine-readable Open Knowledge Format (\`section.json\`, executive circulars, and return schemas) bundled within this repository.
@@ -106,9 +108,11 @@ This catalog is deterministically generated from the machine-readable Open Knowl
         }
     }
 
+    const totalSectionsCount = Object.values(domainSections).reduce((acc, arr) => acc + arr.length, 0);
+
     md += `\n---\n\n## Coverage, Freshness & Verification Registry
 
-The table below records the provenance baseline, verification standard, and operational boundaries for core bundled provisions. For the complete provision-by-provision quality registry covering all 29 provisions across all 5 domains, see [**CORPUS_QUALITY.md**](./CORPUS_QUALITY.md).
+The table below records the provenance baseline, verification standard, and operational boundaries for core bundled provisions. For the complete provision-by-provision quality registry covering all ${totalSectionsCount} provisions across all ${domains.length} domains (snapshot compiled on ${snapshotDate}; continuously updated as new statutory amendments and circulars take effect), see [**CORPUS_QUALITY.md**](./CORPUS_QUALITY.md).
 
 | Section Code | Subject Domain | Jurisdiction | Epistemic Baseline | Bundled Status | Verification Standard | Known Coverage Limitations |
 |---|---|---|---|---|---|---|

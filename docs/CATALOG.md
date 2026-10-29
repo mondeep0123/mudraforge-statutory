@@ -2,6 +2,7 @@
 
 > **Institutional Reference Index**  
 > Package: `@mudraforge/statutory` | Version: `2.11.0` | Standard: `OKF v0.2`  
+> Compiled Snapshot: `2026-10-29` (Continuously expanded with new gazettes and provisions)  
 > Epistemic Baseline: Union Budget 2025-26, Finance Act, 2025, and official executive gazettes.
 
 This catalog is deterministically generated from the machine-readable Open Knowledge Format (`section.json`, executive circulars, and return schemas) bundled within this repository.
@@ -54,7 +55,7 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 
 ## Coverage, Freshness & Verification Registry
 
-The table below records the provenance baseline, verification standard, and operational boundaries for core bundled provisions. For the complete provision-by-provision quality registry covering all 29 provisions across all 5 domains, see [**CORPUS_QUALITY.md**](./CORPUS_QUALITY.md).
+The table below records the provenance baseline, verification standard, and operational boundaries for core bundled provisions. For the complete provision-by-provision quality registry covering all 37 provisions across all 5 domains (snapshot compiled on 2026-10-29; continuously updated as new statutory amendments and circulars take effect), see [**CORPUS_QUALITY.md**](./CORPUS_QUALITY.md).
 
 | Section Code | Subject Domain | Jurisdiction | Epistemic Baseline | Bundled Status | Verification Standard | Known Coverage Limitations |
 |---|---|---|---|---|---|---|
