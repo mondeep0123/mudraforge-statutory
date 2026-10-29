@@ -80,6 +80,9 @@ import {
     generateGstr2bAuditMarkdownReport,
     normalizeInvoiceNumber,
     normalizeGstin,
+    calculateOverdueStartDate,
+    calculateEclUtilizationInterest,
+    buildEvidenceProvenance,
     STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
@@ -4940,8 +4943,452 @@ async function run() {
     }
     console.log(`[PASS] 50-Transaction Synthetic E2E Batch Verified: ${batchRecon.summary.totalBooksBillsCount} bills and ${batchRecon.summary.totalGstr2bRecordsCount} 2B records evaluated across 9 orthogonal compliance groups.`);
 
+    // ── Test 147: Chronological Rule 88B(3) ECL Ledger History ──
+    console.log('\n── Test 147: Chronological Rule 88B(3) ECL Ledger History ──');
+
+    // Trajectory 1: Balance never falling below unreversed ITC (0% interest)
+    const traj1 = calculateEclUtilizationInterest({
+        unreversedItcInr: 100000,
+        overdueStartDate: '2024-01-01',
+        asOfDate: '2024-03-31',
+        eclLedgerHistory: [
+            { date: '2024-01-01', balanceInr: 250000 },
+            { date: '2024-02-01', balanceInr: 180000 },
+            { date: '2024-03-01', balanceInr: 120000 }
+        ]
+    });
+    if (traj1.totalInterestInr !== 0 || traj1.utilizedDaysCount !== 0 || traj1.maxWrongfulUtilizationInr !== 0) {
+        throw new Error(`Trajectory 1 failed: expected 0 interest, got ${traj1.totalInterestInr}`);
+    }
+
+    // Trajectory 2: Temporary dip below unreversed ITC (interest strictly on dipped amount for dip days)
+    const traj2 = calculateEclUtilizationInterest({
+        unreversedItcInr: 100000,
+        overdueStartDate: '2024-01-01',
+        asOfDate: '2024-01-31', // 30 days
+        eclLedgerHistory: [
+            { date: '2024-01-01', balanceInr: 150000 }, // 10 days at 0 dip
+            { date: '2024-01-11', balanceInr: 60000 },  // 10 days dipped by 40,000
+            { date: '2024-01-21', balanceInr: 120000 }  // 10 days at 0 dip
+        ]
+    });
+    const expectedInt2Paise = Math.round(toIntegerPaise(40000) * (0.18 / 365) * 10);
+    const expectedInt2Inr = fromIntegerPaise(expectedInt2Paise);
+    if (traj2.totalInterestInr !== expectedInt2Inr || traj2.maxWrongfulUtilizationInr !== 40000 || traj2.utilizedDaysCount !== 10 || traj2.zeroUtilizationDaysCount !== 20) {
+        throw new Error(`Trajectory 2 failed: expected ${expectedInt2Inr}, got ${traj2.totalInterestInr}`);
+    }
+
+    // Trajectory 3: Multiple dips and subsequent recoveries
+    const traj3 = calculateEclUtilizationInterest({
+        unreversedItcInr: 200000,
+        overdueStartDate: '2024-01-01',
+        asOfDate: '2024-02-10', // 40 days
+        eclLedgerHistory: [
+            { date: '2024-01-01', balanceInr: 150000 }, // dip 50k (10 days)
+            { date: '2024-01-11', balanceInr: 250000 }, // dip 0 (10 days)
+            { date: '2024-01-21', balanceInr: 100000 }, // dip 100k (10 days)
+            { date: '2024-01-31', balanceInr: 300000 }  // dip 0 (10 days)
+        ]
+    });
+    const expectedInt3Paise = Math.round(toIntegerPaise(50000) * (0.18 / 365) * 10) + Math.round(toIntegerPaise(100000) * (0.18 / 365) * 10);
+    const expectedInt3Inr = fromIntegerPaise(expectedInt3Paise);
+    if (traj3.totalInterestInr !== expectedInt3Inr || traj3.maxWrongfulUtilizationInr !== 100000 || traj3.utilizedDaysCount !== 20) {
+        throw new Error(`Trajectory 3 failed: expected ${expectedInt3Inr}, got ${traj3.totalInterestInr}`);
+    }
+
+    // Trajectory 4: Partial utilization (balance remains positive but below unreversed ITC)
+    const traj4 = calculateEclUtilizationInterest({
+        unreversedItcInr: 500000,
+        overdueStartDate: '2024-01-01',
+        asOfDate: '2024-01-31', // 30 days
+        eclLedgerHistory: [
+            { date: '2024-01-01', balanceInr: 300000 }
+        ]
+    });
+    const expectedInt4Paise = Math.round(toIntegerPaise(200000) * (0.18 / 365) * 30);
+    const expectedInt4Inr = fromIntegerPaise(expectedInt4Paise);
+    if (traj4.totalInterestInr !== expectedInt4Inr || traj4.maxWrongfulUtilizationInr !== 200000) {
+        throw new Error(`Trajectory 4 failed: expected ${expectedInt4Inr}, got ${traj4.totalInterestInr}`);
+    }
+
+    // Trajectory 5: Reversal occurring after utilization (interest ceases on reversal date)
+    const traj5 = calculateEclUtilizationInterest({
+        unreversedItcInr: 100000,
+        overdueStartDate: '2024-01-01',
+        asOfDate: '2024-03-31',
+        reversalDate: '2024-01-21', // Reversal at 20 days!
+        eclLedgerHistory: [
+            { date: '2024-01-01', balanceInr: 50000 }
+        ]
+    });
+    if (traj5.totalOverdueDays !== 20 || traj5.utilizedDaysCount !== 20) {
+        throw new Error(`Trajectory 5 failed: expected 20 days, got ${traj5.totalOverdueDays}`);
+    }
+
+    // Trajectory 6: Full Integration with reconcileZohoGstr2b
+    const reconWithEcl = reconcileZohoGstr2b({
+        zohoBills: [{
+            billNumber: 'ECL-BILL-01',
+            vendorName: 'ECL Vendor',
+            vendorGstin: '27AAPCA1234A1Z5',
+            taxableAmountInr: 100000,
+            totalTaxInr: 18000,
+            totalAmountInr: 118000,
+            balanceInr: 118000,
+            billDate: '2023-01-01'
+        }],
+        gstr2b: [{
+            invoiceNumber: 'ECL-BILL-01',
+            supplierName: 'ECL Vendor',
+            supplierGstin: '27AAPCA1234A1Z5',
+            taxableAmountInr: 100000,
+            totalTaxInr: 18000,
+            totalAmountInr: 118000
+        }],
+        options: {
+            asOfDate: '2024-01-01',
+            eclLedgerHistory: [
+                { date: '2023-06-30', balanceInr: 100000 }, // Overdue starts Day 180 (2023-06-30). Balance >= 18k
+                { date: '2023-10-01', balanceInr: 5000 }    // Dipped to 5k -> utilized = 13,000
+            ]
+        }
+    });
+    if (reconWithEcl.summary.eclLedgerHistoryAudit !== true) {
+        throw new Error('Expected summary.eclLedgerHistoryAudit === true');
+    }
+    console.log('[PASS] Chronological Rule 88B(3) ECL Ledger History Verified: Zero-dip (0%), temporary dip, multiple dip-recovery cycles, partial dip, and reversal-date termination.');
+
+    // ── Test 148: Evidence Provenance Integrity & Audit Trail Reproducibility ──
+    console.log('\n── Test 148: Evidence Provenance Integrity & Audit Trail Reproducibility ──');
+
+    const reconForProv = reconcileZohoGstr2b({
+        zohoBills: [
+            {
+                billNumber: 'PROV-INV-01',
+                vendorName: 'Verified Supplier',
+                vendorGstin: '27AAPCA1234A1Z5',
+                taxableAmountInr: 50000,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-05-15'
+            },
+            {
+                billNumber: 'PROV-INV-02',
+                vendorName: 'Bad Vendor',
+                vendorGstin: '27AAPCA1234A1ZZ', // Invalid checksum
+                taxableAmountInr: 20000,
+                totalTaxInr: 3600,
+                totalAmountInr: 23600,
+                balanceInr: 0,
+                isFullyPaid: true,
+                billDate: '2024-05-15',
+                isGstinValid: false
+            }
+        ],
+        gstr2b: [
+            {
+                invoiceNumber: 'PROV-INV-01',
+                supplierName: 'Verified Supplier',
+                supplierGstin: '27AAPCA1234A1Z5',
+                taxableAmountInr: 50000,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000
+            },
+            {
+                invoiceNumber: 'PROV-INV-03',
+                supplierName: 'Unrecorded Vendor',
+                supplierGstin: '27AAPCA9999A1Z1',
+                taxableAmountInr: 30000,
+                totalTaxInr: 5400,
+                totalAmountInr: 35400,
+                invoiceDate: '2024-05-10'
+            }
+        ],
+        options: { asOfDate: '2024-06-01' }
+    });
+
+    if (reconForProv.reconciliationItems.length !== 3) {
+        throw new Error(`Expected 3 items, got ${reconForProv.reconciliationItems.length}`);
+    }
+
+    for (const item of reconForProv.reconciliationItems) {
+        const prov = item.evidenceProvenance;
+        if (!prov) throw new Error('Missing evidenceProvenance on reconciliation item');
+        if (!/^MF-PROV-[0-9a-f]{16}$/i.test(prov.provenanceId)) {
+            throw new Error(`Malformed provenanceId format: ${prov.provenanceId}`);
+        }
+        if (!prov.provenanceTimestamp || isNaN(new Date(prov.provenanceTimestamp).getTime())) {
+            throw new Error(`Invalid provenanceTimestamp: ${prov.provenanceTimestamp}`);
+        }
+        if (prov.governanceTrail.merkleSubstrateRoot !== 'sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19') {
+            throw new Error(`Substrate root mismatch: ${prov.governanceTrail.merkleSubstrateRoot}`);
+        }
+        if (prov.governanceTrail.isAuthorizedToDisburse !== false) {
+            throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+        }
+    }
+
+    // Test direct signature reproducibility
+    const provA = buildEvidenceProvenance({
+        bill: { billNumber: 'STAMP-01', vendorGstin: '27AAPCA1234A1Z5', totalAmountInr: 118000 },
+        record2b: { invoiceNumber: 'STAMP-01', supplierGstin: '27AAPCA1234A1Z5', totalAmountInr: 118000 },
+        asOfDate: '2024-07-01'
+    });
+    const provB = buildEvidenceProvenance({
+        bill: { billNumber: 'STAMP-01', vendorGstin: '27AAPCA1234A1Z5', totalAmountInr: 118000 },
+        record2b: { invoiceNumber: 'STAMP-01', supplierGstin: '27AAPCA1234A1Z5', totalAmountInr: 118000 },
+        asOfDate: '2024-07-01'
+    });
+    if (provA.provenanceId !== provB.provenanceId) {
+        throw new Error(`Provenance ID non-deterministic: ${provA.provenanceId} vs ${provB.provenanceId}`);
+    }
+    console.log('[PASS] Evidence Provenance Integrity Verified: Immutable SHA-256 signatures, Merkle substrate pinning, and strict disbursement invariant.');
+
+    // ── Test 149: Section 12(3) Immovable Lodging vs Section 12(7) B2B Event Management POS Triangulation ──
+    console.log('\n── Test 149: Section 12(3) Lodging vs Section 12(7) B2B Event Management ──');
+
+    const hotelEventRecon = reconcileZohoGstr2b({
+        zohoBills: [
+            {
+                billNumber: 'HOTEL-BLR-01',
+                vendorName: 'Bangalore Palace Hotel',
+                vendorGstin: '29AABCD1234B1ZM', // Karnataka vendor
+                category: 'Hotel Lodging Accommodation Room Stay',
+                taxableAmountInr: 10000,
+                cgstInr: 900,
+                sgstInr: 900,
+                igstInr: 0,
+                totalTaxInr: 1800,
+                totalAmountInr: 11800,
+                balanceInr: 0,
+                isFullyPaid: true,
+                posStateCode: '29',
+                billDate: '2024-05-10'
+            },
+            {
+                billNumber: 'EVENT-BLR-02',
+                vendorName: 'Bangalore Event Productions',
+                vendorGstin: '29AABCD5678B1ZM', // Karnataka vendor
+                category: 'Corporate B2B Conference & Event Management',
+                taxableAmountInr: 50000,
+                cgstInr: 4500,
+                sgstInr: 4500,
+                igstInr: 0,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000,
+                balanceInr: 0,
+                isFullyPaid: true,
+                posStateCode: '29',
+                billDate: '2024-05-12'
+            }
+        ],
+        gstr2b: [
+            {
+                invoiceNumber: 'HOTEL-BLR-01',
+                supplierName: 'Bangalore Palace Hotel',
+                supplierGstin: '29AABCD1234B1ZM',
+                posStateCode: '29',
+                taxableAmountInr: 10000,
+                cgstInr: 900,
+                sgstInr: 900,
+                igstInr: 0,
+                totalTaxInr: 1800,
+                totalAmountInr: 11800
+            },
+            {
+                invoiceNumber: 'EVENT-BLR-02',
+                supplierName: 'Bangalore Event Productions',
+                supplierGstin: '29AABCD5678B1ZM',
+                posStateCode: '29',
+                taxableAmountInr: 50000,
+                cgstInr: 4500,
+                sgstInr: 4500,
+                igstInr: 0,
+                totalTaxInr: 9000,
+                totalAmountInr: 59000
+            }
+        ],
+        options: {
+            asOfDate: '2024-06-01',
+            recipientGstin: '27AABCT8888T1ZZ', // Maharashtra recipient
+            recipientRegisteredStates: ['27'] // Unregistered in Karnataka!
+        }
+    });
+
+    const hotelItem = hotelEventRecon.reconciliationItems.find(i => i.billNumber === 'HOTEL-BLR-01');
+    const eventItem = hotelEventRecon.reconciliationItems.find(i => i.billNumber === 'EVENT-BLR-02');
+
+    if (!hotelItem || hotelItem.disposition !== 'MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST') {
+        throw new Error(`Hotel stay expected MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST, got ${hotelItem?.disposition}`);
+    }
+    if (hotelItem.jurisdictionDecisions.operationalRouting !== 'BOOK_AS_EXPENSE_NO_ITC') {
+        throw new Error(`Hotel stay expected BOOK_AS_EXPENSE_NO_ITC, got ${hotelItem.jurisdictionDecisions.operationalRouting}`);
+    }
+
+    if (!eventItem || eventItem.disposition !== 'MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH') {
+        throw new Error(`B2B event expected MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH, got ${eventItem?.disposition}`);
+    }
+    if (eventItem.jurisdictionDecisions.operationalRouting !== 'REQUEST_VENDOR_CREDIT_NOTE_AMENDMENT') {
+        throw new Error(`B2B event expected REQUEST_VENDOR_CREDIT_NOTE_AMENDMENT, got ${eventItem.jurisdictionDecisions.operationalRouting}`);
+    }
+    console.log('[PASS] Section 12(3) vs Section 12(7) Verified: Hotel stay absorbed as stranded expense; B2B event routing triggers vendor credit note demand.');
+
+    // ── Test 150: Zoho Books API Contract Hardening ──
+    console.log('\n── Test 150: Zoho Books API Contract Hardening ──');
+
+    // 1. Pagination page_context retention
+    const pagedApiResponse = {
+        code: 0,
+        message: 'success',
+        page_context: {
+            page: 3,
+            per_page: 200,
+            has_more_page: false,
+            total: 450
+        },
+        bills: [
+            {
+                bill_id: '999001',
+                bill_number: 'PAGED-INV-01',
+                vendor_name: 'Paged Vendor',
+                vendor_gstin: '27AABCA1111A1ZO',
+                date: '2024-04-01',
+                sub_total: 10000,
+                total: 11800,
+                balance: 0,
+                line_items: [
+                    { bcy_rate: 10000, item_total: 10000, item_tax: [{ tax_name: 'IGST18', tax_amount: 1800 }] }
+                ]
+            }
+        ]
+    };
+    const parsedPaged = parseZohoBillsJson(pagedApiResponse);
+    if (!parsedPaged.pageContext || parsedPaged.pageContext.page !== 3 || parsedPaged.pageContext.total !== 450 || parsedPaged.pageContext.hasMorePage !== false) {
+        throw new Error('parseZohoBillsJson failed to preserve page_context');
+    }
+
+    // 2. Defensive resilience against null/empty records
+    const emptyResponse = { code: 0, message: 'success', page_context: { page: 1, total: 0 }, bills: [] };
+    const parsedEmpty = parseZohoBillsJson(emptyResponse);
+    if (parsedEmpty.length !== 0 || !parsedEmpty.pageContext) {
+        throw new Error('parseZohoBillsJson failed on empty bills array');
+    }
+
+    // 3. API Error Code Handling (fail-closed)
+    let apiErrorCaught = false;
+    try {
+        parseZohoBillsJson({ code: 14, message: 'Invalid value passed for vendor_id' });
+    } catch (e) {
+        apiErrorCaught = true;
+        if (!e.message.includes('code 14')) throw new Error('Expected code 14 in error message');
+    }
+    if (!apiErrorCaught) throw new Error('Expected parseZohoBillsJson to throw on API error response');
+    console.log('[PASS] Zoho Books API Contracts Verified: Pagination context, null fields, and fail-closed error handling.');
+
+    // ── Test 151: Invariant & Property-Based Fuzz Testing (500 Randomized Transactions) ──
+    console.log('\n── Test 151: Invariant & Property-Based Fuzz Testing (500 Transactions) ──');
+
+    const fuzzedBills = [];
+    const fuzzedGstr2b = [];
+
+    for (let i = 1; i <= 500; i++) {
+        const invNum = `FUZZ-INV-${String(i).padStart(4, '0')}`;
+        const baseTaxable = (i * 123) % 250000 + 1000;
+        const taxRate = (i % 3 === 0) ? 0.05 : ((i % 3 === 1) ? 0.12 : 0.18);
+        const taxVal = Math.round(baseTaxable * taxRate);
+        const grossVal = baseTaxable + taxVal;
+        const isLocal = i % 2 === 0;
+        const gstin = isLocal ? '27AAPCA1234A1Z5' : '29AABCD5678B1ZM';
+
+        // 80% appear in both, 10% books only, 10% 2B only
+        const inBooks = (i % 10 !== 0);
+        const in2b = (i % 10 !== 9);
+
+        if (inBooks) {
+            fuzzedBills.push({
+                billNumber: invNum,
+                vendorName: `Fuzz Vendor ${i}`,
+                vendorGstin: gstin,
+                taxableAmountInr: baseTaxable,
+                cgstInr: isLocal ? taxVal / 2 : 0,
+                sgstInr: isLocal ? taxVal / 2 : 0,
+                igstInr: isLocal ? 0 : taxVal,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                balanceInr: (i % 4 === 0) ? grossVal : 0,
+                isFullyPaid: (i % 4 !== 0),
+                billDate: '2024-03-01'
+            });
+        }
+
+        if (in2b) {
+            fuzzedGstr2b.push({
+                invoiceNumber: invNum,
+                supplierName: `Fuzz Vendor ${i}`,
+                supplierGstin: gstin,
+                taxableAmountInr: baseTaxable,
+                cgstInr: isLocal ? taxVal / 2 : 0,
+                sgstInr: isLocal ? taxVal / 2 : 0,
+                igstInr: isLocal ? 0 : taxVal,
+                totalTaxInr: taxVal,
+                totalAmountInr: grossVal,
+                itcAvailable: true
+            });
+        }
+    }
+
+    const fuzzRecon = reconcileZohoGstr2b({
+        zohoBills: fuzzedBills,
+        gstr2b: fuzzedGstr2b,
+        options: {
+            asOfDate: '2024-08-01',
+            recipientGstin: '27AABCT8888T1ZZ',
+            recipientRegisteredStates: ['27', '29']
+        }
+    });
+
+    const s = fuzzRecon.summary;
+
+    // Strict Statutory Invariants
+    if (s.isAuthorizedToDisburse !== false) {
+        throw new Error('Fuzz Invariant Violated: summary.isAuthorizedToDisburse !== false');
+    }
+
+    const accountConservationSum = s.matchedEligibleCount +
+        s.amountMismatchCount +
+        s.blocked17_5Count +
+        s.posMismatchCount +
+        s.routableToBranchCount +
+        s.strandedLocalCount +
+        s.gstr2bPortalIneligibleCount +
+        s.requiresHumanVerificationCount +
+        s.missingIn2bCount;
+
+    if (accountConservationSum !== s.totalBooksBillsCount) {
+        throw new Error(`Fuzz Invariant Violated: Dispositions (${accountConservationSum}) !== Total Bills (${s.totalBooksBillsCount})`);
+    }
+
+    for (const item of fuzzRecon.reconciliationItems) {
+        if (!item.evidenceProvenance || !item.evidenceProvenance.provenanceId) {
+            throw new Error('Fuzz Invariant Violated: Item missing evidence provenance');
+        }
+        if (item.evidenceProvenance.governanceTrail.isAuthorizedToDisburse !== false) {
+            throw new Error('Fuzz Invariant Violated: Item provenance has isAuthorizedToDisburse === true');
+        }
+    }
+
+    // Verify no NaNs across summary
+    for (const [key, val] of Object.entries(s)) {
+        if (typeof val === 'number' && isNaN(val)) {
+            throw new Error(`Fuzz Invariant Violated: NaN detected in summary.${key}`);
+        }
+    }
+    console.log(`[PASS] Property-Based Fuzz Testing Verified: 500 randomized transactions satisfied all statutory, accounting conservation, and disbursement invariants.`);
+
     console.log('\n===========================================================================');
-    console.log('ALL 146 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 151 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

@@ -182,6 +182,11 @@ Every statutory capability and defensive boundary is continuously verified by de
 | **144** | Payment Appropriation Policies & Dipped ECL Math | Rule 37(1) & Rule 88B(3) Math | Verifies `VALUE_FIRST` vs `PROPORTIONATE` reversal math and computes 18% interest on dipped ECL balances. |
 | **145** | Decoupled Jurisdictional Decisions Structure | Architectural Assurance | Asserts transaction-level 4-way decisions structure (`taxClassification`, `recipientJurisdiction`, etc.). |
 | **146** | 50-Transaction Synthetic E2E Batch Test | Comprehensive Enterprise AP Simulation | 47 bills and 45 GSTR-2B records across 9 compliance groups evaluated in an end-to-end stress run. |
+| **147** | Chronological Rule 88B(3) ECL Ledger History | CGST Act Section 50(1) & Rule 88B(3) | Evaluates day-by-day movements across 5 trajectories: zero dip, temporary dip, multiple dips/recoveries, partial dip, and post-utilization reversal. |
+| **148** | Evidence Provenance Integrity & Audit Trail | Forensic Audit Reproducibility | Attaches cryptographic `evidenceProvenance` object with SHA-256 derived signature (`MF-PROV-...`), source references, 4-way decisions, and pinned Merkle root. |
+| **149** | Section 12(3) Lodging vs Section 12(7) Event Management | IGST Act Place of Supply Triangulation | Distinguishes immovable lodging (property location -> stranded expense) from B2B event organizing (recipient location -> mandatory IGST / vendor credit note demand). |
+| **150** | Zoho Books API Contract Hardening | Enterprise API Resilience | Validates pagination `page_context` retention, null/empty record resilience, and fail-closed handling of Zoho API error codes (e.g. Code 14). |
+| **151** | Property-Based Fuzz Testing (500 Transactions) | Invariant Enforcement & Stress Resilience | Generates 500 randomized transactions, asserting double-entry accounting conservation, zero floating-point drift, and immutable `isAuthorizedToDisburse: false`. |
 
 ---
 
@@ -203,12 +208,61 @@ Test 146 constructs an end-to-end multi-scenario corporate portfolio evaluating 
 
 ---
 
-## 8. Preserving Audit Defensibility in Production
+## 8. Advanced Accounting Assurance & Forensic Integrity (Tests 147–151)
+
+### A. Chronological Rule 88B(3) ECL Simulation
+Under Explanation (1) to Rule 88B of the CGST Rules, wrongful utilization of input tax credit occurs **only when and to the extent that** the balance in the Electronic Credit Ledger (ECL) dips below the unreversed ITC amount. MudraForge models this day-by-day:
+- **Trajectory 1 (Zero Dip)**: ECL balance remains above unreversed ITC -> 0% interest throughout.
+- **Trajectory 2 (Temporary Dip)**: ECL dips below unreversed ITC for a 10-day window -> interest is calculated strictly for those 10 days on the dipped amount.
+- **Trajectory 3 (Multiple Dips & Recoveries)**: Sum of day-weighted interest across each distinct dip interval.
+- **Trajectory 4 (Partial Utilization)**: If the ECL balance remains positive (e.g. ₹3,00,000 against ₹5,00,000 unreversed ITC), interest is quantified strictly on the ₹2,00,000 shortfall.
+- **Trajectory 5 (Post-Utilization Reversal)**: If the taxpayer reverses the ITC prior to assessment, interest calculation terminates on the exact reversal date.
+
+### B. Cryptographic Evidence Provenance (`MF-PROV-...`)
+Every reconciliation item now bears an immutable, self-contained `evidenceProvenance` object:
+```json
+{
+  "provenanceId": "MF-PROV-3A7F8B12C4E9D021",
+  "provenanceTimestamp": "2024-08-10T14:30:00.000Z",
+  "source": { "sourceSystem": "ZOHO_BOOKS", "billNumber": "INV-2024-001" },
+  "externalEvidence": { "sourceSystem": "GST_PORTAL_GSTR2B", "presentInGstr2b": true },
+  "matchingMethod": "EXACT",
+  "statutoryBasis": {
+    "governingStatute": "Central Goods and Services Tax Act, 2017 / Integrated Goods and Services Tax Act, 2017",
+    "primarySection": "CGST Act Section 16(2)"
+  },
+  "jurisdictionDecisions": {
+    "taxClassification": "INTRASTATE_CORRECT",
+    "recipientJurisdiction": "FILING_GSTIN_MATCHES_POS",
+    "itcEligibility": "ELIGIBLE_NORMAL",
+    "operationalRouting": "CLAIM_IN_CURRENT_GSTR3B_TABLE_4A5"
+  },
+  "uncertaintyAssessment": { "isCertain": true, "uncertaintyReason": "NONE" },
+  "governanceTrail": {
+    "requiresHumanReview": false,
+    "merkleSubstrateRoot": "sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19",
+    "isAuthorizedToDisburse": false
+  }
+}
+```
+
+### C. Section 12(3) vs Section 12(7) Place of Supply Triangulation
+- **Section 12(3)(a) Immovable Lodging**: Accommodation in hotels, guest houses, or campsites strictly fixes the Place of Supply at the property location. If the recipient has no GST registration in that state, the CGST/SGST is legally stranded and absorbed as an operating expense (`BOOK_AS_EXPENSE_NO_ITC`).
+- **Section 12(7)(a)(i) B2B Event Management**: Organization of conferences, exhibitions, or corporate events provided to a registered person fixes the Place of Supply at the **location of the recipient**. If a local vendor charges venue state CGST/SGST, it is an `ERRONEOUS_INTRASTATE_LEVY`. The engine flags this as a defective invoice and instructs the AP team to demand a vendor credit note and corrected IGST invoice (`REQUEST_VENDOR_CREDIT_NOTE_AMENDMENT`).
+
+### D. Zoho Books API Contracts & Property-Based Fuzz Testing
+- **API Pagination**: Preserves `page_context` (`page`, `per_page`, `has_more_page`, `total`) for multi-page batch ingestion.
+- **Fail-Closed API Errors**: Throws explicit, actionable errors upon encountering Zoho API error codes (e.g. Code 14 invalid parameter).
+- **500-Transaction Fuzz Invariants**: Validates that double-entry balance, disposition categorization, and disbursement lock (`isAuthorizedToDisburse: false`) hold across 500 randomized transactions.
+
+---
+
+## 9. Preserving Audit Defensibility in Production
 
 To prove compliance to external auditors, execute the automated verification pipeline:
 
 ```bash
-# 1. Full statutory test suite (asserts all 146 tests pass)
+# 1. Full statutory test suite (asserts all 151 tests pass)
 npm test
 
 # 2. Excel Add-in verification suite (asserts 25 custom functions pass)

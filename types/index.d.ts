@@ -227,6 +227,16 @@ export declare class StatutoryClient {
     reconcileZohoGstr2b(params: ReconcileZohoGstr2bParams): ReconcileZohoGstr2bResult;
     generateGstr2bAuditMarkdownReport(reconResult: ReconcileZohoGstr2bResult): string;
     generateGstr2bAuditReport(reconResult: ReconcileZohoGstr2bResult): string;
+    calculateOverdueStartDate(billDateIso: string): string | null;
+    calculateEclUtilizationInterest(params: {
+        unreversedItcInr: number | string;
+        overdueStartDate: string;
+        asOfDate: string;
+        reversalDate?: string | null;
+        eclLedgerHistory?: Array<{ date: string; balanceInr: number }>;
+        annualInterestRate?: number;
+    }): EclUtilizationAuditResult;
+    buildEvidenceProvenance(params: any): EvidenceProvenance;
     normalizeInvoiceNumber(raw: string): { exactKey: string; alphaNumericKey: string };
     normalizeGstin(raw: string): { gstin: string | null; pan: string | null; stateCode: string | null; isValid: boolean };
     cleanNumericAmount(val: any, options?: CleanNumericAmountOptions): number;
@@ -600,6 +610,7 @@ export interface ReconcileZohoGstr2bOptions {
     recipientRegisteredGstins?: string[];
     paymentAppropriationMethod?: 'PROPORTIONATE' | 'VALUE_FIRST' | 'TAX_FIRST';
     minimumEclBalanceInr?: number;
+    eclLedgerHistory?: Array<{ date: string; balanceInr: number }>;
     eclUtilizationStatus?: 'UTILIZED' | 'UNUTILIZED' | 'UNKNOWN';
     goodsInTransitWindowDays?: number;
 }
@@ -631,6 +642,85 @@ export interface JurisdictionDecisions {
     operationalRouting: 'CLAIM_IN_CURRENT_GSTR3B_TABLE_4A5' | 'ROUTE_TO_BRANCH_GSTIN' | 'BOOK_AS_EXPENSE_NO_ITC' | 'REPORT_IN_GSTR3B_TABLE_4B1_PERMANENT_REVERSAL' | 'REQUEST_VENDOR_CREDIT_NOTE_AMENDMENT' | 'WITHHOLD_CLAIM_PENDING_SUPPLIER_GSTR1' | 'PHYSICAL_GOODS_RECEIPT_VERIFICATION_PENDING' | 'MANUAL_HUMAN_INVESTIGATION_REQUIRED';
 }
 
+export interface EvidenceProvenance {
+    provenanceId: string;
+    provenanceTimestamp: string;
+    source: {
+        sourceSystem: string;
+        docType: string;
+        billId: string | null;
+        billNumber: string | null;
+        rowNumber: number | null;
+    };
+    externalEvidence: {
+        sourceSystem: string;
+        presentInGstr2b: boolean;
+        invoiceNumber: string | null;
+        filingPeriod: string | null;
+        supplierFilingStatus: string;
+        portalRevReason: string | null;
+    };
+    matchingMethod: string;
+    statutoryBasis: {
+        governingStatute: string;
+        primarySection: string;
+        officialCitations: string[];
+    };
+    inputSnapshot: {
+        billNumber: string | null;
+        billDate: string | null;
+        vendorGstin: string | null;
+        taxableAmountInr: number;
+        totalTaxInr: number;
+        totalAmountInr: number;
+        balanceInr: number;
+        posStateCode: string | null;
+        isRcm: boolean;
+        category: string | null;
+    };
+    jurisdictionDecisions: {
+        taxClassification: string;
+        recipientJurisdiction: string;
+        itcEligibility: string;
+        operationalRouting: string;
+    };
+    uncertaintyAssessment: {
+        isCertain: boolean;
+        uncertaintyReason: string;
+        actionableRemedy: string;
+    };
+    governanceTrail: {
+        requiresHumanReview: boolean;
+        auditVerificationDate: string;
+        engineIdentity: string;
+        merkleSubstrateRoot: string;
+        isAuthorizedToDisburse: boolean;
+    };
+}
+
+export interface EclUtilizationInterval {
+    intervalIndex: number;
+    startDate: string;
+    endDate: string;
+    daysInInterval: number;
+    eclBalanceInr: number;
+    utilizedInr: number;
+    annualInterestRatePercent: number;
+    intervalInterestInr: number;
+}
+
+export interface EclUtilizationAuditResult {
+    totalInterestInr: number;
+    totalInterestPaise: number;
+    totalOverdueDays: number;
+    utilizedDaysCount: number;
+    zeroUtilizationDaysCount: number;
+    maxWrongfulUtilizationInr: number;
+    chronologicalIntervals: EclUtilizationInterval[];
+    explanation: string;
+    isAuthorizedToDisburse: boolean;
+}
+
 export interface ReconcileItem {
     disposition: Gstr2bDisposition;
     uncertaintyReason?: string;
@@ -658,6 +748,7 @@ export interface ReconcileItem {
     jurisdictionDecisions?: JurisdictionDecisions;
     statutoryAction: string;
     auditEvidence: Record<string, any>;
+    evidenceProvenance?: EvidenceProvenance;
 }
 
 export interface ReconcileZohoGstr2bSummary {
@@ -693,6 +784,7 @@ export interface ReconcileZohoGstr2bSummary {
     paymentAppropriationMethod: 'PROPORTIONATE' | 'VALUE_FIRST' | 'TAX_FIRST';
     minimumEclBalanceInr: number | null;
     eclUtilizationStatus: 'UTILIZED' | 'UNUTILIZED' | 'UNKNOWN';
+    eclLedgerHistoryAudit: boolean;
     reconciliationStatus: 'FULLY_RECONCILED' | 'EXCEPTIONS_IDENTIFIED';
     isAuthorizedToDisburse: boolean;
 }
@@ -711,6 +803,16 @@ export declare function reconcileZohoGstr2b(params: ReconcileZohoGstr2bParams): 
 export declare function generateGstr2bAuditMarkdownReport(reconResult: ReconcileZohoGstr2bResult): string;
 export declare function normalizeInvoiceNumber(raw: string): { exactKey: string; alphaNumericKey: string };
 export declare function normalizeGstin(raw: string): { gstin: string | null; pan: string | null; stateCode: string | null; isValid: boolean };
+export declare function calculateOverdueStartDate(billDateIso: string): string | null;
+export declare function calculateEclUtilizationInterest(params: {
+    unreversedItcInr: number | string;
+    overdueStartDate: string;
+    asOfDate: string;
+    reversalDate?: string | null;
+    eclLedgerHistory?: Array<{ date: string; balanceInr: number }>;
+    annualInterestRate?: number;
+}): EclUtilizationAuditResult;
+export declare function buildEvidenceProvenance(params: any): EvidenceProvenance;
 
 
 

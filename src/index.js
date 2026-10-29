@@ -82,7 +82,10 @@ import {
     reconcileZohoGstr2b,
     generateGstr2bAuditMarkdownReport,
     normalizeInvoiceNumber,
-    normalizeGstin
+    normalizeGstin,
+    calculateOverdueStartDate,
+    calculateEclUtilizationInterest,
+    buildEvidenceProvenance
 } from './zoho_gstr2b.js';
 
 import { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL } from './constants.js';
@@ -2135,6 +2138,31 @@ export class StatutoryClient {
     }
 
     /**
+     * Calculate exact Day 180 overdue start date for an invoice.
+     * @param {string} billDateIso
+     */
+    calculateOverdueStartDate(billDateIso) {
+        return calculateOverdueStartDate(billDateIso);
+    }
+
+    /**
+     * Calculate chronological interest under Section 50(1) read with Rule 88B(3)
+     * across Electronic Credit Ledger (ECL) movements.
+     * @param {Object} params
+     */
+    calculateEclUtilizationInterest(params) {
+        return calculateEclUtilizationInterest(params);
+    }
+
+    /**
+     * Construct an immutable evidence provenance record for a reconciliation item.
+     * @param {Object} params
+     */
+    buildEvidenceProvenance(params) {
+        return buildEvidenceProvenance(params);
+    }
+
+    /**
      * Normalize invoice number for exact and alphanumeric canonical matching.
      * @param {string} raw
      */
@@ -3268,7 +3296,10 @@ export {
     reconcileZohoGstr2b,
     generateGstr2bAuditMarkdownReport,
     normalizeInvoiceNumber,
-    normalizeGstin
+    normalizeGstin,
+    calculateOverdueStartDate,
+    calculateEclUtilizationInterest,
+    buildEvidenceProvenance
 };
 
 

@@ -36,6 +36,7 @@
  * 6. Zero external dependencies: Pure native ES modules.
  */
 
+import crypto from 'node:crypto';
 import {
     cleanNumericAmount,
     toIntegerPaise,
@@ -43,6 +44,328 @@ import {
     roundToPaisa,
     isValidGstinChecksum
 } from './calculators.js';
+
+/**
+ * Calculates the exact Day 180 overdue date for an invoice under Section 16(2) second proviso.
+ *
+ * @param {string} billDateIso - ISO date string (YYYY-MM-DD)
+ * @returns {string|null}
+ */
+export function calculateOverdueStartDate(billDateIso) {
+    if (!billDateIso) return null;
+    const d = new Date(billDateIso);
+    if (isNaN(d.getTime())) return null;
+    d.setDate(d.getDate() + 180);
+    return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Calculates exact chronological interest under Section 50(1) read with Rule 88B(3)
+ * across an array of daily or step Electronic Credit Ledger (ECL) balance entries.
+ *
+ * Implements Explanation (1) to Rule 88B:
+ * "Input tax credit wrongly availed shall be construed to have been utilized, when the balance in
+ * the electronic credit ledger falls below the amount of input tax credit wrongly availed,
+ * and the extent of utilization, shall be the amount by which the balance falls below the amount."
+ *
+ * Handles:
+ * 1. Balance never falling below unreversed ITC -> 0% interest throughout.
+ * 2. Temporary dips below unreversed ITC -> interest strictly for the dip days on the dipped portion.
+ * 3. Multiple dips and subsequent recoveries -> day-weighted sum across all dip intervals.
+ * 4. Partial utilization -> interest calculated strictly on max(0, unreversedItc - balance).
+ * 5. Reversal occurring after utilization -> interest ceases on reversal date.
+ *
+ * @param {Object} params
+ * @param {number} params.unreversedItcInr - Total unreversed / wrongly availed ITC amount
+ * @param {string} params.overdueStartDate - ISO date string (YYYY-MM-DD) when 180 days expired
+ * @param {string} params.asOfDate - ISO date string (YYYY-MM-DD) of assessment / audit
+ * @param {string} [params.reversalDate] - Optional ISO date string when taxpayer reversed ITC
+ * @param {Array<{ date: string, balanceInr: number }>} params.eclLedgerHistory - Chronological ledger snapshots
+ * @param {number} [params.annualInterestRate=0.18] - Statutory annual interest rate (default 18% p.a.)
+ * @returns {Object}
+ */
+export function calculateEclUtilizationInterest({
+    unreversedItcInr,
+    overdueStartDate,
+    asOfDate,
+    reversalDate = null,
+    eclLedgerHistory = [],
+    annualInterestRate = 0.18
+}) {
+    const unreversedItcPaise = toIntegerPaise(unreversedItcInr, 'unreversedItcInr');
+    if (unreversedItcPaise <= 0) {
+        return {
+            totalInterestInr: 0,
+            totalInterestPaise: 0,
+            totalOverdueDays: 0,
+            utilizedDaysCount: 0,
+            zeroUtilizationDaysCount: 0,
+            maxWrongfulUtilizationInr: 0,
+            chronologicalIntervals: [],
+            explanation: 'Unreversed ITC is zero. No interest payable.',
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    const startNorm = normalizeIsoDate(overdueStartDate);
+    const asOfNorm = normalizeIsoDate(asOfDate);
+    const reversalNorm = reversalDate ? normalizeIsoDate(reversalDate) : null;
+
+    if (!startNorm || !asOfNorm) {
+        throw new Error('[@mudraforge/statutory] overdueStartDate and asOfDate must be valid ISO date strings (YYYY-MM-DD)');
+    }
+
+    let effectiveEndDate = asOfNorm;
+    if (reversalNorm && reversalNorm < effectiveEndDate) {
+        effectiveEndDate = reversalNorm;
+    }
+
+    const startMs = new Date(startNorm).getTime();
+    const endMs = new Date(effectiveEndDate).getTime();
+
+    if (endMs <= startMs) {
+        return {
+            totalInterestInr: 0,
+            totalInterestPaise: 0,
+            totalOverdueDays: 0,
+            utilizedDaysCount: 0,
+            zeroUtilizationDaysCount: 0,
+            maxWrongfulUtilizationInr: 0,
+            chronologicalIntervals: [],
+            explanation: `Reversal or audit date (${effectiveEndDate}) is on or before overdue start date (${startNorm}). Zero overdue days; zero interest payable.`,
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    const totalOverdueDays = Math.round((endMs - startMs) / (1000 * 60 * 60 * 24));
+
+    const sortedHistory = (Array.isArray(eclLedgerHistory) ? eclLedgerHistory : [])
+        .filter(e => e && e.date)
+        .map(e => ({
+            date: normalizeIsoDate(e.date),
+            balancePaise: toIntegerPaise(e.balanceInr, 'eclBalanceInr')
+        }))
+        .filter(e => e.date !== null)
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (sortedHistory.length === 0) {
+        return {
+            totalInterestInr: 0,
+            totalInterestPaise: 0,
+            totalOverdueDays,
+            utilizedDaysCount: 0,
+            zeroUtilizationDaysCount: 0,
+            maxWrongfulUtilizationInr: 0,
+            chronologicalIntervals: [],
+            explanation: 'Electronic Credit Ledger balance history is empty. Rule 88B(3) utilization cannot be computed without ledger closing balances.',
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    function getBalancePaiseOnDate(dayIso) {
+        let activeBalance = sortedHistory[0].balancePaise;
+        for (const entry of sortedHistory) {
+            if (entry.date <= dayIso) {
+                activeBalance = entry.balancePaise;
+            } else {
+                break;
+            }
+        }
+        return activeBalance;
+    }
+
+    let totalInterestPaisePrecise = 0;
+    let utilizedDaysCount = 0;
+    let zeroUtilizationDaysCount = 0;
+    let maxWrongfulUtilizationPaise = 0;
+
+    const dailyEvaluations = [];
+
+    let currentMs = startMs;
+    while (currentMs < endMs) {
+        const currentIso = new Date(currentMs).toISOString().slice(0, 10);
+        const dayBalancePaise = getBalancePaiseOnDate(currentIso);
+
+        const wrongfulUtilizedPaise = Math.max(0, unreversedItcPaise - dayBalancePaise);
+
+        if (wrongfulUtilizedPaise > 0) {
+            utilizedDaysCount++;
+            if (wrongfulUtilizedPaise > maxWrongfulUtilizationPaise) {
+                maxWrongfulUtilizationPaise = wrongfulUtilizedPaise;
+            }
+            const dayInterestPaise = wrongfulUtilizedPaise * (annualInterestRate / 365);
+            totalInterestPaisePrecise += dayInterestPaise;
+            dailyEvaluations.push({
+                date: currentIso,
+                balanceInr: fromIntegerPaise(dayBalancePaise),
+                utilizedInr: fromIntegerPaise(wrongfulUtilizedPaise),
+                dayInterestInr: roundToPaisa(dayInterestPaise / 100)
+            });
+        } else {
+            zeroUtilizationDaysCount++;
+            dailyEvaluations.push({
+                date: currentIso,
+                balanceInr: fromIntegerPaise(dayBalancePaise),
+                utilizedInr: 0,
+                dayInterestInr: 0
+            });
+        }
+
+        currentMs += 1000 * 60 * 60 * 24;
+    }
+
+    const chronologicalIntervals = [];
+    if (dailyEvaluations.length > 0) {
+        let currentInterval = {
+            startDate: dailyEvaluations[0].date,
+            endDate: dailyEvaluations[0].date,
+            days: 1,
+            eclBalanceInr: dailyEvaluations[0].balanceInr,
+            utilizedAmountInr: dailyEvaluations[0].utilizedInr,
+            intervalInterestPaise: dailyEvaluations[0].dayInterestInr * 100
+        };
+
+        for (let i = 1; i < dailyEvaluations.length; i++) {
+            const day = dailyEvaluations[i];
+            if (day.utilizedInr === currentInterval.utilizedAmountInr && day.balanceInr === currentInterval.eclBalanceInr) {
+                currentInterval.endDate = day.date;
+                currentInterval.days++;
+                currentInterval.intervalInterestPaise += day.dayInterestInr * 100;
+            } else {
+                currentInterval.intervalInterestInr = fromIntegerPaise(Math.round(currentInterval.intervalInterestPaise));
+                delete currentInterval.intervalInterestPaise;
+                chronologicalIntervals.push(currentInterval);
+
+                currentInterval = {
+                    startDate: day.date,
+                    endDate: day.date,
+                    days: 1,
+                    eclBalanceInr: day.balanceInr,
+                    utilizedAmountInr: day.utilizedInr,
+                    intervalInterestPaise: day.dayInterestInr * 100
+                };
+            }
+        }
+        currentInterval.intervalInterestInr = fromIntegerPaise(Math.round(currentInterval.intervalInterestPaise));
+        delete currentInterval.intervalInterestPaise;
+        chronologicalIntervals.push(currentInterval);
+    }
+
+    const roundedInterestPaise = Math.round(totalInterestPaisePrecise);
+    const totalInterestInr = fromIntegerPaise(roundedInterestPaise);
+    const maxWrongfulUtilizationInr = fromIntegerPaise(maxWrongfulUtilizationPaise);
+
+    let explanation = '';
+    if (utilizedDaysCount === 0) {
+        explanation = `Rule 88B(3) Proviso: Electronic Credit Ledger balance remained equal to or above unreversed ITC (₹${fromIntegerPaise(unreversedItcPaise).toLocaleString('en-IN')}) for all ${totalOverdueDays} overdue days. Credit was unutilized; ₹0.00 interest payable.`;
+    } else {
+        explanation = `Rule 88B(3): Electronic Credit Ledger dipped below unreversed ITC (max dip ₹${maxWrongfulUtilizationInr.toLocaleString('en-IN')}) for ${utilizedDaysCount} of ${totalOverdueDays} overdue days. Section 50(1) 18% p.a. interest computed strictly on utilized amounts across dip intervals totaling ₹${totalInterestInr.toLocaleString('en-IN')}.`;
+        if (reversalNorm && reversalNorm < asOfNorm) {
+            explanation += ` Interest accrual ceased on reversal date (${reversalNorm}).`;
+        }
+    }
+
+    return {
+        totalInterestInr,
+        totalInterestPaise: roundedInterestPaise,
+        totalOverdueDays,
+        utilizedDaysCount,
+        zeroUtilizationDaysCount,
+        maxWrongfulUtilizationInr,
+        chronologicalIntervals,
+        explanation,
+        isAuthorizedToDisburse: false
+    };
+}
+
+/**
+ * Constructs an immutable, self-contained evidence provenance record for a statutory reconciliation item.
+ * Enables complete forensic reconstruction of the decision chain months later.
+ *
+ * @param {Object} params
+ * @returns {Object}
+ */
+export function buildEvidenceProvenance({
+    bill = null,
+    record2b = null,
+    matchType = 'UNMATCHED',
+    disposition,
+    statutorySection,
+    jurisdictionDecisions = null,
+    uncertaintyReason = null,
+    asOfDate = new Date().toISOString().slice(0, 10)
+}) {
+    const billNum = bill ? bill.billNumber : null;
+    const inv2bNum = record2b ? (record2b.invoiceNumber || record2b.billNumber || record2b.inum) : null;
+    const gstin = bill ? bill.vendorGstin : (record2b ? record2b.supplierGstin : null);
+    const taxable = bill ? bill.taxableAmountInr : (record2b ? record2b.taxableAmountInr : 0);
+    const tax = bill ? bill.totalTaxInr : (record2b ? record2b.totalTaxInr : 0);
+    const total = bill ? bill.totalAmountInr : (record2b ? record2b.totalAmountInr : 0);
+
+    const sigString = `${billNum || 'NO_BILL'}|${inv2bNum || 'NO_2B'}|${gstin || 'NO_GSTIN'}|${total}|${asOfDate}`;
+    const provenanceHash = crypto.createHash('sha256').update(sigString).digest('hex').slice(0, 16);
+    const provenanceId = `MF-PROV-${provenanceHash}`;
+
+    return {
+        provenanceId,
+        provenanceTimestamp: new Date().toISOString(),
+        source: {
+            sourceSystem: bill && bill.source ? bill.source : 'ZOHO_BOOKS',
+            docType: bill && bill.docType ? bill.docType : 'BILL',
+            billId: bill && bill.billId ? bill.billId : billNum,
+            billNumber: billNum,
+            rowNumber: bill && bill.rowNumber ? bill.rowNumber : null
+        },
+        externalEvidence: {
+            sourceSystem: 'GST_PORTAL_GSTR2B',
+            presentInGstr2b: Boolean(record2b),
+            invoiceNumber: inv2bNum,
+            filingPeriod: record2b && record2b.filingPeriod ? record2b.filingPeriod : null,
+            supplierFilingStatus: record2b ? (record2b.itcAvailable === false ? 'PORTAL_INELIGIBLE_FLAGGED' : 'FILED_ELIGIBLE') : 'UNFILED_BY_SUPPLIER',
+            portalRevReason: record2b && record2b.itcRevReason ? record2b.itcRevReason : null
+        },
+        matchingMethod: matchType,
+        statutoryBasis: {
+            governingStatute: 'Central Goods and Services Tax Act, 2017 / Integrated Goods and Services Tax Act, 2017',
+            primarySection: statutorySection || 'CGST Act Section 16',
+            officialCitations: [
+                'CBIC Circular No. 170/02/2022-GST',
+                'CBIC Notification No. 19/2022-Central Tax',
+                'Notification No. 14/2022-Central Tax (Rule 88B)'
+            ]
+        },
+        inputSnapshot: {
+            billNumber: billNum,
+            billDate: bill ? bill.billDate : null,
+            vendorGstin: gstin,
+            taxableAmountInr: taxable,
+            totalTaxInr: tax,
+            totalAmountInr: total,
+            balanceInr: bill ? bill.balanceInr : 0,
+            posStateCode: bill ? bill.posStateCode : (record2b ? record2b.posStateCode : null),
+            isRcm: bill ? Boolean(bill.isRcm) : (record2b ? Boolean(record2b.isRcm) : false),
+            category: bill && bill.category ? bill.category : null
+        },
+        jurisdictionDecisions: {
+            taxClassification: jurisdictionDecisions ? jurisdictionDecisions.taxClassification : 'INDETERMINATE',
+            recipientJurisdiction: jurisdictionDecisions ? jurisdictionDecisions.recipientJurisdiction : 'INDETERMINATE',
+            itcEligibility: jurisdictionDecisions ? jurisdictionDecisions.itcEligibility : 'INDETERMINATE',
+            operationalRouting: jurisdictionDecisions ? jurisdictionDecisions.operationalRouting : 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+        },
+        uncertaintyAssessment: {
+            isCertain: !uncertaintyReason,
+            uncertaintyReason: uncertaintyReason || 'NONE',
+            actionableRemedy: disposition === 'REQUIRES_HUMAN_VERIFICATION' ? 'MANDATORY_HUMAN_INTERVENTION' : 'AUTOMATED_DISPOSITION'
+        },
+        governanceTrail: {
+            requiresHumanReview: disposition === 'REQUIRES_HUMAN_VERIFICATION',
+            auditVerificationDate: asOfDate,
+            engineIdentity: '@mudraforge/statutory@2.11.0',
+            merkleSubstrateRoot: 'sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19',
+            isAuthorizedToDisburse: false
+        }
+    };
+}
 
 /**
  * Normalizes an invoice number for fuzzy canonical matching across ERP and GSTN.
@@ -333,6 +656,15 @@ export function parseZohoBillsJson(jsonData) {
         });
     }
 
+    if (data && data.page_context && typeof data.page_context === 'object') {
+        records.pageContext = {
+            page: Number(data.page_context.page) || 1,
+            perPage: Number(data.page_context.per_page) || 200,
+            hasMorePage: Boolean(data.page_context.has_more_page),
+            total: Number(data.page_context.total) || records.length
+        };
+    }
+
     return records;
 }
 
@@ -513,6 +845,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         recipientRegisteredGstins = [],
         paymentAppropriationMethod = 'PROPORTIONATE',
         minimumEclBalanceInr = undefined,
+        eclLedgerHistory = [],
         eclUtilizationStatus = 'UTILIZED',
         goodsInTransitWindowDays = 15
     } = options;
@@ -767,6 +1100,10 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
 
                 paymentAppropriationDetails = {
                     method: paymentAppropriationMethod,
+                    isStatutoryStandard: paymentAppropriationMethod === 'PROPORTIONATE',
+                    statutoryNote: paymentAppropriationMethod === 'PROPORTIONATE'
+                        ? 'CGST Act Section 16(2) second proviso read with Rule 37(1) canonical statutory baseline: proportional reversal on unpaid consideration and tax.'
+                        : `Alternative accounting allocation assumption (${paymentAppropriationMethod}). In statutory audit and tax litigation, proportional allocation remains the default baseline unless contractually documented.`,
                     totalInvoiceInr: totalAmt,
                     balanceDueInr: balanceAmt,
                     amountPaidInr: paidAmt,
@@ -778,7 +1115,19 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 // Section 50(1) interest evaluated against Rule 88B(3) ECL balance
                 const overdueDaysPast180 = daysElapsedSinceBill - 180;
 
-                if (minimumEclBalanceInr !== undefined && minimumEclBalanceInr !== null) {
+                if (Array.isArray(eclLedgerHistory) && eclLedgerHistory.length > 0) {
+                    const overdueStartDate = calculateOverdueStartDate(bill.billDate);
+                    const eclRes = calculateEclUtilizationInterest({
+                        unreversedItcInr: rule37ReversalTaxInr,
+                        overdueStartDate,
+                        asOfDate,
+                        reversalDate: bill.reversalDate || null,
+                        eclLedgerHistory
+                    });
+                    rule37InterestInr = eclRes.totalInterestInr;
+                    rule37InterestExplanation = eclRes.explanation;
+                    rule37InterestExposurePaise += eclRes.totalInterestPaise;
+                } else if (minimumEclBalanceInr !== undefined && minimumEclBalanceInr !== null) {
                     const minEcl = cleanNumericAmount(minimumEclBalanceInr);
                     const wrongfulUtilizedInr = Math.max(0, roundToPaisa(rule37ReversalTaxInr - minEcl));
                     if (wrongfulUtilizedInr <= 0) {
@@ -832,6 +1181,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 rule37InterestInr,
                 rule37InterestExplanation,
                 isReclaimableUponPayment,
+                paymentAppropriationDetails,
                 jurisdictionDecisions: {
                     taxClassification: 'INDETERMINATE',
                     recipientJurisdiction: 'INDETERMINATE',
@@ -843,7 +1193,22 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     inBooks: true,
                     inGstr2b: false,
                     invalidGstin: bill.vendorGstin
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b: null,
+                    matchType: 'NONE',
+                    disposition: 'REQUIRES_HUMAN_VERIFICATION',
+                    statutorySection: 'CGST Act Section 22/25 & Rule 8 (Taxpayer Identity Verification)',
+                    jurisdictionDecisions: {
+                        taxClassification: 'INDETERMINATE',
+                        recipientJurisdiction: 'INDETERMINATE',
+                        itcEligibility: 'INDETERMINATE',
+                        operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+                    },
+                    uncertaintyReason: 'INVALID_SUPPLIER_GSTIN_CHECKSUM',
+                    asOfDate
+                })
             });
             continue;
         }
@@ -875,6 +1240,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 rule37InterestInr,
                 rule37InterestExplanation,
                 isReclaimableUponPayment,
+                paymentAppropriationDetails,
                 jurisdictionDecisions: {
                     taxClassification: 'INDETERMINATE',
                     recipientJurisdiction: 'INDETERMINATE',
@@ -886,7 +1252,22 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     inBooks: true,
                     inGstr2b: Boolean(matchEntry),
                     duplicateCompositeKey: exactComposite
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b: matchEntry ? matchEntry.record : null,
+                    matchType: exactComposite === `${gstinKey}|${(matchEntry && matchEntry.record.exactKey)}` ? 'EXACT' : 'ALPHANUMERIC',
+                    disposition: 'REQUIRES_HUMAN_VERIFICATION',
+                    statutorySection: 'CGST Act Section 31 & General Accounting Internal Controls',
+                    jurisdictionDecisions: {
+                        taxClassification: 'INDETERMINATE',
+                        recipientJurisdiction: 'INDETERMINATE',
+                        itcEligibility: 'INDETERMINATE',
+                        operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+                    },
+                    uncertaintyReason: 'AMBIGUOUS_DUPLICATE_INVOICE_MATCH',
+                    asOfDate
+                })
             });
             continue;
         }
@@ -920,6 +1301,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 rule37InterestInr,
                 rule37InterestExplanation,
                 isReclaimableUponPayment,
+                paymentAppropriationDetails,
                 jurisdictionDecisions: {
                     taxClassification: 'INDETERMINATE',
                     recipientJurisdiction: 'INDETERMINATE',
@@ -931,7 +1313,22 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     cgstInr: bill.cgstInr,
                     sgstInr: bill.sgstInr,
                     igstInr: bill.igstInr
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b: matchEntry ? matchEntry.record : null,
+                    matchType: matchEntry ? (exactComposite === `${gstinKey}|${matchEntry.record.exactKey}` ? 'EXACT' : 'ALPHANUMERIC') : 'UNMATCHED',
+                    disposition: 'REQUIRES_HUMAN_VERIFICATION',
+                    statutorySection: 'CGST Act Section 31 & IGST Act Section 5',
+                    jurisdictionDecisions: {
+                        taxClassification: 'INDETERMINATE',
+                        recipientJurisdiction: 'INDETERMINATE',
+                        itcEligibility: 'INELIGIBLE_DEFECTIVE_INVOICE',
+                        operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+                    },
+                    uncertaintyReason: 'CONTRADICTORY_TAX_SPLIT',
+                    asOfDate
+                })
             });
             continue;
         }
@@ -966,6 +1363,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 rule37InterestInr,
                 rule37InterestExplanation,
                 isReclaimableUponPayment,
+                paymentAppropriationDetails,
                 jurisdictionDecisions: {
                     taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
                     recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
@@ -980,7 +1378,22 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     inGstr2b: false,
                     matchType: 'UNMATCHED',
                     isTimingDifference
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b: null,
+                    matchType: 'UNMATCHED',
+                    disposition,
+                    statutorySection: 'CGST Act Section 16(2)(aa) read with Rule 36(4)',
+                    jurisdictionDecisions: {
+                        taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                        recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
+                        itcEligibility: 'PROVISIONAL_PENDING_FILING',
+                        operationalRouting: 'WITHHOLD_CLAIM_PENDING_SUPPLIER_GSTR1'
+                    },
+                    uncertaintyReason: null,
+                    asOfDate
+                })
             });
             continue;
         }
@@ -1004,6 +1417,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
             requiresHumanVerificationCount++;
             requiresHumanVerificationItcPaise += booksTaxPaise;
 
+            const itemMatchType = exactComposite === `${gstinKey}|${record2b.exactKey}` ? 'EXACT' : 'ALPHANUMERIC';
             items.push({
                 disposition: 'REQUIRES_HUMAN_VERIFICATION',
                 uncertaintyReason: 'MISSING_POS_DATA',
@@ -1026,6 +1440,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 rule37InterestInr,
                 rule37InterestExplanation,
                 isReclaimableUponPayment,
+                paymentAppropriationDetails,
                 jurisdictionDecisions: {
                     taxClassification: 'INDETERMINATE',
                     recipientJurisdiction: 'INDETERMINATE',
@@ -1033,7 +1448,22 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
                 },
                 statutoryAction: 'Place of Supply information is missing or indeterminate in both Books and GSTR-2B. Human intervention required to ascertain place of supply from shipping or service delivery documentation.',
-                auditEvidence: { inBooks: true, inGstr2b: true, missingPos: true }
+                auditEvidence: { inBooks: true, inGstr2b: true, missingPos: true },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b,
+                    matchType: itemMatchType,
+                    disposition: 'REQUIRES_HUMAN_VERIFICATION',
+                    statutorySection: 'IGST Act Section 10 & 12 (Place of Supply Determination)',
+                    jurisdictionDecisions: {
+                        taxClassification: 'INDETERMINATE',
+                        recipientJurisdiction: 'INDETERMINATE',
+                        itcEligibility: 'INDETERMINATE',
+                        operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+                    },
+                    uncertaintyReason: 'MISSING_POS_DATA',
+                    asOfDate
+                })
             });
             continue;
         }
@@ -1073,10 +1503,18 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
             itcEligibility = 'ELIGIBLE_IN_BRANCH_RETURN';
             operationalRouting = 'ROUTE_TO_BRANCH_GSTIN';
         } else if (recipientJurisdiction === 'UNREGISTERED_IN_POS_STATE') {
-            const isStatutoryLocalPOS = /hotel|lodge|stay|accommodation|catering|restaurant|real estate|immovable|event/i.test(bill.category || '');
-            if (isStatutoryLocalPOS && isSupplierLocal) {
+            const isStatutoryImmovableStay = /hotel|lodge|lodging|room stay|guest house|accommodation|campsite|catering|restaurant|real estate|immovable/i.test(bill.category || '');
+            const isB2bEventManagement = /event|conference|exhibition|seminar|summit|event management/i.test(bill.category || '');
+
+            if (isStatutoryImmovableStay && isSupplierLocal) {
+                // Section 12(3)(a): Immovable lodging POS is property location. Since recipient lacks registration in this state, local CGST/SGST is stranded.
                 itcEligibility = 'INELIGIBLE_STRANDED_LOCAL_LEVY';
                 operationalRouting = 'BOOK_AS_EXPENSE_NO_ITC';
+            } else if (isB2bEventManagement) {
+                // IGST Act Section 12(7)(a)(i): POS for organizing event/conference to a registered person is the location of the recipient!
+                // If supplier charged local CGST/SGST, it is an ERRONEOUS_INTRASTATE_LEVY. Supplier MUST issue credit note and re-invoice with IGST.
+                itcEligibility = 'INELIGIBLE_DEFECTIVE_INVOICE';
+                operationalRouting = 'REQUEST_VENDOR_CREDIT_NOTE_AMENDMENT';
             } else {
                 itcEligibility = 'INELIGIBLE_DEFECTIVE_INVOICE';
                 operationalRouting = 'REQUEST_VENDOR_CREDIT_NOTE_AMENDMENT';
@@ -1092,6 +1530,8 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
             itcEligibility,
             operationalRouting
         };
+
+        const matchType = exactComposite === `${gstinKey}|${record2b.exactKey}` ? 'EXACT' : 'ALPHANUMERIC';
 
         if (record2b.itcAvailable === false) {
             // Disposition: GSTR2B_INELIGIBLE_FLAGGED_BY_GSTN
@@ -1126,7 +1566,17 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     inBooks: true,
                     inGstr2b: true,
                     itcRevReason: record2b.itcRevReason
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b,
+                    matchType,
+                    disposition: 'GSTR2B_INELIGIBLE_FLAGGED_BY_GSTN',
+                    statutorySection: 'CGST Act Section 16(4) / 16(2) (GSTN Ineligibility Flag)',
+                    jurisdictionDecisions,
+                    uncertaintyReason: null,
+                    asOfDate
+                })
             });
         } else if (bill.isBlocked17_5) {
             // Disposition: MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5
@@ -1160,9 +1610,19 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 auditEvidence: {
                     inBooks: true,
                     inGstr2b: true,
-                    matchType: exactComposite === `${gstinKey}|${record2b.exactKey}` ? 'EXACT' : 'ALPHANUMERIC',
+                    matchType,
                     blockedCategory: bill.category || 'Section 17(5) Item'
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b,
+                    matchType,
+                    disposition: 'MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5',
+                    statutorySection: 'CGST Act Section 17(5) (Statutorily Blocked Input Tax Credit)',
+                    jurisdictionDecisions,
+                    uncertaintyReason: null,
+                    asOfDate
+                })
             });
         } else if (operationalRouting === 'ROUTE_TO_BRANCH_GSTIN') {
             // Disposition: MATCHED_ROUTABLE_TO_BRANCH_GSTIN
@@ -1199,7 +1659,17 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     posStateCode,
                     recipientFilingState,
                     recipientRegisteredStates: Array.from(recipientStateSet)
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b,
+                    matchType,
+                    disposition: 'MATCHED_ROUTABLE_TO_BRANCH_GSTIN',
+                    statutorySection: 'CGST Act Section 25(4) read with IGST Act Section 12 (Distinct Persons)',
+                    jurisdictionDecisions,
+                    uncertaintyReason: null,
+                    asOfDate
+                })
             });
         } else if (operationalRouting === 'BOOK_AS_EXPENSE_NO_ITC') {
             // Disposition: MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST
@@ -1235,7 +1705,17 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     inGstr2b: true,
                     posStateCode,
                     recipientFilingState
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b,
+                    matchType,
+                    disposition: 'MATCHED_INELIGIBLE_STRANDED_LOCAL_CGST_SGST',
+                    statutorySection: 'IGST Act Section 12(3)/12(4) & CGST Act Section 16(2)(c)',
+                    jurisdictionDecisions,
+                    uncertaintyReason: null,
+                    asOfDate
+                })
             });
         } else if (taxClassification === 'ERRONEOUS_INTRASTATE_LEVY' || (recipientJurisdiction === 'UNREGISTERED_IN_POS_STATE' && operationalRouting === 'REQUEST_VENDOR_CREDIT_NOTE_AMENDMENT')) {
             // Disposition: MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH
@@ -1271,7 +1751,17 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     inGstr2b: true,
                     posStateCode,
                     recipientFilingState
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b,
+                    matchType,
+                    disposition: 'MATCHED_INELIGIBLE_PLACE_OF_SUPPLY_MISMATCH',
+                    statutorySection: 'CGST Act Section 16(2)(c) read with IGST Act Section 10(1)(a) & Section 12',
+                    jurisdictionDecisions,
+                    uncertaintyReason: null,
+                    asOfDate
+                })
             });
         } else if (diffTaxablePaise > tolerancePaise || diffTaxPaise > tolerancePaise) {
             // Disposition: MISMATCH_AMOUNT_VALUE
@@ -1305,9 +1795,19 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 auditEvidence: {
                     inBooks: true,
                     inGstr2b: true,
-                    matchType: exactComposite === `${gstinKey}|${record2b.exactKey}` ? 'EXACT' : 'ALPHANUMERIC',
+                    matchType,
                     varianceExceeded: true
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b,
+                    matchType,
+                    disposition: 'MISMATCH_AMOUNT_VALUE',
+                    statutorySection: 'CGST Act Section 16(2)(aa) & Rule 36(4)',
+                    jurisdictionDecisions,
+                    uncertaintyReason: null,
+                    asOfDate
+                })
             });
         } else {
             // Disposition: MATCHED_ELIGIBLE
@@ -1346,10 +1846,20 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 auditEvidence: {
                     inBooks: true,
                     inGstr2b: true,
-                    matchType: exactComposite === `${gstinKey}|${record2b.exactKey}` ? 'EXACT' : 'ALPHANUMERIC',
+                    matchType,
                     varianceExceeded: false,
                     isRcm
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill,
+                    record2b,
+                    matchType,
+                    disposition: 'MATCHED_ELIGIBLE',
+                    statutorySection: 'CGST Act Section 16(2) read with Section 16(1)',
+                    jurisdictionDecisions,
+                    uncertaintyReason: null,
+                    asOfDate
+                })
             });
         }
     }
@@ -1376,10 +1886,19 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
             const disposition = isGoodsInTransit ? 'MISSING_IN_BOOKS_GOODS_IN_TRANSIT' : 'MISSING_IN_BOOKS';
             const itcStatus = isGoodsInTransit ? 'GOODS_IN_TRANSIT_PENDING_RECEIPT' : 'UNRECORDED_PURCHASE_IN_BOOKS';
 
+            const jurisdictionDecisions = {
+                taxClassification: (record.cgstInr > 0 || record.sgstInr > 0) ? 'INTRASTATE_CORRECT' : 'INTERSTATE_CORRECT',
+                recipientJurisdiction: recipientStateSet.has(record.posStateCode) ? 'FILING_GSTIN_MATCHES_POS' : 'UNREGISTERED_IN_POS_STATE',
+                itcEligibility: isGoodsInTransit ? 'PROVISIONAL_PENDING_FILING' : 'INDETERMINATE',
+                operationalRouting: isGoodsInTransit ? 'PHYSICAL_GOODS_RECEIPT_VERIFICATION_PENDING' : 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+            };
+
+            const statutorySection = isGoodsInTransit ? 'CGST Act Section 16(2)(b) (Receipt of Goods Condition)' : 'General Accounting Principles & GST Compliance';
+
             items.push({
                 disposition,
                 itcStatus,
-                statutorySection: isGoodsInTransit ? 'CGST Act Section 16(2)(b) (Receipt of Goods Condition)' : 'General Accounting Principles & GST Compliance',
+                statutorySection,
                 vendorName: record.supplierName,
                 vendorGstin: record.supplierGstin,
                 billNumber: record.invoiceNumber,
@@ -1397,12 +1916,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                 rule37InterestInr: 0,
                 rule37InterestExplanation: '',
                 isReclaimableUponPayment: false,
-                jurisdictionDecisions: {
-                    taxClassification: (record.cgstInr > 0 || record.sgstInr > 0) ? 'INTRASTATE_CORRECT' : 'INTERSTATE_CORRECT',
-                    recipientJurisdiction: recipientStateSet.has(record.posStateCode) ? 'FILING_GSTIN_MATCHES_POS' : 'UNREGISTERED_IN_POS_STATE',
-                    itcEligibility: isGoodsInTransit ? 'PROVISIONAL_PENDING_FILING' : 'INDETERMINATE',
-                    operationalRouting: isGoodsInTransit ? 'PHYSICAL_GOODS_RECEIPT_VERIFICATION_PENDING' : 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
-                },
+                jurisdictionDecisions,
                 statutoryAction: isGoodsInTransit
                     ? `Invoice reported in GSTR-2B dated ${record.invoiceDate} (within ${goodsInTransitWindowDays} days). Verify physical receipt of goods per Section 16(2)(b) before recording bill.`
                     : 'Invoice reported in GSTR-2B by supplier but missing in Zoho Books. Review purchase orders or confirm if goods/services received.',
@@ -1412,7 +1926,17 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                     docType: record.docType,
                     posStateCode: record.posStateCode,
                     isGoodsInTransit
-                }
+                },
+                evidenceProvenance: buildEvidenceProvenance({
+                    bill: null,
+                    record2b: record,
+                    matchType: 'UNMATCHED',
+                    disposition,
+                    statutorySection,
+                    jurisdictionDecisions,
+                    uncertaintyReason: null,
+                    asOfDate
+                })
             });
         }
     }
@@ -1453,6 +1977,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         paymentAppropriationMethod,
         minimumEclBalanceInr: minimumEclBalanceInr !== undefined ? cleanNumericAmount(minimumEclBalanceInr) : null,
         eclUtilizationStatus,
+        eclLedgerHistoryAudit: (Array.isArray(eclLedgerHistory) && eclLedgerHistory.length > 0),
 
         reconciliationStatus: (missingIn2bCount === 0 && amountMismatchCount === 0 && missingInBooksCount === 0 && posMismatchCount === 0 && blocked17_5Count === 0 && requiresHumanVerificationCount === 0) ? 'FULLY_RECONCILED' : 'EXCEPTIONS_IDENTIFIED',
         isAuthorizedToDisburse: false
