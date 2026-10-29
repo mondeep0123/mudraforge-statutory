@@ -302,6 +302,7 @@ export function reconcile194QDaybook(vouchers, options = {}) {
             return (a.rowNumber || 0) - (b.rowNumber || 0);
         });
 
+        let activeFy = null;
         let rollingPriorPurchases = 0;
         let vendorTotalPurchases = 0;
         let vendorExcessPurchases = 0;
@@ -317,7 +318,50 @@ export function reconcile194QDaybook(vouchers, options = {}) {
         const processedGroupVouchers = [];
 
         for (const v of group.vouchers) {
-            const amount = Number(v.grossAmount) || 0;
+            const voucherFy = getIndianFinancialYear(v.date);
+            if (activeFy && voucherFy !== activeFy) {
+                // Section 194Q(1) statutory threshold resets at each FY boundary (1 April)
+                rollingPriorPurchases = 0;
+            }
+            activeFy = voucherFy;
+
+            const isDebitNote = Boolean(
+                (v.voucherType && (v.voucherType.toLowerCase().includes('debit') || v.voucherType.toLowerCase().includes('return'))) ||
+                (Number(v.grossAmount) < 0)
+            );
+            const rawAmount = Math.abs(Number(v.grossAmount) || 0);
+
+            if (isDebitNote) {
+                // Circular 13/2021 Q4: Debit Note / Purchase Return reduces rolling purchase base in same FY
+                rollingPriorPurchases = Math.max(0, roundToPaisa(rollingPriorPurchases - rawAmount));
+                totalDaybookPurchasesInr = roundToPaisa(totalDaybookPurchasesInr - rawAmount);
+                vendorTotalPurchases = roundToPaisa(vendorTotalPurchases - rawAmount);
+
+                const auditedVoucher = {
+                    ...v,
+                    financialYear: voucherFy,
+                    vendorPan: group.pan,
+                    isDebitNote: true,
+                    priorPurchasesInFy: roundToPaisa(rollingPriorPurchases + rawAmount),
+                    cumulativePurchasesInFy: rollingPriorPurchases,
+                    isOver50LThreshold: rollingPriorPurchases > STATUTORY_THRESHOLD_INR,
+                    taxableBase194Q: 0,
+                    statutoryRatePercent: group.isPanValid ? 0.1 : 5.0,
+                    requiredTdsInr: 0,
+                    actualTdsInr: v.tdsDeducted || 0,
+                    shortfallInr: 0,
+                    auditStatus: 'DEBIT_NOTE_PURCHASE_RETURN_ADJUSTED',
+                    section40aDisallowanceInr: 0,
+                    estimatedTaxHitInr: 0,
+                    section201InterestInr: 0,
+                    statutoryCitation: 'CBDT Circular No. 13 of 2021 Question 4 (Purchase Return Adjustment)'
+                };
+                processedGroupVouchers.push(auditedVoucher);
+                auditedVouchers.push(auditedVoucher);
+                continue;
+            }
+
+            const amount = rawAmount;
             totalDaybookPurchasesInr = roundToPaisa(totalDaybookPurchasesInr + amount);
             vendorTotalPurchases = roundToPaisa(vendorTotalPurchases + amount);
 
@@ -356,7 +400,11 @@ export function reconcile194QDaybook(vouchers, options = {}) {
 
                 if (shortfall > 0) {
                     hasExceptions = true;
-                    auditStatus = actualTds === 0 ? 'EXCEPTION_TDS_NOT_DEDUCTED' : 'EXCEPTION_TDS_UNDER_DEDUCTED';
+                    if (!group.isPanValid) {
+                        auditStatus = 'EXCEPTION_TDS_UNDER_DEDUCTED_PAN_MISSING_PENALTY_5PCT';
+                    } else {
+                        auditStatus = actualTds === 0 ? 'EXCEPTION_TDS_NOT_DEDUCTED' : 'EXCEPTION_TDS_UNDER_DEDUCTED';
+                    }
 
                     // Section 40(a)(ia) disallowance: 30% of the entire unwithheld purchase base
                     // If shortfall is partial, proportionate base is disallowed
@@ -381,6 +429,7 @@ export function reconcile194QDaybook(vouchers, options = {}) {
 
             const auditedVoucher = {
                 ...v,
+                financialYear: voucherFy,
                 vendorPan: group.pan,
                 priorPurchasesInFy: rollingPriorPurchases,
                 cumulativePurchasesInFy: roundToPaisa(rollingPriorPurchases + amount),
@@ -698,4 +747,24 @@ function calculateElapsedMonths(startDateStr, endDateStr) {
         months += 1;
     }
     return Math.max(1, months);
+}
+
+/**
+ * Derives the Indian Financial Year string (e.g. '2024-25') for a given ISO date.
+ * Financial Year runs from 1 April to 31 March.
+ * 
+ * @param {string} dateStr - ISO date string (YYYY-MM-DD)
+ * @returns {string} Financial Year identifier (e.g. '2024-25')
+ */
+export function getIndianFinancialYear(dateStr) {
+    if (!dateStr) return 'DEFAULT_FY';
+    const clean = String(dateStr).trim().slice(0, 10);
+    const m = clean.match(/^(\d{4})-(\d{2})/);
+    if (!m) return 'DEFAULT_FY';
+    const year = parseInt(m[1], 10);
+    const month = parseInt(m[2], 10);
+    if (month >= 1 && month <= 3) {
+        return `${year - 1}-${String(year).slice(2)}`;
+    }
+    return `${year}-${String(year + 1).slice(2)}`;
 }

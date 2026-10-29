@@ -60,6 +60,7 @@ import {
     reconcile194QDaybook,
     generateTally194QJournalXml,
     generateAuditMarkdownReport,
+    getIndianFinancialYear,
     STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
@@ -3173,8 +3174,84 @@ async function run() {
         if (fs.existsSync(tmpXmlOutPath)) fs.unlinkSync(tmpXmlOutPath);
     }
 
+    // 116. Financial Year Isolation & 1 April Threshold Reset (Section 194Q(1))
+    console.log('\n── Test 116: Financial Year Isolation & 1 April Reset (Section 194Q(1)) ──');
+    if (getIndianFinancialYear('2024-03-31') !== '2023-24' || getIndianFinancialYear('2024-04-01') !== '2024-25') {
+        throw new Error('Financial year boundary calculation failed');
+    }
+    const multiFyVouchers = [
+        { date: '2024-03-20', voucherNo: 'V1', partyName: 'Steel Corp', partyPan: 'AAACS1111A', grossAmount: 4000000, tdsDeducted: 0 },
+        { date: '2024-04-15', voucherNo: 'V2', partyName: 'Steel Corp', partyPan: 'AAACS1111A', grossAmount: 3000000, tdsDeducted: 0 },
+        { date: '2024-06-10', voucherNo: 'V3', partyName: 'Steel Corp', partyPan: 'AAACS1111A', grossAmount: 3000000, tdsDeducted: 0 }
+    ];
+    const multiFyRes = reconcile194QDaybook(multiFyVouchers, { buyerTurnoverCr: 20 });
+    const v2Audited = multiFyRes.auditedVouchers.find(v => v.voucherNo === 'V2');
+    const v3Audited = multiFyRes.auditedVouchers.find(v => v.voucherNo === 'V3');
+    if (v2Audited.taxableBase194Q !== 0 || v2Audited.auditStatus !== 'BELOW_STATUTORY_50L_THRESHOLD') {
+        throw new Error('FY rollover reset failed: V2 in new FY was erroneously tagged with previous year balance');
+    }
+    if (v3Audited.taxableBase194Q !== 1000000 || v3Audited.requiredTdsInr !== 1000) {
+        throw new Error(`FY rollover calculation failed on V3: expected taxableBase 1000000, got ${v3Audited.taxableBase194Q}`);
+    }
+    console.log('[PASS] Financial Year Isolation Verified: Threshold successfully resets on 1 April across fiscal years.');
+
+    // 117. Debit Note & Purchase Return Rolling Adjustment (Circular 13/2021 Q4)
+    console.log('\n── Test 117: Debit Note & Purchase Return Rolling Adjustment (Circular 13/2021 Q4) ──');
+    const debitNoteVouchers = [
+        { date: '2024-05-01', voucherNo: 'INV-1', partyName: 'Cement Ltd', partyPan: 'AAACC2222A', grossAmount: 4500000, tdsDeducted: 0 },
+        { date: '2024-06-01', voucherNo: 'DN-1', partyName: 'Cement Ltd', partyPan: 'AAACC2222A', voucherType: 'Debit Note', grossAmount: 1000000, tdsDeducted: 0 },
+        { date: '2024-07-01', voucherNo: 'INV-2', partyName: 'Cement Ltd', partyPan: 'AAACC2222A', grossAmount: 2000000, tdsDeducted: 0 }
+    ];
+    const debitNoteRes = reconcile194QDaybook(debitNoteVouchers, { buyerTurnoverCr: 25 });
+    const inv2Audited = debitNoteRes.auditedVouchers.find(v => v.voucherNo === 'INV-2');
+    if (inv2Audited.taxableBase194Q !== 500000 || inv2Audited.requiredTdsInr !== 500) {
+        throw new Error(`Debit note netting failed: expected taxableBase 500000, got ${inv2Audited.taxableBase194Q}`);
+    }
+    console.log('[PASS] Debit Note Netting Verified: CBDT Circular 13/2021 Q4 purchase return reduces rolling threshold base.');
+
+    // 118. Missing PAN Daybook Vendor & Section 206AA 5% Penalty Rate
+    console.log('\n── Test 118: Missing PAN Daybook Vendor & Section 206AA 5% Penalty Rate ──');
+    const missingPanVouchers = [
+        { date: '2024-06-15', voucherNo: 'UNREG-01', partyName: 'Local Scrap Dealer', partyPan: '', partyGstin: '', grossAmount: 7000000, tdsDeducted: 0 }
+    ];
+    const missingPanRes = reconcile194QDaybook(missingPanVouchers, { buyerTurnoverCr: 50 });
+    const unregVendor = missingPanRes.exceptionVendors[0];
+    if (unregVendor.tdsShortfallInr !== 100000 || unregVendor.section40aDisallowanceInr !== 600000) {
+        throw new Error(`Missing PAN penalty rate calculation failed: expected shortfall 100000, got ${unregVendor.tdsShortfallInr}`);
+    }
+    const unregVch = missingPanRes.auditedVouchers[0];
+    if (unregVch.statutoryRatePercent !== 5.0 || !unregVch.auditStatus.includes('PAN_MISSING_PENALTY_5PCT')) {
+        throw new Error('Missing PAN rate or audit exception disposition check failed');
+    }
+    console.log('[PASS] Missing PAN Daybook Vendor Verified: Section 206AA 5% penalty rate applied and ₹6L 40(a)(ia) risk quantified.');
+
+    // 119. Large-Scale Daybook Stress & Throughput Benchmark
+    console.log('\n── Test 119: Large-Scale Daybook Stress & Throughput Benchmark ──');
+    const stressVouchers = [];
+    for (let i = 1; i <= 1000; i++) {
+        const panNum = String(i % 50).padStart(4, '0');
+        stressVouchers.push({
+            date: '2024-06-' + String((i % 28) + 1).padStart(2, '0'),
+            voucherNo: `STR-${i}`,
+            partyName: `Vendor_${panNum}`,
+            partyPan: `AAACV${panNum}A`,
+            grossAmount: 150000,
+            tdsDeducted: 0
+        });
+    }
+    const tStart = performance.now();
+    const stressRes = reconcile194QDaybook(stressVouchers, { buyerTurnoverCr: 100 });
+    const tElapsed = performance.now() - tStart;
+    if (stressRes.auditSummary.totalVouchersScanned !== 1000) {
+        throw new Error('Stress test voucher count mismatch');
+    }
+    if (tElapsed > 250) {
+        throw new Error(`Stress throughput exceeded latency threshold: ${tElapsed.toFixed(2)}ms`);
+    }
+    console.log(`[PASS] Stress Benchmark Verified: 1,000 vouchers across 50 PANs reconciled in ${tElapsed.toFixed(2)}ms (${(1000 / (tElapsed / 1000)).toFixed(0)} vouchers/sec).`);
+
     console.log('\n===========================================================================');
-    console.log('ALL 115 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 119 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

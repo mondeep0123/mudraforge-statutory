@@ -489,6 +489,7 @@ export declare function generateTally194QJournalXml(
 export declare function generateAuditMarkdownReport(
     reconciliationResult: ReconcileDaybookResult
 ): string;
+export declare function getIndianFinancialYear(dateStr: string): string;
 
 
 

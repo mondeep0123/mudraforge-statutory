@@ -66,7 +66,8 @@ import {
     parseTallyDaybookXml,
     reconcile194QDaybook,
     generateTally194QJournalXml,
-    generateAuditMarkdownReport
+    generateAuditMarkdownReport,
+    getIndianFinancialYear
 } from './tally.js';
 
 import { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL } from './constants.js';
@@ -3117,7 +3118,8 @@ export {
     parseTallyDaybookXml,
     reconcile194QDaybook,
     generateTally194QJournalXml,
-    generateAuditMarkdownReport
+    generateAuditMarkdownReport,
+    getIndianFinancialYear
 };
 
 
