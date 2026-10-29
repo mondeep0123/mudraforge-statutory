@@ -61,6 +61,13 @@ import {
     STATUTORY_OUTCOMES_DICTIONARY,
     enrichWithOutcomeExplanation
 } from './outcomes.js';
+import {
+    parseTallyDaybookCsv,
+    parseTallyDaybookXml,
+    reconcile194QDaybook,
+    generateTally194QJournalXml,
+    generateAuditMarkdownReport
+} from './tally.js';
 
 import { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL } from './constants.js';
 
@@ -2006,6 +2013,48 @@ export class StatutoryClient {
     }
 
     /**
+     * Parse raw Tally or ERP daybook CSV text into normalized vouchers.
+     * @param {string} csvText
+     */
+    parseTallyDaybookCsv(csvText) {
+        return parseTallyDaybookCsv(csvText);
+    }
+
+    /**
+     * Parse raw Tally XML daybook export into normalized vouchers.
+     * @param {string} xmlText
+     */
+    parseTallyDaybookXml(xmlText) {
+        return parseTallyDaybookXml(xmlText);
+    }
+
+    /**
+     * Reconcile daybook vouchers against Section 194Q and Section 40(a)(ia) rules.
+     * @param {Array<Object>} vouchers
+     * @param {Object} [options]
+     */
+    reconcileDaybook(vouchers, options = {}) {
+        return reconcile194QDaybook(vouchers, options);
+    }
+
+    /**
+     * Generate Tally-compliant XML compensating journal vouchers for unwithheld TDS.
+     * @param {Object} reconciliationResult
+     * @param {Object} [options]
+     */
+    generateTallyJournalXml(reconciliationResult, options = {}) {
+        return generateTally194QJournalXml(reconciliationResult, options);
+    }
+
+    /**
+     * Format a clean Markdown audit exception report for Form 3CD working papers.
+     * @param {Object} reconciliationResult
+     */
+    generateAuditReport(reconciliationResult) {
+        return generateAuditMarkdownReport(reconciliationResult);
+    }
+
+    /**
      * Retrieve statutory outcomes and disposition codes.
      * @param {string} [provision] Optional section code or provision alias
      * @param {Object} [options]
@@ -3063,7 +3112,12 @@ export {
     getStatutoryOutcomes,
     explainStatutoryDisposition,
     STATUTORY_OUTCOMES_DICTIONARY,
-    enrichWithOutcomeExplanation
+    enrichWithOutcomeExplanation,
+    parseTallyDaybookCsv,
+    parseTallyDaybookXml,
+    reconcile194QDaybook,
+    generateTally194QJournalXml,
+    generateAuditMarkdownReport
 };
 
 

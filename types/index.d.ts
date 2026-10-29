@@ -430,4 +430,65 @@ export declare function ignorePackageUpdate(
     versionToIgnore: string
 ): { status: 'SUCCESS' | 'ERROR'; ignoredVersion: string; error?: string };
 
+export interface DaybookVoucherInput {
+    date: string;
+    voucherNo?: string;
+    voucherType?: string;
+    partyName: string;
+    partyPan?: string | null;
+    partyGstin?: string | null;
+    grossAmount: number;
+    gstAmount?: number;
+    tdsDeducted?: number;
+}
+
+export interface ReconcileDaybookOptions {
+    buyerTurnoverCr?: number | null;
+    disallowancePercent?: number;
+    corporateTaxRatePercent?: number;
+    delayedInterestRateMonthlyPercent?: number;
+    auditDate?: string | null;
+}
+
+export interface DaybookAuditSummary {
+    totalVouchersScanned: number;
+    uniqueVendorsCount: number;
+    vendorsExceeding50LCount: number;
+    vendorsWithExceptionsCount: number;
+    totalPurchasesInr: number;
+    totalExcessPurchasesOver50LInr: number;
+    totalTdsPayableInr: number;
+    totalTdsDeductedInr: number;
+    totalTdsShortfallInr: number;
+    totalSection40aDisallowanceInr: number;
+    totalEstimatedTaxImpactInr: number;
+    totalSection201InterestInr: number;
+    totalAuditExposureInr: number;
+    statutoryAuthority: string;
+    isAuthorizedToDisburse: boolean;
+}
+
+export interface ReconcileDaybookResult {
+    auditSummary: DaybookAuditSummary;
+    exceptionVendors: any[];
+    compliantVendors: any[];
+    allVendors: any[];
+    auditedVouchers: any[];
+}
+
+export declare function parseTallyDaybookCsv(csvText: string): DaybookVoucherInput[];
+export declare function parseTallyDaybookXml(xmlText: string): DaybookVoucherInput[];
+export declare function reconcile194QDaybook(
+    vouchers: DaybookVoucherInput[],
+    options?: ReconcileDaybookOptions
+): ReconcileDaybookResult;
+export declare function generateTally194QJournalXml(
+    reconciliationResult: ReconcileDaybookResult,
+    options?: { voucherDate?: string; creditLedgerName?: string; companyName?: string }
+): string;
+export declare function generateAuditMarkdownReport(
+    reconciliationResult: ReconcileDaybookResult
+): string;
+
+
 

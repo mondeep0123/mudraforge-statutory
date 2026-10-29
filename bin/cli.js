@@ -25,6 +25,11 @@ import {
     getStatutoryOutcomes,
     explainStatutoryDisposition,
     ignorePackageUpdate,
+    parseTallyDaybookCsv,
+    parseTallyDaybookXml,
+    reconcile194QDaybook,
+    generateTally194QJournalXml,
+    generateAuditMarkdownReport,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
@@ -173,6 +178,22 @@ async function main() {
             }
             handleDecodeId(args[1]);
             break;
+
+        case 'reconcile':
+        case 'reconcile-daybook':
+        case 'audit-daybook': {
+            const filePath = (args[1] && !args[1].startsWith('-')) ? args[1] : getNamedArg(['--file', '-f'], rawArgs);
+            const format = getNamedArg(['--format'], rawArgs);
+            const xmlOut = getNamedArg(['--xml-out'], rawArgs);
+            const reportOut = getNamedArg(['--report-out', '--out'], rawArgs);
+            const buyerTurnover = getNamedArg(['--buyer-turnover'], rawArgs);
+            if (!filePath) {
+                console.error('[ERROR] Please specify a daybook file to reconcile, e.g. npx @mudraforge/statutory reconcile daybook.csv');
+                process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+            }
+            await handleReconcileDaybook(filePath, { format, xmlOut, reportOut, buyerTurnover: buyerTurnover ? parseFloat(buyerTurnover) : null });
+            break;
+        }
 
         case 'help':
         default:
@@ -899,6 +920,96 @@ function handleDecodeId(rawId) {
     console.log('───────────────────────────────────────────────────────────────────────────\n');
 }
 
+async function handleReconcileDaybook(filePath, opts = {}) {
+    const resolvedPath = path.resolve(process.cwd(), filePath);
+    if (!fs.existsSync(resolvedPath)) {
+        console.error(`[ERROR] Daybook file not found: ${resolvedPath}`);
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+
+    const rawContent = fs.readFileSync(resolvedPath, 'utf8');
+    const ext = path.extname(resolvedPath).toLowerCase();
+    const format = (opts.format || (ext === '.xml' ? 'xml' : (ext === '.json' ? 'json' : 'csv'))).toLowerCase();
+
+    let vouchers = [];
+    try {
+        if (format === 'xml') {
+            vouchers = parseTallyDaybookXml(rawContent);
+        } else if (format === 'json') {
+            vouchers = JSON.parse(rawContent);
+        } else {
+            vouchers = parseTallyDaybookCsv(rawContent);
+        }
+    } catch (parseErr) {
+        console.error(`[ERROR] Failed to parse daybook file (${format}):`, parseErr.message);
+        process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+    }
+
+    const reconciliation = reconcile194QDaybook(vouchers, {
+        buyerTurnoverCr: opts.buyerTurnover || null
+    });
+
+    if (opts.xmlOut) {
+        const xmlOutPath = path.resolve(process.cwd(), opts.xmlOut);
+        const xmlContent = generateTally194QJournalXml(reconciliation);
+        fs.writeFileSync(xmlOutPath, xmlContent, 'utf8');
+        if (!isJsonMode) {
+            console.log(`[INFO] Tally compensating XML journal written to: ${xmlOutPath}`);
+        }
+    }
+
+    if (opts.reportOut) {
+        const reportOutPath = path.resolve(process.cwd(), opts.reportOut);
+        const reportContent = generateAuditMarkdownReport(reconciliation);
+        fs.writeFileSync(reportOutPath, reportContent, 'utf8');
+        if (!isJsonMode) {
+            console.log(`[INFO] Audit Markdown memorandum written to: ${reportOutPath}`);
+        }
+    }
+
+    if (isJsonMode) {
+        console.log(JSON.stringify(reconciliation, null, 2));
+        process.exit(0);
+    }
+
+    const { auditSummary, exceptionVendors } = reconciliation;
+    const fmtInr = (n) => '₹' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    console.log('\n===========================================================================');
+    console.log('TALLY / ERP SECTION 194Q RECONCILIATION & 40(a)(ia) EXPOSURE AUDIT');
+    console.log('===========================================================================');
+    console.log(`File:                      ${resolvedPath}`);
+    console.log(`Format:                    ${format.toUpperCase()}`);
+    console.log(`Vouchers Audited:          ${auditSummary.totalVouchersScanned}`);
+    console.log(`Unique Vendors / PANs:     ${auditSummary.uniqueVendorsCount}`);
+    console.log(`Vendors > ₹50L Threshold:  ${auditSummary.vendorsExceeding50LCount}`);
+    console.log(`Non-Compliant Vendors:     ${auditSummary.vendorsWithExceptionsCount}`);
+    console.log(`Total Purchases:           ${fmtInr(auditSummary.totalPurchasesInr)}`);
+    console.log(`Taxable Base (> ₹50L):     ${fmtInr(auditSummary.totalExcessPurchasesOver50LInr)}`);
+    console.log(`Required TDS @ 0.1%:       ${fmtInr(auditSummary.totalTdsPayableInr)}`);
+    console.log(`Actual TDS Deducted:       ${fmtInr(auditSummary.totalTdsDeductedInr)}`);
+    console.log(`Unwithheld TDS Shortfall:  ${fmtInr(auditSummary.totalTdsShortfallInr)}`);
+    console.log(`---------------------------------------------------------------------------`);
+    console.log(`Section 40(a)(ia) Risk:    ${fmtInr(auditSummary.totalSection40aDisallowanceInr)} (30% Expenditure Disallowed)`);
+    console.log(`Estimated Income Tax Hit:  ${fmtInr(auditSummary.totalEstimatedTaxImpactInr)} (@ 30% Corporate Tax)`);
+    console.log(`Sec 201(1A) Interest:      ${fmtInr(auditSummary.totalSection201InterestInr)}`);
+    console.log(`TOTAL AUDIT EXPOSURE:      ${fmtInr(auditSummary.totalAuditExposureInr)}`);
+    console.log('===========================================================================');
+
+    if (exceptionVendors.length > 0) {
+        console.log('\nNON-COMPLIANT VENDOR SCHEDULE (Form 3CD Clause 21(b) Working Papers):');
+        console.log('─'.repeat(75));
+        for (const v of exceptionVendors) {
+            console.log(`• ${v.primaryVendorName} (PAN: ${v.pan || 'MISSING'})`);
+            console.log(`  Purchases: ${fmtInr(v.totalPurchasesInr)} | Excess: ${fmtInr(v.excessPurchasesOver50LInr)} | Shortfall: ${fmtInr(v.tdsShortfallInr)} | 40(a)(ia) Risk: ${fmtInr(v.section40aDisallowanceInr)}`);
+        }
+        console.log('─'.repeat(75));
+        console.log(`Tip: Pass --xml-out vouchers.xml to generate Tally Prime auto-import XML.`);
+    } else {
+        console.log('\n[PASS] 100% Statutory Compliance. Zero Section 40(a)(ia) disallowance risk.\n');
+    }
+}
+
 function printHelp() {
     console.log(`
 MudraForge Statutory Commons CLI (@mudraforge/statutory)
@@ -907,6 +1018,7 @@ Usage:
   npx @mudraforge/statutory <command> [options]
 
 Commands:
+  reconcile <file>          Reconcile Tally/ERP daybook (CSV/XML/JSON) for Section 194Q & 40(a)(ia)
   doctor [--offline]        Run full diagnostic check of runtime, substrate integrity, & edge status
   verify [path]             Cryptographically verify OKF substrate authenticity & file integrity
   crosswalk <section>       Dual-act 1961 <-> 2025 bridge (earlier of credit vs payment)
@@ -923,6 +1035,10 @@ Commands:
   help                      Show this help message
 
 Options:
+  --format <csv|xml|json>   Explicit daybook file format parser
+  --xml-out <path>          Output path for Tally Prime compensating journal voucher XML
+  --report-out <path>       Output path for executive Markdown audit memorandum
+  --buyer-turnover <Cr>     Preceding FY buyer turnover in ₹ Crores (default: assumes > ₹10 Cr)
   --credit <YYYY-MM-DD>     Date of credit to vendor/payee account in books (used in crosswalk)
   --payment <YYYY-MM-DD>    Date of actual payment/disbursement (used in crosswalk)
   --since <YYYY-MM-DD>      Filter amendments taking effect on or after date (used in diff)

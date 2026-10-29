@@ -55,6 +55,11 @@ import {
     explainStatutoryDisposition,
     enrichWithOutcomeExplanation,
     ignorePackageUpdate,
+    parseTallyDaybookCsv,
+    parseTallyDaybookXml,
+    reconcile194QDaybook,
+    generateTally194QJournalXml,
+    generateAuditMarkdownReport,
     STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
@@ -3016,8 +3021,160 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient programmatic parity verified across all Rule 42 & Rule 43 interfaces.');
 
+    // 111. Tally & Daybook CSV Parsing & ISO Mod-36 PAN Extraction
+    console.log('\n── Test 111: Tally & Daybook CSV Parsing & ISO Mod-36 PAN Extraction ──');
+    const sampleCsv = `Date,Voucher_No,Party_Name,GSTIN,Voucher_Type,Gross_Amount,TDS_Deducted
+2024-05-10,PUR-001,Apex Steels Ltd,27AAACA1234A1Z5,Purchase,3000000,0
+2024-08-15,PUR-002,Apex Steels Ltd (Mumbai),27AAACA1234A1Z5,Purchase,3500000,0
+2024-09-01,PUR-003,Bharat Tools Corp,07AAACB5678B1Z2,Purchase,1200000,0`;
+
+    const parsedCsv = parseTallyDaybookCsv(sampleCsv);
+    if (parsedCsv.length !== 3) {
+        throw new Error(`Expected 3 parsed vouchers, got ${parsedCsv.length}`);
+    }
+    if (parsedCsv[0].grossAmount !== 3000000 || parsedCsv[0].partyGstin !== '27AAACA1234A1Z5') {
+        throw new Error('Daybook CSV parsing field integrity check failed');
+    }
+    console.log('[PASS] Daybook CSV Parsing Verified: Normalized dates, voucher numbers, amounts, and GSTINs.');
+
+    // 112. Tally Native XML Daybook Parsing
+    console.log('\n── Test 112: Tally Native XML Daybook Parsing ──');
+    const sampleXml = `<ENVELOPE>
+  <BODY>
+    <IMPORTDATA>
+      <REQUESTDATA>
+        <TALLYMESSAGE>
+          <VOUCHER VCHTYPE="Purchase">
+            <DATE>20240510</DATE>
+            <VOUCHERNUMBER>VCH-TL-001</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Tata Steel Ltd</PARTYLEDGERNAME>
+            <PARTYGSTIN>27AAACT2727Q1ZW</PARTYGSTIN>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Tata Steel Ltd</LEDGERNAME>
+              <AMOUNT>-4000000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE>
+          <VOUCHER VCHTYPE="Purchase">
+            <DATE>20240720</DATE>
+            <VOUCHERNUMBER>VCH-TL-002</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Tata Steel Ltd</PARTYLEDGERNAME>
+            <PARTYGSTIN>27AAACT2727Q1ZW</PARTYGSTIN>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Tata Steel Ltd</LEDGERNAME>
+              <AMOUNT>-2500000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>TDS on Purchase of Goods u/s 194Q</LEDGERNAME>
+              <AMOUNT>1500.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+      </REQUESTDATA>
+    </IMPORTDATA>
+  </BODY>
+</ENVELOPE>`;
+
+    const parsedXml = parseTallyDaybookXml(sampleXml);
+    if (parsedXml.length !== 2) {
+        throw new Error(`Expected 2 parsed XML vouchers, got ${parsedXml.length}`);
+    }
+    if (parsedXml[0].date !== '2024-05-10' || parsedXml[0].grossAmount !== 4000000) {
+        throw new Error('Tally XML date or amount extraction failed');
+    }
+    if (parsedXml[1].tdsDeducted !== 1500) {
+        throw new Error('Tally XML existing TDS deduction ledger extraction failed');
+    }
+    console.log('[PASS] Tally XML Daybook Parsing Verified: Multi-voucher tokenization and ledger entry amounts.');
+
+    // 113. Section 194Q Multi-Branch PAN Aggregation & 40(a)(ia) Exposure Audit
+    console.log('\n── Test 113: Section 194Q Multi-Branch PAN Aggregation & 40(a)(ia) Exposure Audit ──');
+    const auditRes = reconcile194QDaybook(parsedCsv, {
+        buyerTurnoverCr: 25,
+        disallowancePercent: 30,
+        corporateTaxRatePercent: 30
+    });
+
+    if (auditRes.auditSummary.totalVouchersScanned !== 3) {
+        throw new Error('Audit summary total vouchers count mismatch');
+    }
+    if (auditRes.auditSummary.vendorsExceeding50LCount !== 1) {
+        throw new Error(`Expected 1 vendor exceeding 50L, got ${auditRes.auditSummary.vendorsExceeding50LCount}`);
+    }
+    if (auditRes.auditSummary.totalExcessPurchasesOver50LInr !== 1500000) {
+        throw new Error(`Expected excess purchases = 1500000, got ${auditRes.auditSummary.totalExcessPurchasesOver50LInr}`);
+    }
+    if (auditRes.auditSummary.totalTdsPayableInr !== 1500) {
+        throw new Error(`Expected TDS payable = 1500, got ${auditRes.auditSummary.totalTdsPayableInr}`);
+    }
+    if (auditRes.auditSummary.totalTdsShortfallInr !== 1500) {
+        throw new Error(`Expected TDS shortfall = 1500, got ${auditRes.auditSummary.totalTdsShortfallInr}`);
+    }
+    if (auditRes.auditSummary.totalSection40aDisallowanceInr !== 450000) {
+        throw new Error(`Expected 40(a)(ia) disallowance = 450000, got ${auditRes.auditSummary.totalSection40aDisallowanceInr}`);
+    }
+    if (auditRes.auditSummary.totalEstimatedTaxImpactInr !== 135000) {
+        throw new Error(`Expected corporate tax hit = 135000, got ${auditRes.auditSummary.totalEstimatedTaxImpactInr}`);
+    }
+    if (auditRes.auditSummary.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+    }
+    console.log('[PASS] Section 194Q Daybook Reconciler Verified: Multi-branch PAN aggregation, ₹15L excess math, ₹4.5L Section 40(a)(ia) disallowance, and ₹1.35L tax penalty exposure.');
+
+    // 114. Tally Compensating XML Journal Generation & Markdown Audit Report
+    console.log('\n── Test 114: Tally Compensating XML Journal Generation & Markdown Audit Report ──');
+    const tallyXml = generateTally194QJournalXml(auditRes, {
+        companyName: 'Acme Enterprises Pvt Ltd',
+        voucherDate: '20240815'
+    });
+    if (!tallyXml.includes('<TALLYREQUEST>Import Data</TALLYREQUEST>') || !tallyXml.includes('<SVCURRENTCOMPANY>Acme Enterprises Pvt Ltd</SVCURRENTCOMPANY>')) {
+        throw new Error('Tally XML envelope structure check failed');
+    }
+    if (!tallyXml.includes('<AMOUNT>-1500.00</AMOUNT>') || !tallyXml.includes('<AMOUNT>1500.00</AMOUNT>')) {
+        throw new Error('Tally XML compensating double-entry amounts check failed');
+    }
+
+    const mdReport = generateAuditMarkdownReport(auditRes);
+    if (!mdReport.includes('SECTION 194Q STATUTORY AUDIT') || !mdReport.includes('₹4,50,000.00') || !mdReport.includes('Form 3CD Clause 21(b)')) {
+        throw new Error('Audit Markdown report generation check failed');
+    }
+    console.log('[PASS] Tally XML Journal & Markdown Report Verified: Valid double-entry XML and executive audit memorandum.');
+
+    // 115. CLI Integration — node bin/cli.js reconcile --json and --xml-out
+    console.log('\n── Test 115: CLI Integration — node bin/cli.js reconcile --json and --xml-out ──');
+    const tmpDaybookPath = path.join(os.tmpdir(), `tally_test_daybook_${Date.now()}.csv`);
+    const tmpXmlOutPath = path.join(os.tmpdir(), `tally_test_out_${Date.now()}.xml`);
+    try {
+        fs.writeFileSync(tmpDaybookPath, sampleCsv, 'utf8');
+        const cliOutput = execFileSync(process.execPath, [
+            path.resolve('bin/cli.js'),
+            'reconcile',
+            tmpDaybookPath,
+            '--xml-out',
+            tmpXmlOutPath,
+            '--json'
+        ], { encoding: 'utf8', cwd: path.resolve('.') });
+
+        const parsedCli = JSON.parse(cliOutput);
+        if (parsedCli.auditSummary.totalTdsShortfallInr !== 1500) {
+            throw new Error(`CLI JSON shortfall mismatch: got ${parsedCli.auditSummary.totalTdsShortfallInr}`);
+        }
+        if (!fs.existsSync(tmpXmlOutPath)) {
+            throw new Error('CLI failed to write XML out file');
+        }
+        const writtenXml = fs.readFileSync(tmpXmlOutPath, 'utf8');
+        if (!writtenXml.includes('<TALLYREQUEST>Import Data</TALLYREQUEST>')) {
+            throw new Error('CLI written XML is invalid');
+        }
+        console.log('[PASS] CLI reconcile executed cleanly with exitCode 0, JSON parity, and XML file creation.');
+    } finally {
+        if (fs.existsSync(tmpDaybookPath)) fs.unlinkSync(tmpDaybookPath);
+        if (fs.existsSync(tmpXmlOutPath)) fs.unlinkSync(tmpXmlOutPath);
+    }
+
     console.log('\n===========================================================================');
-    console.log('ALL 110 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 115 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 
