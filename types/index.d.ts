@@ -202,6 +202,7 @@ export declare class StatutoryClient {
     evaluateSection194A(payload?: any): any;
     evaluateSection194O(payload?: any): any;
     evaluateSection194IA(payload?: any): any;
+    evaluateSection194R(payload?: any): any;
     evaluateSection43B(payload?: any): any;
     evaluateSection281(payload?: any): any;
     calculateItcReversalRule37(payload?: any): any;
@@ -349,6 +350,7 @@ export declare function evaluateSection194J(payload: any): any;
 export declare function evaluateSection194A(payload: any): any;
 export declare function evaluateSection194O(payload: any): any;
 export declare function evaluateSection194IA(payload: any): any;
+export declare function evaluateSection194R(payload: any): any;
 export declare function evaluateSection43BStatutoryPayables(payload: any): any;
 export declare function calculateItcReversalRule37(payload: any): any;
 export declare function calculateRule37ASupplierNonFilingReversal(payload: any): any;

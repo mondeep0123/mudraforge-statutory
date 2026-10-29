@@ -12,7 +12,7 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-bd351719a8235c44f2bac87cc347423baa8ac3ecb74c0ee63d1fffa9f33dbebe';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-02090e4063a863e3486401215469350c911dc0c9a24855e1d9db2903946aa644';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 export const STATUTORY_PACKAGE_VERSION = '2.11.0';
 export const OKF_CORPUS_VERSION = '2.11.0';
@@ -5668,4 +5668,174 @@ export function revalueForeignExchangeIndAs109({
         statutoryRationale: `Ind AS 21 & 109 Revaluation: ${revaluedItems.length} items evaluated as of ${asOfIso}. Net P&L FX impact: INR ${netPnlGainLossInr.toLocaleString('en-IN')}; Net OCI Hedge impact: INR ${netOciGainLossInr.toLocaleString('en-IN')}. Accounting revaluations do not authorize payment disbursement.`
     };
 }
+
+/**
+ * Evaluates Tax Deduction at Source on Benefit or Perquisite in respect of Business or Profession under Section 194R.
+ * 
+ * Rules Enforced:
+ * 1. Payer Turnover Prerequisite:
+ *    - Individuals & HUFs: Covered only if preceding FY business turnover > 1 Crore or profession receipts > 50 Lakhs.
+ *    - Companies, LLPs, Partnership Firms: Covered irrespective of turnover.
+ * 2. Cumulative Financial Year Exemption:
+ *    - Threshold: INR 20,000 aggregate in a financial year.
+ *    - Value up to INR 20,000: No TDS (EXEMPT_BELOW_THRESHOLD).
+ *    - Once aggregate exceeds INR 20,000: TDS applies at 10% standard rate.
+ * 3. Specific Exclusions per CBDT Circular No. 12/2022 & 18/2022:
+ *    - Sales discount, cash discount, and commercial rebates are excluded.
+ *    - Bona fide dealer training/launch conferences without leisure/family overstay are excluded.
+ * 4. In-Kind / Non-Cash Benefits (Section 194R(1) Proviso):
+ *    - If benefit is wholly in kind or partly in kind, provider must ensure advance tax (ITNS 281) has been paid before release.
+ *    - Release without advance tax verification flags 30% disallowance under Section 40(a)(ia).
+ * 5. Section 206AA / 206AB Rules:
+ *    - 20% floor for missing/inoperative PAN.
+ *    - Section 206AB non-filer penalty active pre-1 April 2025; omitted post-1 April 2025 by Finance Act, 2025.
+ * 6. Statutory Invariant:
+ *    - Always returns isAuthorizedToDisburse: false.
+ */
+export function evaluateSection194R({
+    currentBenefitValueInr = 0,
+    cumulativePriorBenefitsInr = 0,
+    payerEntityType = 'COMPANY',
+    payerPrecedingFyTurnoverInr = null,
+    payerPrecedingFyProfessionReceiptsInr = null,
+    benefitNature = 'CASH', // 'CASH', 'IN_KIND', 'PARTLY_CASH_PARTLY_KIND'
+    benefitCategory = 'OTHER', // 'DEALER_INCENTIVE_TRIP', 'SALES_CONFERENCE_EXCESS', 'CAPITAL_ASSET_TRANSFER', 'PRODUCT_SAMPLE_COMMERCIAL', 'GIFT_VOUCHER_OR_GOLD', 'COMMERCIAL_DISCOUNT_REBATE', 'DEALER_CONFERENCE_BONAFIDE', 'OTHER'
+    isAdvanceTaxPaidBeforeRelease = false,
+    hasPan = true,
+    isPanInoperative = false,
+    isSpecifiedPerson206AB = false,
+    effectiveDate = null
+} = {}) {
+    const benefitVal = roundToPaisa(Math.max(0, Number(currentBenefitValueInr) || 0));
+    const priorVal = roundToPaisa(Math.max(0, Number(cumulativePriorBenefitsInr) || 0));
+    const totalCumulativeVal = roundToPaisa(priorVal + benefitVal);
+    const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
+
+    // Exclusion 1: CBDT Circular 12/2022 & 18/2022 Non-Perquisite Categories
+    if (benefitCategory === 'COMMERCIAL_DISCOUNT_REBATE' || benefitCategory === 'DEALER_CONFERENCE_BONAFIDE') {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXCLUDED_CBDT_CIRCULAR_12_2022',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            benefitValueInr: benefitVal,
+            cumulativePriorBenefitsInr: priorVal,
+            totalCumulativeInr: totalCumulativeVal,
+            disallowanceRiskSection40a_ia: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194R read with CBDT Circular No. 12/2022 & Circular No. 18/2022',
+            isAuthorizedToDisburse: false,
+            statutoryRationale: `Benefit category "${benefitCategory}" is explicitly excluded from Section 194R per CBDT Circular No. 12/2022. Sales discounts, commercial rebates, and bona fide dealer product conferences do not constitute taxable perquisites.`
+        };
+    }
+
+    // Exclusion 2: Individual / HUF Payer Turnover Floor
+    const normalizedEntityType = String(payerEntityType || 'COMPANY').toUpperCase();
+    if (normalizedEntityType === 'INDIVIDUAL' || normalizedEntityType === 'HUF' || normalizedEntityType === 'INDIVIDUAL_HUF') {
+        const turnover = Number(payerPrecedingFyTurnoverInr) || 0;
+        const profReceipts = Number(payerPrecedingFyProfessionReceiptsInr) || 0;
+        const exceedsBusinessFloor = turnover > 10000000; // > 1 Crore
+        const exceedsProfessionFloor = profReceipts > 5000000; // > 50 Lakhs
+
+        if (!exceedsBusinessFloor && !exceedsProfessionFloor) {
+            return {
+                status: 'SUCCESS',
+                statutoryDetermination: 'EXEMPT_PAYER_TURNOVER_BELOW_STATUTORY_FLOOR',
+                applicableTdsRatePercent: 0,
+                taxableBaseInr: 0,
+                calculatedTdsInr: 0,
+                benefitValueInr: benefitVal,
+                cumulativePriorBenefitsInr: priorVal,
+                totalCumulativeInr: totalCumulativeVal,
+                disallowanceRiskSection40a_ia: false,
+                governingLaw: 'Income-tax Act, 1961 Section 194R(1) Second Proviso',
+                isAuthorizedToDisburse: false,
+                statutoryRationale: 'Payer is an Individual/HUF whose business turnover (INR ' + turnover.toLocaleString('en-IN') + ') and professional receipts (INR ' + profReceipts.toLocaleString('en-IN') + ') in preceding FY do not exceed the statutory threshold (> INR 1 Cr business / > INR 50L profession). Section 194R withholding does not apply.'
+            };
+        }
+    }
+
+    // Exclusion 3: Cumulative Financial Year De Minimis Ceiling (<= INR 20,000)
+    const STATUTORY_THRESHOLD_INR = 20000;
+    if (totalCumulativeVal <= STATUTORY_THRESHOLD_INR) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_BELOW_THRESHOLD',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            benefitValueInr: benefitVal,
+            cumulativePriorBenefitsInr: priorVal,
+            totalCumulativeInr: totalCumulativeVal,
+            thresholdCeilingInr: STATUTORY_THRESHOLD_INR,
+            disallowanceRiskSection40a_ia: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194R(1) First Proviso',
+            isAuthorizedToDisburse: false,
+            statutoryRationale: `Cumulative value of perquisites in financial year (INR ${totalCumulativeVal.toLocaleString('en-IN')}) does not exceed the statutory de minimis limit of INR 20,000. No tax deduction at source is required.`
+        };
+    }
+
+    // Rate Determination
+    let applicableRate = 10.0;
+    let rateLaw = 'Section 194R(1) standard rate (10%)';
+
+    // Section 206AA: Missing or inoperative PAN
+    if (!hasPan || isPanInoperative) {
+        applicableRate = 20.0;
+        rateLaw = 'Section 206AA penal rate (20%) due to missing or inoperative PAN';
+    } else if (isSpecifiedPerson206AB) {
+        // Section 206AB: Non-filer higher rate (omitted w.e.f. 1 April 2025)
+        if (dateStr < '2025-04-01') {
+            applicableRate = 20.0;
+            rateLaw = 'Section 206AB higher rate (20% - twice standard rate) for non-filer prior to 1 April 2025';
+        } else {
+            applicableRate = 10.0;
+            rateLaw = 'Section 194R(1) standard rate (10%) - Section 206AB omitted w.e.f. 1 April 2025';
+        }
+    }
+
+    const calculatedTds = roundToPaisa(benefitVal * (applicableRate / 100));
+
+    // In-Kind Compliance Verification (Section 194R(1) Proviso)
+    const normalizedNature = String(benefitNature || 'CASH').toUpperCase();
+    const isInKind = normalizedNature === 'IN_KIND' || normalizedNature === 'PARTLY_CASH_PARTLY_KIND';
+
+    if (isInKind && !isAdvanceTaxPaidBeforeRelease) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'MANDATORY_IN_KIND_ADVANCE_TAX_PENDING',
+            applicableTdsRatePercent: applicableRate,
+            taxableBaseInr: benefitVal,
+            calculatedTdsInr: calculatedTds,
+            benefitValueInr: benefitVal,
+            cumulativePriorBenefitsInr: priorVal,
+            totalCumulativeInr: totalCumulativeVal,
+            benefitNature: normalizedNature,
+            isAdvanceTaxPaidBeforeRelease: false,
+            disallowanceRiskSection40a_ia: true,
+            disallowanceAmountInr: roundToPaisa(benefitVal * 0.30),
+            governingLaw: `Income-tax Act, 1961 Section 194R(1) read with ${rateLaw}`,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: `Section 194R(1) Proviso mandates that where perquisite is wholly or partly in kind, the provider must ensure tax has been paid in advance before releasing the benefit. Releasing INR ${benefitVal.toLocaleString('en-IN')} benefit in kind without verified advance tax payment creates an immediate 30% expenditure disallowance risk (INR ${roundToPaisa(benefitVal * 0.30).toLocaleString('en-IN')}) under Section 40(a)(ia).`
+        };
+    }
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: isInKind ? 'DEDUCTION_MANDATORY_IN_KIND_DISCHARGED' : 'DEDUCTION_MANDATORY',
+        applicableTdsRatePercent: applicableRate,
+        taxableBaseInr: benefitVal,
+        calculatedTdsInr: calculatedTds,
+        benefitValueInr: benefitVal,
+        cumulativePriorBenefitsInr: priorVal,
+        totalCumulativeInr: totalCumulativeVal,
+        benefitNature: normalizedNature,
+        isAdvanceTaxPaidBeforeRelease: isInKind ? true : null,
+        disallowanceRiskSection40a_ia: false,
+        governingLaw: `Income-tax Act, 1961 Section 194R(1) read with ${rateLaw}`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Cumulative benefits (INR ${totalCumulativeVal.toLocaleString('en-IN')}) exceed statutory threshold of INR 20,000. TDS of INR ${calculatedTds.toLocaleString('en-IN')} (rate: ${applicableRate}%) applies under Section 194R.`
+    };
+}
+
 

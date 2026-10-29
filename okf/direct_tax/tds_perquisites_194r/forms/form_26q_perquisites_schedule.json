@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Form 26Q Section 194R Benefit or Perquisite TDS Schedule",
+  "description": "Statutory quarterly compliance schedule for reporting tax deducted at source on benefits or perquisites under Section 194R",
+  "type": "object",
+  "required": [
+    "providerTan",
+    "financialYear",
+    "quarter",
+    "recipientPan",
+    "benefitNature",
+    "grossValueOfBenefitInr",
+    "dateOfProvisionOrPayment",
+    "rateOfTdsPercent",
+    "tdsAmountInr"
+  ],
+  "properties": {
+    "providerTan": {
+      "type": "string",
+      "pattern": "^[A-Z]{4}[0-9]{5}[A-Z]{1}$"
+    },
+    "financialYear": {
+      "type": "string",
+      "pattern": "^20[2-9][0-9]-20[2-9][0-9]$"
+    },
+    "quarter": {
+      "type": "string",
+      "enum": ["Q1", "Q2", "Q3", "Q4"]
+    },
+    "recipientPan": {
+      "type": "string",
+      "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$"
+    },
+    "recipientName": {
+      "type": "string"
+    },
+    "benefitNature": {
+      "type": "string",
+      "enum": ["CASH", "IN_KIND", "PARTLY_CASH_PARTLY_KIND"]
+    },
+    "benefitCategory": {
+      "type": "string",
+      "enum": [
+        "DEALER_INCENTIVE_TRIP",
+        "SALES_CONFERENCE_EXCESS",
+        "CAPITAL_ASSET_TRANSFER",
+        "PRODUCT_SAMPLE_COMMERCIAL",
+        "GIFT_VOUCHER_OR_GOLD",
+        "SPONSORSHIP_PERK",
+        "OTHER_BUSINESS_BENEFIT"
+      ]
+    },
+    "grossValueOfBenefitInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "dateOfProvisionOrPayment": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "rateOfTdsPercent": {
+      "type": "number",
+      "enum": [0.0, 10.0, 20.0]
+    },
+    "tdsAmountInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "isAdvanceTaxChallanVerified": {
+      "type": "boolean",
+      "description": "Mandatory true if benefit was provided in kind and provider ensured advance tax discharge before release"
+    },
+    "inKindAdvanceTaxChallan": {
+      "type": "object",
+      "properties": {
+        "bsrCode": { "type": "string", "pattern": "^[0-9]{7}$" },
+        "dateOfChallan": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "challanSerialNumber": { "type": "string" },
+        "challanAmountInr": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

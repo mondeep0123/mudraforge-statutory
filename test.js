@@ -41,6 +41,7 @@ import {
     evaluateSection194A,
     evaluateSection194O,
     evaluateSection194IA,
+    evaluateSection194R,
     evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
@@ -2541,8 +2542,106 @@ async function run() {
     }
     console.log('[PASS] StatutoryClient parity verified for evaluateSection194IA.');
 
+    // 101. Direct Tax — Section 194R (Benefit or Perquisite in Business or Profession)
+    console.log('\n── Test 101: Direct Tax — Section 194R (Benefit or Perquisite in Business or Profession) ──');
+    // Scenario 1: Commercial discount / rebate exclusion per CBDT Circular 12/2022
+    const discRes = evaluateSection194R({
+        currentBenefitValueInr: 45000,
+        benefitCategory: 'COMMERCIAL_DISCOUNT_REBATE'
+    });
+    if (discRes.statutoryDetermination !== 'EXCLUDED_CBDT_CIRCULAR_12_2022' || discRes.calculatedTdsInr !== 0) {
+        throw new Error('Section 194R commercial discount exclusion check failed');
+    }
+
+    // Scenario 2: Individual payer below turnover floor
+    const indivPayerRes = evaluateSection194R({
+        currentBenefitValueInr: 50000,
+        payerEntityType: 'INDIVIDUAL',
+        payerPrecedingFyTurnoverInr: 8000000, // INR 80 Lakhs (<= 1 Cr)
+        payerPrecedingFyProfessionReceiptsInr: 3000000 // INR 30 Lakhs (<= 50L)
+    });
+    if (indivPayerRes.statutoryDetermination !== 'EXEMPT_PAYER_TURNOVER_BELOW_STATUTORY_FLOOR' || indivPayerRes.calculatedTdsInr !== 0) {
+        throw new Error('Section 194R individual payer turnover exemption check failed');
+    }
+
+    // Scenario 3: Below statutory threshold (cumulative <= INR 20,000)
+    const belowThreshRes = evaluateSection194R({
+        currentBenefitValueInr: 12000,
+        cumulativePriorBenefitsInr: 5000 // Total 17,000 <= 20,000
+    });
+    if (belowThreshRes.statutoryDetermination !== 'EXEMPT_BELOW_THRESHOLD' || belowThreshRes.calculatedTdsInr !== 0) {
+        throw new Error('Section 194R de minimis threshold check failed');
+    }
+
+    // Scenario 4: Standard corporate dealer incentive (cumulative > INR 20,000)
+    const stdPerqRes = evaluateSection194R({
+        currentBenefitValueInr: 50000,
+        cumulativePriorBenefitsInr: 0,
+        benefitNature: 'CASH',
+        payerEntityType: 'COMPANY',
+        hasPan: true
+    });
+    if (stdPerqRes.statutoryDetermination !== 'DEDUCTION_MANDATORY' || stdPerqRes.applicableTdsRatePercent !== 10.0 || stdPerqRes.calculatedTdsInr !== 5000) {
+        throw new Error(`Expected calculatedTdsInr 5000, got ${stdPerqRes.calculatedTdsInr}`);
+    }
+    if (stdPerqRes.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
+    }
+
+    // Scenario 5: Benefit in kind without advance tax verification (Section 194R(1) Proviso)
+    const inKindPendingRes = evaluateSection194R({
+        currentBenefitValueInr: 100000, // Gold coin or vehicle incentive
+        benefitNature: 'IN_KIND',
+        isAdvanceTaxPaidBeforeRelease: false
+    });
+    if (inKindPendingRes.statutoryDetermination !== 'MANDATORY_IN_KIND_ADVANCE_TAX_PENDING' || !inKindPendingRes.disallowanceRiskSection40a_ia || inKindPendingRes.disallowanceAmountInr !== 30000) {
+        throw new Error('Section 194R in-kind advance tax pending and 30% disallowance check failed');
+    }
+
+    // Scenario 6: Missing PAN penalty rate (Section 206AA 20%)
+    const penaltyPerqRes = evaluateSection194R({
+        currentBenefitValueInr: 40000,
+        hasPan: false
+    });
+    if (penaltyPerqRes.applicableTdsRatePercent !== 20.0 || penaltyPerqRes.calculatedTdsInr !== 8000) {
+        throw new Error('Section 194R missing PAN 20% penalty rate check failed');
+    }
+
+    // Scenario 7: Section 206AB sunset (pre vs post 1 April 2025)
+    const preSunset206AB = evaluateSection194R({
+        currentBenefitValueInr: 50000,
+        isSpecifiedPerson206AB: true,
+        effectiveDate: '2025-02-15'
+    });
+    if (preSunset206AB.applicableTdsRatePercent !== 20.0 || preSunset206AB.calculatedTdsInr !== 10000) {
+        throw new Error('Section 194R Section 206AB pre-sunset check failed');
+    }
+
+    const postSunset206AB = evaluateSection194R({
+        currentBenefitValueInr: 50000,
+        isSpecifiedPerson206AB: true,
+        effectiveDate: '2025-05-15'
+    });
+    if (postSunset206AB.applicableTdsRatePercent !== 10.0 || postSunset206AB.calculatedTdsInr !== 5000) {
+        throw new Error('Section 194R Section 206AB post-sunset check failed');
+    }
+    console.log('[PASS] Section 194R Engine Verified: Circular 12/2022 exclusions, Individual turnover floor, De minimis threshold, 10% standard rate, In-kind 30% Section 40(a)(ia) disallowance, Section 206AA 20% penalty, and Section 206AB sunset.');
+
+    // 102. StatutoryClient Programmatic Parity for Section 194R
+    console.log('\n── Test 102: StatutoryClient Programmatic Parity for Section 194R ──');
+    const client194R = statutoryClientInstance.evaluateSection194R({
+        currentBenefitValueInr: 80000,
+        cumulativePriorBenefitsInr: 10000,
+        benefitNature: 'IN_KIND',
+        isAdvanceTaxPaidBeforeRelease: true
+    });
+    if (client194R.calculatedTdsInr !== 8000 || client194R.statutoryDetermination !== 'DEDUCTION_MANDATORY_IN_KIND_DISCHARGED') {
+        throw new Error('StatutoryClient.evaluateSection194R parity check failed');
+    }
+    console.log('[PASS] StatutoryClient parity verified for evaluateSection194R.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 100 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 102 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

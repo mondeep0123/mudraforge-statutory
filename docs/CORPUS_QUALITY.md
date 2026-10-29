@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.11.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-29T05:06:39.250Z
+> **Generated Timestamp**: 2026-10-29T06:45:52.675Z
 
 ---
 
@@ -15,8 +15,8 @@
 | **Temporal Validity Bounds** | 35 sections with explicit dates | 35 total bundled sections | **100.0%** | VERIFIED |
 | **Dual-Act 2025 Transition Bridges** | 13 direct tax provisions mapped | 14 direct tax provisions | **92.9%** | VERIFIED |
 | **Attached Administrative Circulars** | 36 official circulars | 35 provisions across active domains | **100% Attached** | VERIFIED |
-| **Attached Return/Compliance Schemas** | 34 schemas/templates | 35 provisions across active domains | **100% Attached** | VERIFIED |
-| **Cryptographic Merkle Verification** | 105 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
+| **Attached Return/Compliance Schemas** | 35 schemas/templates | 35 provisions across active domains | **100% Attached** | VERIFIED |
+| **Cryptographic Merkle Verification** | 106 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
 
@@ -61,7 +61,7 @@
 | **194Q** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 2 | 2 | Income-tax Act, 2025 (Section 393(1), Table 8, Item (ii)) |
 | **393** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 2025 (Act No. 1 of 2025) | `2026-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 0 | 0 | N/A |
 | **194A** | Deduction of tax at source on payment of interest other than interest on securities | Income-tax Act, 1961 (Act No. 43 of 1961) | `1967-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 4, Item (i)) |
-| **194R** | Deduction of tax at source on benefit or perquisite in respect of business or profession | Income-tax Act, 1961 (Act No. 43 of 1961) | `2022-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | Income-tax Act, 2025 (Section 393(1), Table 8, Item 12) |
+| **194R** | Deduction of tax at source on benefit or perquisite in respect of business or profession | Income-tax Act, 1961 (Act No. 43 of 1961) | `2022-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 8, Item 12) |
 | **194-IA** | Payment on Transfer of Certain Immovable Property Other than Agricultural Land (Section 194-IA) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2013-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1) Table 4 Item (q)) |
 | **194I** | Deduction of tax at source on payment of rent | Income-tax Act, 1961 (Act No. 43 of 1961) | `1994-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (i)) |
 | **194J** | Fees for professional or technical services, royalty, and non-compete fees | Income-tax Act, 1961 | `1995-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 6, Item (iii)) |
