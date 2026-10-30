@@ -19,7 +19,7 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 export const STATUTORY_PACKAGE_VERSION = '2.11.0';
 export const OKF_CORPUS_VERSION = '2.11.0';

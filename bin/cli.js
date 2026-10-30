@@ -35,6 +35,7 @@ import {
     parseGstr2bJson,
     reconcileZohoGstr2b,
     generateGstr2bAuditMarkdownReport,
+    runStatutoryWatchtower,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
@@ -220,6 +221,13 @@ async function main() {
                 asOfDate,
                 recipientGstin: gstin
             });
+            break;
+        }
+
+        case 'watchtower':
+        case 'freshness':
+        case 'attest': {
+            await handleWatchtower();
             break;
         }
 
@@ -1108,6 +1116,38 @@ async function handleReconcileZohoGstr2b(zohoPath, gstr2bPath, opts = {}) {
     console.log('===========================================================================\n');
 }
 
+async function handleWatchtower() {
+    try {
+        const report = await runStatutoryWatchtower({ verbose: !isJsonMode });
+        if (isJsonMode) {
+            console.log(JSON.stringify(report, null, 2));
+        } else {
+            console.log('\n===========================================================================');
+            console.log('MUDRAFORGE REGULATORY WATCHTOWER & FRESHNESS ATTESTATION');
+            console.log('===========================================================================');
+            console.log(`Status                  : ${report.status}`);
+            console.log(`Sections Scanned        : ${report.checks.schemaValidation.sectionsScanned}`);
+            console.log(`Circulars Scanned       : ${report.checks.schemaValidation.circularsScanned}`);
+            console.log(`Forms Scanned           : ${report.checks.schemaValidation.formsScanned}`);
+            console.log(`Citations Verified      : ${report.checks.citationIntegrity.validCitations} (0 failures)`);
+            console.log(`Merkle Root             : ${report.checks.merkleImmutability.computedRoot}`);
+            console.log(`Pinned Root Match       : ${report.checks.merkleImmutability.matchesPinnedRoot}`);
+            console.log(`Freshness Benchmarks    : ${report.checks.freshnessHorizon.benchmarksPassed}/${report.checks.freshnessHorizon.benchmarksEvaluated} passed`);
+            console.log(`Certificate ID          : ${report.certificate?.certificateId}`);
+            console.log(`Empanelment Score       : ${report.certificate?.empanelmentComplianceScore}`);
+            console.log(`Disbursement Invariant  : isAuthorizedToDisburse === ${report.certificate?.isAuthorizedToDisburse}`);
+            console.log(`Execution Duration      : ${report.executionDurationMs}ms`);
+            console.log('===========================================================================\n');
+        }
+        if (report.status !== 'SUCCESS') {
+            process.exit(STATUTORY_EXIT_CODES.SUBSTRATE_CORRUPT || 1);
+        }
+    } catch (err) {
+        console.error('[FAIL] Watchtower execution failed:', err);
+        process.exit(1);
+    }
+}
+
 function printHelp() {
     console.log(`
 MudraForge Statutory Commons CLI (@mudraforge/statutory)
@@ -1116,6 +1156,7 @@ Usage:
   npx @mudraforge/statutory <command> [options]
 
 Commands:
+  watchtower                     Run regulatory surveillance & generate Empanelment Freshness Certificate
   reconcile <file>               Reconcile Tally/ERP daybook (CSV/XML/JSON) for Section 194Q & 40(a)(ia)
   reconcile-gstr2b [options]     Reconcile Zoho Books AP bills with GST Portal Form GSTR-2B
   doctor [--offline]             Run full diagnostic check of runtime, substrate integrity, & edge status

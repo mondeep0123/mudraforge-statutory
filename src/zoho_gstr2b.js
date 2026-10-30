@@ -361,7 +361,7 @@ export function buildEvidenceProvenance({
             requiresHumanReview: disposition === 'REQUIRES_HUMAN_VERIFICATION',
             auditVerificationDate: asOfDate,
             engineIdentity: '@mudraforge/statutory@2.11.0',
-            merkleSubstrateRoot: 'sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19',
+            merkleSubstrateRoot: 'sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03',
             isAuthorizedToDisburse: false
         }
     };
@@ -476,7 +476,10 @@ export function parseZohoBillsCsv(csvText) {
         const rawSgst = colIndex.sgst !== -1 ? row[colIndex.sgst] : '0';
         const rawIgst = colIndex.igst !== -1 ? row[colIndex.igst] : '0';
 
-        const isRcm = colIndex.isRcm !== -1 ? /true|yes|y|1/i.test(row[colIndex.isRcm] || '') : false;
+        const isCommercialRentRcm = /commercial.*rent|office.*rent|property.*rent|warehouse.*rent|renting.*commercial/i.test(category) &&
+            (!normalizedGstinObj.gstin || normalizedGstinObj.gstin === 'UNREGISTERED' || normalizedGstinObj.gstin.length < 15) &&
+            (!billDate || billDate >= '2024-10-10');
+        const isRcm = Boolean((colIndex.isRcm !== -1 ? /true|yes|y|1/i.test(row[colIndex.isRcm] || '') : false) || isCommercialRentRcm);
 
         const totalAmount = cleanNumericAmount(rawTotal);
         const taxableAmount = colIndex.taxableAmount !== -1 ? cleanNumericAmount(rawTaxable) : totalAmount;
@@ -510,6 +513,7 @@ export function parseZohoBillsCsv(csvText) {
             category,
             isBlocked17_5,
             isRcm,
+            isCommercialRentRcm,
             isSchedule1DeemedSupply: /distinct|related|deemed|schedule\s*1/i.test(category),
             taxableAmountInr: roundToPaisa(taxableAmount),
             cgstInr: roundToPaisa(cgst),
@@ -576,7 +580,11 @@ export function parseZohoBillsJson(jsonData) {
             }
         }
 
-        const isRcm = Boolean(b.is_reverse_charge_applied || b.reverse_charge_vat_registered || b.is_rcm);
+        const billDateNorm = normalizeIsoDate(b.date || b.bill_date);
+        const isCommercialRentRcm = /commercial.*rent|office.*rent|property.*rent|warehouse.*rent|renting.*commercial/i.test(category) &&
+            (!normalizedGstinObj.gstin || normalizedGstinObj.gstin === 'UNREGISTERED' || normalizedGstinObj.gstin.length < 15) &&
+            (!billDateNorm || billDateNorm >= '2024-10-10');
+        const isRcm = Boolean(b.is_reverse_charge_applied || b.reverse_charge_vat_registered || b.is_rcm || isCommercialRentRcm);
         const rawPos = String(b.place_of_supply || b.destination_state || '').trim();
 
         records.push({
@@ -598,6 +606,7 @@ export function parseZohoBillsJson(jsonData) {
             category,
             isBlocked17_5,
             isRcm,
+            isCommercialRentRcm,
             isSchedule1DeemedSupply: /distinct|related|deemed|schedule\s*1/i.test(category),
             taxableAmountInr: roundToPaisa(taxableAmount),
             cgstInr: roundToPaisa(cgst),
@@ -872,7 +881,12 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         const isFullyPaid = typeof b.isFullyPaid === 'boolean' ? b.isFullyPaid : (balanceInr <= 0 || b.status === 'paid');
         const posStateCode = b.posStateCode !== undefined ? b.posStateCode : (gstinObj ? gstinObj.stateCode : null);
         const isBlocked17_5 = typeof b.isBlocked17_5 === 'boolean' ? b.isBlocked17_5 : /motor|vehicle|food|beverage|catering|club|fitness|personal|gift/i.test(b.category || '');
-        const isRcm = Boolean(b.isRcm || /true|yes|y|1/i.test(String(b.is_rcm || '')));
+        const isCommercialRentRcm = Boolean(b.isCommercialRentRcm || (
+            /commercial.*rent|office.*rent|property.*rent|warehouse.*rent|renting.*commercial/i.test(b.category || '') &&
+            (!vendorGstin || vendorGstin === 'UNREGISTERED' || vendorGstin.length < 15) &&
+            (!b.billDate || b.billDate >= '2024-10-10')
+        ));
+        const isRcm = Boolean(b.isRcm || /true|yes|y|1/i.test(String(b.is_rcm || '')) || isCommercialRentRcm);
         const isSchedule1DeemedSupply = Boolean(b.isSchedule1DeemedSupply || /distinct|related|deemed|schedule\s*1/i.test(b.category || ''));
 
         return {
@@ -886,6 +900,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
             posStateCode,
             isBlocked17_5,
             isRcm,
+            isCommercialRentRcm,
             isSchedule1DeemedSupply,
             taxableAmountInr,
             cgstInr,
@@ -993,6 +1008,9 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
 
     let matchedEligibleCount = 0;
     let eligibleItcPaise = 0;
+
+    let rcmUnregisteredEligibleCount = 0;
+    let rcmUnregisteredEligibleItcPaise = 0;
 
     let amountMismatchCount = 0;
     let mismatchedItcPaise = 0;
@@ -1333,8 +1351,78 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
             continue;
         }
 
-        // ── Missing in GSTR-2B ──
+        // ── Missing in GSTR-2B or Unregistered RCM Supply ──
         if (!matchEntry) {
+            if (isRcm && (!bill.vendorGstin || bill.vendorGstin === 'UNREGISTERED' || bill.isCommercialRentRcm)) {
+                rcmUnregisteredEligibleCount++;
+                rcmUnregisteredEligibleItcPaise += booksTaxPaise;
+                eligibleItcPaise += booksTaxPaise;
+
+                const statutorySection = bill.isCommercialRentRcm
+                    ? 'CGST Act Section 9(3) read with Notification No. 09/2024-CT(Rate) Entry 5AB & Section 31(3)(f)'
+                    : 'CGST Act Section 9(3)/9(4) read with Section 31(3)(f)';
+
+                const statutoryAction = bill.isCommercialRentRcm
+                    ? 'Commercial property renting by unregistered supplier (Entry 5AB, Notification No. 09/2024-CT(Rate) w.e.f. 10 Oct 2024). Recipient must issue self-invoice (Sec 31(3)(f)), payment voucher (Sec 31(3)(g)), pay 18% GST in cash in Table 3.1(d), and claim ITC in Table 4(A)(3).'
+                    : 'Inward supply liable to reverse charge from unregistered person. Recipient must issue self-invoice (Sec 31(3)(f)), pay tax in cash in Table 3.1(d), and claim ITC in Table 4(A)(3).';
+
+                items.push({
+                    disposition: 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE',
+                    itcStatus: 'ELIGIBLE_RCM_TABLE_4A3',
+                    statutorySection,
+                    vendorName: bill.vendorName,
+                    vendorGstin: bill.vendorGstin || 'UNREGISTERED',
+                    billNumber: bill.billNumber,
+                    billDate: bill.billDate,
+                    booksTaxableInr: bill.taxableAmountInr,
+                    booksTaxInr: bill.totalTaxInr,
+                    gstr2bTaxableInr: 0,
+                    gstr2bTaxInr: 0,
+                    varianceTaxableInr: 0,
+                    varianceTaxInr: 0,
+                    isRule37Overdue: false,
+                    daysElapsedSinceBill,
+                    rule37Status: 'EXEMPT_RCM_SUPPLY',
+                    rule37ReversalTaxInr: 0,
+                    rule37InterestInr: 0,
+                    rule37InterestExplanation: '',
+                    isReclaimableUponPayment: false,
+                    paymentAppropriationDetails: null,
+                    isRcm: true,
+                    isCommercialRentRcm: Boolean(bill.isCommercialRentRcm),
+                    jurisdictionDecisions: {
+                        taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                        recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
+                        itcEligibility: 'ELIGIBLE_INWARD_RCM',
+                        operationalRouting: 'ISSUE_SELF_INVOICE_AND_PAY_CASH_TABLE_3_1_D'
+                    },
+                    statutoryAction,
+                    auditEvidence: {
+                        inBooks: true,
+                        inGstr2b: false,
+                        matchType: 'RCM_UNREGISTERED_SUPPLY',
+                        isRcm: true,
+                        isCommercialRentRcm: Boolean(bill.isCommercialRentRcm)
+                    },
+                    evidenceProvenance: buildEvidenceProvenance({
+                        bill,
+                        record2b: null,
+                        matchType: 'RCM_UNREGISTERED_SUPPLY',
+                        disposition: 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE',
+                        statutorySection,
+                        jurisdictionDecisions: {
+                            taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                            recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
+                            itcEligibility: 'ELIGIBLE_INWARD_RCM',
+                            operationalRouting: 'ISSUE_SELF_INVOICE_AND_PAY_CASH_TABLE_3_1_D'
+                        },
+                        uncertaintyReason: null,
+                        asOfDate
+                    })
+                });
+                continue;
+            }
+
             missingIn2bCount++;
             atRiskUnfiledItcPaise += booksTaxPaise;
 
@@ -1945,6 +2033,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         totalBooksBillsCount: parsedBills.length,
         totalGstr2bRecordsCount: parsed2b.length,
         matchedEligibleCount,
+        rcmUnregisteredEligibleCount,
         amountMismatchCount,
         blocked17_5Count,
         posMismatchCount,
@@ -1962,6 +2051,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         totalGstr2bTaxInr: fromIntegerPaise(total2bTaxPaise),
 
         eligibleItcInr: fromIntegerPaise(eligibleItcPaise),
+        rcmUnregisteredEligibleItcInr: fromIntegerPaise(rcmUnregisteredEligibleItcPaise),
         atRiskUnfiledItcInr: fromIntegerPaise(atRiskUnfiledItcPaise),
         blocked17_5ItcInr: fromIntegerPaise(blocked17_5ItcPaise),
         posMismatchItcInr: fromIntegerPaise(posMismatchItcPaise),
@@ -2022,6 +2112,9 @@ export function generateGstr2bAuditMarkdownReport(reconResult) {
     md += `| **Taxable Goods & Services Base** | ${fmt(s.totalBooksTaxableInr)} | ${fmt(s.totalGstr2bTaxableInr)} | ${fmt(s.totalBooksTaxableInr - s.totalGstr2bTaxableInr)} |\n`;
     md += `| **Input Tax Credit (ITC) Total** | ${fmt(s.totalBooksTaxInr)} | ${fmt(s.totalGstr2bTaxInr)} | ${fmt(s.totalBooksTaxInr - s.totalGstr2bTaxInr)} |\n`;
     md += `| **100% Eligible ITC (Table 4(A)(5))** | — | — | **${fmt(s.eligibleItcInr)}** |\n`;
+    if (s.rcmUnregisteredEligibleCount > 0) {
+        md += `| **Eligible Inward RCM Supplies (Table 4(A)(3))** | — | — | **${fmt(s.rcmUnregisteredEligibleItcInr)}** (\`${s.rcmUnregisteredEligibleCount}\` vouchers) |\n`;
+    }
     md += `| **Requires Human Verification (Uncertainty)** | — | — | **${fmt(s.requiresHumanVerificationItcInr)}** (\`${s.requiresHumanVerificationCount}\` items) |\n`;
     md += `| **Provisional / At-Risk ITC (Missing in 2B)** | — | — | **${fmt(s.atRiskUnfiledItcInr)}** (Withhold) |\n`;
     md += `| **Blocked Ineligible ITC (Sec 17(5))** | — | — | **${fmt(s.blocked17_5ItcInr)}** (Table 4(B)(1)) |\n`;
@@ -2031,7 +2124,7 @@ export function generateGstr2bAuditMarkdownReport(reconResult) {
     md += `| **Rule 37 Overdue Reversal (>180 Days)** | — | — | **${fmt(s.rule37ReversalAmountInr)}** (Table 4(B)(2)) |\n`;
     md += `| **Rule 37 Sec 50(1) Delayed Interest Exposure** | — | — | **${fmt(s.rule37InterestExposureInr)}** |\n\n`;
 
-    const exceptions = reconResult.reconciliationItems.filter(i => i.disposition !== 'MATCHED_ELIGIBLE');
+    const exceptions = reconResult.reconciliationItems.filter(i => i.disposition !== 'MATCHED_ELIGIBLE' && i.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE');
 
     if (exceptions.length === 0) {
         md += '## 2. Statutory Audit Verdict\n\n';

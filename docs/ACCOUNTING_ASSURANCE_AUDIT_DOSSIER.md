@@ -240,7 +240,7 @@ Every reconciliation item now bears an immutable, self-contained `evidenceProven
   "uncertaintyAssessment": { "isCertain": true, "uncertaintyReason": "NONE" },
   "governanceTrail": {
     "requiresHumanReview": false,
-    "merkleSubstrateRoot": "sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19",
+    "merkleSubstrateRoot": "sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03",
     "isAuthorizedToDisburse": false
   }
 }

@@ -83,6 +83,7 @@ import {
     calculateOverdueStartDate,
     calculateEclUtilizationInterest,
     buildEvidenceProvenance,
+    runStatutoryWatchtower,
     STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
@@ -5122,7 +5123,7 @@ async function run() {
         if (!prov.provenanceTimestamp || isNaN(new Date(prov.provenanceTimestamp).getTime())) {
             throw new Error(`Invalid provenanceTimestamp: ${prov.provenanceTimestamp}`);
         }
-        if (prov.governanceTrail.merkleSubstrateRoot !== 'sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19') {
+        if (prov.governanceTrail.merkleSubstrateRoot !== 'sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03') {
             throw new Error(`Substrate root mismatch: ${prov.governanceTrail.merkleSubstrateRoot}`);
         }
         if (prov.governanceTrail.isAuthorizedToDisburse !== false) {
@@ -5357,6 +5358,7 @@ async function run() {
     }
 
     const accountConservationSum = s.matchedEligibleCount +
+        (s.rcmUnregisteredEligibleCount || 0) +
         s.amountMismatchCount +
         s.blocked17_5Count +
         s.posMismatchCount +
@@ -5387,8 +5389,182 @@ async function run() {
     }
     console.log(`[PASS] Property-Based Fuzz Testing Verified: 500 randomized transactions satisfied all statutory, accounting conservation, and disbursement invariants.`);
 
+    // ── Test 152: Notification No. 09/2024-CT(Rate) Commercial Renting RCM Ingestion & Reconciliation ──
+    console.log('\n── Test 152: Notification No. 09/2024-CT(Rate) Commercial Renting RCM Ingestion & Reconciliation ──');
+
+    const rentBills = [
+        // 1. Post-10 Oct 2024 Unregistered Commercial Rent -> Auto-classified as RCM
+        {
+            billNumber: 'RENT-OCT-01',
+            vendorName: 'Shri Ram Sharma (Individual Landlord)',
+            vendorGstin: '', // Unregistered landlord
+            category: 'Commercial Office Space Renting',
+            taxableAmountInr: 100000,
+            cgstInr: 9000,
+            sgstInr: 9000,
+            igstInr: 0,
+            totalTaxInr: 18000,
+            totalAmountInr: 118000,
+            balanceInr: 0,
+            isFullyPaid: true,
+            posStateCode: '27',
+            billDate: '2024-10-15'
+        },
+        // 2. Pre-10 Oct 2024 Unregistered Commercial Rent -> Not RCM (Forward charge / Exempt below threshold)
+        {
+            billNumber: 'RENT-SEP-02',
+            vendorName: 'Shri Ram Sharma (Individual Landlord)',
+            vendorGstin: '',
+            category: 'Commercial Office Space Renting',
+            taxableAmountInr: 100000,
+            cgstInr: 0,
+            sgstInr: 0,
+            igstInr: 0,
+            totalTaxInr: 0,
+            totalAmountInr: 100000,
+            balanceInr: 0,
+            isFullyPaid: true,
+            posStateCode: '27',
+            billDate: '2024-09-15'
+        },
+        // 3. Registered Supplier GTA with explicit RCM -> Inward RCM
+        {
+            billNumber: 'GTA-RCM-03',
+            vendorName: 'Quick Roadways Logistics',
+            vendorGstin: '27AABCQ1234Q1Z1',
+            category: 'Goods Transport Agency (GTA) Freight',
+            isRcm: true,
+            taxableAmountInr: 50000,
+            cgstInr: 1250,
+            sgstInr: 1250,
+            igstInr: 0,
+            totalTaxInr: 2500,
+            totalAmountInr: 52500,
+            balanceInr: 0,
+            isFullyPaid: true,
+            posStateCode: '27',
+            billDate: '2024-10-20'
+        }
+    ];
+
+    // GSTR-2B only contains the registered GTA supply (with rchrg='Y')
+    const rentGstr2b = [
+        {
+            invoiceNumber: 'GTA-RCM-03',
+            supplierName: 'Quick Roadways Logistics',
+            supplierGstin: '27AABCQ1234Q1Z1',
+            posStateCode: '27',
+            taxableAmountInr: 50000,
+            cgstInr: 1250,
+            sgstInr: 1250,
+            igstInr: 0,
+            totalTaxInr: 2500,
+            totalAmountInr: 52500,
+            rchrg: 'Y',
+            itcAvailable: true
+        }
+    ];
+
+    const rentRecon = reconcileZohoGstr2b({
+        zohoBills: rentBills,
+        gstr2b: rentGstr2b,
+        options: {
+            asOfDate: '2024-11-01',
+            recipientGstin: '27AABCT8888T1ZZ',
+            recipientRegisteredStates: ['27']
+        }
+    });
+
+    const rentOctItem = rentRecon.reconciliationItems.find(i => i.billNumber === 'RENT-OCT-01');
+    const gtaItem = rentRecon.reconciliationItems.find(i => i.billNumber === 'GTA-RCM-03');
+
+    if (!rentOctItem) {
+        throw new Error('RENT-OCT-01 not found in reconciliation items');
+    }
+    if (rentOctItem.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE') {
+        throw new Error(`Expected RCM_UNREGISTERED_SUPPLIER_ELIGIBLE for unregistered commercial rent, got ${rentOctItem.disposition}`);
+    }
+    if (rentOctItem.itcStatus !== 'ELIGIBLE_RCM_TABLE_4A3') {
+        throw new Error(`Expected ELIGIBLE_RCM_TABLE_4A3, got ${rentOctItem.itcStatus}`);
+    }
+    if (!rentOctItem.statutorySection.includes('Notification No. 09/2024-CT(Rate) Entry 5AB')) {
+        throw new Error(`Statutory section missing Notification 09/2024: ${rentOctItem.statutorySection}`);
+    }
+    if (rentOctItem.jurisdictionDecisions.operationalRouting !== 'ISSUE_SELF_INVOICE_AND_PAY_CASH_TABLE_3_1_D') {
+        throw new Error(`Expected ISSUE_SELF_INVOICE_AND_PAY_CASH_TABLE_3_1_D, got ${rentOctItem.jurisdictionDecisions.operationalRouting}`);
+    }
+    if (rentOctItem.rule37Status !== 'EXEMPT_RCM_SUPPLY') {
+        throw new Error(`Rule 37 expected EXEMPT_RCM_SUPPLY for RCM, got ${rentOctItem.rule37Status}`);
+    }
+
+    if (!gtaItem || gtaItem.disposition !== 'MATCHED_ELIGIBLE' || gtaItem.itcStatus !== 'ELIGIBLE_RCM_TABLE_4A3') {
+        throw new Error(`Registered GTA expected MATCHED_ELIGIBLE / ELIGIBLE_RCM_TABLE_4A3, got ${gtaItem?.disposition} / ${gtaItem?.itcStatus}`);
+    }
+
+    if (rentRecon.summary.rcmUnregisteredEligibleCount !== 1) {
+        throw new Error(`Expected 1 rcmUnregisteredEligibleCount, got ${rentRecon.summary.rcmUnregisteredEligibleCount}`);
+    }
+    if (rentRecon.summary.matchedEligibleCount !== 1) {
+        throw new Error(`Expected 1 matchedEligibleCount (GTA), got ${rentRecon.summary.matchedEligibleCount}`);
+    }
+
+    console.log('[PASS] Notification No. 09/2024-CT(Rate) Verified: Unregistered commercial rent correctly auto-classified as RCM, exempted from GSTR-2B matching, routed to Table 3.1(d) cash payment & Table 4(A)(3) ITC.');
+
+    // ── Test 153: Regulatory Watchtower & Continuous Empanelment Freshness Attestation ──
+    console.log('\n── Test 153: Regulatory Watchtower & Continuous Empanelment Freshness Attestation ──');
+
+    // 1. Programmatic via StatutoryClient
+    const watchtowerReport = await statutoryClient.runWatchtower();
+
+    if (watchtowerReport.status !== 'SUCCESS') {
+        throw new Error(`Watchtower returned failure status: ${JSON.stringify(watchtowerReport.checks)}`);
+    }
+    if (watchtowerReport.checks.schemaValidation.sectionsScanned !== 38) {
+        throw new Error(`Expected 38 sections scanned, got ${watchtowerReport.checks.schemaValidation.sectionsScanned}`);
+    }
+    if (watchtowerReport.checks.schemaValidation.circularsScanned !== 41) {
+        throw new Error(`Expected 41 circulars scanned, got ${watchtowerReport.checks.schemaValidation.circularsScanned}`);
+    }
+    if (watchtowerReport.checks.schemaValidation.formsScanned !== 39) {
+        throw new Error(`Expected 39 forms scanned, got ${watchtowerReport.checks.schemaValidation.formsScanned}`);
+    }
+    if (watchtowerReport.checks.citationIntegrity.failedCitations !== 0 || watchtowerReport.checks.citationIntegrity.validCitations !== 148) {
+        throw new Error(`Citation integrity failed: ${watchtowerReport.checks.citationIntegrity.validCitations} valid, ${watchtowerReport.checks.citationIntegrity.failedCitations} failed`);
+    }
+    if (!watchtowerReport.checks.merkleImmutability.matchesPinnedRoot) {
+        throw new Error(`Merkle root ${watchtowerReport.checks.merkleImmutability.computedRoot} not in PINNED_RELEASE_ROOTS`);
+    }
+    if (watchtowerReport.checks.freshnessHorizon.benchmarksPassed !== 6) {
+        throw new Error(`Freshness benchmarks failed: ${watchtowerReport.checks.freshnessHorizon.benchmarksPassed}/6 passed`);
+    }
+    if (!watchtowerReport.certificate || watchtowerReport.certificate.empanelmentComplianceScore !== '100.0%') {
+        throw new Error(`Empanelment score not 100.0%: ${watchtowerReport.certificate?.empanelmentComplianceScore}`);
+    }
+    if (watchtowerReport.certificate.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated in certificate: isAuthorizedToDisburse must be false');
+    }
+
+    // 2. Direct runStatutoryWatchtower invocation parity
+    const directReport = await runStatutoryWatchtower();
+    if (directReport.certificate.merkleSubstrateRoot !== watchtowerReport.certificate.merkleSubstrateRoot) {
+        throw new Error('Direct vs Client watchtower root mismatch');
+    }
+
+    // 3. CLI Integration
+    const cliOutput = execFileSync(process.execPath, [
+        path.resolve('bin/cli.js'),
+        'watchtower',
+        '--json'
+    ], { encoding: 'utf8', cwd: path.resolve('.') });
+    const parsedCli = JSON.parse(cliOutput);
+    if (parsedCli.status !== 'SUCCESS' || !parsedCli.certificate?.certificateId.startsWith('MF-CERT-')) {
+        throw new Error(`CLI watchtower returned malformed output: ${cliOutput}`);
+    }
+
+    console.log(`[PASS] Regulatory Watchtower Verified: All 38 sections, 41 circulars, 39 forms, 148 deep citations, and 6 regulatory horizons attested at 100.0% empanelment score.`);
+
     console.log('\n===========================================================================');
-    console.log('ALL 151 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 153 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

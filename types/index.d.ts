@@ -237,6 +237,7 @@ export declare class StatutoryClient {
         annualInterestRate?: number;
     }): EclUtilizationAuditResult;
     buildEvidenceProvenance(params: any): EvidenceProvenance;
+    runWatchtower(options?: { okfDir?: string; verbose?: boolean }): Promise<WatchtowerReport>;
     normalizeInvoiceNumber(raw: string): { exactKey: string; alphaNumericKey: string };
     normalizeGstin(raw: string): { gstin: string | null; pan: string | null; stateCode: string | null; isValid: boolean };
     cleanNumericAmount(val: any, options?: CleanNumericAmountOptions): number;
@@ -623,6 +624,7 @@ export interface ReconcileZohoGstr2bParams {
 
 export type Gstr2bDisposition =
     | 'MATCHED_ELIGIBLE'
+    | 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE'
     | 'MISMATCH_AMOUNT_VALUE'
     | 'MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5'
     | 'MATCHED_ROUTABLE_TO_BRANCH_GSTIN'
@@ -755,6 +757,7 @@ export interface ReconcileZohoGstr2bSummary {
     totalBooksBillsCount: number;
     totalGstr2bRecordsCount: number;
     matchedEligibleCount: number;
+    rcmUnregisteredEligibleCount: number;
     amountMismatchCount: number;
     blocked17_5Count: number;
     posMismatchCount: number;
@@ -770,6 +773,7 @@ export interface ReconcileZohoGstr2bSummary {
     totalGstr2bTaxableInr: number;
     totalGstr2bTaxInr: number;
     eligibleItcInr: number;
+    rcmUnregisteredEligibleItcInr: number;
     atRiskUnfiledItcInr: number;
     blocked17_5ItcInr: number;
     posMismatchItcInr: number;
@@ -813,6 +817,40 @@ export declare function calculateEclUtilizationInterest(params: {
     annualInterestRate?: number;
 }): EclUtilizationAuditResult;
 export declare function buildEvidenceProvenance(params: any): EvidenceProvenance;
+
+export interface EmpanelmentCertificate {
+    certificateId: string;
+    attestationTimestamp: string;
+    merkleSubstrateRoot: string;
+    governingSpecification: string;
+    sectionsCount: number;
+    circularsCount: number;
+    formsCount: number;
+    citationsVerified: number;
+    freshnessStatus: 'FRESH_AND_AUDIT_READY' | 'ACTION_REQUIRED';
+    regulatoryHorizon: string;
+    empanelmentComplianceScore: string;
+    isAuthorizedToDisburse: false;
+}
+
+export interface WatchtowerReport {
+    status: 'SUCCESS' | 'FAILED';
+    watchtowerVersion: string;
+    auditTimestamp: string;
+    okfDirectory: string;
+    checks: {
+        schemaValidation: { status: 'PASSED' | 'FAILED'; sectionsScanned: number; circularsScanned: number; formsScanned: number; errors: string[] };
+        citationIntegrity: { status: 'PASSED' | 'FAILED'; totalCitations: number; validCitations: number; failedCitations: number; errors: any[] };
+        merkleImmutability: { status: 'PASSED' | 'FAILED'; computedRoot: string; matchesPinnedRoot: boolean; fileCount: number };
+        freshnessHorizon: { status: 'PASSED' | 'FAILED'; benchmarksEvaluated: number; benchmarksPassed: number; benchmarks: any[] };
+        statutoryInvariants: { status: 'PASSED' | 'FAILED'; disburseInvariantSatisfied: boolean };
+    };
+    certificate: EmpanelmentCertificate | null;
+    executionDurationMs: number;
+}
+
+export declare function runStatutoryWatchtower(options?: { okfDir?: string; verbose?: boolean }): Promise<WatchtowerReport>;
+
 
 
 

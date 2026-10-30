@@ -85,6 +85,7 @@
     "example:trace": "node examples/simulate_end_to_end_trace.js",
     "manifest": "node scripts/generate_manifest.js",
     "manifest:check": "node scripts/generate_manifest.js --check",
+    "watchtower": "node scripts/watchtower.js",
     "catalog": "node scripts/build_catalog.js",
     "release": "node scripts/release.js"
   },

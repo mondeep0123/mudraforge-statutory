@@ -7,9 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.11.0] - 2026-10-29
+## [2.11.0] - 2026-10-30
 
 ### Added
+- **Regulatory Watchtower & Continuous Empanelment Freshness Attestation (`scripts/watchtower.js`)**:
+  - *Automated Compliance Surveillance Engine*: Scans and attests the entire Open Knowledge Format (OKF v0.2) substrate across all 38 statutory sections, 41 executive circulars, 39 compliance forms, and 148 deep canonical citations.
+  - *Regulatory Freshness Horizon Audit*: Evaluates active compliance against 6 statutory benchmarks:
+    1. October 2024 Commercial Renting RCM: CBIC Notification No. 09/2024-CT(Rate) Entry 5AB.
+    2. Retrospective Section 16(5)/16(6) ITC Relief: Finance (No. 2) Act, 2024.
+    3. October 2024 Section 194H 2% Rate Reduction: Finance (No. 2) Act, 2024.
+    4. April 2025 Section 206C(1H) Goods TCS Sunset: Finance Act, 2025.
+    5. April 2025 Section 206AB Non-Filer Omission: Finance Act, 2025 Clause 61.
+    6. April 2026 Dual-Act Transition: Income-tax Act, 1961 vs Income-tax Act, 2025 Section 393.
+  - *Empanelment Freshness Certificate Generation*: Produces cryptographic, machine-readable `MF-CERT-...` attestation with 100.0% empanelment score and strict `isAuthorizedToDisburse: false` invariant enforcement.
+  - *CLI & Programmatic Integration*: Added `npx @mudraforge/statutory watchtower [--json]`, `npm run watchtower`, and `StatutoryClient.prototype.runWatchtower()`.
+- **Commercial Property Renting RCM Engine (Notification No. 09/2024-CT(Rate) w.e.f. 10 October 2024)**:
+  - *Entry 5AB Implementation* (`indirect_tax_gst/rcm_liability_sec9_3`): Full statutory codification of reverse charge on commercial immovable property renting by unregistered suppliers to registered persons.
+  - *Auto-Classification in Zoho AP Reconciliation*: Bills for office/commercial rent from unregistered landlords are automatically classified as `isCommercialRentRcm: true` and `isRcm: true`.
+  - *Exemption from Section 16(2)(aa) GSTR-2B Matching*: Unregistered RCM supplies are classified as `RCM_UNREGISTERED_SUPPLIER_ELIGIBLE` with `itcStatus: ELIGIBLE_RCM_TABLE_4A3`, eliminating erroneous "missing in 2B" false flags.
+  - *Compliance Directives*: Mandates Self-Invoice under Section 31(3)(f), Payment Voucher under Section 31(3)(g), cash tax discharge under GSTR-3B Table 3.1(d), and credit availment under Table 4(A)(3).
 - **Zoho Books & GST Portal Form GSTR-2B Automated AP Reconciliation Engine**:
   - *Automated 2-Way Accounts Payable Matching*: Ingests Zoho Books Bills CSV/API JSON and GST Portal Form GSTR-2B JSON (B2B invoices + CDNR credit/debit notes) with deterministic invoice number canonicalization (resolving slash, hyphen, space, and leading zero variations) and integer-paise arithmetic.
   - *Decoupled 4-Way Jurisdictional Decisions*: Replaces monolithic eligibility flags with 4 orthogonal, discrete decisions per transaction:
