@@ -50,15 +50,22 @@
       "instrument": "Circular No. 170/02/2022-GST (Dated 06 July 2022)",
       "subject": "Mandatory reporting of reclaimable ITC reversals in Table 4(B)(2) of Form GSTR-3B",
       "officialUrl": "https://taxinformation.cbic.gov.in/view-pdf/1003110/ENG/Circulars"
+    },
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Circular No. 192/04/2023-GST (Dated 17 July 2023)",
+      "subject": "Clarification on charging of interest under section 50(3) read with Rule 88B(3) in cases of wrong availment of IGST credit and consideration of combined ECL balance",
+      "officialUrl": "https://gstcouncil.gov.in/node/4913"
     }
   ],
   "requiredDocumentChecklist": [
     "Supplier Tax Invoice with invoice date and payment terms",
     "Accounts Payable Aging Ledger showing unpaid balances beyond 180 days",
+    "Electronic Credit Ledger chronological ledger movement statement (Rule 88B(3) utilization audit)",
     "Bank payment vouchers confirming partial or full settlement dates",
     "GSTR-2B statement showing initial ITC availment month",
     "Form GSTR-3B Table 4(B)(2) reversal disclosure voucher"
   ],
   "tier": "PUBLIC_COMMONS_FREE",
-  "version": "2.10.0"
+  "version": "2.11.0"
 }

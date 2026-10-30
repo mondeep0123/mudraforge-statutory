@@ -10,6 +10,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.11.0] - 2026-10-30
 
 ### Added
+- **55th GST Council Intervening Commercial Rent Regularization ("As Is Where Is")**:
+  - *Statutory Codification* (`indirect_tax_gst/rcm_liability_sec9_3`): Codified 55th GST Council Meeting Recommendations (21 December 2024, Jaisalmer) regularizing past commercial property renting transactions under reverse charge for Section 10 composition taxpayers during the intervening window (10 October 2024 to 15 January 2025) on an "as is where is" basis.
+  - *Disposition `RCM_COMPOSITION_INTERVENING_REGULARIZED_PAID`*: If RCM tax was historically discharged in cash, the tax is permanently regularized with zero refund rights and booked as an expense under Section 10(4).
+  - *Disposition `RCM_COMPOSITION_INTERVENING_REGULARIZED_UNPAID`*: If RCM tax was not discharged, statutory authorities cannot initiate retrospective recovery, demand notices, or penal proceedings; full consideration is expensed with zero RCM tax payable.
+  - *Failsafe Uncertainty Routing*: Intervening bills with indeterminate or unverified cash payment status route to `REQUIRES_HUMAN_VERIFICATION` (`INDETERMINATE_INTERVENING_RCM_DISCHARGE`).
+- **Notification No. 07/2025-CT(Rate) Composition Taxpayer Rent Exclusion**:
+  - *Entry 5AB Prospective Amendment* (w.e.f. 16 January 2025): Excludes composition taxpayers under Section 10 from reverse charge liability on commercial immovable property renting (`COMPOSITION_EXCLUDED_RCM_SUPPLY`).
+- **CBIC Circular No. 192/04/2023-GST Head-Wise ECL Utilization Rules**:
+  - *Aggregate Pool for Wrongly Availed IGST*: Clarifies Section 49(5) cross-utilization rules for Rule 88B(3) interest on unreversed ITC. IGST credit is tested against the aggregate pool of `IGST + CGST + SGST` balances. If the combined balance never falls below unreversed IGST credit, zero interest attaches under Section 50(3) even if standalone IGST balance falls to zero.
+  - *Restricted Cross-Utilization for CGST & SGST*: CGST credit is tested against `CGST + IGST` (SGST is not cross-utilizable). SGST credit is tested against `SGST + IGST` (CGST is not cross-utilizable).
+  - *Strict Exclusion of Compensation Cess*: Compensation Cess balances in the Electronic Credit Ledger are strictly excluded from general ITC balance computations.
+- **Cumulative Multi-Invoice Portfolio Rule 88B(3) ECL Stress-Testing**:
+  - *Portfolio Pooling*: Pools overdue exposure across multiple concurrent bills, tracking overlapping start dates, separate reversal dates, and temporary dip-recovery cycles.
+  - *Same-Day Movement Coalescing*: Multiple credit and debit entries on the same date are accurately coalesced to the net daily closing balance.
+- **Regulatory Watchtower Expansion (9 Benchmarks & 154 Citations)**:
+  - Added Benchmark 8: `GST_RCM_COMMERCIAL_RENT_INTERVENING_REGULARIZATION` (55th GST Council meeting).
+  - Added Benchmark 9: `GST_RULE_88B3_CIRCULAR_192_ECL_UTILIZATION` (Circular No. 192/04/2023-GST).
+  - Validated all 38 sections, 44 circulars, 39 forms, and 154 deep canonical citations with zero errors.
+  - Pinned Merkle Root: `sha256-a94baf08cbdea064a7b1bd25c1e1311821bf75e9b0d15cc8e0648339d487c79b`.
 - **Regulatory Watchtower & Continuous Empanelment Freshness Attestation (`scripts/watchtower.js`)**:
   - *Automated Compliance Surveillance Engine*: Scans and attests the entire Open Knowledge Format (OKF v0.2) substrate across all 38 statutory sections, 41 executive circulars, 39 compliance forms, and 148 deep canonical citations.
   - *Regulatory Freshness Horizon Audit*: Evaluates active compliance against 6 statutory benchmarks:

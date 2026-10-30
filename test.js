@@ -5523,20 +5523,20 @@ async function run() {
     if (watchtowerReport.checks.schemaValidation.sectionsScanned !== 38) {
         throw new Error(`Expected 38 sections scanned, got ${watchtowerReport.checks.schemaValidation.sectionsScanned}`);
     }
-    if (watchtowerReport.checks.schemaValidation.circularsScanned !== 42) {
-        throw new Error(`Expected 42 circulars scanned, got ${watchtowerReport.checks.schemaValidation.circularsScanned}`);
+    if (watchtowerReport.checks.schemaValidation.circularsScanned !== 44) {
+        throw new Error(`Expected 44 circulars scanned, got ${watchtowerReport.checks.schemaValidation.circularsScanned}`);
     }
     if (watchtowerReport.checks.schemaValidation.formsScanned !== 39) {
         throw new Error(`Expected 39 forms scanned, got ${watchtowerReport.checks.schemaValidation.formsScanned}`);
     }
-    if (watchtowerReport.checks.citationIntegrity.failedCitations !== 0 || watchtowerReport.checks.citationIntegrity.validCitations !== 150) {
+    if (watchtowerReport.checks.citationIntegrity.failedCitations !== 0 || watchtowerReport.checks.citationIntegrity.validCitations !== 154) {
         throw new Error(`Citation integrity failed: ${watchtowerReport.checks.citationIntegrity.validCitations} valid, ${watchtowerReport.checks.citationIntegrity.failedCitations} failed`);
     }
     if (!watchtowerReport.checks.merkleImmutability.matchesPinnedRoot) {
         throw new Error(`Merkle root ${watchtowerReport.checks.merkleImmutability.computedRoot} not in PINNED_RELEASE_ROOTS`);
     }
-    if (watchtowerReport.checks.freshnessHorizon.benchmarksPassed !== 7) {
-        throw new Error(`Freshness benchmarks failed: ${watchtowerReport.checks.freshnessHorizon.benchmarksPassed}/7 passed`);
+    if (watchtowerReport.checks.freshnessHorizon.benchmarksPassed !== 9) {
+        throw new Error(`Freshness benchmarks failed: ${watchtowerReport.checks.freshnessHorizon.benchmarksPassed}/9 passed`);
     }
     if (!watchtowerReport.certificate || watchtowerReport.certificate.empanelmentComplianceScore !== '100.0%') {
         throw new Error(`Empanelment score not 100.0%: ${watchtowerReport.certificate?.empanelmentComplianceScore}`);
@@ -5565,7 +5565,7 @@ async function run() {
         throw new Error(`CLI watchtower returned malformed output: ${cliOutput}`);
     }
 
-    console.log(`[PASS] Regulatory Watchtower Verified: All 38 sections, 42 circulars, 39 forms, 150 deep citations, and 7 regulatory horizons attested at 100.0% empanelment score.`);
+    console.log(`[PASS] Regulatory Watchtower Verified: All 38 sections, 44 circulars, 39 forms, 154 deep citations, and 9 regulatory horizons attested at 100.0% empanelment score.`);
 
     // ── Test 154: Notification No. 07/2025 Composition Rent Exclusion & Multi-Invoice Portfolio ECL Utilization ──
     console.log('\n── Test 154: Notification No. 07/2025 Composition Rent Exclusion & Multi-Invoice Portfolio ECL Utilization ──');
@@ -5578,15 +5578,6 @@ async function run() {
             vendorName: 'Shri Ram Commercial Spaces',
             vendorGstin: 'UNREGISTERED',
             lineItems: [{ description: 'Office Godown Rent', hsnSac: '997212', taxableAmount: 50000, cgstAmount: 4500, sgstAmount: 4500, igstAmount: 0 }],
-            isCommercialRentRcm: true
-        },
-        // Case B: Pre-16 Jan 2025 with COMPOSITION recipient (under Notification 09/2024, RCM still attached before 16 Jan 2025)
-        {
-            billNumber: 'RENT-PRE-JAN16',
-            billDate: '2024-12-15',
-            vendorName: 'Shri Ram Commercial Spaces',
-            vendorGstin: 'UNREGISTERED',
-            lineItems: [{ description: 'Office Godown Rent Dec 2024', hsnSac: '997212', taxableAmount: 50000, cgstAmount: 4500, sgstAmount: 4500, igstAmount: 0 }],
             isCommercialRentRcm: true
         }
     ];
@@ -5604,7 +5595,6 @@ async function run() {
     });
 
     const postJan16Item = compRecon.reconciliationItems.find(i => i.billNumber === 'RENT-COMP-2025');
-    const preJan16Item = compRecon.reconciliationItems.find(i => i.billNumber === 'RENT-PRE-JAN16');
 
     if (!postJan16Item || postJan16Item.disposition !== 'COMPOSITION_EXCLUDED_RCM_SUPPLY') {
         throw new Error(`Post-16 Jan 2025 rent expected COMPOSITION_EXCLUDED_RCM_SUPPLY, got ${postJan16Item?.disposition}`);
@@ -5617,10 +5607,6 @@ async function run() {
     }
     if (compRecon.summary.compositionExcludedCount !== 1 || compRecon.summary.compositionExcludedItcInr !== 9000) {
         throw new Error(`Summary composition excluded count/ITC mismatch: count=${compRecon.summary.compositionExcludedCount}, itc=${compRecon.summary.compositionExcludedItcInr}`);
-    }
-
-    if (!preJan16Item || preJan16Item.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE') {
-        throw new Error(`Pre-16 Jan 2025 rent under Notification 09/2024 expected RCM_UNREGISTERED_SUPPLIER_ELIGIBLE, got ${preJan16Item?.disposition}`);
     }
 
     // Case C: Post-16 Jan 2025 with recipientTaxScheme: 'INDETERMINATE'
@@ -5638,9 +5624,19 @@ async function run() {
         throw new Error(`Indeterminate scheme expected REQUIRES_HUMAN_VERIFICATION / INDETERMINATE_RECIPIENT_REGISTRATION_SCHEME, got ${indetItem?.disposition} / ${indetItem?.uncertaintyReason}`);
     }
 
-    // Case D: Post-16 Jan 2025 with recipientTaxScheme: 'REGULAR'
+    // Case D: Pre-16 Jan 2025 and Post-16 Jan 2025 with recipientTaxScheme: 'REGULAR'
     const regRecon = reconcileZohoGstr2b({
-        zohoBills: [testRentBills[0]],
+        zohoBills: [
+            testRentBills[0],
+            {
+                billNumber: 'RENT-PRE-JAN16-REG',
+                billDate: '2024-12-15',
+                vendorName: 'Shri Ram Commercial Spaces',
+                vendorGstin: 'UNREGISTERED',
+                lineItems: [{ description: 'Office Godown Rent Dec 2024', hsnSac: '997212', taxableAmount: 50000, cgstAmount: 4500, sgstAmount: 4500, igstAmount: 0 }],
+                isCommercialRentRcm: true
+            }
+        ],
         gstr2b: [],
         options: {
             asOfDate: '2025-01-25',
@@ -5648,9 +5644,10 @@ async function run() {
             recipientTaxScheme: 'REGULAR'
         }
     });
-    const regItem = regRecon.reconciliationItems[0];
-    if (regItem.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE') {
-        throw new Error(`Regular taxpayer expected RCM_UNREGISTERED_SUPPLIER_ELIGIBLE under Entry 5AB, got ${regItem?.disposition}`);
+    const regItem = regRecon.reconciliationItems.find(i => i.billNumber === 'RENT-COMP-2025');
+    const preRegItem = regRecon.reconciliationItems.find(i => i.billNumber === 'RENT-PRE-JAN16-REG');
+    if (regItem.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE' || preRegItem.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE') {
+        throw new Error(`Regular taxpayer expected RCM_UNREGISTERED_SUPPLIER_ELIGIBLE under Entry 5AB, got ${regItem?.disposition} and ${preRegItem?.disposition}`);
     }
 
     // Rule 37 Payment Appropriation Legal Status Verification
@@ -5709,8 +5706,172 @@ async function run() {
 
     console.log('[PASS] Notification No. 07/2025-CT(Rate) & Portfolio ECL Utilization Verified: Composition rent RCM exclusion, uncertain scheme failsafe, statutory vs accounting allocation status, and cumulative multi-invoice Rule 88B(3) pooling confirmed.');
 
+    // ── Test 155: 55th GST Council Intervening Rent Regularization & Circular No. 192/04/2023-GST Head-Wise ECL ──
+    console.log('\n── Test 155: 55th GST Council Intervening Rent Regularization & Circular No. 192/04/2023-GST Head-Wise ECL ──');
+
+    // 1. Intervening Period Commercial Rent Regularization ("As Is Where Is")
+    const interveningBills = [
+        // Case A: Intervening bill where RCM was historically paid in cash (regularized, no refund)
+        {
+            billNumber: 'RENT-INTERVENING-PAID',
+            billDate: '2024-11-20',
+            vendorName: 'Narayan Commercial Complex',
+            vendorGstin: 'UNREGISTERED',
+            lineItems: [{ description: 'Warehouse Lease Nov 2024', hsnSac: '997212', taxableAmount: 60000, cgstAmount: 5400, sgstAmount: 5400, igstAmount: 0 }],
+            isCommercialRentRcm: true,
+            isRcmPaid: true
+        },
+        // Case B: Intervening bill where RCM was not discharged (regularized, zero demand / recovery)
+        {
+            billNumber: 'RENT-INTERVENING-UNPAID',
+            billDate: '2024-12-10',
+            vendorName: 'Narayan Commercial Complex',
+            vendorGstin: 'UNREGISTERED',
+            lineItems: [{ description: 'Warehouse Lease Dec 2024', hsnSac: '997212', taxableAmount: 70000, cgstAmount: 6300, sgstAmount: 6300, igstAmount: 0 }],
+            isCommercialRentRcm: true,
+            isRcmPaid: false
+        },
+        // Case C: Intervening bill where RCM payment status is indeterminate / omitted -> REQUIRES_HUMAN_VERIFICATION
+        {
+            billNumber: 'RENT-INTERVENING-INDET',
+            billDate: '2024-12-05',
+            vendorName: 'Narayan Commercial Complex',
+            vendorGstin: 'UNREGISTERED',
+            lineItems: [{ description: 'Warehouse Lease Dec 2024', hsnSac: '997212', taxableAmount: 50000, cgstAmount: 4500, sgstAmount: 4500, igstAmount: 0 }],
+            isCommercialRentRcm: true
+        }
+    ];
+
+    const interveningRecon = reconcileZohoGstr2b({
+        zohoBills: interveningBills,
+        gstr2b: [],
+        options: {
+            asOfDate: '2025-01-25',
+            recipientGstin: '27AABCT8888T1ZZ',
+            recipientTaxScheme: 'COMPOSITION'
+        }
+    });
+
+    const itemPaid = interveningRecon.reconciliationItems.find(i => i.billNumber === 'RENT-INTERVENING-PAID');
+    const itemUnpaid = interveningRecon.reconciliationItems.find(i => i.billNumber === 'RENT-INTERVENING-UNPAID');
+    const itemIndet = interveningRecon.reconciliationItems.find(i => i.billNumber === 'RENT-INTERVENING-INDET');
+
+    if (!itemPaid || itemPaid.disposition !== 'RCM_COMPOSITION_INTERVENING_REGULARIZED_PAID') {
+        throw new Error(`Intervening paid bill expected RCM_COMPOSITION_INTERVENING_REGULARIZED_PAID, got ${itemPaid?.disposition}`);
+    }
+    if (itemPaid.isRcm !== false || itemPaid.isInterveningRegularizedPaid !== true) {
+        throw new Error(`Intervening paid item flags mismatch: isRcm=${itemPaid?.isRcm}, isInterveningRegularizedPaid=${itemPaid?.isInterveningRegularizedPaid}`);
+    }
+    if (!itemPaid.statutoryAction.includes('55th GST Council') || !itemPaid.statutoryAction.includes('refund')) {
+        throw new Error(`Statutory action missing 55th GST Council or no refund note: ${itemPaid?.statutoryAction}`);
+    }
+
+    if (!itemUnpaid || itemUnpaid.disposition !== 'RCM_COMPOSITION_INTERVENING_REGULARIZED_UNPAID') {
+        throw new Error(`Intervening unpaid bill expected RCM_COMPOSITION_INTERVENING_REGULARIZED_UNPAID, got ${itemUnpaid?.disposition}`);
+    }
+    if (itemUnpaid.isRcm !== false || itemUnpaid.isInterveningRegularizedUnpaid !== true) {
+        throw new Error(`Intervening unpaid item flags mismatch: isRcm=${itemUnpaid?.isRcm}, isInterveningRegularizedUnpaid=${itemUnpaid?.isInterveningRegularizedUnpaid}`);
+    }
+    if (!itemUnpaid.statutoryAction.includes('55th GST Council') || !itemUnpaid.statutoryAction.includes('retrospective')) {
+        throw new Error(`Statutory action missing 55th GST Council or no retrospective demand note: ${itemUnpaid?.statutoryAction}`);
+    }
+
+    if (!itemIndet || itemIndet.disposition !== 'REQUIRES_HUMAN_VERIFICATION' || itemIndet.uncertaintyReason !== 'INDETERMINATE_INTERVENING_RCM_DISCHARGE') {
+        throw new Error(`Intervening indeterminate bill expected REQUIRES_HUMAN_VERIFICATION / INDETERMINATE_INTERVENING_RCM_DISCHARGE, got ${itemIndet?.disposition} / ${itemIndet?.uncertaintyReason}`);
+    }
+
+    if (interveningRecon.summary.interveningRegularizedPaidCount !== 1 || interveningRecon.summary.interveningRegularizedUnpaidCount !== 1) {
+        throw new Error(`Intervening summary count mismatch: paid=${interveningRecon.summary.interveningRegularizedPaidCount}, unpaid=${interveningRecon.summary.interveningRegularizedUnpaidCount}`);
+    }
+    if (interveningRecon.summary.interveningRegularizedTaxInr !== 23400) {
+        throw new Error(`Intervening summary tax mismatch: expected 23400, got ${interveningRecon.summary.interveningRegularizedTaxInr}`);
+    }
+
+    // 2. Circular No. 192/04/2023-GST Head-Wise ECL Utilization & Cess Exclusion
+    // Scenario A: Wrongly availed IGST credit tested against aggregate IGST + CGST + SGST balance
+    const igstCombinedAudit = calculatePortfolioEclUtilizationInterest({
+        overdueBills: [
+            {
+                billNumber: 'BILL-IGST-ONLY',
+                unreversedItcInr: 50000,
+                igstInr: 50000,
+                overdueStartDate: '2024-07-01',
+                reversalDate: '2024-07-31'
+            }
+        ],
+        eclLedgerHistory: [
+            {
+                date: '2024-07-01',
+                igstBalanceInr: 0,        // Standalone IGST is zero!
+                cgstBalanceInr: 30000,    // CGST balance available
+                sgstBalanceInr: 30000     // SGST balance available; Combined = 60,000 > 50,000
+            }
+        ],
+        asOfDate: '2024-08-01',
+        annualInterestRate: 0.18
+    });
+
+    if (igstCombinedAudit.totalInterestInr !== 0 || igstCombinedAudit.utilizedDaysCount !== 0) {
+        throw new Error(`Circular 192 IGST aggregate pool failed: expected 0 interest, got ${igstCombinedAudit.totalInterestInr} with ${igstCombinedAudit.utilizedDaysCount} utilized days`);
+    }
+
+    // Scenario B: Wrongly availed CGST credit cannot cross-utilize SGST; Compensation Cess excluded
+    const cgstRestrictedAudit = calculatePortfolioEclUtilizationInterest({
+        overdueBills: [
+            {
+                billNumber: 'BILL-CGST-ONLY',
+                unreversedItcInr: 40000,
+                cgstInr: 40000,
+                overdueStartDate: '2024-07-01',
+                reversalDate: '2024-07-15'
+            }
+        ],
+        eclLedgerHistory: [
+            {
+                date: '2024-07-01',
+                cgstBalanceInr: 10000,
+                igstBalanceInr: 10000,    // Available CGST pool = CGST (10k) + IGST (10k) = 20k
+                sgstBalanceInr: 80000,    // SGST cannot cross-utilize for CGST!
+                cessBalanceInr: 100000    // Cess strictly excluded per Circular 192!
+            }
+        ],
+        asOfDate: '2024-07-20',
+        annualInterestRate: 0.18
+    });
+
+    if (cgstRestrictedAudit.maxPortfolioUtilizationInr !== 20000) {
+        throw new Error(`Circular 192 CGST pool failure: expected 20,000 shortfall, got ${cgstRestrictedAudit.maxPortfolioUtilizationInr}`);
+    }
+    if (cgstRestrictedAudit.totalInterestInr <= 0) {
+        throw new Error(`Circular 192 CGST interest expected positive, got ${cgstRestrictedAudit.totalInterestInr}`);
+    }
+
+    // Scenario C: Same-day multiple ledger transactions coalescing to daily closing balance
+    const sameDayAudit = calculatePortfolioEclUtilizationInterest({
+        overdueBills: [
+            {
+                billNumber: 'BILL-SAMEDAY',
+                unreversedItcInr: 20000,
+                overdueStartDate: '2024-07-10',
+                reversalDate: '2024-07-11'
+            }
+        ],
+        eclLedgerHistory: [
+            { date: '2024-07-10', balanceInr: 100000 }, // Morning credit
+            { date: '2024-07-10', balanceInr: 5000 }    // Afternoon debit -> Net daily closing balance = 5,000
+        ],
+        asOfDate: '2024-07-15',
+        annualInterestRate: 0.18
+    });
+
+    if (sameDayAudit.maxPortfolioUtilizationInr !== 15000) {
+        throw new Error(`Same-day closing balance coalescing failed: expected 15,000 shortfall, got ${sameDayAudit.maxPortfolioUtilizationInr}`);
+    }
+
+    console.log('[PASS] 55th GST Council Intervening Rent Regularization & Circular No. 192/04/2023-GST Head-Wise ECL Verified: Paid vs unpaid vs indeterminate as-is-where-is handling, IGST combined pool, CGST cross-utilization restrictions, Cess exclusion, and same-day entry coalescing confirmed.');
+
     console.log('\n===========================================================================');
-    console.log('ALL 154 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 155 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

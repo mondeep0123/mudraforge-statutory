@@ -633,6 +633,8 @@ export type Gstr2bDisposition =
     | 'MATCHED_ELIGIBLE'
     | 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE'
     | 'COMPOSITION_EXCLUDED_RCM_SUPPLY'
+    | 'RCM_COMPOSITION_INTERVENING_REGULARIZED_PAID'
+    | 'RCM_COMPOSITION_INTERVENING_REGULARIZED_UNPAID'
     | 'MISMATCH_AMOUNT_VALUE'
     | 'MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5'
     | 'MATCHED_ROUTABLE_TO_BRANCH_GSTIN'
@@ -767,6 +769,8 @@ export interface ReconcileZohoGstr2bSummary {
     matchedEligibleCount: number;
     rcmUnregisteredEligibleCount: number;
     compositionExcludedCount: number;
+    interveningRegularizedPaidCount: number;
+    interveningRegularizedUnpaidCount: number;
     amountMismatchCount: number;
     blocked17_5Count: number;
     posMismatchCount: number;
@@ -784,6 +788,7 @@ export interface ReconcileZohoGstr2bSummary {
     eligibleItcInr: number;
     rcmUnregisteredEligibleItcInr: number;
     compositionExcludedItcInr: number;
+    interveningRegularizedTaxInr: number;
     atRiskUnfiledItcInr: number;
     blocked17_5ItcInr: number;
     posMismatchItcInr: number;

@@ -111,6 +111,22 @@ export const STATUTORY_FRESHNESS_BENCHMARKS = [
         effectiveDate: '2026-04-01',
         targetSectionPath: 'direct_tax/tds_goods_194q',
         description: 'Dual-Act crystallization: 1961 Act governs pre-1 April 2026 events; 2025 Act takes effect 1 April 2026.'
+    },
+    {
+        benchmarkId: 'GST_RCM_COMMERCIAL_RENT_INTERVENING_REGULARIZATION',
+        statutorySection: 'CGST Act Section 9(3) read with Section 10',
+        instrument: '55th GST Council Meeting Recommendations (21 December 2024)',
+        effectiveDate: '2024-10-10',
+        targetSectionPath: 'indirect_tax_gst/rcm_liability_sec9_3',
+        description: 'Regularization of commercial property renting RCM on composition taxpayers for intervening period (10 Oct 2024 to 15 Jan 2025) on "as is where is" basis.'
+    },
+    {
+        benchmarkId: 'GST_RULE_88B3_CIRCULAR_192_ECL_UTILIZATION',
+        statutorySection: 'CGST Rules Rule 88B(3) read with Section 50(3)',
+        instrument: 'CBIC Circular No. 192/04/2023-GST (17 July 2023)',
+        effectiveDate: '2023-07-17',
+        targetSectionPath: 'indirect_tax_gst/itc_reversal_rule37_37a',
+        description: 'Electronic Credit Ledger balance calculation for wrongly availed and utilized ITC: IGST tested against aggregate IGST+CGST+SGST pool; CGST against CGST+IGST; SGST against SGST+IGST; Compensation Cess strictly excluded.'
     }
 ];
 
@@ -311,6 +327,16 @@ export async function runStatutoryWatchtower(options = {}) {
             } else if (bm.benchmarkId === 'DUAL_ACT_TRANSITION_APRIL_2026') {
                 isPresent = /Income-tax Act, 2025|393|2026-04-01/i.test(content);
                 details = isPresent ? 'Dual-Act transition to Section 393 verified' : '2025 Act transition missing';
+            } else if (bm.benchmarkId === 'GST_RCM_COMMERCIAL_RENT_INTERVENING_REGULARIZATION') {
+                const hasCircular = fs.existsSync(path.join(targetDir, 'circulars', 'gst_council_55th_meeting_renting_rcm_regularization.md'));
+                const hasMention = /as is where is|as-is-where-is|intervening|55th GST Council/i.test(content);
+                isPresent = hasCircular && hasMention;
+                details = isPresent ? '55th GST Council "as is where is" regularization circular and section terms verified' : 'Missing 55th GST Council circular or regularization mention';
+            } else if (bm.benchmarkId === 'GST_RULE_88B3_CIRCULAR_192_ECL_UTILIZATION') {
+                const hasCircular = fs.existsSync(path.join(targetDir, 'circulars', 'cbic_circular_192_2023_ecl_interest_calculation.md'));
+                const hasMention = /192\/04\/2023|Rule 88B\(3\)|electronicCreditLedgerBalance|Electronic Credit Ledger/i.test(content);
+                isPresent = hasCircular && hasMention;
+                details = isPresent ? 'Circular 192/04/2023-GST ECL utilization circular and Rule 88B(3) terms verified' : 'Missing Circular 192 circular or ECL utilization mention';
             }
         }
 

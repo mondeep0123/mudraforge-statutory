@@ -143,7 +143,11 @@ export function calculateEclUtilizationInterest({
         .filter(e => e && e.date)
         .map(e => ({
             date: normalizeIsoDate(e.date),
-            balancePaise: toIntegerPaise(e.balanceInr, 'eclBalanceInr')
+            balancePaise: toIntegerPaise(e.balanceInr, 'eclBalanceInr'),
+            igstPaise: e.igstBalanceInr !== undefined ? toIntegerPaise(e.igstBalanceInr) : null,
+            cgstPaise: e.cgstBalanceInr !== undefined ? toIntegerPaise(e.cgstBalanceInr) : null,
+            sgstPaise: e.sgstBalanceInr !== undefined ? toIntegerPaise(e.sgstBalanceInr) : null,
+            cessPaise: e.cessBalanceInr !== undefined ? toIntegerPaise(e.cessBalanceInr) : 0
         }))
         .filter(e => e.date !== null)
         .sort((a, b) => a.date.localeCompare(b.date));
@@ -162,9 +166,16 @@ export function calculateEclUtilizationInterest({
         };
     }
 
+    // Coalesce same-day entries to net daily closing balance
+    const dateMap = new Map();
+    for (const entry of sortedHistory) {
+        dateMap.set(entry.date, entry);
+    }
+    const coalescedHistory = Array.from(dateMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
     function getBalancePaiseOnDate(dayIso) {
-        let activeBalance = sortedHistory[0].balancePaise;
-        for (const entry of sortedHistory) {
+        let activeBalance = coalescedHistory[0].balancePaise;
+        for (const entry of coalescedHistory) {
             if (entry.date <= dayIso) {
                 activeBalance = entry.balancePaise;
             } else {
@@ -309,14 +320,35 @@ export function calculatePortfolioEclUtilizationInterest(params = {}) {
         };
     }
 
-    const sortedHistory = eclLedgerHistory
-        .filter(e => e && e.date)
-        .map(e => ({
-            date: normalizeIsoDate(e.date),
-            balancePaise: toIntegerPaise(e.balanceInr, 'eclBalanceInr')
-        }))
-        .filter(e => e.date !== null)
-        .sort((a, b) => a.date.localeCompare(b.date));
+    // Coalesce same-day entries to net daily closing balance
+    const dateMap = new Map();
+    for (const e of eclLedgerHistory) {
+        if (!e || !e.date) continue;
+        const d = normalizeIsoDate(e.date);
+        if (!d) continue;
+
+        const hasHeadwise = (e.igstBalanceInr !== undefined || e.cgstBalanceInr !== undefined || e.sgstBalanceInr !== undefined);
+        const igstPaise = toIntegerPaise(e.igstBalanceInr ?? 0);
+        const cgstPaise = toIntegerPaise(e.cgstBalanceInr ?? 0);
+        const sgstPaise = toIntegerPaise(e.sgstBalanceInr ?? 0);
+        const cessPaise = toIntegerPaise(e.cessBalanceInr ?? 0);
+        // Exclude Compensation Cess from available general ITC per Circular 192/04/2023-GST
+        const balancePaise = hasHeadwise
+            ? (igstPaise + cgstPaise + sgstPaise)
+            : toIntegerPaise(e.balanceInr ?? 0, 'eclBalanceInr');
+
+        dateMap.set(d, {
+            date: d,
+            balancePaise,
+            hasHeadwise,
+            igstPaise,
+            cgstPaise,
+            sgstPaise,
+            cessPaise
+        });
+    }
+
+    const sortedHistory = Array.from(dateMap.values()).sort((a, b) => a.date.localeCompare(b.date));
 
     if (sortedHistory.length === 0) {
         return {
@@ -350,11 +382,20 @@ export function calculatePortfolioEclUtilizationInterest(params = {}) {
         const revTax = b.unreversedItcInr !== undefined
             ? b.unreversedItcInr
             : (b.rule37ReversalTaxInr !== undefined ? b.rule37ReversalTaxInr : (b.reversalTaxInr !== undefined ? b.reversalTaxInr : b.totalTaxInr));
+        const unreversedPaise = toIntegerPaise(revTax || 0);
+
+        const igstPaise = toIntegerPaise(b.igstInr ?? b.igst_amount ?? (b.hasIgst ? revTax : 0));
+        const cgstPaise = toIntegerPaise(b.cgstInr ?? b.cgst_amount ?? (!b.hasIgst && b.cgstInr !== undefined ? b.cgstInr : 0));
+        const sgstPaise = toIntegerPaise(b.sgstInr ?? b.sgst_amount ?? (!b.hasIgst && b.sgstInr !== undefined ? b.sgstInr : 0));
+
         normalizedBills.push({
             billNumber: b.billNumber,
             startIso: start,
             endIso: end,
-            unreversedPaise: toIntegerPaise(revTax || 0)
+            unreversedPaise,
+            igstPaise,
+            cgstPaise,
+            sgstPaise
         });
     }
 
@@ -372,11 +413,11 @@ export function calculatePortfolioEclUtilizationInterest(params = {}) {
         };
     }
 
-    function getBalancePaise(dayIso) {
-        let active = sortedHistory[0].balancePaise;
+    function getBalanceEntry(dayIso) {
+        let active = sortedHistory[0];
         for (const entry of sortedHistory) {
             if (entry.date <= dayIso) {
-                active = entry.balancePaise;
+                active = entry;
             } else {
                 break;
             }
@@ -394,14 +435,45 @@ export function calculatePortfolioEclUtilizationInterest(params = {}) {
     while (currentMs < latestEndMs) {
         const dayIso = new Date(currentMs).toISOString().slice(0, 10);
         let activePoolPaise = 0;
+        let poolIgst = 0;
+        let poolCgst = 0;
+        let poolSgst = 0;
+
         for (const b of normalizedBills) {
             if (dayIso >= b.startIso && dayIso < b.endIso) {
                 activePoolPaise += b.unreversedPaise;
+                poolIgst += b.igstPaise;
+                poolCgst += b.cgstPaise;
+                poolSgst += b.sgstPaise;
             }
         }
 
-        const dayBalPaise = getBalancePaise(dayIso);
-        const wrongfulUtilizedPaise = Math.max(0, activePoolPaise - dayBalPaise);
+        const dayEntry = getBalanceEntry(dayIso);
+        let wrongfulUtilizedPaise = 0;
+
+        if (dayEntry.hasHeadwise && (poolIgst > 0 || poolCgst > 0 || poolSgst > 0)) {
+            // Circular No. 192/04/2023-GST head-wise utilization rules
+            // IGST can be paid from IGST + CGST + SGST (Combined pool)
+            const combinedPool = dayEntry.igstPaise + dayEntry.cgstPaise + dayEntry.sgstPaise;
+            const igstShortfall = Math.max(0, poolIgst - combinedPool);
+
+            // CGST can be paid from CGST + IGST (SGST not cross-utilizable)
+            const cgstAvail = dayEntry.cgstPaise + dayEntry.igstPaise;
+            const cgstShortfall = Math.max(0, poolCgst - cgstAvail);
+
+            // SGST can be paid from SGST + IGST (CGST not cross-utilizable)
+            const sgstAvail = dayEntry.sgstPaise + dayEntry.igstPaise;
+            const sgstShortfall = Math.max(0, poolSgst - sgstAvail);
+
+            wrongfulUtilizedPaise = Math.max(igstShortfall, cgstShortfall, sgstShortfall);
+            if (wrongfulUtilizedPaise === 0 && (poolIgst + poolCgst + poolSgst) > combinedPool) {
+                wrongfulUtilizedPaise = Math.max(0, (poolIgst + poolCgst + poolSgst) - combinedPool);
+            }
+        } else {
+            wrongfulUtilizedPaise = Math.max(0, activePoolPaise - dayEntry.balancePaise);
+        }
+
+        const dayBalPaise = dayEntry.balancePaise;
 
         if (wrongfulUtilizedPaise > 0) {
             utilizedDaysCount++;
@@ -1124,12 +1196,32 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         let isCommercialRentRcm = false;
         let isCompositionExcludedFromRentRcm = false;
         let requiresRentSchemeVerification = false;
+        let isInterveningCompositionRegularizedPaid = false;
+        let isInterveningCompositionRegularizedUnpaid = false;
+        let requiresInterveningRcmPaymentVerification = false;
 
         if (isCommercialRent && isUnregLandlord) {
             if (!billDateStr || billDateStr < '2024-10-10') {
                 isCommercialRentRcm = false;
             } else if (billDateStr >= '2024-10-10' && billDateStr < '2025-01-16') {
-                isCommercialRentRcm = true;
+                // Intervening period under 55th GST Council meeting recommendation (regularized "as is where is")
+                if (normalizedRecipientScheme === 'COMPOSITION') {
+                    const hasPaid = b.isRcmPaid === true || b.isRcmTaxPaidInCash === true || b.rcmPaymentStatus === 'PAID' || b.is_rcm_paid === true;
+                    const hasUnpaid = b.isRcmPaid === false || b.isRcmTaxPaidInCash === false || b.rcmPaymentStatus === 'UNPAID' || b.is_rcm_paid === false;
+                    if (hasPaid) {
+                        isInterveningCompositionRegularizedPaid = true;
+                    } else if (hasUnpaid) {
+                        isInterveningCompositionRegularizedUnpaid = true;
+                    } else {
+                        requiresInterveningRcmPaymentVerification = true;
+                    }
+                    isCommercialRentRcm = false;
+                } else if (normalizedRecipientScheme === 'INDETERMINATE') {
+                    requiresRentSchemeVerification = true;
+                    isCommercialRentRcm = false;
+                } else {
+                    isCommercialRentRcm = true;
+                }
             } else {
                 // On or after 16 Jan 2025: Notification No. 07/2025-Central Tax (Rate)
                 if (normalizedRecipientScheme === 'COMPOSITION') {
@@ -1150,13 +1242,24 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         if (b.requiresRentSchemeVerification !== undefined) {
             requiresRentSchemeVerification = Boolean(b.requiresRentSchemeVerification);
         }
-        if (isCompositionExcludedFromRentRcm || requiresRentSchemeVerification) {
+        if (b.isInterveningCompositionRegularizedPaid !== undefined) {
+            isInterveningCompositionRegularizedPaid = Boolean(b.isInterveningCompositionRegularizedPaid);
+        }
+        if (b.isInterveningCompositionRegularizedUnpaid !== undefined) {
+            isInterveningCompositionRegularizedUnpaid = Boolean(b.isInterveningCompositionRegularizedUnpaid);
+        }
+        if (b.requiresInterveningRcmPaymentVerification !== undefined) {
+            requiresInterveningRcmPaymentVerification = Boolean(b.requiresInterveningRcmPaymentVerification);
+        }
+
+        const isRcmExcludedOrPending = isCompositionExcludedFromRentRcm || requiresRentSchemeVerification || isInterveningCompositionRegularizedPaid || isInterveningCompositionRegularizedUnpaid || requiresInterveningRcmPaymentVerification;
+        if (isRcmExcludedOrPending) {
             isCommercialRentRcm = false;
         } else if (b.isCommercialRentRcm !== undefined && !isCommercialRent) {
             isCommercialRentRcm = Boolean(b.isCommercialRentRcm);
         }
 
-        const isRcm = Boolean((!isCompositionExcludedFromRentRcm && !requiresRentSchemeVerification && (b.isRcm || /true|yes|y|1/i.test(String(b.is_rcm || '')))) || isCommercialRentRcm);
+        const isRcm = Boolean((!isRcmExcludedOrPending && (b.isRcm || /true|yes|y|1/i.test(String(b.is_rcm || '')))) || isCommercialRentRcm);
         const isSchedule1DeemedSupply = Boolean(b.isSchedule1DeemedSupply || /distinct|related|deemed|schedule\s*1/i.test(b.category || ''));
 
         return {
@@ -1173,6 +1276,9 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
             isCommercialRentRcm,
             isCompositionExcludedFromRentRcm,
             requiresRentSchemeVerification,
+            isInterveningCompositionRegularizedPaid,
+            isInterveningCompositionRegularizedUnpaid,
+            requiresInterveningRcmPaymentVerification,
             isSchedule1DeemedSupply,
             taxableAmountInr,
             cgstInr,
@@ -1286,6 +1392,10 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
 
     let compositionExcludedCount = 0;
     let compositionExcludedItcPaise = 0;
+
+    let interveningRegularizedPaidCount = 0;
+    let interveningRegularizedUnpaidCount = 0;
+    let interveningRegularizedTaxPaise = 0;
 
     let amountMismatchCount = 0;
     let mismatchedItcPaise = 0;
@@ -1684,6 +1794,192 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
                             operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
                         },
                         uncertaintyReason: 'INDETERMINATE_RECIPIENT_REGISTRATION_SCHEME',
+                        asOfDate
+                    })
+                });
+                continue;
+            }
+
+            // Check for Intervening Period RCM Payment Verification (55th GST Council Meeting)
+            if (bill.requiresInterveningRcmPaymentVerification) {
+                requiresHumanVerificationCount++;
+                requiresHumanVerificationItcPaise += booksTaxPaise;
+
+                items.push({
+                    disposition: 'REQUIRES_HUMAN_VERIFICATION',
+                    uncertaintyReason: 'INDETERMINATE_INTERVENING_RCM_DISCHARGE',
+                    itcStatus: 'INDETERMINATE_INTERVENING_RCM_DISCHARGE',
+                    statutorySection: 'CGST Act Section 9(3) read with 55th GST Council Meeting Recommendations',
+                    vendorName: bill.vendorName,
+                    vendorGstin: bill.vendorGstin || 'UNREGISTERED',
+                    billNumber: bill.billNumber,
+                    billDate: bill.billDate,
+                    booksTaxableInr: bill.taxableAmountInr,
+                    booksTaxInr: bill.totalTaxInr,
+                    gstr2bTaxableInr: 0,
+                    gstr2bTaxInr: 0,
+                    varianceTaxableInr: bill.taxableAmountInr,
+                    varianceTaxInr: bill.totalTaxInr,
+                    isRule37Overdue: false,
+                    daysElapsedSinceBill,
+                    rule37Status: 'EXEMPT_RCM_SUPPLY',
+                    rule37ReversalTaxInr: 0,
+                    rule37InterestInr: 0,
+                    rule37InterestExplanation: '',
+                    isReclaimableUponPayment: false,
+                    paymentAppropriationDetails: null,
+                    isRcm: false,
+                    jurisdictionDecisions: {
+                        taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                        recipientJurisdiction: 'INDETERMINATE',
+                        itcEligibility: 'INDETERMINATE',
+                        operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+                    },
+                    statutoryAction: 'Intervening period (10 Oct 2024 to 15 Jan 2025) commercial rent regularized on "as is where is" basis per 55th GST Council meeting. Verify historical cash ledger to confirm whether RCM tax was discharged.',
+                    auditEvidence: {
+                        inBooks: true,
+                        inGstr2b: false,
+                        matchType: 'UNMATCHED',
+                        isCommercialRent: true,
+                        requiresInterveningRcmPaymentVerification: true
+                    },
+                    evidenceProvenance: buildEvidenceProvenance({
+                        bill,
+                        record2b: null,
+                        matchType: 'UNMATCHED',
+                        disposition: 'REQUIRES_HUMAN_VERIFICATION',
+                        statutorySection: 'CGST Act Section 9(3) read with 55th GST Council Meeting Recommendations',
+                        jurisdictionDecisions: {
+                            taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                            recipientJurisdiction: 'INDETERMINATE',
+                            itcEligibility: 'INDETERMINATE',
+                            operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+                        },
+                        uncertaintyReason: 'INDETERMINATE_INTERVENING_RCM_DISCHARGE',
+                        asOfDate
+                    })
+                });
+                continue;
+            }
+
+            // Check for Intervening Period Regularized Paid (55th GST Council Meeting)
+            if (bill.isInterveningCompositionRegularizedPaid) {
+                interveningRegularizedPaidCount++;
+                interveningRegularizedTaxPaise += booksTaxPaise;
+
+                items.push({
+                    disposition: 'RCM_COMPOSITION_INTERVENING_REGULARIZED_PAID',
+                    itcStatus: 'INELIGIBLE_COMPOSITION_SCHEME_SEC10_4',
+                    statutorySection: 'CGST Act Section 9(3) read with 55th GST Council Meeting Recommendations & Section 10(4)',
+                    vendorName: bill.vendorName,
+                    vendorGstin: bill.vendorGstin || 'UNREGISTERED',
+                    billNumber: bill.billNumber,
+                    billDate: bill.billDate,
+                    booksTaxableInr: bill.taxableAmountInr,
+                    booksTaxInr: bill.totalTaxInr,
+                    gstr2bTaxableInr: 0,
+                    gstr2bTaxInr: 0,
+                    varianceTaxableInr: 0,
+                    varianceTaxInr: 0,
+                    isRule37Overdue: false,
+                    daysElapsedSinceBill,
+                    rule37Status: 'EXEMPT_NON_GST_SUPPLY',
+                    rule37ReversalTaxInr: 0,
+                    rule37InterestInr: 0,
+                    rule37InterestExplanation: '',
+                    isReclaimableUponPayment: false,
+                    paymentAppropriationDetails: null,
+                    isRcm: false,
+                    isCompositionExcluded: true,
+                    isInterveningRegularizedPaid: true,
+                    jurisdictionDecisions: {
+                        taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                        recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
+                        itcEligibility: 'INELIGIBLE_STRANDED_LOCAL_LEVY',
+                        operationalRouting: 'BOOK_AS_EXPENSE_NO_ITC'
+                    },
+                    statutoryAction: 'Intervening period (10 Oct 2024 to 15 Jan 2025) regularized on "as is where is" basis per 55th GST Council meeting. RCM tax already discharged in cash cannot be claimed as refund; expensed under Section 10(4).',
+                    auditEvidence: {
+                        inBooks: true,
+                        inGstr2b: false,
+                        matchType: 'INTERVENING_REGULARIZED_PAID',
+                        isCompositionRegularizedPaid: true
+                    },
+                    evidenceProvenance: buildEvidenceProvenance({
+                        bill,
+                        record2b: null,
+                        matchType: 'INTERVENING_REGULARIZED_PAID',
+                        disposition: 'RCM_COMPOSITION_INTERVENING_REGULARIZED_PAID',
+                        statutorySection: 'CGST Act Section 9(3) read with 55th GST Council Meeting Recommendations & Section 10(4)',
+                        jurisdictionDecisions: {
+                            taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                            recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
+                            itcEligibility: 'INELIGIBLE_STRANDED_LOCAL_LEVY',
+                            operationalRouting: 'BOOK_AS_EXPENSE_NO_ITC'
+                        },
+                        uncertaintyReason: null,
+                        asOfDate
+                    })
+                });
+                continue;
+            }
+
+            // Check for Intervening Period Regularized Unpaid (55th GST Council Meeting)
+            if (bill.isInterveningCompositionRegularizedUnpaid) {
+                interveningRegularizedUnpaidCount++;
+                interveningRegularizedTaxPaise += booksTaxPaise;
+
+                items.push({
+                    disposition: 'RCM_COMPOSITION_INTERVENING_REGULARIZED_UNPAID',
+                    itcStatus: 'INELIGIBLE_COMPOSITION_SCHEME_SEC10_4',
+                    statutorySection: 'CGST Act Section 9(3) read with 55th GST Council Meeting Recommendations & Section 10(4)',
+                    vendorName: bill.vendorName,
+                    vendorGstin: bill.vendorGstin || 'UNREGISTERED',
+                    billNumber: bill.billNumber,
+                    billDate: bill.billDate,
+                    booksTaxableInr: bill.taxableAmountInr,
+                    booksTaxInr: bill.totalTaxInr,
+                    gstr2bTaxableInr: 0,
+                    gstr2bTaxInr: 0,
+                    varianceTaxableInr: 0,
+                    varianceTaxInr: 0,
+                    isRule37Overdue: false,
+                    daysElapsedSinceBill,
+                    rule37Status: 'EXEMPT_NON_GST_SUPPLY',
+                    rule37ReversalTaxInr: 0,
+                    rule37InterestInr: 0,
+                    rule37InterestExplanation: '',
+                    isReclaimableUponPayment: false,
+                    paymentAppropriationDetails: null,
+                    isRcm: false,
+                    isCompositionExcluded: true,
+                    isInterveningRegularizedUnpaid: true,
+                    jurisdictionDecisions: {
+                        taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                        recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
+                        itcEligibility: 'INELIGIBLE_STRANDED_LOCAL_LEVY',
+                        operationalRouting: 'BOOK_AS_EXPENSE_NO_ITC'
+                    },
+                    statutoryAction: 'Intervening period (10 Oct 2024 to 15 Jan 2025) regularized on "as is where is" basis per 55th GST Council meeting. No retrospective recovery or penal demand payable by composition taxpayer; zero RCM cash discharge required; consideration expensed.',
+                    auditEvidence: {
+                        inBooks: true,
+                        inGstr2b: false,
+                        matchType: 'INTERVENING_REGULARIZED_UNPAID',
+                        isCompositionRegularizedUnpaid: true
+                    },
+                    evidenceProvenance: buildEvidenceProvenance({
+                        bill,
+                        record2b: null,
+                        matchType: 'INTERVENING_REGULARIZED_UNPAID',
+                        disposition: 'RCM_COMPOSITION_INTERVENING_REGULARIZED_UNPAID',
+                        statutorySection: 'CGST Act Section 9(3) read with 55th GST Council Meeting Recommendations & Section 10(4)',
+                        jurisdictionDecisions: {
+                            taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                            recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
+                            itcEligibility: 'INELIGIBLE_STRANDED_LOCAL_LEVY',
+                            operationalRouting: 'BOOK_AS_EXPENSE_NO_ITC'
+                        },
+                        uncertaintyReason: null,
                         asOfDate
                     })
                 });
@@ -2446,6 +2742,8 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         matchedEligibleCount,
         rcmUnregisteredEligibleCount,
         compositionExcludedCount,
+        interveningRegularizedPaidCount,
+        interveningRegularizedUnpaidCount,
         amountMismatchCount,
         blocked17_5Count,
         posMismatchCount,
@@ -2465,6 +2763,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         eligibleItcInr: fromIntegerPaise(eligibleItcPaise),
         rcmUnregisteredEligibleItcInr: fromIntegerPaise(rcmUnregisteredEligibleItcPaise),
         compositionExcludedItcInr: fromIntegerPaise(compositionExcludedItcPaise),
+        interveningRegularizedTaxInr: fromIntegerPaise(interveningRegularizedTaxPaise),
         atRiskUnfiledItcInr: fromIntegerPaise(atRiskUnfiledItcPaise),
         blocked17_5ItcInr: fromIntegerPaise(blocked17_5ItcPaise),
         posMismatchItcInr: fromIntegerPaise(posMismatchItcPaise),
@@ -2534,6 +2833,9 @@ export function generateGstr2bAuditMarkdownReport(reconResult) {
     if (s.compositionExcludedCount > 0) {
         md += `| **Commercial Rent Excluded u/s 10 (Not RCM)** | — | — | **${fmt(s.compositionExcludedItcInr)}** (\`${s.compositionExcludedCount}\` vouchers expensed) |\n`;
     }
+    if (s.interveningRegularizedPaidCount > 0 || s.interveningRegularizedUnpaidCount > 0) {
+        md += `| **Intervening Rent Regularized (As-Is-Where-Is)** | — | — | **${fmt(s.interveningRegularizedTaxInr)}** (\`${s.interveningRegularizedPaidCount}\` paid / \`${s.interveningRegularizedUnpaidCount}\` unpaid regularized) |\n`;
+    }
     md += `| **Requires Human Verification (Uncertainty)** | — | — | **${fmt(s.requiresHumanVerificationItcInr)}** (\`${s.requiresHumanVerificationCount}\` items) |\n`;
     md += `| **Provisional / At-Risk ITC (Missing in 2B)** | — | — | **${fmt(s.atRiskUnfiledItcInr)}** (Withhold) |\n`;
     md += `| **Blocked Ineligible ITC (Sec 17(5))** | — | — | **${fmt(s.blocked17_5ItcInr)}** (Table 4(B)(1)) |\n`;
@@ -2553,7 +2855,13 @@ export function generateGstr2bAuditMarkdownReport(reconResult) {
         md += `- **Audit Finding**: ${port.explanation}\n\n`;
     }
 
-    const exceptions = reconResult.reconciliationItems.filter(i => i.disposition !== 'MATCHED_ELIGIBLE' && i.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE' && i.disposition !== 'COMPOSITION_EXCLUDED_RCM_SUPPLY');
+    const exceptions = reconResult.reconciliationItems.filter(i => (
+        i.disposition !== 'MATCHED_ELIGIBLE' &&
+        i.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE' &&
+        i.disposition !== 'COMPOSITION_EXCLUDED_RCM_SUPPLY' &&
+        i.disposition !== 'RCM_COMPOSITION_INTERVENING_REGULARIZED_PAID' &&
+        i.disposition !== 'RCM_COMPOSITION_INTERVENING_REGULARIZED_UNPAID'
+    ));
 
     if (exceptions.length === 0) {
         md += '## 2. Statutory Audit Verdict\n\n';

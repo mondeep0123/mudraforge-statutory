@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.11.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-10-30T04:33:59.243Z
+> **Generated Timestamp**: 2026-10-30T05:43:16.499Z
 
 ---
 
@@ -11,12 +11,12 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 103 resolvable gazette URLs | 103 total citations declared | **100.0%** | VERIFIED |
+| **Primary Source Citations** | 105 resolvable gazette URLs | 105 total citations declared | **100.0%** | VERIFIED |
 | **Temporal Validity Bounds** | 38 sections with explicit dates | 38 total bundled sections | **100.0%** | VERIFIED |
 | **Dual-Act 2025 Transition Bridges** | 15 direct tax provisions mapped | 16 direct tax provisions | **93.8%** | VERIFIED |
-| **Attached Administrative Circulars** | 42 official circulars | 38 provisions across active domains | **100% Attached** | VERIFIED |
+| **Attached Administrative Circulars** | 44 official circulars | 38 provisions across active domains | **100% Attached** | VERIFIED |
 | **Attached Return/Compliance Schemas** | 39 schemas/templates | 38 provisions across active domains | **100% Attached** | VERIFIED |
-| **Cryptographic Merkle Verification** | 119 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
+| **Cryptographic Merkle Verification** | 121 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
 
@@ -76,8 +76,8 @@
 | **RULE-48(4)** | Mandatory electronic invoicing (E-Invoicing), IRN generation, and invoice validity | Central Goods and Services Tax Rules, 2017 | `2020-10-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |
 | **51** | Tax deduction at source under Goods and Services Tax | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2018-10-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 0 | N/A |
 | **16(2)** | Eligibility and conditions for taking input tax credit and mandatory 180-day payment rule | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 4 | 1 | 1 | CGST Act, 2017 (In force) (Section 16(2), (3), (4), (5), (6)) |
-| **RULE-37-37A** | Reversal of input tax credit in case of non-payment of consideration to vendor within 180 days and non-filing by supplier | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Central Goods and Services Tax Act, 2017 (Section 16(2) second proviso read with Rule 37 and Rule 37A (as amended)) |
-| **9(3)** | Reverse Charge Mechanism (RCM) mandatory tax liability on recipient, self-invoicing, payment voucher issuance, and electronic cash discharge | Central Goods and Services Tax Act, 2017 read with Notification No. 13/2017-Central Tax (Rate) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 5 | 3 | 1 | N/A |
+| **RULE-37-37A** | Reversal of input tax credit in case of non-payment of consideration to vendor within 180 days and non-filing by supplier | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 4 | 2 | 1 | Central Goods and Services Tax Act, 2017 (Section 16(2) second proviso read with Rule 37 and Rule 37A (as amended)) |
+| **9(3)** | Reverse Charge Mechanism (RCM) mandatory tax liability on recipient, self-invoicing, payment voucher issuance, and electronic cash discharge | Central Goods and Services Tax Act, 2017 read with Notification No. 13/2017-Central Tax (Rate) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 6 | 4 | 1 | N/A |
 | **195** | Deduction of tax at source on foreign cross-border payments to non-residents, DTAA treaty benefits, documentation, Form 15CA/15CB, and cloud software exemption | Income-tax Act, 1961 read with Double Taxation Avoidance Agreements (DTAA) under Section 90 | `1962-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 2 | 1 | Income-tax Act, 2025 Section 393(2) (Section 393(2) of Income-tax Act, 2025) |
 | **INDAS-21-109-FX** | Foreign Exchange Monetary Asset/Liability Revaluation and Cash Flow Hedge Accounting | Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013 | `2016-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Companies Act, 2013 (Indian Accounting Standards) (Ind AS 21 & Ind AS 109) |
 | **IRC-901-904** | Foreign Tax Credit authorization, separate basket limitation, and partnership pass-through reporting (Form 1116 / Schedule K-3) | Internal Revenue Code of 1986 (Title 26, U.S. Code) | `2021-01-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 0 | 2 | Title 26, U.S. Code (Continuous) (26 U.S.C. §§ 901, 904(d), 904(j), 469) |
