@@ -236,6 +236,12 @@ export declare class StatutoryClient {
         eclLedgerHistory?: Array<{ date: string; balanceInr: number }>;
         annualInterestRate?: number;
     }): EclUtilizationAuditResult;
+    calculatePortfolioEclUtilizationInterest(params: {
+        overdueBills: Array<any>;
+        eclLedgerHistory: Array<{ date: string; balanceInr: number }>;
+        asOfDate?: string;
+        annualInterestRate?: number;
+    }): any;
     buildEvidenceProvenance(params: any): EvidenceProvenance;
     runWatchtower(options?: { okfDir?: string; verbose?: boolean }): Promise<WatchtowerReport>;
     normalizeInvoiceNumber(raw: string): { exactKey: string; alphaNumericKey: string };
@@ -607,6 +613,7 @@ export interface ReconcileZohoGstr2bOptions {
     toleranceInr?: number;
     asOfDate?: string;
     recipientGstin?: string | null;
+    recipientTaxScheme?: 'REGULAR' | 'COMPOSITION' | 'UNKNOWN' | 'INDETERMINATE';
     recipientRegisteredStates?: string[];
     recipientRegisteredGstins?: string[];
     paymentAppropriationMethod?: 'PROPORTIONATE' | 'VALUE_FIRST' | 'TAX_FIRST';
@@ -625,6 +632,7 @@ export interface ReconcileZohoGstr2bParams {
 export type Gstr2bDisposition =
     | 'MATCHED_ELIGIBLE'
     | 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE'
+    | 'COMPOSITION_EXCLUDED_RCM_SUPPLY'
     | 'MISMATCH_AMOUNT_VALUE'
     | 'MATCHED_INELIGIBLE_STATUTORY_BLOCK_17_5'
     | 'MATCHED_ROUTABLE_TO_BRANCH_GSTIN'
@@ -758,6 +766,7 @@ export interface ReconcileZohoGstr2bSummary {
     totalGstr2bRecordsCount: number;
     matchedEligibleCount: number;
     rcmUnregisteredEligibleCount: number;
+    compositionExcludedCount: number;
     amountMismatchCount: number;
     blocked17_5Count: number;
     posMismatchCount: number;
@@ -774,6 +783,7 @@ export interface ReconcileZohoGstr2bSummary {
     totalGstr2bTaxInr: number;
     eligibleItcInr: number;
     rcmUnregisteredEligibleItcInr: number;
+    compositionExcludedItcInr: number;
     atRiskUnfiledItcInr: number;
     blocked17_5ItcInr: number;
     posMismatchItcInr: number;
@@ -786,9 +796,12 @@ export interface ReconcileZohoGstr2bSummary {
     rule37ReversalAmountInr: number;
     rule37InterestExposureInr: number;
     paymentAppropriationMethod: 'PROPORTIONATE' | 'VALUE_FIRST' | 'TAX_FIRST';
+    paymentAppropriationLegalStatus: 'STATUTORY_MANDATE' | 'ACCOUNTING_ALLOCATION_ASSUMPTION';
+    recipientTaxScheme: 'REGULAR' | 'COMPOSITION' | 'INDETERMINATE';
     minimumEclBalanceInr: number | null;
     eclUtilizationStatus: 'UTILIZED' | 'UNUTILIZED' | 'UNKNOWN';
     eclLedgerHistoryAudit: boolean;
+    cumulativePortfolioEclAudit?: any;
     reconciliationStatus: 'FULLY_RECONCILED' | 'EXCEPTIONS_IDENTIFIED';
     isAuthorizedToDisburse: boolean;
 }
@@ -816,10 +829,18 @@ export declare function calculateEclUtilizationInterest(params: {
     eclLedgerHistory?: Array<{ date: string; balanceInr: number }>;
     annualInterestRate?: number;
 }): EclUtilizationAuditResult;
+export declare function calculatePortfolioEclUtilizationInterest(params: {
+    overdueBills: Array<any>;
+    eclLedgerHistory: Array<{ date: string; balanceInr: number }>;
+    asOfDate?: string;
+    annualInterestRate?: number;
+}): any;
 export declare function buildEvidenceProvenance(params: any): EvidenceProvenance;
 
 export interface EmpanelmentCertificate {
     certificateId: string;
+    attestationType: string;
+    attestationNotice: string;
     attestationTimestamp: string;
     merkleSubstrateRoot: string;
     governingSpecification: string;

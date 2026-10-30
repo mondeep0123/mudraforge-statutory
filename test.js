@@ -82,6 +82,7 @@ import {
     normalizeGstin,
     calculateOverdueStartDate,
     calculateEclUtilizationInterest,
+    calculatePortfolioEclUtilizationInterest,
     buildEvidenceProvenance,
     runStatutoryWatchtower,
     STATUTORY_OUTCOMES_DICTIONARY,
@@ -5123,7 +5124,7 @@ async function run() {
         if (!prov.provenanceTimestamp || isNaN(new Date(prov.provenanceTimestamp).getTime())) {
             throw new Error(`Invalid provenanceTimestamp: ${prov.provenanceTimestamp}`);
         }
-        if (prov.governanceTrail.merkleSubstrateRoot !== 'sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03') {
+        if (prov.governanceTrail.merkleSubstrateRoot !== 'sha256-df76c16ed86673426eeb87fafa1c23712830ce5314339ff17fbb2e0e1795e046') {
             throw new Error(`Substrate root mismatch: ${prov.governanceTrail.merkleSubstrateRoot}`);
         }
         if (prov.governanceTrail.isAuthorizedToDisburse !== false) {
@@ -5522,23 +5523,26 @@ async function run() {
     if (watchtowerReport.checks.schemaValidation.sectionsScanned !== 38) {
         throw new Error(`Expected 38 sections scanned, got ${watchtowerReport.checks.schemaValidation.sectionsScanned}`);
     }
-    if (watchtowerReport.checks.schemaValidation.circularsScanned !== 41) {
-        throw new Error(`Expected 41 circulars scanned, got ${watchtowerReport.checks.schemaValidation.circularsScanned}`);
+    if (watchtowerReport.checks.schemaValidation.circularsScanned !== 42) {
+        throw new Error(`Expected 42 circulars scanned, got ${watchtowerReport.checks.schemaValidation.circularsScanned}`);
     }
     if (watchtowerReport.checks.schemaValidation.formsScanned !== 39) {
         throw new Error(`Expected 39 forms scanned, got ${watchtowerReport.checks.schemaValidation.formsScanned}`);
     }
-    if (watchtowerReport.checks.citationIntegrity.failedCitations !== 0 || watchtowerReport.checks.citationIntegrity.validCitations !== 148) {
+    if (watchtowerReport.checks.citationIntegrity.failedCitations !== 0 || watchtowerReport.checks.citationIntegrity.validCitations !== 150) {
         throw new Error(`Citation integrity failed: ${watchtowerReport.checks.citationIntegrity.validCitations} valid, ${watchtowerReport.checks.citationIntegrity.failedCitations} failed`);
     }
     if (!watchtowerReport.checks.merkleImmutability.matchesPinnedRoot) {
         throw new Error(`Merkle root ${watchtowerReport.checks.merkleImmutability.computedRoot} not in PINNED_RELEASE_ROOTS`);
     }
-    if (watchtowerReport.checks.freshnessHorizon.benchmarksPassed !== 6) {
-        throw new Error(`Freshness benchmarks failed: ${watchtowerReport.checks.freshnessHorizon.benchmarksPassed}/6 passed`);
+    if (watchtowerReport.checks.freshnessHorizon.benchmarksPassed !== 7) {
+        throw new Error(`Freshness benchmarks failed: ${watchtowerReport.checks.freshnessHorizon.benchmarksPassed}/7 passed`);
     }
     if (!watchtowerReport.certificate || watchtowerReport.certificate.empanelmentComplianceScore !== '100.0%') {
         throw new Error(`Empanelment score not 100.0%: ${watchtowerReport.certificate?.empanelmentComplianceScore}`);
+    }
+    if (!watchtowerReport.certificate.attestationNotice || !watchtowerReport.certificate.attestationType) {
+        throw new Error('Empanelment certificate missing epistemic attestation notice or attestation type');
     }
     if (watchtowerReport.certificate.isAuthorizedToDisburse !== false) {
         throw new Error('Statutory invariant violated in certificate: isAuthorizedToDisburse must be false');
@@ -5561,10 +5565,152 @@ async function run() {
         throw new Error(`CLI watchtower returned malformed output: ${cliOutput}`);
     }
 
-    console.log(`[PASS] Regulatory Watchtower Verified: All 38 sections, 41 circulars, 39 forms, 148 deep citations, and 6 regulatory horizons attested at 100.0% empanelment score.`);
+    console.log(`[PASS] Regulatory Watchtower Verified: All 38 sections, 42 circulars, 39 forms, 150 deep citations, and 7 regulatory horizons attested at 100.0% empanelment score.`);
+
+    // ── Test 154: Notification No. 07/2025 Composition Rent Exclusion & Multi-Invoice Portfolio ECL Utilization ──
+    console.log('\n── Test 154: Notification No. 07/2025 Composition Rent Exclusion & Multi-Invoice Portfolio ECL Utilization ──');
+
+    const testRentBills = [
+        // Case A: Post-16 Jan 2025 with COMPOSITION recipient
+        {
+            billNumber: 'RENT-COMP-2025',
+            billDate: '2025-01-20',
+            vendorName: 'Shri Ram Commercial Spaces',
+            vendorGstin: 'UNREGISTERED',
+            lineItems: [{ description: 'Office Godown Rent', hsnSac: '997212', taxableAmount: 50000, cgstAmount: 4500, sgstAmount: 4500, igstAmount: 0 }],
+            isCommercialRentRcm: true
+        },
+        // Case B: Pre-16 Jan 2025 with COMPOSITION recipient (under Notification 09/2024, RCM still attached before 16 Jan 2025)
+        {
+            billNumber: 'RENT-PRE-JAN16',
+            billDate: '2024-12-15',
+            vendorName: 'Shri Ram Commercial Spaces',
+            vendorGstin: 'UNREGISTERED',
+            lineItems: [{ description: 'Office Godown Rent Dec 2024', hsnSac: '997212', taxableAmount: 50000, cgstAmount: 4500, sgstAmount: 4500, igstAmount: 0 }],
+            isCommercialRentRcm: true
+        }
+    ];
+
+    // Execution with recipientTaxScheme: 'COMPOSITION'
+    const compRecon = reconcileZohoGstr2b({
+        zohoBills: testRentBills,
+        gstr2b: [],
+        options: {
+            asOfDate: '2025-01-25',
+            recipientGstin: '27AABCT8888T1ZZ',
+            recipientRegisteredStates: ['27'],
+            recipientTaxScheme: 'COMPOSITION'
+        }
+    });
+
+    const postJan16Item = compRecon.reconciliationItems.find(i => i.billNumber === 'RENT-COMP-2025');
+    const preJan16Item = compRecon.reconciliationItems.find(i => i.billNumber === 'RENT-PRE-JAN16');
+
+    if (!postJan16Item || postJan16Item.disposition !== 'COMPOSITION_EXCLUDED_RCM_SUPPLY') {
+        throw new Error(`Post-16 Jan 2025 rent expected COMPOSITION_EXCLUDED_RCM_SUPPLY, got ${postJan16Item?.disposition}`);
+    }
+    if (postJan16Item.isRcm !== false || postJan16Item.isCompositionExcluded !== true) {
+        throw new Error(`Post-16 Jan 2025 composition item flag error: isRcm=${postJan16Item?.isRcm}, isCompositionExcluded=${postJan16Item?.isCompositionExcluded}`);
+    }
+    if (!postJan16Item.statutoryAction.includes('Notification No. 07/2025-CT(Rate)')) {
+        throw new Error(`Statutory action missing Notification 07/2025-CT(Rate): ${postJan16Item?.statutoryAction}`);
+    }
+    if (compRecon.summary.compositionExcludedCount !== 1 || compRecon.summary.compositionExcludedItcInr !== 9000) {
+        throw new Error(`Summary composition excluded count/ITC mismatch: count=${compRecon.summary.compositionExcludedCount}, itc=${compRecon.summary.compositionExcludedItcInr}`);
+    }
+
+    if (!preJan16Item || preJan16Item.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE') {
+        throw new Error(`Pre-16 Jan 2025 rent under Notification 09/2024 expected RCM_UNREGISTERED_SUPPLIER_ELIGIBLE, got ${preJan16Item?.disposition}`);
+    }
+
+    // Case C: Post-16 Jan 2025 with recipientTaxScheme: 'INDETERMINATE'
+    const indetRecon = reconcileZohoGstr2b({
+        zohoBills: [testRentBills[0]],
+        gstr2b: [],
+        options: {
+            asOfDate: '2025-01-25',
+            recipientGstin: '27AABCT8888T1ZZ',
+            recipientTaxScheme: 'INDETERMINATE'
+        }
+    });
+    const indetItem = indetRecon.reconciliationItems[0];
+    if (indetItem.disposition !== 'REQUIRES_HUMAN_VERIFICATION' || indetItem.uncertaintyReason !== 'INDETERMINATE_RECIPIENT_REGISTRATION_SCHEME') {
+        throw new Error(`Indeterminate scheme expected REQUIRES_HUMAN_VERIFICATION / INDETERMINATE_RECIPIENT_REGISTRATION_SCHEME, got ${indetItem?.disposition} / ${indetItem?.uncertaintyReason}`);
+    }
+
+    // Case D: Post-16 Jan 2025 with recipientTaxScheme: 'REGULAR'
+    const regRecon = reconcileZohoGstr2b({
+        zohoBills: [testRentBills[0]],
+        gstr2b: [],
+        options: {
+            asOfDate: '2025-01-25',
+            recipientGstin: '27AABCT8888T1ZZ',
+            recipientTaxScheme: 'REGULAR'
+        }
+    });
+    const regItem = regRecon.reconciliationItems[0];
+    if (regItem.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE') {
+        throw new Error(`Regular taxpayer expected RCM_UNREGISTERED_SUPPLIER_ELIGIBLE under Entry 5AB, got ${regItem?.disposition}`);
+    }
+
+    // Rule 37 Payment Appropriation Legal Status Verification
+    if (compRecon.summary.paymentAppropriationLegalStatus !== 'STATUTORY_MANDATE') {
+        throw new Error(`Default PROPORTIONATE method expected STATUTORY_MANDATE, got ${compRecon.summary.paymentAppropriationLegalStatus}`);
+    }
+
+    const valueFirstRecon = reconcileZohoGstr2b({
+        zohoBills: [testRentBills[0]],
+        gstr2b: [],
+        options: {
+            asOfDate: '2025-01-25',
+            recipientGstin: '27AABCT8888T1ZZ',
+            paymentAppropriationMethod: 'VALUE_FIRST'
+        }
+    });
+    if (valueFirstRecon.summary.paymentAppropriationLegalStatus !== 'ACCOUNTING_ALLOCATION_ASSUMPTION') {
+        throw new Error(`VALUE_FIRST method expected ACCOUNTING_ALLOCATION_ASSUMPTION, got ${valueFirstRecon.summary.paymentAppropriationLegalStatus}`);
+    }
+
+    // Multi-Invoice Portfolio Rule 88B(3) ECL Utilization Audit Verification
+    const portfolioAudit = calculatePortfolioEclUtilizationInterest({
+        overdueBills: [
+            {
+                billNumber: 'BILL-OVERDUE-01',
+                unreversedItcInr: 10000,
+                overdueStartDate: '2024-07-01'
+            },
+            {
+                billNumber: 'BILL-OVERDUE-02',
+                unreversedItcInr: 20000,
+                overdueStartDate: '2024-07-15'
+            }
+        ],
+        eclLedgerHistory: [
+            { date: '2024-06-30', balanceInr: 50000 }, // Balance > 10,000 & 30,000 -> 0 shortfall
+            { date: '2024-07-20', balanceInr: 15000 }, // Balance dips to 15,000; pooled unreversed = 30,000 -> Shortfall = 15,000 INR
+            { date: '2024-07-25', balanceInr: 45000 }  // Balance recovers to 45,000 > 30,000 -> Shortfall = 0
+        ],
+        asOfDate: '2024-08-01',
+        annualInterestRate: 0.18
+    });
+
+    if (portfolioAudit.totalInterestInr <= 0) {
+        throw new Error(`Expected positive interest for 5-day ECL dip, got ${portfolioAudit.totalInterestInr}`);
+    }
+    if (portfolioAudit.utilizedDaysCount !== 5) {
+        throw new Error(`Expected exactly 5 utilized days between 2024-07-20 and 2024-07-25, got ${portfolioAudit.utilizedDaysCount}`);
+    }
+    if (portfolioAudit.maxPortfolioUtilizationInr !== 15000) {
+        throw new Error(`Expected max portfolio utilization of 15,000 INR, got ${portfolioAudit.maxPortfolioUtilizationInr}`);
+    }
+    if (portfolioAudit.isAuthorizedToDisburse !== false) {
+        throw new Error('Statutory invariant violated in portfolioAudit: isAuthorizedToDisburse must be false');
+    }
+
+    console.log('[PASS] Notification No. 07/2025-CT(Rate) & Portfolio ECL Utilization Verified: Composition rent RCM exclusion, uncertain scheme failsafe, statutory vs accounting allocation status, and cumulative multi-invoice Rule 88B(3) pooling confirmed.');
 
     console.log('\n===========================================================================');
-    console.log('ALL 153 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 154 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

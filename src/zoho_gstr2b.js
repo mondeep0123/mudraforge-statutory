@@ -279,6 +279,214 @@ export function calculateEclUtilizationInterest({
 }
 
 /**
+ * Reconstruct cumulative portfolio ECL utilization for multiple overlapping overdue invoices under Rule 88B(3).
+ * Accurately pools overlapping unreversed ITC and computes multi-invoice shortfall against daily ledger balances.
+ *
+ * @param {Object} params
+ * @param {Array<Object>} params.overdueBills
+ * @param {Array<{date: string, balanceInr: number}>} params.eclLedgerHistory
+ * @param {string} params.asOfDate
+ * @param {number} [params.annualInterestRate=0.18]
+ * @returns {Object} CumulativePortfolioEclAuditResult
+ */
+export function calculatePortfolioEclUtilizationInterest(params = {}) {
+    const overdueBills = Array.isArray(params.overdueBills) ? params.overdueBills : [];
+    const eclLedgerHistory = Array.isArray(params.eclLedgerHistory) ? params.eclLedgerHistory : [];
+    const asOfDate = normalizeIsoDate(params.asOfDate || new Date().toISOString().slice(0, 10));
+    const annualInterestRate = typeof params.annualInterestRate === 'number' ? params.annualInterestRate : 0.18;
+
+    if (overdueBills.length === 0 || eclLedgerHistory.length === 0) {
+        return {
+            totalInterestInr: 0,
+            totalInterestPaise: 0,
+            totalOverdueDays: 0,
+            utilizedDaysCount: 0,
+            zeroUtilizationDaysCount: 0,
+            maxPortfolioUtilizationInr: 0,
+            chronologicalIntervals: [],
+            explanation: 'Zero overdue bills or empty ECL ledger history for portfolio analysis.',
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    const sortedHistory = eclLedgerHistory
+        .filter(e => e && e.date)
+        .map(e => ({
+            date: normalizeIsoDate(e.date),
+            balancePaise: toIntegerPaise(e.balanceInr, 'eclBalanceInr')
+        }))
+        .filter(e => e.date !== null)
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (sortedHistory.length === 0) {
+        return {
+            totalInterestInr: 0,
+            totalInterestPaise: 0,
+            totalOverdueDays: 0,
+            utilizedDaysCount: 0,
+            zeroUtilizationDaysCount: 0,
+            maxPortfolioUtilizationInr: 0,
+            chronologicalIntervals: [],
+            explanation: 'Zero valid dates found in ECL ledger history.',
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    let earliestStartMs = Infinity;
+    let latestEndMs = -Infinity;
+
+    const normalizedBills = [];
+    for (const b of overdueBills) {
+        const start = b.overdueStartDate ? normalizeIsoDate(b.overdueStartDate) : calculateOverdueStartDate(b.billDate);
+        if (!start) continue;
+        const end = b.reversalDate ? normalizeIsoDate(b.reversalDate) : asOfDate;
+        const startMs = new Date(start).getTime();
+        const endMs = new Date(end).getTime();
+        if (startMs >= endMs) continue;
+
+        if (startMs < earliestStartMs) earliestStartMs = startMs;
+        if (endMs > latestEndMs) latestEndMs = endMs;
+
+        const revTax = b.unreversedItcInr !== undefined
+            ? b.unreversedItcInr
+            : (b.rule37ReversalTaxInr !== undefined ? b.rule37ReversalTaxInr : (b.reversalTaxInr !== undefined ? b.reversalTaxInr : b.totalTaxInr));
+        normalizedBills.push({
+            billNumber: b.billNumber,
+            startIso: start,
+            endIso: end,
+            unreversedPaise: toIntegerPaise(revTax || 0)
+        });
+    }
+
+    if (normalizedBills.length === 0 || earliestStartMs >= latestEndMs) {
+        return {
+            totalInterestInr: 0,
+            totalInterestPaise: 0,
+            totalOverdueDays: 0,
+            utilizedDaysCount: 0,
+            zeroUtilizationDaysCount: 0,
+            maxPortfolioUtilizationInr: 0,
+            chronologicalIntervals: [],
+            explanation: 'Overdue duration is zero across portfolio bills.',
+            isAuthorizedToDisburse: false
+        };
+    }
+
+    function getBalancePaise(dayIso) {
+        let active = sortedHistory[0].balancePaise;
+        for (const entry of sortedHistory) {
+            if (entry.date <= dayIso) {
+                active = entry.balancePaise;
+            } else {
+                break;
+            }
+        }
+        return active;
+    }
+
+    let currentMs = earliestStartMs;
+    let totalInterestPaisePrecise = 0;
+    let utilizedDaysCount = 0;
+    let zeroUtilizationDaysCount = 0;
+    let maxPortfolioUtilizationPaise = 0;
+    const dailyEvaluations = [];
+
+    while (currentMs < latestEndMs) {
+        const dayIso = new Date(currentMs).toISOString().slice(0, 10);
+        let activePoolPaise = 0;
+        for (const b of normalizedBills) {
+            if (dayIso >= b.startIso && dayIso < b.endIso) {
+                activePoolPaise += b.unreversedPaise;
+            }
+        }
+
+        const dayBalPaise = getBalancePaise(dayIso);
+        const wrongfulUtilizedPaise = Math.max(0, activePoolPaise - dayBalPaise);
+
+        if (wrongfulUtilizedPaise > 0) {
+            utilizedDaysCount++;
+            if (wrongfulUtilizedPaise > maxPortfolioUtilizationPaise) {
+                maxPortfolioUtilizationPaise = wrongfulUtilizedPaise;
+            }
+            const dayInt = wrongfulUtilizedPaise * (annualInterestRate / 365);
+            totalInterestPaisePrecise += dayInt;
+            dailyEvaluations.push({
+                date: dayIso,
+                balanceInr: fromIntegerPaise(dayBalPaise),
+                activePoolInr: fromIntegerPaise(activePoolPaise),
+                utilizedInr: fromIntegerPaise(wrongfulUtilizedPaise),
+                dayInterestInr: roundToPaisa(dayInt / 100)
+            });
+        } else {
+            zeroUtilizationDaysCount++;
+            dailyEvaluations.push({
+                date: dayIso,
+                balanceInr: fromIntegerPaise(dayBalPaise),
+                activePoolInr: fromIntegerPaise(activePoolPaise),
+                utilizedInr: 0,
+                dayInterestInr: 0
+            });
+        }
+
+        currentMs += 1000 * 60 * 60 * 24;
+    }
+
+    const chronologicalIntervals = [];
+    if (dailyEvaluations.length > 0) {
+        let currentInterval = {
+            startDate: dailyEvaluations[0].date,
+            endDate: dailyEvaluations[0].date,
+            days: 1,
+            eclBalanceInr: dailyEvaluations[0].balanceInr,
+            activePoolInr: dailyEvaluations[0].activePoolInr,
+            utilizedAmountInr: dailyEvaluations[0].utilizedInr,
+            intervalInterestPaise: dailyEvaluations[0].dayInterestInr * 100
+        };
+
+        for (let i = 1; i < dailyEvaluations.length; i++) {
+            const day = dailyEvaluations[i];
+            if (day.utilizedInr === currentInterval.utilizedAmountInr && day.balanceInr === currentInterval.eclBalanceInr && day.activePoolInr === currentInterval.activePoolInr) {
+                currentInterval.endDate = day.date;
+                currentInterval.days++;
+                currentInterval.intervalInterestPaise += day.dayInterestInr * 100;
+            } else {
+                currentInterval.intervalInterestInr = fromIntegerPaise(Math.round(currentInterval.intervalInterestPaise));
+                delete currentInterval.intervalInterestPaise;
+                chronologicalIntervals.push(currentInterval);
+
+                currentInterval = {
+                    startDate: day.date,
+                    endDate: day.date,
+                    days: 1,
+                    eclBalanceInr: day.balanceInr,
+                    activePoolInr: day.activePoolInr,
+                    utilizedAmountInr: day.utilizedInr,
+                    intervalInterestPaise: day.dayInterestInr * 100
+                };
+            }
+        }
+        currentInterval.intervalInterestInr = fromIntegerPaise(Math.round(currentInterval.intervalInterestPaise));
+        delete currentInterval.intervalInterestPaise;
+        chronologicalIntervals.push(currentInterval);
+    }
+
+    const roundedInterestPaise = Math.round(totalInterestPaisePrecise);
+    return {
+        totalInterestInr: fromIntegerPaise(roundedInterestPaise),
+        totalInterestPaise: roundedInterestPaise,
+        totalOverdueDays: dailyEvaluations.length,
+        utilizedDaysCount,
+        zeroUtilizationDaysCount,
+        maxPortfolioUtilizationInr: fromIntegerPaise(maxPortfolioUtilizationPaise),
+        chronologicalIntervals,
+        explanation: utilizedDaysCount === 0
+            ? `Rule 88B(3) Portfolio Proviso: ECL balance exceeded cumulative unreversed ITC pool for all ${dailyEvaluations.length} days across ${normalizedBills.length} overlapping bills. Zero penal interest payable.`
+            : `Rule 88B(3) Portfolio Dip: ECL balance dipped below cumulative unreversed ITC pool on ${utilizedDaysCount} days, reaching max shortfall of INR ${fromIntegerPaise(maxPortfolioUtilizationPaise).toLocaleString('en-IN')}. Total portfolio interest: INR ${fromIntegerPaise(roundedInterestPaise).toLocaleString('en-IN')}.`,
+        isAuthorizedToDisburse: false
+    };
+}
+
+/**
  * Constructs an immutable, self-contained evidence provenance record for a statutory reconciliation item.
  * Enables complete forensic reconstruction of the decision chain months later.
  *
@@ -361,7 +569,7 @@ export function buildEvidenceProvenance({
             requiresHumanReview: disposition === 'REQUIRES_HUMAN_VERIFICATION',
             auditVerificationDate: asOfDate,
             engineIdentity: '@mudraforge/statutory@2.11.0',
-            merkleSubstrateRoot: 'sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03',
+            merkleSubstrateRoot: 'sha256-df76c16ed86673426eeb87fafa1c23712830ce5314339ff17fbb2e0e1795e046',
             isAuthorizedToDisburse: false
         }
     };
@@ -853,11 +1061,22 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         recipientRegisteredStates = [],
         recipientRegisteredGstins = [],
         paymentAppropriationMethod = 'PROPORTIONATE',
+        recipientTaxScheme: rawRecipientScheme = 'REGULAR',
+        recipientScheme,
+        isCompositionDealer = false,
         minimumEclBalanceInr = undefined,
         eclLedgerHistory = [],
         eclUtilizationStatus = 'UTILIZED',
         goodsInTransitWindowDays = 15
     } = options;
+
+    const normalizedRecipientScheme = isCompositionDealer
+        ? 'COMPOSITION'
+        : (/COMPOSITION/i.test(String(recipientScheme || rawRecipientScheme || ''))
+            ? 'COMPOSITION'
+            : (/UNKNOWN|INDETERMINATE/i.test(String(recipientScheme || rawRecipientScheme || ''))
+                ? 'INDETERMINATE'
+                : 'REGULAR'));
 
     const tolerancePaise = toIntegerPaise(toleranceInr, 'toleranceInr');
 
@@ -871,22 +1090,73 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         const vendorGstin = String(b.vendorGstin || b.gstin || b.gst_no || b.vendor_gstin || '').trim().toUpperCase();
         const gstinObj = vendorGstin ? normalizeGstin(vendorGstin) : null;
         const isGstinValid = typeof b.isGstinValid === 'boolean' ? b.isGstinValid : (options.validateGstinChecksum === true && gstinObj ? gstinObj.isValid : undefined);
-        const taxableAmountInr = cleanNumericAmount(b.taxableAmountInr ?? b.taxable_amount ?? b.sub_total ?? 0);
-        const cgstInr = cleanNumericAmount(b.cgstInr ?? b.cgst_amount ?? 0);
-        const sgstInr = cleanNumericAmount(b.sgstInr ?? b.sgst_amount ?? 0);
-        const igstInr = cleanNumericAmount(b.igstInr ?? b.igst_amount ?? 0);
+        let taxableAmountInr = cleanNumericAmount(b.taxableAmountInr ?? b.taxable_amount ?? b.sub_total ?? 0);
+        let cgstInr = cleanNumericAmount(b.cgstInr ?? b.cgst_amount ?? 0);
+        let sgstInr = cleanNumericAmount(b.sgstInr ?? b.sgst_amount ?? 0);
+        let igstInr = cleanNumericAmount(b.igstInr ?? b.igst_amount ?? 0);
+
+        const itemsArr = Array.isArray(b.lineItems) ? b.lineItems : (Array.isArray(b.line_items) ? b.line_items : []);
+        if (itemsArr.length > 0 && taxableAmountInr === 0 && cgstInr === 0 && sgstInr === 0 && igstInr === 0) {
+            for (const item of itemsArr) {
+                taxableAmountInr += cleanNumericAmount(item.taxableAmount ?? item.taxable_amount ?? item.item_total ?? 0);
+                cgstInr += cleanNumericAmount(item.cgstAmount ?? item.cgst_amount ?? 0);
+                sgstInr += cleanNumericAmount(item.sgstAmount ?? item.sgst_amount ?? 0);
+                igstInr += cleanNumericAmount(item.igstAmount ?? item.igst_amount ?? 0);
+            }
+            taxableAmountInr = roundToPaisa(taxableAmountInr);
+            cgstInr = roundToPaisa(cgstInr);
+            sgstInr = roundToPaisa(sgstInr);
+            igstInr = roundToPaisa(igstInr);
+        }
+
         const totalTaxInr = b.totalTaxInr !== undefined ? cleanNumericAmount(b.totalTaxInr) : roundToPaisa(cgstInr + sgstInr + igstInr);
         const totalAmountInr = b.totalAmountInr !== undefined ? cleanNumericAmount(b.totalAmountInr) : roundToPaisa(taxableAmountInr + totalTaxInr);
         const balanceInr = b.balanceInr !== undefined ? cleanNumericAmount(b.balanceInr) : (b.balance !== undefined ? cleanNumericAmount(b.balance) : (b.isFullyPaid || b.status === 'paid' ? 0 : totalAmountInr));
         const isFullyPaid = typeof b.isFullyPaid === 'boolean' ? b.isFullyPaid : (balanceInr <= 0 || b.status === 'paid');
         const posStateCode = b.posStateCode !== undefined ? b.posStateCode : (gstinObj ? gstinObj.stateCode : null);
         const isBlocked17_5 = typeof b.isBlocked17_5 === 'boolean' ? b.isBlocked17_5 : /motor|vehicle|food|beverage|catering|club|fitness|personal|gift/i.test(b.category || '');
-        const isCommercialRentRcm = Boolean(b.isCommercialRentRcm || (
-            /commercial.*rent|office.*rent|property.*rent|warehouse.*rent|renting.*commercial/i.test(b.category || '') &&
-            (!vendorGstin || vendorGstin === 'UNREGISTERED' || vendorGstin.length < 15) &&
-            (!b.billDate || b.billDate >= '2024-10-10')
-        ));
-        const isRcm = Boolean(b.isRcm || /true|yes|y|1/i.test(String(b.is_rcm || '')) || isCommercialRentRcm);
+
+        const descText = Array.isArray(b.lineItems) ? b.lineItems.map(l => l.description || '').join(' ') : '';
+        const isCommercialRent = /commercial.*rent|office.*rent|property.*rent|warehouse.*rent|renting.*commercial|godown.*rent/i.test((b.category || '') + ' ' + descText) || Boolean(b.isCommercialRent || b.isCommercialRentRcm);
+        const isUnregLandlord = (!vendorGstin || vendorGstin === 'UNREGISTERED' || vendorGstin.length < 15);
+        const billDateStr = b.billDate || null;
+
+        let isCommercialRentRcm = false;
+        let isCompositionExcludedFromRentRcm = false;
+        let requiresRentSchemeVerification = false;
+
+        if (isCommercialRent && isUnregLandlord) {
+            if (!billDateStr || billDateStr < '2024-10-10') {
+                isCommercialRentRcm = false;
+            } else if (billDateStr >= '2024-10-10' && billDateStr < '2025-01-16') {
+                isCommercialRentRcm = true;
+            } else {
+                // On or after 16 Jan 2025: Notification No. 07/2025-Central Tax (Rate)
+                if (normalizedRecipientScheme === 'COMPOSITION') {
+                    isCompositionExcludedFromRentRcm = true;
+                    isCommercialRentRcm = false;
+                } else if (normalizedRecipientScheme === 'INDETERMINATE') {
+                    requiresRentSchemeVerification = true;
+                    isCommercialRentRcm = false;
+                } else {
+                    isCommercialRentRcm = true;
+                }
+            }
+        }
+
+        if (b.isCompositionExcludedFromRentRcm !== undefined) {
+            isCompositionExcludedFromRentRcm = Boolean(b.isCompositionExcludedFromRentRcm);
+        }
+        if (b.requiresRentSchemeVerification !== undefined) {
+            requiresRentSchemeVerification = Boolean(b.requiresRentSchemeVerification);
+        }
+        if (isCompositionExcludedFromRentRcm || requiresRentSchemeVerification) {
+            isCommercialRentRcm = false;
+        } else if (b.isCommercialRentRcm !== undefined && !isCommercialRent) {
+            isCommercialRentRcm = Boolean(b.isCommercialRentRcm);
+        }
+
+        const isRcm = Boolean((!isCompositionExcludedFromRentRcm && !requiresRentSchemeVerification && (b.isRcm || /true|yes|y|1/i.test(String(b.is_rcm || '')))) || isCommercialRentRcm);
         const isSchedule1DeemedSupply = Boolean(b.isSchedule1DeemedSupply || /distinct|related|deemed|schedule\s*1/i.test(b.category || ''));
 
         return {
@@ -901,6 +1171,8 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
             isBlocked17_5,
             isRcm,
             isCommercialRentRcm,
+            isCompositionExcludedFromRentRcm,
+            requiresRentSchemeVerification,
             isSchedule1DeemedSupply,
             taxableAmountInr,
             cgstInr,
@@ -1011,6 +1283,9 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
 
     let rcmUnregisteredEligibleCount = 0;
     let rcmUnregisteredEligibleItcPaise = 0;
+
+    let compositionExcludedCount = 0;
+    let compositionExcludedItcPaise = 0;
 
     let amountMismatchCount = 0;
     let mismatchedItcPaise = 0;
@@ -1353,6 +1628,129 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
 
         // ── Missing in GSTR-2B or Unregistered RCM Supply ──
         if (!matchEntry) {
+            // Check for Indeterminate Recipient Scheme (Notification 07/2025-CT(Rate))
+            if (bill.requiresRentSchemeVerification) {
+                requiresHumanVerificationCount++;
+                requiresHumanVerificationItcPaise += booksTaxPaise;
+
+                items.push({
+                    disposition: 'REQUIRES_HUMAN_VERIFICATION',
+                    uncertaintyReason: 'INDETERMINATE_RECIPIENT_REGISTRATION_SCHEME',
+                    itcStatus: 'INDETERMINATE_REGISTRATION_SCHEME',
+                    statutorySection: 'CGST Act Section 9(3) read with Notification No. 07/2025-CT(Rate)',
+                    vendorName: bill.vendorName,
+                    vendorGstin: bill.vendorGstin || 'UNREGISTERED',
+                    billNumber: bill.billNumber,
+                    billDate: bill.billDate,
+                    booksTaxableInr: bill.taxableAmountInr,
+                    booksTaxInr: bill.totalTaxInr,
+                    gstr2bTaxableInr: 0,
+                    gstr2bTaxInr: 0,
+                    varianceTaxableInr: bill.taxableAmountInr,
+                    varianceTaxInr: bill.totalTaxInr,
+                    isRule37Overdue: false,
+                    daysElapsedSinceBill,
+                    rule37Status: 'EXEMPT_RCM_SUPPLY',
+                    rule37ReversalTaxInr: 0,
+                    rule37InterestInr: 0,
+                    rule37InterestExplanation: '',
+                    isReclaimableUponPayment: false,
+                    paymentAppropriationDetails: null,
+                    isRcm: false,
+                    jurisdictionDecisions: {
+                        taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                        recipientJurisdiction: 'INDETERMINATE',
+                        itcEligibility: 'INDETERMINATE',
+                        operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+                    },
+                    statutoryAction: 'Notification No. 07/2025-CT(Rate) w.e.f. 16 Jan 2025 excludes composition taxpayers (Section 10) from Entry 5AB commercial rent RCM. Verify recipient GST registration scheme (Regular vs Section 10 Composition) to determine RCM liability.',
+                    auditEvidence: {
+                        inBooks: true,
+                        inGstr2b: false,
+                        matchType: 'UNMATCHED',
+                        isCommercialRent: true,
+                        requiresRentSchemeVerification: true
+                    },
+                    evidenceProvenance: buildEvidenceProvenance({
+                        bill,
+                        record2b: null,
+                        matchType: 'UNMATCHED',
+                        disposition: 'REQUIRES_HUMAN_VERIFICATION',
+                        statutorySection: 'CGST Act Section 9(3) read with Notification No. 07/2025-CT(Rate)',
+                        jurisdictionDecisions: {
+                            taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                            recipientJurisdiction: 'INDETERMINATE',
+                            itcEligibility: 'INDETERMINATE',
+                            operationalRouting: 'MANUAL_HUMAN_INVESTIGATION_REQUIRED'
+                        },
+                        uncertaintyReason: 'INDETERMINATE_RECIPIENT_REGISTRATION_SCHEME',
+                        asOfDate
+                    })
+                });
+                continue;
+            }
+
+            // Check for Composition Scheme Exclusion (Notification 07/2025-CT(Rate))
+            if (bill.isCompositionExcludedFromRentRcm) {
+                compositionExcludedCount++;
+                compositionExcludedItcPaise += booksTaxPaise;
+
+                items.push({
+                    disposition: 'COMPOSITION_EXCLUDED_RCM_SUPPLY',
+                    itcStatus: 'INELIGIBLE_COMPOSITION_SCHEME_SEC10_4',
+                    statutorySection: 'CGST Act Section 9(3) read with Notification No. 07/2025-CT(Rate) & Section 10(4)',
+                    vendorName: bill.vendorName,
+                    vendorGstin: bill.vendorGstin || 'UNREGISTERED',
+                    billNumber: bill.billNumber,
+                    billDate: bill.billDate,
+                    booksTaxableInr: bill.taxableAmountInr,
+                    booksTaxInr: bill.totalTaxInr,
+                    gstr2bTaxableInr: 0,
+                    gstr2bTaxInr: 0,
+                    varianceTaxableInr: 0,
+                    varianceTaxInr: 0,
+                    isRule37Overdue: false,
+                    daysElapsedSinceBill,
+                    rule37Status: 'EXEMPT_NON_GST_SUPPLY',
+                    rule37ReversalTaxInr: 0,
+                    rule37InterestInr: 0,
+                    rule37InterestExplanation: '',
+                    isReclaimableUponPayment: false,
+                    paymentAppropriationDetails: null,
+                    isRcm: false,
+                    isCompositionExcluded: true,
+                    jurisdictionDecisions: {
+                        taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                        recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
+                        itcEligibility: 'INELIGIBLE_STRANDED_LOCAL_LEVY',
+                        operationalRouting: 'BOOK_AS_EXPENSE_NO_ITC'
+                    },
+                    statutoryAction: 'Commercial property renting from unregistered person is excluded from RCM for composition taxpayers w.e.f. 16 January 2025 per Notification No. 07/2025-CT(Rate). No reverse charge tax payable; zero ITC available under Section 10(4). Book full consideration as business expense.',
+                    auditEvidence: {
+                        inBooks: true,
+                        inGstr2b: false,
+                        matchType: 'COMPOSITION_EXCLUDED_RCM',
+                        isCompositionExcluded: true
+                    },
+                    evidenceProvenance: buildEvidenceProvenance({
+                        bill,
+                        record2b: null,
+                        matchType: 'COMPOSITION_EXCLUDED_RCM',
+                        disposition: 'COMPOSITION_EXCLUDED_RCM_SUPPLY',
+                        statutorySection: 'CGST Act Section 9(3) read with Notification No. 07/2025-CT(Rate) & Section 10(4)',
+                        jurisdictionDecisions: {
+                            taxClassification: hasIgst ? 'INTERSTATE_CORRECT' : 'INTRASTATE_CORRECT',
+                            recipientJurisdiction: 'FILING_GSTIN_MATCHES_POS',
+                            itcEligibility: 'INELIGIBLE_STRANDED_LOCAL_LEVY',
+                            operationalRouting: 'BOOK_AS_EXPENSE_NO_ITC'
+                        },
+                        uncertaintyReason: null,
+                        asOfDate
+                    })
+                });
+                continue;
+            }
+
             if (isRcm && (!bill.vendorGstin || bill.vendorGstin === 'UNREGISTERED' || bill.isCommercialRentRcm)) {
                 rcmUnregisteredEligibleCount++;
                 rcmUnregisteredEligibleItcPaise += booksTaxPaise;
@@ -2029,11 +2427,25 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         }
     }
 
+    // Cumulative Portfolio-Level Rule 88B(3) Audit across overlapping overdue bills
+    let cumulativePortfolioEclAudit = null;
+    if (Array.isArray(eclLedgerHistory) && eclLedgerHistory.length > 0) {
+        const overdueBills = items.filter(i => i.isRule37Overdue);
+        if (overdueBills.length > 0) {
+            cumulativePortfolioEclAudit = calculatePortfolioEclUtilizationInterest({
+                overdueBills,
+                eclLedgerHistory,
+                asOfDate
+            });
+        }
+    }
+
     const summary = {
         totalBooksBillsCount: parsedBills.length,
         totalGstr2bRecordsCount: parsed2b.length,
         matchedEligibleCount,
         rcmUnregisteredEligibleCount,
+        compositionExcludedCount,
         amountMismatchCount,
         blocked17_5Count,
         posMismatchCount,
@@ -2052,6 +2464,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
 
         eligibleItcInr: fromIntegerPaise(eligibleItcPaise),
         rcmUnregisteredEligibleItcInr: fromIntegerPaise(rcmUnregisteredEligibleItcPaise),
+        compositionExcludedItcInr: fromIntegerPaise(compositionExcludedItcPaise),
         atRiskUnfiledItcInr: fromIntegerPaise(atRiskUnfiledItcPaise),
         blocked17_5ItcInr: fromIntegerPaise(blocked17_5ItcPaise),
         posMismatchItcInr: fromIntegerPaise(posMismatchItcPaise),
@@ -2065,9 +2478,12 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         rule37ReversalAmountInr: fromIntegerPaise(rule37ReversalAmountPaise),
         rule37InterestExposureInr: fromIntegerPaise(rule37InterestExposurePaise),
         paymentAppropriationMethod,
+        paymentAppropriationLegalStatus: paymentAppropriationMethod === 'PROPORTIONATE' ? 'STATUTORY_MANDATE' : 'ACCOUNTING_ALLOCATION_ASSUMPTION',
+        recipientTaxScheme: normalizedRecipientScheme,
         minimumEclBalanceInr: minimumEclBalanceInr !== undefined ? cleanNumericAmount(minimumEclBalanceInr) : null,
         eclUtilizationStatus,
         eclLedgerHistoryAudit: (Array.isArray(eclLedgerHistory) && eclLedgerHistory.length > 0),
+        cumulativePortfolioEclAudit,
 
         reconciliationStatus: (missingIn2bCount === 0 && amountMismatchCount === 0 && missingInBooksCount === 0 && posMismatchCount === 0 && blocked17_5Count === 0 && requiresHumanVerificationCount === 0) ? 'FULLY_RECONCILED' : 'EXCEPTIONS_IDENTIFIED',
         isAuthorizedToDisburse: false
@@ -2115,6 +2531,9 @@ export function generateGstr2bAuditMarkdownReport(reconResult) {
     if (s.rcmUnregisteredEligibleCount > 0) {
         md += `| **Eligible Inward RCM Supplies (Table 4(A)(3))** | — | — | **${fmt(s.rcmUnregisteredEligibleItcInr)}** (\`${s.rcmUnregisteredEligibleCount}\` vouchers) |\n`;
     }
+    if (s.compositionExcludedCount > 0) {
+        md += `| **Commercial Rent Excluded u/s 10 (Not RCM)** | — | — | **${fmt(s.compositionExcludedItcInr)}** (\`${s.compositionExcludedCount}\` vouchers expensed) |\n`;
+    }
     md += `| **Requires Human Verification (Uncertainty)** | — | — | **${fmt(s.requiresHumanVerificationItcInr)}** (\`${s.requiresHumanVerificationCount}\` items) |\n`;
     md += `| **Provisional / At-Risk ITC (Missing in 2B)** | — | — | **${fmt(s.atRiskUnfiledItcInr)}** (Withhold) |\n`;
     md += `| **Blocked Ineligible ITC (Sec 17(5))** | — | — | **${fmt(s.blocked17_5ItcInr)}** (Table 4(B)(1)) |\n`;
@@ -2124,7 +2543,17 @@ export function generateGstr2bAuditMarkdownReport(reconResult) {
     md += `| **Rule 37 Overdue Reversal (>180 Days)** | — | — | **${fmt(s.rule37ReversalAmountInr)}** (Table 4(B)(2)) |\n`;
     md += `| **Rule 37 Sec 50(1) Delayed Interest Exposure** | — | — | **${fmt(s.rule37InterestExposureInr)}** |\n\n`;
 
-    const exceptions = reconResult.reconciliationItems.filter(i => i.disposition !== 'MATCHED_ELIGIBLE' && i.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE');
+    if (s.cumulativePortfolioEclAudit) {
+        const port = s.cumulativePortfolioEclAudit;
+        md += `### Cumulative Portfolio-Level Rule 88B(3) ECL Utilization\n\n`;
+        md += `- **Active Overdue Bills Pooled**: \`${reconResult.reconciliationItems.filter(i => i.isRule37Overdue).length}\`\n`;
+        md += `- **Total Rule 88B(3) Interest Liability**: **${fmt(port.totalInterestInr)}**\n`;
+        md += `- **Utilized Shortfall Days**: \`${port.utilizedDaysCount}\` days (Zero Interest Days: \`${port.zeroUtilizationDaysCount}\`)\n`;
+        md += `- **Peak Portfolio Shortfall**: ${fmt(port.maxPortfolioUtilizationInr)}\n`;
+        md += `- **Audit Finding**: ${port.explanation}\n\n`;
+    }
+
+    const exceptions = reconResult.reconciliationItems.filter(i => i.disposition !== 'MATCHED_ELIGIBLE' && i.disposition !== 'RCM_UNREGISTERED_SUPPLIER_ELIGIBLE' && i.disposition !== 'COMPOSITION_EXCLUDED_RCM_SUPPLY');
 
     if (exceptions.length === 0) {
         md += '## 2. Statutory Audit Verdict\n\n';

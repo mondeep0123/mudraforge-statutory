@@ -85,6 +85,7 @@ import {
     normalizeGstin,
     calculateOverdueStartDate,
     calculateEclUtilizationInterest,
+    calculatePortfolioEclUtilizationInterest,
     buildEvidenceProvenance
 } from './zoho_gstr2b.js';
 
@@ -106,7 +107,7 @@ export { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL };
 /**
  * Current verified Merkle root digest for the active OKF v0.2 corpus.
  */
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-df76c16ed86673426eeb87fafa1c23712830ce5314339ff17fbb2e0e1795e046';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 
 /**
@@ -114,6 +115,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-df76c16ed86673426eeb87fafa1c23712830ce5314339ff17fbb2e0e1795e046', // feat/notification-07-2025-composition-rent-rcm-exclusion (38 Sections across 5 Domains, 42 Circulars)
     'sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03', // feat/notification-09-2024-commercial-rent-rcm (38 Sections across 5 Domains, 41 Circulars)
     'sha256-2e402bb02fe71939c79b9f11ad737d20faac21daf8e27417cb13ec1933511c19', // feat/gst-rule-42-43 (38 Sections across 5 Domains)
     'sha256-feb1555f10c9f5c70de18ef340e0ba6cf1f060fb19cae866aa36240345c46f3a', // feat/rent-194ib-contract-194m (37 Sections across 5 Domains)
@@ -2139,6 +2141,14 @@ export class StatutoryClient {
     }
 
     /**
+     * Reconstruct cumulative portfolio ECL utilization for multiple overlapping overdue invoices under Rule 88B(3).
+     * @param {Object} params
+     */
+    calculatePortfolioEclUtilizationInterest(params) {
+        return calculatePortfolioEclUtilizationInterest(params);
+    }
+
+    /**
      * Run regulatory watchtower surveillance and generate Empanelment Freshness Certificate.
      * @param {Object} [options]
      */
@@ -3314,6 +3324,7 @@ export {
     normalizeGstin,
     calculateOverdueStartDate,
     calculateEclUtilizationInterest,
+    calculatePortfolioEclUtilizationInterest,
     buildEvidenceProvenance,
     runStatutoryWatchtower
 };

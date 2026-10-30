@@ -65,6 +65,14 @@ export const STATUTORY_FRESHNESS_BENCHMARKS = [
         description: 'Commercial immovable property renting by unregistered suppliers brought under Reverse Charge Mechanism (Entry 5AB).'
     },
     {
+        benchmarkId: 'GST_RCM_COMMERCIAL_RENT_COMPOSITION_EXCLUSION_JAN_2025',
+        statutorySection: 'CGST Act Section 9(3) read with Section 10',
+        instrument: 'CBIC Notification No. 07/2025-Central Tax (Rate)',
+        effectiveDate: '2025-01-16',
+        targetSectionPath: 'indirect_tax_gst/rcm_liability_sec9_3',
+        description: 'Exclusion of composition taxpayers paying tax under Section 10 from reverse charge liability on commercial immovable property renting w.e.f. 16 January 2025.'
+    },
+    {
         benchmarkId: 'GST_SEC_16_5_RETROSPECTIVE_ITC_RELIEF',
         statutorySection: 'CGST Act Section 16(5) & 16(6)',
         instrument: 'Finance (No. 2) Act, 2024',
@@ -283,6 +291,11 @@ export async function runStatutoryWatchtower(options = {}) {
                 const hasMention = /09\/2024|commercial.*rent/i.test(content);
                 isPresent = hasCircular && hasMention;
                 details = isPresent ? 'Entry 5AB commercial renting RCM circular and section thresholds verified' : 'Missing Notification 09/2024 reference or circular';
+            } else if (bm.benchmarkId === 'GST_RCM_COMMERCIAL_RENT_COMPOSITION_EXCLUSION_JAN_2025') {
+                const hasCircular = fs.existsSync(path.join(targetDir, 'circulars', 'cbic_notification_07_2025_composition_rent_exclusion.md'));
+                const hasMention = /07\/2025|composition taxpayer/i.test(content);
+                isPresent = hasCircular && hasMention;
+                details = isPresent ? 'Notification 07/2025 composition exclusion circular and Section 10 exclusion verified' : 'Missing Notification 07/2025 circular or Section 10 exclusion mention';
             } else if (bm.benchmarkId === 'GST_SEC_16_5_RETROSPECTIVE_ITC_RELIEF') {
                 isPresent = /16\(5\)|16\(6\)|Finance \(No\. 2\) Act|retrospectiveReliefProvisions/i.test(content);
                 details = isPresent ? 'Retrospective Section 16(5)/16(6) relief terms verified' : 'Missing Section 16(5)/16(6) terms';
@@ -338,6 +351,8 @@ export async function runStatutoryWatchtower(options = {}) {
 
     report.certificate = {
         certificateId,
+        attestationType: 'INTERNAL_STATUTORY_SUBSTRATE_VERIFICATION_ATTESTATION',
+        attestationNotice: 'MF-CERT is an internally generated cryptographic and algorithmic verification attestation proving OKF v0.2 substrate integrity and benchmark compliance. It does not constitute an external statutory audit opinion or regulatory sign-off by a chartered accountant or government agency.',
         attestationTimestamp: report.auditTimestamp,
         merkleSubstrateRoot: report.checks.merkleImmutability.computedRoot,
         governingSpecification: 'Open Knowledge Format (OKF v0.2)',

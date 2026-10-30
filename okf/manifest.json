@@ -1,9 +1,9 @@
 {
   "okfVersion": "2.9.0",
-  "publishedAt": "2026-10-30T03:44:04.557Z",
-  "rootHash": "sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03",
+  "publishedAt": "2026-10-30T04:25:51.680Z",
+  "rootHash": "sha256-df76c16ed86673426eeb87fafa1c23712830ce5314339ff17fbb2e0e1795e046",
   "totalSections": 38,
-  "totalFiles": 118,
+  "totalFiles": 119,
   "changelog": "Expanded statutory commons with 5 Corporate Finance Domains: Corporate Tax MAT vs 115BAA, Place of Supply & Zero-Rated Export LUT, Transfer Pricing ALP & Rule 10CA, Section 79 Loss Continuity, and Ind AS 21 & 109 FX Revaluation.",
   "domains": {
     "corporate_ma_restructuring": [
@@ -184,9 +184,10 @@
     "indirect_tax_gst/itc_reversal_rule37_37a/forms/gstr_3b_table_4b_reversal.json": "150a993f6528d9800b40dcb2332b3ce28e4e632d1d27bea0384fd95c3f9aa142",
     "indirect_tax_gst/itc_reversal_rule37_37a/section.json": "2e14d1d237f234b7119d221e02956138af4b4426f0c4b1e3630aa469cdeefc2c",
     "indirect_tax_gst/rcm_liability_sec9_3/circulars/cbic_circular_102_2019_rcm_clarifications.md": "d0aee33e231ece18030d00037feb54f3a8c292a193b5b317e86af17eac48a6a8",
+    "indirect_tax_gst/rcm_liability_sec9_3/circulars/cbic_notification_07_2025_composition_rent_exclusion.md": "78afd2d33dd1d0cf275d5e7622f40a723bcf2edcfa5a2ce6cf8e46f2051509cf",
     "indirect_tax_gst/rcm_liability_sec9_3/circulars/cbic_notification_09_2024_renting_rcm.md": "fb74c0b6eb74d7ecb683a6c8fdb6553a7b7eb0c365f5e46f635ac7e714eccd5d",
     "indirect_tax_gst/rcm_liability_sec9_3/forms/rcm_self_invoice_payment_voucher.json": "5b0b6cd1ca9e08083d060245963da9d271e81ecdf77fd8d0af9749cb49ed06f0",
-    "indirect_tax_gst/rcm_liability_sec9_3/section.json": "cf3b6c571b7d3318a66b044322828a09a146ab3d3a36427e9296ae83c7993fd1",
+    "indirect_tax_gst/rcm_liability_sec9_3/section.json": "9ba201b8a7d2f7ac8eb875699e9bda89d36b0cf2bdc3e0812a22add5b04b3122",
     "international_tax/cross_border_remittance_195/circulars/cbdt_circular_03_2022_form10f_electronic.md": "cd8abe5cd8fac53fa8f185b20be6e4b9a46e08ed77afddd2f3abd9a0e665d3ae",
     "international_tax/cross_border_remittance_195/circulars/supreme_court_engineering_analysis_doctrine.md": "37e704ae7f87cf9596a48dad6d981abcebf5e4603781c766ff5ca8cfef50bcd5",
     "international_tax/cross_border_remittance_195/forms/form_15ca_15cb_compliance_checklist.json": "58a71629120c0f7bc6c907dae11970750e99c5ad4097df046af6350d15e6c7cf",
