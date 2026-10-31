@@ -12,8 +12,8 @@ Only the current major release series receives active updates and statutory amen
 
 | Version | Supported | Statutory Epistemic Baseline |
 |---|---|---|
-| `2.10.x` | Yes | Finance Act, 2025 & CBDT/CBIC Circulars up to October 2026 |
-| `< 2.10.0` | No | Prior releases (upgrade via `npm install @mudraforge/statutory@latest`) |
+| `2.11.x` | Yes | Finance Act, 2025 & CBDT/CBIC Circulars up to October 2026 |
+| `< 2.11.0` | No | Prior releases (upgrade via `npm install @mudraforge/statutory@latest`) |
 
 ---
 
